@@ -45,3 +45,8 @@ __pycache__/
 
 # 日志
 *.log
+
+# 分析项目数据（测序数据/中间文件体积太大，不入库）
+Project/*/data/
+Project/*/temp/
+Project/*/result/
