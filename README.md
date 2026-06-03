@@ -31,6 +31,71 @@ bash ~/Course/Maxmetagenome/scripts/checkm_config.sh
 
 ---
 
+## 两种运行模式
+
+MaxMetagenome 支持两种互补的运行模式，满足不同分析需求：
+
+### 模式一：逐步模式（Step-by-step）
+
+**定位**：研究级，每步独立运行，参数可精细调控，适合探索性分析和调试。
+
+```bash
+# 单步运行示例
+bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
+bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
+bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
+bash scripts/13_bac_humann4.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
+
+# 所有样本完成后合并
+bash scripts/11b_bac_metaphlan4_merge.sh -w Project/Project_A -r ~/Course/Maxmetagenome
+```
+
+### 模式二：一站式流程模式（Pipeline mode）
+
+**定位**：生产级，输入 samplesheet.csv，自动串联所有步骤，适合标准化批量分析。参考 MetaflowX 的模块化设计。
+
+**第一步：准备 samplesheet.csv**
+
+```csv
+sample_id,r1,r2,host_type,project_dir
+SRR001,/path/SRR001_1.fastq.gz,/path/SRR001_2.fastq.gz,human,/path/Project_A
+SRR002,/path/SRR002_1.fastq.gz,/path/SRR002_2.fastq.gz,human,/path/Project_A
+```
+
+**第二步：运行流程**
+
+```bash
+# 完整流程（所有步骤）
+bash scripts/00_pipeline_bacteria.sh \
+     -i Project/Project_A/samplesheet.csv \
+     -r ~/Course/Maxmetagenome -t 16
+
+# 从去宿主步骤续跑（质控已完成）
+bash scripts/00_pipeline_bacteria.sh \
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --from kneaddata
+
+# 只做物种分类（跳过功能分析）
+bash scripts/00_pipeline_bacteria.sh \
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --skip humann4
+
+# 多样本并行（需要安装 rush）
+bash scripts/00_pipeline_bacteria.sh \
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 -j 2
+```
+
+**可用的 `--skip` 和 `--from` 步骤**：
+
+| 步骤名 | 对应脚本 |
+|--------|---------|
+| `qc` | 01_qc_fastp.sh |
+| `kneaddata` | 02_qc_kneaddata.sh |
+| `metaphlan4` | 11_bac_metaphlan4.sh |
+| `humann4` | 13_bac_humann4.sh |
+| `strainphlan4` | 12_bac_strainphlan4.sh |
+| `merge` | 11b_bac_metaphlan4_merge.sh |
+
+---
+
 ## 分析流程总览
 
 ```

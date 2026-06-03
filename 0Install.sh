@@ -30,7 +30,7 @@
 #   [✓] §5.1 VIBRANT 1.2.1（envs/vibrant）+ CheckV（envs/checkv）  2026/06/01  测试通过（zlib冲突已拆分独立环境）
 #   [✓] §5.2 AMRFinderPlus 3.10.1 + RGI 4.0.3 + CARD 数据库       2026/06/01  测试通过
 #   [✓] §5.3 dbCAN3 + 数据库（3.5 GB）                             2026/06/01  测试通过
-#   [✓] §5.4 StrainPhlAn4 4.2.4（复用 humann4 环境）               2026/06/01  测试通过
+#   [✓] §5.4 StrainPhlAn4 4.2.4（复用 humann4 环境）               2026/06/03  测试通过（补装 samtools/mafft/fasttree）
 #   [✓] §5.5 antiSMASH 7.1.0（--no-channel-priority 安装）         2026/06/01  测试通过
 #   [✓] §5.6 FastSpar（SparCC）                                    2026/06/01  测试通过
 #   [✓] §6.2 CRAN 包（vegan 2.7.5 / ggplot2 4.0.3 / dplyr 等 16 个）  2026/06/01  测试通过
@@ -217,10 +217,19 @@
     conda run --prefix ${envs}/humann4 pip install humann
     conda run --prefix ${envs}/humann4 pip install metaphlan
 
+    # 安装 StrainPhlAn4 运行时必须依赖（2026-06-03 补充，mamba 求解更稳定）
+    # 注意：不能用 conda install ncurses=5（会破坏 python 3.9 环境），samtools 必须 >=1.15
+    mamba install --prefix ${envs}/humann4 -y \
+        "samtools=1.15.1" mafft fasttree \
+        -c bioconda -c conda-forge
+
     # 版本验证
     conda run --prefix ${envs}/humann4 humann --version
     conda run --prefix ${envs}/humann4 metaphlan --version
     conda run --prefix ${envs}/humann4 diamond --version
+    conda run --prefix ${envs}/humann4 samtools --version 2>&1 | head -1
+    conda run --prefix ${envs}/humann4 mafft --version 2>&1
+    conda run --prefix ${envs}/humann4 FastTree -help 2>&1 | head -1
 
 
 # --- 2.2 HUMAnN4 数据库  [✓ chocophlan 12773 / uniref90 34G / mapping 20 / config 已写入] ---
@@ -698,8 +707,23 @@ CHECKM_CFG
 # --- 5.4 菌株级分析：StrainPhlAn4 4.2.4  [✓ 复用 humann4 环境] ---
 
     # StrainPhlAn4 是 MetaPhlAn4 套件的一部分，复用 humann4 环境，无需单独安装
+    # 前置依赖（已在 §2.1 中安装）：samtools=1.15.1、mafft、fasttree
+    #   - samtools: sample2markers.py 内部调用，必须 >=1.15（<1.15 与 ncurses 有版本冲突）
+    #   - mafft + fasttree: strainphlan 通过 phylophlan 构建系统发育树时调用
+    #   - 安装时必须用 mamba（conda solver 无法解决 samtools + python3.9 + ncurses 的三方约束）
     conda run --prefix ${envs}/humann4 strainphlan --version 2>&1 | head -1
+    conda run --prefix ${envs}/humann4 sample2markers.py --version 2>&1 | head -1
     echo "StrainPhlAn4 就绪（复用 humann4 环境）"
+
+    # ——— HUMAnN3.9 + MetaPhlAn4 vOct22 数据库兼容性修复 ———
+    # HUMAnN3.9 默认只接受 MetaPhlAn4 vJun23 数据库生成的 profile，
+    # 而本项目使用 vOct22 数据库，需要修改 humann/config.py 中的版本检测字符串
+    # 此修改是幂等的（sed -i 不会重复修改）
+    CONFIG_PY="${envs}/humann4/lib/python3.9/site-packages/humann/config.py"
+    cp "${CONFIG_PY}" "${CONFIG_PY}.bak.$(date +%Y%m%d)"
+    sed -i 's/metaphlan_v4_db_version="vJun23"/metaphlan_v4_db_version="vOct22"/' "${CONFIG_PY}"
+    grep "metaphlan_v4_db_version" "${CONFIG_PY}"
+    echo "HUMAnN config.py 已更新：vJun23 → vOct22（适配本项目 MetaPhlAn4 数据库版本）"
 
 
 # --- 5.5 次级代谢产物：antiSMASH 7.1.0  [✓ --no-channel-priority 安装] ---
