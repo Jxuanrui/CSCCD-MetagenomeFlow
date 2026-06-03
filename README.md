@@ -323,35 +323,52 @@ Read-based  Assembly-based
 
 ```
 MaxMetagenome/
-├── 0Install.sh          # 完整安装脚本（§0-§8，含所有工具和数据库）
-├── README.md            # 本文档
-├── CLAUDE.md            # CC/Codex 协作规范
+├── 0Install.sh              # 完整安装脚本（§0-§8，含所有工具和数据库）
+├── README.md                # 本文档
+├── CLAUDE.md                # CC/Codex 协作规范 + 项目地图（§14 分析流程索引）
 │
-├── scripts/             # 辅助脚本
-│   ├── activate.sh      # 会话激活（每次分析前执行 source）
-│   └── checkm_config.sh # CheckM 数据库路径配置（迁移新服务器后执行一次）
+├── scripts/                 # 分析脚本（单步骤一个文件，按编号排列）
+│   ├── activate.sh          # 会话激活（每次分析前执行 source）
+│   ├── checkm_config.sh     # CheckM 数据库路径配置（迁移新服务器后执行一次）
+│   ├── 01_qc_fastp.sh       # 质量控制
+│   └── ...                  # 后续脚本按编号追加
 │
-├── miniforge3/          # Miniforge3 自包含环境（27G）
-├── envs/                # 23 个 conda 独立工具环境（23G）
-├── db/                  # 所有分析数据库（~700G，31 个数据库）
-├── Rlib/                # R 包库（conda R 4.5.1，297 个包，1.4G）
+├── docs/                    # 轻量工具文档（目的/输入输出/示例命令/官网链接）
+│   ├── 01_preprocessing/    # 预处理工具文档
+│   ├── 02_read_based/       # 读长分析工具文档
+│   ├── 03_assembly/         # 组装工具文档
+│   ├── 04_binning/          # Binning 工具文档
+│   ├── 05_deep_mining/      # 深度挖掘工具文档
+│   │   ├── viromics/
+│   │   ├── amr_mge/
+│   │   ├── strain_level/
+│   │   ├── secondary_metabolites/
+│   │   └── cooccurrence_network/
+│   ├── 06_multiomics/       # 多组学工具文档
+│   └── tools_ref/           # 参考工具速查
 │
-├── docs/                # RAG 知识库文档（待完善）
-│   ├── 01_preprocessing/
-│   ├── 02_read_based/
-│   ├── 03_assembly/
-│   ├── 04_binning/
-│   ├── 05_deep_mining/
-│   ├── 06_multiomics/
-│   └── tools_ref/
+├── agents/                  # AI 驱动的辅助 Agent
+│   └── tool_learner/        # 工具知识 Agent（动态获取工具文档）
+│       ├── README.md        # Agent 说明
+│       └── cache/           # 已学习工具的知识缓存（{tool}.md）
 │
-├── mcp/                 # MCP 服务器（§9，待配置）
-├── tools/               # 辅助工具脚本（§9 MCP 服务器将放置于此）
+├── Project/                 # 分析项目目录（每个项目一个子目录）
+│   └── Project_example/     # 示例项目（含4个测试样本）
+│       ├── data/            # 原始测序数据（*.fastq.gz）
+│       │   └── test_small/  # 小样本测试数据（100k reads）
+│       ├── temp/            # 分析中间文件（按脚本编号子目录，分析后可删）
+│       │   └── fastp/
+│       └── result/          # 最终分析结果（按分析类型子目录）
+│           └── qc/fastp/
 │
-├── seq/                 # 原始测序数据（*.fq.gz）
-├── temp/                # 分析中间文件（分析完成后可删）
-├── result/              # 最终分析结果
-└── Reference/           # 参考项目（EasyMetagenome.zip）
+├── miniforge3/              # Miniforge3 自包含环境（27G）
+├── envs/                    # 23 个 conda 独立工具环境（23G）
+├── db/                      # 所有分析数据库（~700G，31 个数据库）
+├── Rlib/                    # R 包库（conda R 4.5.1，297 个包，1.4G）
+│
+├── mcp/                     # MCP 服务器（§9，待实现）
+│   └── README.md
+└── Reference/               # 参考项目（EasyMetagenome.zip, bioSkills.zip）
 ```
 
 ---
@@ -361,4 +378,5 @@ MaxMetagenome/
 详见 `0Install.sh` 头部进度表，最新状态（2026-06-02）：
 
 - ✅ §0-§8.8 全部完成并测试通过（含 VIBRANT 数据库 11G，antiSMASH 数据库 9.4G）
+- ✅ 分析脚本：`scripts/01_qc_fastp.sh` 已完成并测试通过
 - ⏳ §9 MCP/RAG 服务（待配置）

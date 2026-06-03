@@ -15,17 +15,16 @@ Rlib/
 # 所有数据库（~700G）
 db/
 
-# 原始测序数据
-seq/
-
-# 分析中间文件
-temp/
-
-# 分析结果（本地生成，不入库）
-result/
-
-# 参考项目（大型 zip，通过 0Install.sh 注释说明下载方式）
+# 参考项目（大型 zip，体积过大不入库）
 Reference/
+
+# 分析项目数据（测序数据/中间文件/结果体积过大，不入库）
+Project/*/data/
+Project/*/temp/
+Project/*/result/
+
+# tool_learner 缓存（动态生成，不入库）
+agents/tool_learner/cache/*.md
 
 # Python 缓存
 __pycache__/
@@ -45,8 +44,3 @@ __pycache__/
 
 # 日志
 *.log
-
-# 分析项目数据（测序数据/中间文件体积太大，不入库）
-Project/*/data/
-Project/*/temp/
-Project/*/result/
