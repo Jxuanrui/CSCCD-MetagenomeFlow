@@ -46,6 +46,9 @@ bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/C
 bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
 bash scripts/13_bac_humann4.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
 
+# 高深度样本（>20M reads）推荐使用 balanced 模式加速（2× 提速，精度损失 <5%）
+bash scripts/13_bac_humann4.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome --speed-mode balanced
+
 # 所有样本完成后合并
 bash scripts/11b_bac_metaphlan4_merge.sh -w Project/Project_A -r ~/Course/Maxmetagenome
 ```

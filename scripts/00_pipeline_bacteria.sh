@@ -44,9 +44,9 @@
 #   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 \
 #        --only taxonomy
 #
-#   # 跳过功能注释（只做物种分类）
+#   # 高深度样本使用平衡模式加速 HUMAnN4
 #   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 \
-#        --skip humann4
+#        --humann-speed balanced
 # ==============================================================================
 
 set -euo pipefail
@@ -59,6 +59,7 @@ PARALLEL_JOBS=1
 SKIP_STEPS=""
 FROM_STEP=""
 ONLY_STEP=""
+HUMANN_SPEED="standard"
 
 show_help() {
 cat << 'EOF'
@@ -74,6 +75,7 @@ cat << 'EOF'
   --skip  跳过步骤：qc,kneaddata,metaphlan4,strainphlan4,humann4,merge
   --from  从某步骤开始续跑：kneaddata,metaphlan4,humann4
   --only  只运行某模块：qc,kneaddata,taxonomy,functional
+  --humann-speed  HUMAnN4 速度模式：standard（默认）/ balanced（推荐）/ fast
 
 samplesheet.csv 格式（第一行为表头）:
   sample_id,r1,r2,host_type,project_dir
@@ -95,6 +97,7 @@ while [[ $# -gt 0 ]]; do
         --skip) SKIP_STEPS="$2"; shift 2 ;;
         --from) FROM_STEP="$2";  shift 2 ;;
         --only) ONLY_STEP="$2";  shift 2 ;;
+        --humann-speed) HUMANN_SPEED="$2"; shift 2 ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -209,10 +212,11 @@ run_sample() {
 
     # Step 13: HUMAnN4 功能通路
     if should_run "humann4"; then
-        echo "[${SAMPLE_ID}] Step 13: HUMAnN4 功能通路定量..."
+        echo "[${SAMPLE_ID}] Step 13: HUMAnN4 功能通路定量（速度模式: ${HUMANN_SPEED}）..."
         bash "${SCRIPTS}/13_bac_humann4.sh" \
             -s "${SAMPLE_ID}" -t "${CPUS}" \
-            -w "${WORKDIR}" -r "${REPO}"
+            -w "${WORKDIR}" -r "${REPO}" \
+            --speed-mode "${HUMANN_SPEED}"
     else
         echo "[${SAMPLE_ID}] Step 13: 跳过 HUMAnN4"
     fi
@@ -220,7 +224,7 @@ run_sample() {
     echo "[pipeline] 样本 ${SAMPLE_ID} 完成"
 }
 export -f run_sample should_run
-export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP
+export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP HUMANN_SPEED
 
 # --- 执行（支持并行）---
 if [ "${PARALLEL_JOBS}" -gt 1 ] && command -v rush &>/dev/null; then
