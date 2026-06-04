@@ -13,7 +13,19 @@
 #           ${SAMPLE}_pathabundance_relab.tsv    — 通路相对丰度（normalized）
 #           ${SAMPLE}_genefamilies_relab.tsv     — 基因家族相对丰度（normalized）
 #           unstratified/stratified/             — 分层/非分层拆分结果
-# 临时文件: ${WORKDIR}/temp/humann4/${SAMPLE}/
+# 临时文件: ${WORKDIR}/temp/humann4/${SAMPLE}/  （可达 60-100G，完成后自动保留）
+#
+# 性能说明（重要）:
+#   HUMAnN4 第一步构建 custom chocophlan 索引（bowtie2-build）耗时极长：
+#   - 检测物种数 ~100：custom db ~10G，索引约 30-60 分钟
+#   - 检测物种数 ~300：custom db ~60G，索引约 10-20 小时
+#   建议：高深度样本（>60M reads）先用 --prescreen-threshold 0.1 限制物种数
+#   临时目录（temp/humann4/）需预留 100G+ 磁盘空间
+#
+# 兼容性修复（已在 0Install.sh §5.4 记录）:
+#   1. --bypass-prescreen：跳过 metaphlan 版本检测（metaphlan --version 有多行输出导致解析失败）
+#   2. config.py vOct22：HUMAnN3.9 默认只接受 vJun23，需修改为本项目使用的 vOct22
+#
 # 参  考: EasyMetagenome 1Pipeline.sh §2.3（HUMAnN4 参数设计）
 #         MetaflowX modules/local/marker/humann_v4.nf（--taxonomic-profile 优化）
 #         HUMAnN 官方文档 https://github.com/biobakery/humann
