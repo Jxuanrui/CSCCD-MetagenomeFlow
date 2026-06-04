@@ -9,13 +9,13 @@
 
 ## 项目概述
 
-MaxMetagenome 是一个综合性宏基因组深度挖掘分析平台，整合了以下三个参考项目的分析模块：
+MaxMetagenome 是一个综合性宏基因组深度挖掘分析平台，覆盖从原始测序数据到功能注释、MAG 挖掘、深度生态学解析的完整分析体系，支持细菌、病毒、真菌三大物种维度并行分析。
 
-- **EasyMetagenome**：标准宏基因组分析流程（质控→读长分析→组装→分箱）
-- **Metagenomics_Apptainer_pipline**：基于 Apptainer 的宏基因组序列和功能注释流程
-- **Binning_Apptainer_pipline**：MAG 挖掘及深度功能注释流程
-
-覆盖从原始测序数据到功能注释、MAG 挖掘、深度生态学解析的完整分析体系。
+**核心特性**：
+- 三大分析维度：细菌（脚本 11-41）/ 病毒（51-69）/ 真菌（71-86）
+- 两种运行模式：逐步模式（研究级精细控制）/ 一站式流程（生产级批量处理）
+- 自包含环境：23 个独立 conda 环境，支持跨服务器迁移
+- 完整工具链：物种分类 → 功能注释 → 组装 → Binning → MAG 深度注释
 
 ---
 
@@ -52,7 +52,7 @@ bash scripts/11b_bac_metaphlan4_merge.sh -w Project/Project_A -r ~/Course/Maxmet
 
 ### 模式二：一站式流程模式（Pipeline mode）
 
-**定位**：生产级，输入 samplesheet.csv，自动串联所有步骤，适合标准化批量分析。参考 MetaflowX 的模块化设计。
+**定位**：生产级，输入 samplesheet.csv，自动串联所有步骤，适合标准化批量分析。支持 `--skip`/`--from`/`--only` 灵活控制步骤。
 
 **第一步：准备 samplesheet.csv**
 
@@ -386,54 +386,55 @@ Read-based  Assembly-based
 
 ## 项目结构
 
+> 完整目录说明见 [docs/project_structure.md](docs/project_structure.md)
+
 ```
 MaxMetagenome/
-├── 0Install.sh              # 完整安装脚本（§0-§8，含所有工具和数据库）
+├── 0Install.sh              # 环境安装主脚本
+├── 1Pipeline.sh             # 参考式完整流程脚本（带详细注释）
 ├── README.md                # 本文档
-├── CLAUDE.md                # CC/Codex 协作规范 + 项目地图（§14 分析流程索引）
+├── CLAUDE.md                # 开发协作手册（内部）
 │
-├── scripts/                 # 分析脚本（单步骤一个文件，按编号排列）
-│   ├── activate.sh          # 会话激活（每次分析前执行 source）
-│   ├── checkm_config.sh     # CheckM 数据库路径配置（迁移新服务器后执行一次）
-│   ├── 01_qc_fastp.sh       # 质量控制
+├── scripts/                 # 可执行脚本（单步骤一个文件，按编号排列）
+│   ├── activate.sh          # 环境激活（每次分析前 source）
+│   ├── checkm_config.sh     # CheckM 路径配置（迁移服务器后执行一次）
+│   ├── 00_pipeline_bacteria.sh  # 细菌维度一站式流程（Pipeline 模式）
+│   ├── 01_qc_fastp.sh       # 质量控制（fastp）
+│   ├── 02_qc_kneaddata.sh   # 去宿主（KneadData）
+│   ├── 11_bac_metaphlan4.sh # 物种组成（MetaPhlAn4）
+│   ├── 11b_bac_metaphlan4_merge.sh  # 多样本合并
+│   ├── 12_bac_strainphlan4.sh       # 菌株系统发育
+│   ├── 13_bac_humann4.sh    # 功能通路定量（HUMAnN4）
 │   └── ...                  # 后续脚本按编号追加
 │
-├── docs/                    # 轻量工具文档（目的/输入输出/示例命令/官网链接）
+├── docs/                    # 文档
+│   ├── project_structure.md # 项目结构详细说明
+│   ├── WGS_integration.md   # WGS 单菌模块融入说明
 │   ├── 01_preprocessing/    # 预处理工具文档
-│   ├── 02_read_based/       # 读长分析工具文档
+│   ├── 02_read_based/       # Read-based 分析文档
 │   ├── 03_assembly/         # 组装工具文档
 │   ├── 04_binning/          # Binning 工具文档
-│   ├── 05_deep_mining/      # 深度挖掘工具文档
-│   │   ├── viromics/
-│   │   ├── amr_mge/
-│   │   ├── strain_level/
-│   │   ├── secondary_metabolites/
-│   │   └── cooccurrence_network/
-│   ├── 06_multiomics/       # 多组学工具文档
-│   └── tools_ref/           # 参考工具速查
+│   └── 05_deep_mining/      # 深度挖掘工具文档
 │
-├── agents/                  # AI 驱动的辅助 Agent
-│   └── tool_learner/        # 工具知识 Agent（动态获取工具文档）
-│       ├── README.md        # Agent 说明
-│       └── cache/           # 已学习工具的知识缓存（{tool}.md）
-│
-├── Project/                 # 分析项目目录（每个项目一个子目录）
-│   └── Project_example/     # 示例项目（含4个测试样本）
+├── Project/                 # 项目工作目录
+│   └── Project_example/     # 示例项目（含测试样本）
 │       ├── data/            # 原始测序数据（*.fastq.gz）
 │       │   └── test_small/  # 小样本测试数据（100k reads）
-│       ├── temp/            # 分析中间文件（按脚本编号子目录，分析后可删）
-│       │   └── fastp/
-│       └── result/          # 最终分析结果（按分析类型子目录）
-│           └── qc/fastp/
+│       ├── result/          # 分析结果（按分析类型子目录）
+│       │   ├── qc/          # 质控结果
+│       │   ├── taxonomy/    # 物种分类结果
+│       │   └── functional/  # 功能分析结果
+│       ├── temp/            # 中间文件（分析后可删除）
+│       ├── samples.txt      # 样本列表（逐步模式）
+│       └── samplesheet.csv  # 样本表（Pipeline 模式）
 │
 ├── miniforge3/              # Miniforge3 自包含环境（27G）
 ├── envs/                    # 23 个 conda 独立工具环境（23G）
-├── db/                      # 所有分析数据库（~700G，31 个数据库）
-├── Rlib/                    # R 包库（conda R 4.5.1，297 个包，1.4G）
-│
-├── mcp/                     # MCP 服务器（§9，待实现）
-│   └── README.md
-└── Reference/               # 参考项目（EasyMetagenome.zip, bioSkills.zip）
+├── db/                      # 分析数据库（~700G，31 个数据库）
+├── Rlib/                    # R 包库（R 4.5.1，297 个包）
+├── mcp/                     # MCP 服务器（待实现）
+├── agents/                  # AI 辅助 Agent（tool_learner 等）
+└── Reference/               # 内部资料（仅开发用，不随项目分发）
 ```
 
 ---

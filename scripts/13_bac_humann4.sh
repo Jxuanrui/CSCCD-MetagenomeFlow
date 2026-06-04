@@ -26,9 +26,8 @@
 #   1. --bypass-prescreen：跳过 metaphlan 版本检测（metaphlan --version 有多行输出导致解析失败）
 #   2. config.py vOct22：HUMAnN3.9 默认只接受 vJun23，需修改为本项目使用的 vOct22
 #
-# 参  考: EasyMetagenome 1Pipeline.sh §2.3（HUMAnN4 参数设计）
-#         MetaflowX modules/local/marker/humann_v4.nf（--taxonomic-profile 优化）
-#         HUMAnN 官方文档 https://github.com/biobakery/humann
+# 参  考: HUMAnN 官方文档 https://github.com/biobakery/humann
+#         Beghini et al. eLife 2021; PMID 33944776
 # 用  法: bash 13_bac_humann4.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
@@ -130,7 +129,8 @@ echo "[humann4] 线程: ${CPUS}"
 
 # --- 构建 MetaPhlAn4 选项 ---
 # 优先：如步骤11已生成 profile，直接传入（--taxonomic-profile），跳过 MetaPhlAn4 重复运行
-# 参考：MetaflowX humann_v4.nf 的 --taxonomic-profile 优化设计
+# 如步骤11已生成 profile，直接传入（--taxonomic-profile），跳过 HUMAnN 内部 MetaPhlAn 调用
+# 避免对同一样本重复运行 MetaPhlAn4，节省时间
 if [ -f "${METAPHLAN_PROFILE}" ]; then
     echo "[humann4] 使用已有 MetaPhlAn4 profile（步骤11输出），跳过重复 MetaPhlAn4 分析"
     TAXONOMIC_PROFILE_ARG="--taxonomic-profile ${METAPHLAN_PROFILE}"
@@ -179,7 +179,7 @@ mv "${TEMP_DIR}/${SAMPLE}_pathcoverage.tsv"  "${RESULT_DIR}/"
 mv "${TEMP_DIR}/${SAMPLE}_genefamilies.tsv"  "${RESULT_DIR}/"
 
 # --- 标准化为相对丰度（relab）---
-# 参考：EasyMetagenome §2.4 humann_renorm_table；MetaflowX humann_v4.nf
+# 标准化为相对丰度（relab）
 
 echo "[humann4] 标准化为相对丰度..."
 

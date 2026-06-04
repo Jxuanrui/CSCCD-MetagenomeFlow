@@ -16,8 +16,6 @@
 #           clades_detected.txt         — 可分析的菌株列表
 # 参  考: MetaPhlAn4 Wiki (biobakery/MetaPhlAn/wiki/StrainPhlAn-4)
 #         Blanco-Miguez et al. Nat Biotechnol 2023; PMID 36823356
-#         EasyMetagenome 1Pipeline.sh §2.3（StrainPhlAn 参数设计）
-#         WGS_prokaryote.pipeline.v0.7.sh（系统发育树格式参考）
 # 用  法: bash 12_bac_strainphlan4.sh -w WORKDIR -r REPO [-t CPUS] [-c CLADE]
 # ==============================================================================
 

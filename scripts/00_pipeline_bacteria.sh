@@ -3,11 +3,10 @@
 # 脚本名: 00_pipeline_bacteria.sh
 # 功  能: 细菌维度一站式流程（Pipeline 模式）
 #         支持两种运行模式：
-#           模式一（逐步）：通过 1Pipeline.sh 或直接调用各步骤脚本
+#           模式一（逐步）：通过主流程脚本或直接调用各步骤脚本
 #           模式二（一站式）：本脚本，传入 samplesheet.csv，自动串联所有步骤
 #
-# 设计参考: MetaflowX --mode/--skip 参数体系
-#            EasyMetagenome 1Pipeline.sh 多样本并行模式
+# 设计特点: 支持 --skip/--from/--only 灵活控制步骤，支持多样本并行（-j 参数）
 #
 # 用  法: bash 00_pipeline_bacteria.sh -i SAMPLESHEET -r REPO [-t CPUS] [options]
 #

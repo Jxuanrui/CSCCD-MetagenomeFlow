@@ -1,8 +1,8 @@
-# WGS 流程模块融入 MaxMetagenome 说明
+# WGS 模块融入 MaxMetagenome 说明
 
 ## 概述
 
-本文档说明如何将原核生物全基因组测序（WGS）分析流程（`Reference/WGS_prokaryote.pipeline.v0.7.sh`）的核心模块融入 MaxMetagenome 宏基因组平台，实现 **MAG 深度精细化注释**。
+本文档说明如何将原核生物全基因组测序（WGS）单基因组分析模块融入 MaxMetagenome 宏基因组平台，实现 **MAG 深度精细化注释**。
 
 **适用场景**：获得高质量 MAG（步骤 37-38）后，对感兴趣的物种进行单基因组级别的深度分析。
 
@@ -10,8 +10,8 @@
 
 ## 融入模块一览
 
-| 脚本编号 | 脚本名 | 来源 WGS 功能 | 依赖步骤 | 状态 |
-|---------|--------|--------------|---------|------|
+| 脚本编号 | 脚本名 | 功能 | 依赖步骤 | 状态 |
+|---------|--------|------|---------|------|
 | `41b` | `41b_bac_mlst.sh` | MLST 多位点序列分型 | 步骤 38-41（MAG） | ⏳ 待开发 |
 | `41c` | `41c_bac_pangenome.sh` | 泛基因组分析（Roary） | 步骤 41（Bakta GFF）| ⏳ 待开发 |
 | `41d` | `41d_bac_snippy.sh` | SNP/InDel 变异检测 | 步骤 40（GTDB 分类）+ 参考基因组 | ⏳ 待开发 |
@@ -24,13 +24,13 @@
 
 **功能**：对 MAG 进行多位点序列分型（Multi-Locus Sequence Typing），获得序列型（ST），用于分型、传播追踪和流行病学分析。
 
-**工具**：`mlst v2.19+`（`prokaWGS` 环境或新建专用环境）
+**工具**：`mlst v2.19+`
 
 **适用条件**：
-- 目标 MAG 来自已知 MLST 方案的物种（见 `mlst --list`，支持 134+ 种细菌）
+- 目标 MAG 来自已知 MLST 方案的物种（执行 `mlst --list` 查看支持的 134+ 种细菌）
 - MAG 完整度 ≥ 90%（高质量 MAG 才能覆盖足够的 MLST 位点）
 
-**典型命令**（参考 `WGS_prokaryote.pipeline.v0.7.sh §1.5.4`）：
+**典型命令**：
 ```bash
 mlst --scheme ecoli --legacy *.fasta --threads 8 --nopath --quiet \
   | sed 's/\.fasta//' > result/mlst/mlst.tab
@@ -44,16 +44,15 @@ mlst --scheme ecoli --legacy *.fasta --threads 8 --nopath --quiet \
 
 **功能**：对同一物种的多个 MAG 进行泛基因组分析，区分核心基因（Core）、软核心（Soft core）、壳基因（Shell）和云基因（Cloud），用于理解物种基因组多样性。
 
-**工具**：`Roary v3.13+`（需要 Bakta 或 Prokka 的 GFF 输出作为输入）
+**工具**：`Roary v3.13+`（需要 Bakta 步骤输出的 GFF 文件作为输入）
 
 **适用条件**：
 - 同一物种（GTDB 分类相同）的 MAG ≥ 3 个
 - 依赖步骤 41（Bakta 全基因组注释）的 `.gff` 文件
 
-**典型命令**（参考 `WGS_prokaryote.pipeline.v0.7.sh §1.6`）：
+**典型命令**：
 ```bash
 roary -p 8 -e --mafft -f result/pangenome/ result/gff/*.gff
-# 核心基因多序列比对可进一步构建系统发育树
 ```
 
 **输出**：
@@ -75,7 +74,7 @@ roary -p 8 -e --mafft -f result/pangenome/ result/gff/*.gff
 - 分析同一物种在不同样本/时间点的变异
 - 适合感染病原体的流行病学调查场景
 
-**典型命令**（参考 `WGS_prokaryote.pipeline.v0.7.sh §1.7`）：
+**典型命令**：
 ```bash
 # 单样本变异检测
 snippy --cpus 8 --outdir result/snippy/SAMPLE \
@@ -113,21 +112,15 @@ snippy-core --ref reference.fasta result/snippy/*/
 
 上述工具需新建 `envs/wgs_tools` 环境：
 ```bash
-# MLST
-conda install --prefix envs/wgs_tools -y mlst -c bioconda -c conda-forge
-
-# Roary（泛基因组）
-conda install --prefix envs/wgs_tools -y roary -c bioconda -c conda-forge
-
-# Snippy（SNP 检测）
-conda install --prefix envs/wgs_tools -y snippy -c bioconda -c conda-forge
+mamba create --prefix envs/wgs_tools -y \
+    mlst roary snippy \
+    -c bioconda -c conda-forge
 ```
 
 ---
 
 ## 参考资料
 
-- WGS 分析参考流程：`Reference/WGS_prokaryote.pipeline.v0.7.sh`
 - Roary 官方文档：https://sanger-pathogens.github.io/Roary/
 - mlst 工具：https://github.com/tseemann/mlst
 - Snippy 工具：https://github.com/tseemann/snippy

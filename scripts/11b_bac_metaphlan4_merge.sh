@@ -93,8 +93,8 @@ mkdir -p "${MERGED_DIR}"
 #   后续行: 数据
 # 处理：
 #   - tail -n+2 去掉数据库版本注释行
-#   - sed '1 s/clade_name/ID' 将列头改为 ID（与 EasyMetagenome 统计脚本兼容）
-#   - sed '2i #metaphlan4' 插入工具标识注释行（EasyMetagenome 约定）
+#   - sed '1 s/clade_name/ID' 将列头改为 ID（与下游统计脚本兼容）
+#   - sed '2i #metaphlan4' 插入工具标识注释行
 
 echo "[INFO] 合并多样本丰度表..."
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
