@@ -1,10 +1,7 @@
 sample_id,r1,r2,host_type,project_dir
-# 使用说明:
-#   sample_id  - 样本唯一标识（不含空格和特殊字符）
-#   r1/r2      - 原始测序数据绝对路径（*.fastq.gz）
-#   host_type  - 宿主类型（human/mouse/rat，用于去宿主步骤）
-#   project_dir- 工作目录（结果输出到 project_dir/result/）
-#
-# 示例（取消下面行首的 # 并修改路径）:
-# SRR28210342,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/SRR28210342_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/SRR28210342_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_example
-# SRR28210343,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/SRR28210343_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/SRR28210343_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_example
+S01,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S01_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S01_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_example
+S02,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S02_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S02_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_example
+S03,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S03_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S03_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_example
+S04,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S04_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S04_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_example
+S05,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S05_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S05_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_example
+S06,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S06_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_example/data/test/S06_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_example
