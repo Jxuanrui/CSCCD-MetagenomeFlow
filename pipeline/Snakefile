@@ -12,6 +12,7 @@ CPUS     = config["cpus"]
 include: "rules/preprocessing.smk"
 include: "rules/bacteria_taxonomy.smk"
 include: "rules/bacteria_assembly.smk"
+include: "rules/bacteria_annotation.smk"
 
 rule all:
     input:
@@ -25,3 +26,15 @@ rule all:
                workdir=WORKDIR, sample=SAMPLES),
         expand("{workdir}/result/taxonomy/metaphlan4/merged/taxonomy.tsv",
                workdir=WORKDIR),
+        WORKDIR + "/result/annotation/eggnog/eggnog.emapper.annotations",
+        WORKDIR + "/result/annotation/kegg/kegg_diamond.tsv",
+        WORKDIR + "/result/annotation/amrfinder/amrfinder_results.tsv",
+        WORKDIR + "/result/annotation/card/rgi_results.txt",
+        WORKDIR + "/result/annotation/dbcan/overview.txt",
+        WORKDIR + "/result/annotation/vfdb/vfdb_hits.tsv",
+        WORKDIR + "/result/annotation/bacmet/bacmet_hits.tsv",
+        WORKDIR + "/result/annotation/defense_finder/defense_finder_systems.tsv",
+        WORKDIR + "/result/annotation/ncyc/ncyc_hits.tsv",
+        WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
+        expand("{workdir}/result/annotation/antismash/{sample}/index.html",
+               workdir=WORKDIR, sample=SAMPLES),
