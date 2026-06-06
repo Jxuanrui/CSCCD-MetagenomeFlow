@@ -93,3 +93,21 @@ rule kraken2:
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
+
+
+rule centrifuger:
+    """Protein-level taxonomic classification (Centrifuger + GTDB R226 + RefSeq)."""
+    input:
+        r1 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+    output:
+        kreport         = WORKDIR + "/result/taxonomy/centrifuger/{sample}/{sample}.kreport.tsv",
+        classifications = WORKDIR + "/result/taxonomy/centrifuger/{sample}/{sample}.classifications.tsv.gz",
+    log:
+        WORKDIR + "/logs/centrifuger/{sample}.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/15_bac_centrifuger.sh "
+        "-s {wildcards.sample} -t {threads} "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
