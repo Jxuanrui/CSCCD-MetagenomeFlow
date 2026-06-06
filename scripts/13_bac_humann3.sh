@@ -53,9 +53,10 @@
 #   错误示例：threshold=0.05（误以为是5%）→ 实际是0.05%，等同于threshold=0.01
 #
 # ── 兼容性修复（已在 0Install.sh §5.4 记录）────────────────────────────────────
-#   1. --bypass-prescreen：跳过 HUMAnN3.9 对 metaphlan --version 的检测
-#      （metaphlan v4.2.4 输出多行导致版本解析失败）
-#   2. config.py vOct22：HUMAnN3.9 默认只接受 vJun23，已修改为 vOct22
+#   1. config.py vOct22：HUMAnN3.9 默认只接受 vJun23，已修改为 vOct22
+#      （prescreen.py 会检查 profile 头部 "#mpa_vOct22_..." 中的版本标识）
+#   2. 不需要 --bypass-prescreen：提供 --taxonomic-profile 时 HUMAnN3 不调用 MetaPhlAn4，
+#      且 bypass=False 才能正确触发按物种过滤的 ChocoPhlAn 小数据库构建
 #
 # 参  考: HUMAnN 官方文档 https://github.com/biobakery/humann
 #         Beghini et al. eLife 2021; PMID 33944776
@@ -228,11 +229,14 @@ if [ -n "${DIAMOND_EXTRA_OPTS}" ]; then
 fi
 
 # --- 运行 HUMAnN3 ---
-# --bypass-prescreen：跳过 HUMAnN3.9 对 metaphlan --version 的版本检测
-#   （metaphlan 4.2.4 输出含 "No complete MetaPhlAn Bowtie2 database found" 警告行，
-#    导致 HUMAnN 版本解析失败）
-# --prescreen-threshold：当使用 --taxonomic-profile 时，该参数对 profile 中的 t__
-#   行仍然有效（prescreen.py create_custom_database 逐行过滤）
+# 注意：不使用 --bypass-prescreen。
+#   理由：当提供 --taxonomic-profile 时，HUMAnN3 不会调用 MetaPhlAn4（源码 humann.py:960-970），
+#         因此不存在版本检测失败的问题。
+#         而 --bypass-prescreen=True 会导致 create_custom_database() 中走 else 分支，
+#         将 ChocoPhlAn 目录中的所有文件（~60G）都加入自定义数据库，完全跳过基于
+#         prescreen_threshold 的物种过滤（prescreen.py:246-256）。
+# --prescreen-threshold：在 bypass_prescreen=False 的情况下，create_custom_database()
+#   会按 threshold 过滤 profile 中的物种，只包含丰度 >= threshold 的物种对应的 ChocoPhlAn 文件。
 
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
     humann \
@@ -243,7 +247,6 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         --nucleotide-database     "${DB_CHOCOPHLAN}" \
         --protein-database        "${DB_UNIREF}" \
         --o-log                   "${TEMP_DIR}/${SAMPLE}.log" \
-        --bypass-prescreen \
         --prescreen-threshold     "${PRESCREEN_THRESHOLD}" \
         --memory-use              "${MEMORY_MODE}" \
         ${REMOVE_TEMP} \
