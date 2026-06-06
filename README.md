@@ -1,7 +1,7 @@
 # MaxMetagenome — 宏基因组深度挖掘分析平台
 
 **作者**: Jxuanrui  
-**版本**: 0.1  **日期**: 2026-06-02  
+**版本**: 0.2  **日期**: 2026-06-06  
 **平台**: Linux x86_64 (Ubuntu 22.04+)  
 **环境管理**: Miniforge3（自包含，支持跨服务器迁移）
 
@@ -13,7 +13,7 @@ MaxMetagenome 是一个综合性宏基因组深度挖掘分析平台，覆盖从
 
 **核心特性**：
 - 三大分析维度：细菌（脚本 11-41）/ 病毒（51-69）/ 真菌（71-86）
-- 两种运行模式：逐步模式（研究级精细控制）/ 一站式流程（生产级批量处理）
+- 三种运行模式：逐步模式（研究级精细控制）/ Bash Pipeline（轻量批量处理）/ Snakemake（生产级 DAG 流程）
 - 自包含环境：23 个独立 conda 环境，支持跨服务器迁移
 - 完整工具链：物种分类 → 功能注释 → 组装 → Binning → MAG 深度注释
 
@@ -31,9 +31,9 @@ bash ~/Course/Maxmetagenome/scripts/checkm_config.sh
 
 ---
 
-## 两种运行模式
+## 三种运行模式
 
-MaxMetagenome 支持两种互补的运行模式，满足不同分析需求：
+MaxMetagenome 支持三种互补的运行模式：
 
 ### 模式一：逐步模式（Step-by-step）
 
@@ -46,16 +46,16 @@ bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/C
 bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
 bash scripts/13_bac_humann3.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
 
-# 高深度样本（>20M reads）推荐使用 balanced 模式加速（2× 提速，精度损失 <5%）
+# 高深度样本（>20M reads）推荐 balanced 模式（5-10× 提速，精度损失 <5%）
 bash scripts/13_bac_humann3.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome --speed-mode balanced
 
 # 所有样本完成后合并
 bash scripts/11b_bac_metaphlan4_merge.sh -w Project/Project_A -r ~/Course/Maxmetagenome
 ```
 
-### 模式二：一站式流程模式（Pipeline mode）
+### 模式二：Bash Pipeline（轻量一站式）
 
-**定位**：生产级，输入 samplesheet.csv，自动串联所有步骤，适合标准化批量分析。支持 `--skip`/`--from`/`--only` 灵活控制步骤。
+**定位**：无额外依赖，传入 samplesheet.csv 串联步骤，适合单机小批量样本。支持 `--skip`/`--from`/`--only` 断点续跑。
 
 **第一步：准备 samplesheet.csv**
 
@@ -79,7 +79,7 @@ bash scripts/00_pipeline_bacteria.sh \
 
 # 只做物种分类（跳过功能分析）
 bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --skip humann4
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --skip humann3
 
 # 多样本并行（需要安装 rush）
 bash scripts/00_pipeline_bacteria.sh \
@@ -93,9 +93,24 @@ bash scripts/00_pipeline_bacteria.sh \
 | `qc` | 01_qc_fastp.sh |
 | `kneaddata` | 02_qc_kneaddata.sh |
 | `metaphlan4` | 11_bac_metaphlan4.sh |
-| `humann4` | 13_bac_humann3.sh |
+| `humann3` | 13_bac_humann3.sh |
 | `strainphlan4` | 12_bac_strainphlan4.sh |
 | `merge` | 11b_bac_metaphlan4_merge.sh |
+
+### 模式三：Snakemake Pipeline（生产级，推荐）
+
+**定位**：基于 DAG 的自动依赖追踪，原生断点续跑，支持 HPC/多节点，适合大批量正式分析。
+
+```bash
+# 1. 编辑运行参数
+vim pipeline/config/config.yaml
+
+# 2. 预演（检查依赖，不实际运行）
+snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml --dry-run
+
+# 3. 正式运行 / 断点续跑
+snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 16 --rerun-incomplete
+```
 
 ---
 
@@ -393,59 +408,58 @@ Read-based  Assembly-based
 
 ```
 MaxMetagenome/
-├── 0Install.sh              # 环境安装主脚本
-├── 1Pipeline.sh             # 参考式完整流程脚本（带详细注释）
+├── 0Install.sh              # 环境安装主脚本（分节 §1-§9）
 ├── README.md                # 本文档
 ├── CLAUDE.md                # 开发协作手册（内部）
 │
-├── scripts/                 # 可执行脚本（单步骤一个文件，按编号排列）
-│   ├── activate.sh          # 环境激活（每次分析前 source）
-│   ├── checkm_config.sh     # CheckM 路径配置（迁移服务器后执行一次）
-│   ├── 00_pipeline_bacteria.sh  # 细菌维度一站式流程（Pipeline 模式）
-│   ├── 01_qc_fastp.sh       # 质量控制（fastp）
-│   ├── 02_qc_kneaddata.sh   # 去宿主（KneadData）
-│   ├── 11_bac_metaphlan4.sh # 物种组成（MetaPhlAn4）
+├── scripts/                 # 分析脚本（单步骤一文件，编号 01-98）
+│   ├── activate.sh                  # 环境激活（每次分析前 source）
+│   ├── checkm_config.sh             # CheckM2 路径配置（迁移后执行一次）
+│   ├── 00_pipeline_bacteria.sh      # 细菌维度一站式 Bash 流程
+│   ├── 00_pipeline_full.sh          # 三维度全流程 Bash 脚本
+│   ├── 01_qc_fastp.sh               # 质量控制
+│   ├── 02_qc_kneaddata.sh           # 去宿主
+│   ├── 11_bac_metaphlan4.sh         # 物种组成（MetaPhlAn4）
 │   ├── 11b_bac_metaphlan4_merge.sh  # 多样本合并
 │   ├── 12_bac_strainphlan4.sh       # 菌株系统发育
-│   ├── 13_bac_humann3.sh    # 功能通路定量（HUMAnN4）
-│   └── ...                  # 后续脚本按编号追加
+│   ├── 13_bac_humann3.sh            # 功能通路定量（HUMAnN3 v3.9）
+│   └── ...                          # 14-98 按需追加
+│
+├── pipeline/                # Snakemake 生产级流程（Mode 3）
+│   ├── Snakefile            # 入口
+│   ├── config/config.yaml   # 运行参数（samples / workdir / cpus）
+│   └── rules/               # 各模块规则（*.smk）
+│
+├── agents/                  # Agent Skills 系统
+│   ├── registry.yaml        # 全局脚本状态（78 条目）
+│   ├── skills/              # 工具卡片（*.yaml，已集成脚本各一份）
+│   └── provenance/          # 运行记录（exit_code / runtime / memory）
 │
 ├── docs/                    # 文档
-│   ├── project_structure.md # 项目结构详细说明
-│   ├── WGS_integration.md   # WGS 单菌模块融入说明
-│   ├── 01_preprocessing/    # 预处理工具文档
-│   ├── 02_read_based/       # Read-based 分析文档
-│   ├── 03_assembly/         # 组装工具文档
-│   ├── 04_binning/          # Binning 工具文档
-│   └── 05_deep_mining/      # 深度挖掘工具文档
+│   ├── project_structure.md
+│   ├── 01_preprocessing/ / 02_read_based/ / 03_assembly/ / ...
+│   └── tools_ref/           # 工具知识文档
 │
-├── Project/                 # 项目工作目录
-│   └── Project_example/     # 示例项目（含测试样本）
-│       ├── data/            # 原始测序数据（*.fastq.gz）
-│       │   └── test_small/  # 小样本测试数据（100k reads）
-│       ├── result/          # 分析结果（按分析类型子目录）
-│       │   ├── qc/          # 质控结果
-│       │   ├── taxonomy/    # 物种分类结果
-│       │   └── functional/  # 功能分析结果
-│       ├── temp/            # 中间文件（分析后可删除）
-│       ├── samples.txt      # 样本列表（逐步模式）
-│       └── samplesheet.csv  # 样本表（Pipeline 模式）
+├── Project/                 # 分析项目目录（每个项目一个子目录）
+│   └── Project_example/
+│       ├── data/            # 原始测序数据
+│       ├── result/          # 分析结果
+│       └── temp/            # 中间文件（可删除）
 │
-├── miniforge3/              # Miniforge3 自包含环境（27G）
-├── envs/                    # 23 个 conda 独立工具环境（23G）
-├── db/                      # 分析数据库（~700G，31 个数据库）
-├── Rlib/                    # R 包库（R 4.5.1，297 个包）
-├── mcp/                     # MCP 服务器（待实现）
-├── agents/                  # AI 辅助 Agent（tool_learner 等）
-└── Reference/               # 内部资料（仅开发用，不随项目分发）
+├── miniforge3/              # 自包含 Python/Conda（~27G，不入库）
+├── envs/                    # 23 个 conda 工具环境（~23G，不入库）
+├── db/                      # 分析数据库（~700G，不入库）
+├── Rlib/                    # R 包库（~1.4G，不入库）
+└── Reference/               # 内部参考资料（不入库）
 ```
 
 ---
 
 ## 安装状态
 
-详见 `0Install.sh` 头部进度表，最新状态（2026-06-02）：
+详见 `0Install.sh` 头部进度表，最新状态（2026-06-06）：
 
-- ✅ §0-§8.8 全部完成并测试通过（含 VIBRANT 数据库 11G，antiSMASH 数据库 9.4G）
-- ✅ 分析脚本：`scripts/01_qc_fastp.sh` 已完成并测试通过
+- ✅ §0-§8.9 全部完成并测试通过（含 Snakemake 9.22.0 安装）
+- ✅ 分析脚本：01 / 02 / 11 / 11b / 12 / 13 / 14 已完成并集成至 Snakemake pipeline
+- ✅ Snakemake pipeline：preprocessing + bacteria_taxonomy 规则就绪（含 kraken2）
 - ⏳ §9 MCP/RAG 服务（待配置）

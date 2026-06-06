@@ -23,8 +23,11 @@ Project/*/data/
 Project/*/temp/
 Project/*/result/
 
-# tool_learner 缓存（动态生成，不入库）
-agents/tool_learner/cache/*.md
+# tool_learner 缓存已合并至 docs/tools_ref/（动态学习内容不入库）
+docs/tools_ref/*.auto.md
+
+# Snakemake 运行时缓存
+.snakemake/
 
 # Python 缓存
 __pycache__/
