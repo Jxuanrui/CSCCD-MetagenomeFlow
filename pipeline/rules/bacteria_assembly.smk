@@ -13,3 +13,21 @@ rule megahit:
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
+
+
+rule prodigal:
+    """Prokaryotic gene prediction in metagenomics mode (-p meta)."""
+    input:
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+    output:
+        faa = WORKDIR + "/result/assembly/prodigal/{sample}/{sample}.faa",
+        fna = WORKDIR + "/result/assembly/prodigal/{sample}/{sample}.fna",
+        gff = WORKDIR + "/result/assembly/prodigal/{sample}/{sample}.gff",
+    log:
+        WORKDIR + "/logs/prodigal/{sample}.log",
+    threads: 1
+    shell:
+        "bash {REPO}/scripts/17_bac_prodigal.sh "
+        "-s {wildcards.sample} -t 1 "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
