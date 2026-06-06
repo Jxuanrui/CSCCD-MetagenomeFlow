@@ -460,6 +460,6 @@ MaxMetagenome/
 详见 `0Install.sh` 头部进度表，最新状态（2026-06-06）：
 
 - ✅ §0-§8.9 全部完成并测试通过（含 Snakemake 9.22.0 安装）
-- ✅ 分析脚本：01 / 02 / 11 / 11b / 12 / 13 / 14 已完成并集成至 Snakemake pipeline
-- ✅ Snakemake pipeline：preprocessing + bacteria_taxonomy 规则就绪（含 kraken2）
+- ✅ 分析脚本：01 / 02 / 11 / 11b / 12 / 13 / 14 / 15 / 16 已完成并集成至 Snakemake pipeline
+- ✅ Snakemake pipeline：preprocessing + bacteria_taxonomy + bacteria_assembly 规则就绪
 - ⏳ §9 MCP/RAG 服务（待配置）

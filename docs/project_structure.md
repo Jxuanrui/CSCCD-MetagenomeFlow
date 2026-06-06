@@ -33,10 +33,11 @@ MaxMetagenome/
 │   │   └── config.yaml      # 运行参数（samples / workdir / cpus / humann_speed）
 │   └── rules/
 │       ├── preprocessing.smk       # 规则：fastp_qc, kneaddata
-│       └── bacteria_taxonomy.smk   # 规则：metaphlan4, metaphlan4_merge, strainphlan4, humann3, kraken2
+│       ├── bacteria_taxonomy.smk   # 规则：metaphlan4, metaphlan4_merge, strainphlan4, humann3, kraken2, centrifuger
+│       └── bacteria_assembly.smk   # 规则：megahit
 │
 ├── agents/                  # Agent Skills 系统（CC 交互式驱动）
-│   ├── registry.yaml        # 全局脚本状态（78 条目：7 integrated / 71 not_started）
+│   ├── registry.yaml        # 全局脚本状态（78 条目：9 integrated / 69 not_started）
 │   ├── skills/              # 工具卡片（每个已集成脚本一份 YAML）
 │   │   ├── _template.yaml
 │   │   ├── 01_qc_fastp.yaml
@@ -45,7 +46,9 @@ MaxMetagenome/
 │   │   ├── 11b_bac_metaphlan4_merge.yaml
 │   │   ├── 12_bac_strainphlan4.yaml
 │   │   ├── 13_bac_humann3.yaml
-│   │   └── 14_bac_kraken2.yaml
+│   │   ├── 14_bac_kraken2.yaml
+│   │   ├── 15_bac_centrifuger.yaml
+│   │   └── 16_bac_megahit.yaml
 │   └── provenance/          # 运行记录（exit_code / runtime / memory，/mgx-learn 写入）
 │
 ├── .claude/

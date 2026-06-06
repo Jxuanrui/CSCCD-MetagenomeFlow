@@ -11,6 +11,7 @@ CPUS     = config["cpus"]
 
 include: "rules/preprocessing.smk"
 include: "rules/bacteria_taxonomy.smk"
+include: "rules/bacteria_assembly.smk"
 
 rule all:
     input:
