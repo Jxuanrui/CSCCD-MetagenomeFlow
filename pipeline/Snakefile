@@ -4,13 +4,13 @@
 
 configfile: "pipeline/config/config.yaml"
 
-include: "rules/preprocessing.smk"
-include: "rules/bacteria_taxonomy.smk"
-
 SAMPLES  = config["samples"]
 WORKDIR  = config["workdir"]
 REPO     = config["repo"]
 CPUS     = config["cpus"]
+
+include: "rules/preprocessing.smk"
+include: "rules/bacteria_taxonomy.smk"
 
 rule all:
     input:
