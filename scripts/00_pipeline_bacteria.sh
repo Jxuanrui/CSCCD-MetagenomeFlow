@@ -75,7 +75,7 @@ cat << 'EOF'
   --skip  跳过步骤：qc,kneaddata,metaphlan4,strainphlan4,humann4,merge
   --from  从某步骤开始续跑：kneaddata,metaphlan4,humann4
   --only  只运行某模块：qc,kneaddata,taxonomy,functional
-  --humann-speed  HUMAnN4 速度模式：standard（默认）/ balanced（推荐）/ fast
+  --humann-speed  HUMAnN3 速度模式：standard（默认）/ balanced（推荐）/ fast
 
 samplesheet.csv 格式（第一行为表头）:
   sample_id,r1,r2,host_type,project_dir
@@ -213,7 +213,7 @@ run_sample() {
     # Step 13: HUMAnN4 功能通路
     if should_run "humann4"; then
         echo "[${SAMPLE_ID}] Step 13: HUMAnN4 功能通路定量（速度模式: ${HUMANN_SPEED}）..."
-        bash "${SCRIPTS}/13_bac_humann4.sh" \
+        bash "${SCRIPTS}/13_bac_humann3.sh" \
             -s "${SAMPLE_ID}" -t "${CPUS}" \
             -w "${WORKDIR}" -r "${REPO}" \
             --speed-mode "${HUMANN_SPEED}"

@@ -1,6 +1,6 @@
-# HUMAnN4 速度优化指南
+# HUMAnN3 速度优化指南
 
-本文档说明 `scripts/13_bac_humann4.sh` 的三种速度模式及其适用场景。
+本文档说明 `scripts/13_bac_humann3.sh` 的三种速度模式及其适用场景。
 
 ---
 
@@ -48,7 +48,7 @@
 
 ### 3. `--remove-temp-output`
 
-**作用**：自动删除 `temp/humann4/` 下的中间文件（60-100GB）
+**作用**：自动删除 `temp/humann3/` 下的中间文件（60-100GB）
 
 **提速**：无（仅节省磁盘空间）
 
@@ -58,7 +58,7 @@
 
 ### 4. 只用 R1（fast 模式）
 
-**作用**：HUMAnN4 不考虑双端配对信息，只用 R1 端结果与 R1+R2 高度相关
+**作用**：HUMAnN3 不考虑双端配对信息，只用 R1 端结果与 R1+R2 高度相关
 
 **提速**：2×（数据量减半）
 
@@ -84,20 +84,20 @@
 
 ```bash
 # 标准模式（默认）
-bash scripts/13_bac_humann4.sh \
+bash scripts/13_bac_humann3.sh \
      -s SRR28210342 -t 16 \
      -w Project/Project_example \
      -r ~/Course/Maxmetagenome
 
 # 平衡模式（推荐）
-bash scripts/13_bac_humann4.sh \
+bash scripts/13_bac_humann3.sh \
      -s SRR28210342 -t 16 \
      -w Project/Project_example \
      -r ~/Course/Maxmetagenome \
      --speed-mode balanced
 
 # 快速模式
-bash scripts/13_bac_humann4.sh \
+bash scripts/13_bac_humann3.sh \
      -s SRR28210342 -t 16 \
      -w Project/Project_example \
      -r ~/Course/Maxmetagenome \
@@ -164,8 +164,8 @@ bash scripts/00_pipeline_bacteria.sh \
 
 | 目录 | 大小 | 用途 | balanced/fast 清理 |
 |------|------|------|-------------------|
-| `temp/humann4/` | 60-100G | custom db + 索引 + 中间文件 | 自动删除 |
-| `result/functional/humann4/` | 50-200MB | 最终结果 | 保留 |
+| `temp/humann3/` | 60-100G | custom db + 索引 + 中间文件 | 自动删除 |
+| `result/functional/humann3/` | 50-200MB | 最终结果 | 保留 |
 
 **建议**：
 - 生产环境使用 balanced/fast 模式，自动清理 temp 节省磁盘

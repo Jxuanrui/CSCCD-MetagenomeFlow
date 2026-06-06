@@ -44,10 +44,10 @@ MaxMetagenome 支持两种互补的运行模式，满足不同分析需求：
 bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
 bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
 bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
-bash scripts/13_bac_humann4.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
+bash scripts/13_bac_humann3.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
 
 # 高深度样本（>20M reads）推荐使用 balanced 模式加速（2× 提速，精度损失 <5%）
-bash scripts/13_bac_humann4.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome --speed-mode balanced
+bash scripts/13_bac_humann3.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome --speed-mode balanced
 
 # 所有样本完成后合并
 bash scripts/11b_bac_metaphlan4_merge.sh -w Project/Project_A -r ~/Course/Maxmetagenome
@@ -93,7 +93,7 @@ bash scripts/00_pipeline_bacteria.sh \
 | `qc` | 01_qc_fastp.sh |
 | `kneaddata` | 02_qc_kneaddata.sh |
 | `metaphlan4` | 11_bac_metaphlan4.sh |
-| `humann4` | 13_bac_humann4.sh |
+| `humann4` | 13_bac_humann3.sh |
 | `strainphlan4` | 12_bac_strainphlan4.sh |
 | `merge` | 11b_bac_metaphlan4_merge.sh |
 
@@ -407,7 +407,7 @@ MaxMetagenome/
 │   ├── 11_bac_metaphlan4.sh # 物种组成（MetaPhlAn4）
 │   ├── 11b_bac_metaphlan4_merge.sh  # 多样本合并
 │   ├── 12_bac_strainphlan4.sh       # 菌株系统发育
-│   ├── 13_bac_humann4.sh    # 功能通路定量（HUMAnN4）
+│   ├── 13_bac_humann3.sh    # 功能通路定量（HUMAnN4）
 │   └── ...                  # 后续脚本按编号追加
 │
 ├── docs/                    # 文档

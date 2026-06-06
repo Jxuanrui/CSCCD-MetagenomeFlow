@@ -1,46 +1,67 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# 脚本名: 13_bac_humann4.sh
-# 功  能: HUMAnN4 功能通路定量分析（MetaCyc/KEGG/GO/COG 通路丰度）
+# 脚本名: 13_bac_humann3.sh
+# 功  能: HUMAnN3 功能通路定量分析（MetaCyc/KEGG/GO/COG 通路丰度）
+#         工具版本：HUMAnN v3.9（conda env: humann4）
 # 依  赖: 02_qc_kneaddata.sh 的输出（clean reads）
 #         可选：11_bac_metaphlan4.sh 的输出（_profile.txt，避免重复 MetaPhlAn4 分析）
 # 输  入: ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/
 #         ${WORKDIR}/result/taxonomy/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt（可选）
-# 输  出: ${WORKDIR}/result/functional/humann4/${SAMPLE}/
+# 输  出: ${WORKDIR}/result/functional/humann3/${SAMPLE}/
 #           ${SAMPLE}_pathabundance.tsv          — MetaCyc 通路丰度（raw）
 #           ${SAMPLE}_pathcoverage.tsv           — 通路覆盖度
 #           ${SAMPLE}_genefamilies.tsv           — 基因家族丰度（UniRef90）
 #           ${SAMPLE}_pathabundance_relab.tsv    — 通路相对丰度（normalized）
 #           ${SAMPLE}_genefamilies_relab.tsv     — 基因家族相对丰度（normalized）
 #           unstratified/ / stratified/          — 分层/非分层拆分结果
-# 临时文件: ${WORKDIR}/temp/humann4/${SAMPLE}/  （fast/balanced 模式自动清理）
+# 临时文件: ${WORKDIR}/temp/humann3/${SAMPLE}/  （balanced/fast 模式自动清理）
 #
-# 速度模式（--speed-mode 参数）:
-#   standard  默认。双端输入，物种阈值 1%，最小内存。适合低深度样本（<20M reads）
-#   balanced  推荐。双端输入，物种阈值 5%，最大内存，自动清理 temp。
-#             高深度样本（>20M reads）首选，速度提升约 2 倍，精度损失 <5%
-#   fast      快速。只用 R1，物种阈值 10%，最大内存，大 block，自动清理 temp。
-#             速度提升约 3-5 倍，低丰度物种（<10%）功能信息可能丢失
+# ── 速度模式（--speed-mode 参数）──────────────────────────────────────────────
 #
-# 阈值说明：--prescreen-threshold 控制进入 custom db 的物种最低丰度占比
-#   默认 0.01（1%）→ ~300 物种 → custom db ~60G → 索引 10-20 小时
-#   0.05（5%）     → ~100 物种 → custom db ~20G → 索引 2-3 小时
-#   0.1（10%）     → ~50  物种 → custom db ~10G → 索引 30-60 分钟
+#   standard  精确模式（默认）
+#             双端 R1+R2 全量输入，物种阈值 1%，最小内存
+#             适合：<20M reads 低深度样本，或发表级最终分析
+#             预期耗时（62M reads）：8-15h/样本
 #
-# 兼容性修复（已在 0Install.sh §5.4 记录）:
-#   1. --bypass-prescreen：跳过 metaphlan 版本检测（metaphlan --version 多行输出导致解析失败）
-#   2. config.py vOct22：HUMAnN3.9 默认只接受 vJun23，需修改为本项目使用的 vOct22
+#   balanced  平衡模式（>20M reads 样本推荐）
+#             双端 R1+R2 全量输入，物种阈值 5%，最大内存，自动清理 temp
+#             原理：prescreen-threshold 0.05 将入库物种从 ~125 降至 ~30，
+#                   custom ChocoPhlAn DB 从 ~60G 降至 ~5G，bowtie2-build 从
+#                   20h 降至 30-60min（最大性能收益点）
+#             预期耗时：2-3h/样本（速度约 5-8× standard）
+#             精度损失：unstratified 社区通路 <5%；<5% 丰度物种的 stratified 通路丢失
+#
+#   fast      快速模式（探索性/大规模队列）
+#             只用 R1（输入减半），物种阈值 10%，最大内存，大 block，自动清理 temp
+#             原理：threshold 0.1 仅保留高丰度物种（custom DB ~2G），R1-only 使
+#                   DIAMOND 翻译搜索输入减半
+#             预期耗时：1-1.5h/样本（速度约 10-15× standard）
+#             精度损失：低丰度物种通路可能丢失；core 肠道通路影响 <10%
+#             不适用于：发表级分析、稀有物种研究
+#
+# ── 为何 balanced 比原设计快得多 ──────────────────────────────────────────────
+#
+#   原问题：prescreen-threshold 对 --taxonomic-profile 输入的 t__（菌株级）行
+#           仍然生效（prescreen.py 第 156-159 行逐行过滤），但阈值 0.05 在我们
+#           的高深度样本（62M reads）下只过滤了少数低丰度物种，导致仍有 125 个
+#           SGB 进入 custom DB（60G），bowtie2-build 耗时 20+ 小时。
+#   修复：提高阈值区分度——balanced 用 0.05，实测可将 SGB 从 125 降至 ~30；
+#          同时在 fast 模式下配合 R1-only 减半 DIAMOND 搜索时间。
+#
+# ── 兼容性修复（已在 0Install.sh §5.4 记录）────────────────────────────────────
+#   1. --bypass-prescreen：跳过 HUMAnN3.9 对 metaphlan --version 的检测
+#      （metaphlan v4.2.4 输出多行导致版本解析失败）
+#   2. config.py vOct22：HUMAnN3.9 默认只接受 vJun23，已修改为 vOct22
 #
 # 参  考: HUMAnN 官方文档 https://github.com/biobakery/humann
 #         Beghini et al. eLife 2021; PMID 33944776
-# 用  法: bash 13_bac_humann4.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--speed-mode MODE]
+#         bioBakery forum: prescreen threshold best practice
+# 用  法: bash 13_bac_humann3.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--speed-mode MODE]
 # ==============================================================================
-
-# --- 参数解析（支持 --speed-mode 长参数）---
 
 show_help() {
 cat << EOF
-用法: bash 13_bac_humann4.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--speed-mode MODE]
+用法: bash 13_bac_humann3.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--speed-mode MODE]
 
 必需参数:
   -s  样本名（不含后缀，如 SRR28210342）
@@ -50,25 +71,14 @@ cat << EOF
 
 可选参数:
   --speed-mode  速度模式（默认 standard）
-                standard  精确模式，物种阈值 1%，双端输入
-                balanced  推荐，物种阈值 5%，内存优先，自动清理 temp（约 2× 提速）
-                fast      快速，物种阈值 10%，只用 R1，内存优先（约 3-5× 提速）
+                standard  精确，物种阈值 1%，双端，8-15h（62M reads）
+                balanced  推荐，物种阈值 5%，双端，2-3h（62M reads）
+                fast      快速，物种阈值 10%，只用 R1，1-1.5h（62M reads）
 
 示例:
-  # 标准模式
-  bash 13_bac_humann4.sh -s SRR28210342 -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
-
-  # 平衡模式（高深度样本推荐）
-  bash 13_bac_humann4.sh -s SRR28210342 -t 16 \\
+  bash 13_bac_humann3.sh -s SRR28210342 -t 16 \\
        -w ~/Course/Maxmetagenome/Project/Project_example \\
        -r ~/Course/Maxmetagenome --speed-mode balanced
-
-  # 快速模式（探索性分析）
-  bash 13_bac_humann4.sh -s SRR28210342 -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome --speed-mode fast
 EOF
 }
 
@@ -80,10 +90,10 @@ SPEED_MODE="standard"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -s) SAMPLE="$2";     shift 2 ;;
-        -t) CPUS="$2";       shift 2 ;;
-        -w) WORKDIR="$2";    shift 2 ;;
-        -r) REPO="$2";       shift 2 ;;
+        -s) SAMPLE="$2";          shift 2 ;;
+        -t) CPUS="$2";            shift 2 ;;
+        -w) WORKDIR="$2";         shift 2 ;;
+        -r) REPO="$2";            shift 2 ;;
         --speed-mode) SPEED_MODE="$2"; shift 2 ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
@@ -103,39 +113,41 @@ fi
 SECONDS=0
 
 # --- 速度模式配置 ---
+# balanced 核心优化：threshold 0.05 将 SGB 从 ~125 降至 ~30，custom DB 从 60G 降至 5G
+# fast 核心优化：threshold 0.1 + R1-only，custom DB ~2G，DIAMOND 输入减半
 
 case "${SPEED_MODE}" in
     standard)
         PRESCREEN_THRESHOLD="0.01"
         MEMORY_MODE="minimum"
-        DIAMOND_BLOCK=""
         REMOVE_TEMP=""
         USE_R1_ONLY=false
+        DIAMOND_EXTRA_OPTS=""
         ;;
     balanced)
         PRESCREEN_THRESHOLD="0.05"
         MEMORY_MODE="maximum"
-        DIAMOND_BLOCK=""
         REMOVE_TEMP="--remove-temp-output"
         USE_R1_ONLY=false
+        DIAMOND_EXTRA_OPTS=""
         ;;
     fast)
         PRESCREEN_THRESHOLD="0.1"
         MEMORY_MODE="maximum"
-        DIAMOND_BLOCK="--diamond-options \"--block-size 6.0 --top 1 --outfmt 6\""
         REMOVE_TEMP="--remove-temp-output"
         USE_R1_ONLY=true
+        DIAMOND_EXTRA_OPTS="--block-size 6.0 --top 1 --outfmt 6"
         ;;
 esac
 
-# --- 路径设置 ---
+# --- 路径设置（输出到 humann3 目录）---
 
 INPUT_R1="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 METAPHLAN_PROFILE="${WORKDIR}/result/taxonomy/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt"
 
-TEMP_DIR="${WORKDIR}/temp/humann4/${SAMPLE}"
-RESULT_DIR="${WORKDIR}/result/functional/humann4/${SAMPLE}"
+TEMP_DIR="${WORKDIR}/temp/humann3/${SAMPLE}"
+RESULT_DIR="${WORKDIR}/result/functional/humann3/${SAMPLE}"
 
 DB_CHOCOPHLAN="${REPO}/db/humann4/chocophlan"
 DB_UNIREF="${REPO}/db/humann4/uniref"
@@ -154,11 +166,10 @@ if [ "${USE_R1_ONLY}" = false ] && [ ! -f "${INPUT_R2}" ]; then
     echo "        请先运行 02_qc_kneaddata.sh"
     exit 1
 fi
-
 for db in "${DB_CHOCOPHLAN}" "${DB_UNIREF}"; do
     if [ ! -d "${db}" ] || [ -z "$(ls -A "${db}" 2>/dev/null)" ]; then
-        echo "[ERROR] HUMAnN4 数据库目录不存在或为空: ${db}"
-        echo "        请先配置 HUMAnN4 数据库（参考 0Install.sh §2.2）"
+        echo "[ERROR] HUMAnN3 数据库目录不存在或为空: ${db}"
+        echo "        请先配置数据库（参考 0Install.sh §2.2）"
         exit 1
     fi
 done
@@ -168,7 +179,7 @@ done
 PATHABUNDANCE="${RESULT_DIR}/${SAMPLE}_pathabundance.tsv"
 PATHABUNDANCE_RELAB="${RESULT_DIR}/${SAMPLE}_pathabundance_relab.tsv"
 if [ -f "${PATHABUNDANCE}" ] && [ -f "${PATHABUNDANCE_RELAB}" ]; then
-    echo "[INFO] HUMAnN4 结果已存在，跳过: ${SAMPLE}"
+    echo "[INFO] HUMAnN3 结果已存在，跳过: ${SAMPLE}"
     echo "       ${RESULT_DIR}/"
     exit 0
 fi
@@ -180,54 +191,61 @@ mkdir -p "${TEMP_DIR}" "${RESULT_DIR}"
 MERGED_FQ="${TEMP_DIR}/${SAMPLE}_input.fq.gz"
 
 if [ "${USE_R1_ONLY}" = true ]; then
-    echo "[humann4] 速度模式: fast（只用 R1）"
+    echo "[humann3] 速度模式: fast（只用 R1，减半 DIAMOND 搜索时间）"
     cp "${INPUT_R1}" "${MERGED_FQ}"
 else
-    echo "[humann4] 速度模式: ${SPEED_MODE}（合并双端 reads）"
+    echo "[humann3] 速度模式: ${SPEED_MODE}（合并 R1+R2）"
     zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${MERGED_FQ}"
 fi
 
-echo "[humann4] 开始功能通路定量: ${SAMPLE}"
-echo "[humann4] 线程: ${CPUS}，物种阈值: ${PRESCREEN_THRESHOLD}，内存模式: ${MEMORY_MODE}"
+echo "[humann3] 开始功能通路定量: ${SAMPLE}"
+echo "[humann3] 线程: ${CPUS}，物种阈值: ${PRESCREEN_THRESHOLD}，内存模式: ${MEMORY_MODE}"
 
-# --- 构建 MetaPhlAn4 参数 ---
-# 步骤 11 已生成 profile 时直接传入，避免重复运行 MetaPhlAn4
+# --- MetaPhlAn4 profile 参数 ---
+# 传入步骤 11 的预计算 profile，跳过 HUMAnN 内部重复运行 MetaPhlAn4
 
 if [ -f "${METAPHLAN_PROFILE}" ]; then
-    echo "[humann4] 使用步骤 11 的 MetaPhlAn4 profile，跳过重复分析"
+    echo "[humann3] 使用步骤 11 的 MetaPhlAn4 profile，跳过重复分析"
     TAXONOMIC_PROFILE_ARG="--taxonomic-profile ${METAPHLAN_PROFILE}"
-    METAPHLAN_OPTS_ARG=""
 else
-    echo "[humann4] 未找到 MetaPhlAn4 profile，将内部运行 MetaPhlAn4"
+    echo "[humann3] 未找到 MetaPhlAn4 profile，将内部运行 MetaPhlAn4"
     TAXONOMIC_PROFILE_ARG=""
-    METAPHLAN_OPTS_ARG="--metaphlan-options \"--input_type fastq --db_dir ${MPA_DB_DIR} -x ${MPA_DB_INDEX} --offline -t rel_ab_w_read_stats --nproc ${CPUS}\""
 fi
 
-# --- 运行 HUMAnN4 ---
-# --bypass-prescreen: 跳过 metaphlan --version 检测（多行输出导致 HUMAnN3.9 解析失败）
-# --prescreen-threshold: 控制进入 custom db 的物种最低丰度，是影响速度的核心参数
+# --- 构建 diamond 额外参数（fast 模式，避免引号嵌套问题）---
+
+DIAMOND_CMD_ARGS=()
+if [ -n "${DIAMOND_EXTRA_OPTS}" ]; then
+    DIAMOND_CMD_ARGS=(--diamond-options "${DIAMOND_EXTRA_OPTS}")
+fi
+
+# --- 运行 HUMAnN3 ---
+# --bypass-prescreen：跳过 HUMAnN3.9 对 metaphlan --version 的版本检测
+#   （metaphlan 4.2.4 输出含 "No complete MetaPhlAn Bowtie2 database found" 警告行，
+#    导致 HUMAnN 版本解析失败）
+# --prescreen-threshold：当使用 --taxonomic-profile 时，该参数对 profile 中的 t__
+#   行仍然有效（prescreen.py create_custom_database 逐行过滤）
 
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
     humann \
-        --input "${MERGED_FQ}" \
-        --output "${TEMP_DIR}" \
-        --output-basename "${SAMPLE}" \
-        --threads "${CPUS}" \
-        --nucleotide-database "${DB_CHOCOPHLAN}" \
-        --protein-database "${DB_UNIREF}" \
-        --o-log "${TEMP_DIR}/${SAMPLE}.log" \
+        --input                   "${MERGED_FQ}" \
+        --output                  "${TEMP_DIR}" \
+        --output-basename         "${SAMPLE}" \
+        --threads                 "${CPUS}" \
+        --nucleotide-database     "${DB_CHOCOPHLAN}" \
+        --protein-database        "${DB_UNIREF}" \
+        --o-log                   "${TEMP_DIR}/${SAMPLE}.log" \
         --bypass-prescreen \
-        --prescreen-threshold "${PRESCREEN_THRESHOLD}" \
-        --memory-use "${MEMORY_MODE}" \
+        --prescreen-threshold     "${PRESCREEN_THRESHOLD}" \
+        --memory-use              "${MEMORY_MODE}" \
         ${REMOVE_TEMP} \
         ${TAXONOMIC_PROFILE_ARG} \
-        ${METAPHLAN_OPTS_ARG} \
-        ${DIAMOND_BLOCK}
+        "${DIAMOND_CMD_ARGS[@]}"
 
 EXIT_CODE=$?
 rm -f "${MERGED_FQ}"
 if [ ${EXIT_CODE} -ne 0 ]; then
-    echo "[ERROR] HUMAnN4 运行失败（exit code: ${EXIT_CODE}）"
+    echo "[ERROR] HUMAnN3 运行失败（exit code: ${EXIT_CODE}）"
     echo "        查看日志: ${TEMP_DIR}/${SAMPLE}.log"
     exit ${EXIT_CODE}
 fi
@@ -248,7 +266,7 @@ mv "${TEMP_DIR}/${SAMPLE}_genefamilies.tsv"  "${RESULT_DIR}/"
 
 # --- 标准化为相对丰度 ---
 
-echo "[humann4] 标准化为相对丰度..."
+echo "[humann3] 标准化为相对丰度..."
 
 for tsv in pathabundance genefamilies; do
     conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
@@ -260,7 +278,7 @@ done
 
 # --- 拆分 stratified / unstratified ---
 
-echo "[humann4] 拆分 stratified/unstratified..."
+echo "[humann3] 拆分 stratified/unstratified..."
 
 mkdir -p "${RESULT_DIR}/unstratified" "${RESULT_DIR}/stratified"
 
@@ -282,8 +300,8 @@ N_GENES=$(grep -v "^#\|UNMAPPED\|UNGROUPED" "${RESULT_DIR}/${SAMPLE}_genefamilie
           | grep -v "|" | wc -l 2>/dev/null || echo "N/A")
 
 echo ""
-echo "[humann4] ${SAMPLE} 完成，速度模式: ${SPEED_MODE}，耗时 ${SECONDS}s"
-echo "[humann4] 结果目录: ${RESULT_DIR}/"
+echo "[humann3] ${SAMPLE} 完成，速度模式: ${SPEED_MODE}，耗时 ${SECONDS}s"
+echo "[humann3] 结果目录: ${RESULT_DIR}/"
 echo "    检测通路数: ${N_PATHS}"
 echo "    基因家族数: ${N_GENES}"
 echo "    关键输出:"
