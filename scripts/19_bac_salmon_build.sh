@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# 脚本名: 19_bac_salmon_build.sh
+# 功  能: Salmon 基因定量索引构建（基于 CD-HIT NR 非冗余基因集）
+#         工具版本：Salmon v1.2.0（conda env: assembly）
+# 依  赖: 18_bac_cdhit.sh 的输出（nucleotide_nr.fa）
+# 输  入: ${WORKDIR}/result/assembly/cdhit/nucleotide_nr.fa
+# 输  出: ${WORKDIR}/result/assembly/salmon/index/   — Salmon 索引目录（含 info.json）
+#
+# ── 说明 ──────────────────────────────────────────────────────────────────────
+#
+#   本步骤为聚合步骤（aggregate），运行一次即可供所有样本的 quant 使用。
+#   索引构建完成后运行 20_bac_salmon_quant.sh 对每个样本独立定量。
+#
+# 参  考: Patro et al. Nature Methods 2017; https://salmon.readthedocs.io
+# 用  法: bash 19_bac_salmon_build.sh -t CPUS -w WORKDIR -r REPO
+# ==============================================================================
+
+show_help() {
+cat << EOF
+用法: bash 19_bac_salmon_build.sh -t CPUS -w WORKDIR -r REPO
+
+必需参数:
+  -t  线程数（推荐 8-16）
+  -w  工作目录（Project 路径）
+  -r  MaxMetagenome 项目根目录
+
+示例:
+  bash 19_bac_salmon_build.sh -t 16 \\
+       -w ~/Course/Maxmetagenome/Project/Project_example \\
+       -r ~/Course/Maxmetagenome
+EOF
+}
+
+CPUS=""
+WORKDIR=""
+REPO=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -t) CPUS="$2";    shift 2 ;;
+        -w) WORKDIR="$2"; shift 2 ;;
+        -r) REPO="$2";    shift 2 ;;
+        -h|--help) show_help; exit 0 ;;
+        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
+    esac
+done
+
+if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
+    echo "[ERROR] 缺少必需参数（-t/-w/-r）"
+    show_help; exit 1
+fi
+
+SECONDS=0
+
+# --- 路径设置 ---
+
+NR_FNA="${WORKDIR}/result/assembly/cdhit/nucleotide_nr.fa"
+INDEX_DIR="${WORKDIR}/result/assembly/salmon/index"
+INDEX_INFO="${INDEX_DIR}/info.json"
+
+# --- 输入检查 ---
+
+if [ ! -f "${NR_FNA}" ] || [ ! -s "${NR_FNA}" ]; then
+    echo "[ERROR] 非冗余基因集不存在: ${NR_FNA}"
+    echo "        请先运行 18_bac_cdhit.sh"
+    exit 1
+fi
+
+# --- 幂等性检查 ---
+
+if [ -f "${INDEX_INFO}" ]; then
+    echo "[INFO] Salmon 索引已存在，跳过"
+    echo "       ${INDEX_DIR}/"
+    exit 0
+fi
+
+mkdir -p "${INDEX_DIR}"
+
+echo "[salmon-index] 构建 Salmon 索引"
+echo "[salmon-index] 输入: ${NR_FNA}"
+echo "[salmon-index] 索引: ${INDEX_DIR}/"
+echo "[salmon-index] 线程: ${CPUS}"
+
+# --- 运行 salmon index ---
+# -t: 输入核苷酸序列（NR 基因集）
+# -i: 索引输出目录
+# -p: 线程数
+# Salmon 自动选择最优 word size
+
+conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    salmon index \
+        -t "${NR_FNA}" \
+        -i "${INDEX_DIR}" \
+        -p "${CPUS}"
+
+EXIT_CODE=$?
+if [ ${EXIT_CODE} -ne 0 ]; then
+    echo "[ERROR] salmon index 运行失败（exit code: ${EXIT_CODE}）"
+    rm -rf "${INDEX_DIR}"
+    exit ${EXIT_CODE}
+fi
+
+if [ ! -f "${INDEX_INFO}" ]; then
+    echo "[ERROR] 索引文件 info.json 未生成，可能构建失败"
+    exit 1
+fi
+
+echo ""
+echo "[salmon-index] 索引构建完成，耗时 ${SECONDS}s"
+echo "[salmon-index] 索引目录: ${INDEX_DIR}/"
+echo ""
+echo "[提示] 下一步: 对每个样本运行 20_bac_salmon_quant.sh 进行基因丰度定量"

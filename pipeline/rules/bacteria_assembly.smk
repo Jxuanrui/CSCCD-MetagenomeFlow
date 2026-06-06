@@ -51,3 +51,37 @@ rule cdhit:
         "-t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
+
+
+rule salmon_build:
+    """Build Salmon quasi-mapping index from NR gene catalog (runs once)."""
+    input:
+        nr_fna = WORKDIR + "/result/assembly/cdhit/nucleotide_nr.fa",
+    output:
+        index_info = WORKDIR + "/result/assembly/salmon/index/info.json",
+    log:
+        WORKDIR + "/logs/salmon/build.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/19_bac_salmon_build.sh "
+        "-t {threads} "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule salmon_quant:
+    """Per-sample gene abundance quantification (TPM + NumReads) using Salmon."""
+    input:
+        r1         = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2         = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        index_info = WORKDIR + "/result/assembly/salmon/index/info.json",
+    output:
+        quant_sf = WORKDIR + "/result/assembly/salmon/{sample}/quant.sf",
+    log:
+        WORKDIR + "/logs/salmon/{sample}.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/20_bac_salmon_quant.sh "
+        "-s {wildcards.sample} -t {threads} "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
