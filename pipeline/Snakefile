@@ -1,0 +1,26 @@
+# MaxMetagenome — Snakemake Pipeline (Mode 1)
+# Usage: snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 16
+# Resume:  snakemake ... -j 16 --rerun-incomplete
+
+configfile: "pipeline/config/config.yaml"
+
+include: "rules/preprocessing.smk"
+include: "rules/bacteria_taxonomy.smk"
+
+SAMPLES  = config["samples"]
+WORKDIR  = config["workdir"]
+REPO     = config["repo"]
+CPUS     = config["cpus"]
+
+rule all:
+    input:
+        expand("{workdir}/result/qc/fastp/{sample}/{sample}.json",
+               workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+               workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/taxonomy/metaphlan4/{sample}/{sample}_profile.txt",
+               workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/functional/humann3/{sample}/{sample}_pathabundance.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/taxonomy/metaphlan4/merged/taxonomy.tsv",
+               workdir=WORKDIR),

@@ -24,29 +24,33 @@
 #             预期耗时（62M reads）：8-15h/样本
 #
 #   balanced  平衡模式（>20M reads 样本推荐）
-#             双端 R1+R2 全量输入，物种阈值 5%，最大内存，自动清理 temp
-#             原理：prescreen-threshold 0.05 将入库物种从 ~125 降至 ~30，
-#                   custom ChocoPhlAn DB 从 ~60G 降至 ~5G，bowtie2-build 从
+#             双端 R1+R2 全量输入，物种阈值 1%，最大内存，自动清理 temp
+#             原理：prescreen-threshold 1.0 将入库物种从 ~126 降至 ~21，
+#                   custom ChocoPhlAn DB 从 ~60G 降至 ~2-5G，bowtie2-build 从
 #                   20h 降至 30-60min（最大性能收益点）
-#             预期耗时：2-3h/样本（速度约 5-8× standard）
-#             精度损失：unstratified 社区通路 <5%；<5% 丰度物种的 stratified 通路丢失
+#             预期耗时：1-2h/样本（速度约 5-10× standard）
+#             精度损失：unstratified 社区通路 <5%；<1% 丰度物种的 stratified 通路丢失
 #
 #   fast      快速模式（探索性/大规模队列）
-#             只用 R1（输入减半），物种阈值 10%，最大内存，大 block，自动清理 temp
-#             原理：threshold 0.1 仅保留高丰度物种（custom DB ~2G），R1-only 使
-#                   DIAMOND 翻译搜索输入减半
-#             预期耗时：1-1.5h/样本（速度约 10-15× standard）
+#             只用 R1（输入减半），物种阈值 3%，最大内存，大 block，自动清理 temp
+#             原理：threshold 3.0 仅保留高丰度物种（~5 SGBs，custom DB ~0.5G），
+#                   R1-only 使 DIAMOND 翻译搜索输入减半
+#             预期耗时：0.5-1h/样本（速度约 15-20× standard）
 #             精度损失：低丰度物种通路可能丢失；core 肠道通路影响 <10%
 #             不适用于：发表级分析、稀有物种研究
 #
-# ── 为何 balanced 比原设计快得多 ──────────────────────────────────────────────
+# ── prescreen-threshold 单位说明（关键！）────────────────────────────────────
 #
-#   原问题：prescreen-threshold 对 --taxonomic-profile 输入的 t__（菌株级）行
-#           仍然生效（prescreen.py 第 156-159 行逐行过滤），但阈值 0.05 在我们
-#           的高深度样本（62M reads）下只过滤了少数低丰度物种，导致仍有 125 个
-#           SGB 进入 custom DB（60G），bowtie2-build 耗时 20+ 小时。
-#   修复：提高阈值区分度——balanced 用 0.05，实测可将 SGB 从 125 降至 ~30；
-#          同时在 fast 模式下配合 R1-only 减半 DIAMOND 搜索时间。
+#   HUMAnN3 的 prescreen.py 将阈值直接与 MetaPhlAn4 输出的 relative_abundance
+#   列（0-100 百分比尺度）比较：
+#     if read_percent >= config.prescreen_threshold:  # prescreen.py 第159行
+#
+#   因此：
+#     threshold=0.01 → ≥0.01% 的物种 → 几乎所有物种（~126 SGBs, 60G）
+#     threshold=1.0  → ≥1.0% 的物种 → ~21 SGBs, 较小 DB（balanced 推荐）
+#     threshold=3.0  → ≥3.0% 的物种 → ~5 SGBs, 极小 DB（fast 推荐）
+#
+#   错误示例：threshold=0.05（误以为是5%）→ 实际是0.05%，等同于threshold=0.01
 #
 # ── 兼容性修复（已在 0Install.sh §5.4 记录）────────────────────────────────────
 #   1. --bypass-prescreen：跳过 HUMAnN3.9 对 metaphlan --version 的检测
@@ -71,9 +75,9 @@ cat << EOF
 
 可选参数:
   --speed-mode  速度模式（默认 standard）
-                standard  精确，物种阈值 1%，双端，8-15h（62M reads）
-                balanced  推荐，物种阈值 5%，双端，2-3h（62M reads）
-                fast      快速，物种阈值 10%，只用 R1，1-1.5h（62M reads）
+                standard  精确，物种阈值 0.01%，双端，8-15h（62M reads）
+                balanced  推荐，物种阈值 1%，双端，1-2h（62M reads）
+                fast      快速，物种阈值 3%，只用 R1，0.5-1h（62M reads）
 
 示例:
   bash 13_bac_humann3.sh -s SRR28210342 -t 16 \\
@@ -113,8 +117,9 @@ fi
 SECONDS=0
 
 # --- 速度模式配置 ---
-# balanced 核心优化：threshold 0.05 将 SGB 从 ~125 降至 ~30，custom DB 从 60G 降至 5G
-# fast 核心优化：threshold 0.1 + R1-only，custom DB ~2G，DIAMOND 输入减半
+# 注意：threshold 值对应 MetaPhlAn4 的百分比尺度（0-100），非分数（0-1）
+# balanced 核心优化：threshold 1.0（1%）将 SGB 从 ~126 降至 ~21，custom DB 从 60G 降至 ~2-5G
+# fast 核心优化：threshold 3.0（3%）降至 ~5 SGBs + R1-only，custom DB ~0.5G
 
 case "${SPEED_MODE}" in
     standard)
@@ -125,14 +130,17 @@ case "${SPEED_MODE}" in
         DIAMOND_EXTRA_OPTS=""
         ;;
     balanced)
-        PRESCREEN_THRESHOLD="0.05"
+        # 1.0 = 1% abundance threshold → ~20 SGBs → ~2-5G custom DB (vs 60G in standard)
+        # HUMAnN3 compares threshold directly against MetaPhlAn4 percentage values (0-100 scale)
+        PRESCREEN_THRESHOLD="1.0"
         MEMORY_MODE="maximum"
         REMOVE_TEMP="--remove-temp-output"
         USE_R1_ONLY=false
         DIAMOND_EXTRA_OPTS=""
         ;;
     fast)
-        PRESCREEN_THRESHOLD="0.1"
+        # 3.0 = 3% abundance threshold → ~5 SGBs → ~0.5G custom DB
+        PRESCREEN_THRESHOLD="3.0"
         MEMORY_MODE="maximum"
         REMOVE_TEMP="--remove-temp-output"
         USE_R1_ONLY=true

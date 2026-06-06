@@ -1,0 +1,7 @@
+samples:
+  - "SRR001"
+
+workdir: "/home/labuser/Course/Maxmetagenome/Project/Project_example"
+repo: "/home/labuser/Course/Maxmetagenome"
+cpus: 16
+humann_speed: "standard"
