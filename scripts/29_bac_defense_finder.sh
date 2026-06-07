@@ -51,7 +51,7 @@ SECONDS=0
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/defense_finder"
 SENTINEL="${RESULT_DIR}/defense_finder_systems.tsv"
-DF_DB="${REPO}/db/defense-finder/defense-finder-db"
+DF_DB="${REPO}/db/defense-finder/defense-finder-db/models"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then
     echo "[ERROR] 蛋白序列文件不存在: ${PROTEIN_NR}"; exit 1

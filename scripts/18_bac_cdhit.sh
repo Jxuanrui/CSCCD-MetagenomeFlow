@@ -103,10 +103,13 @@ fi
 
 mkdir -p "${RESULT_DIR}"
 
-# --- Step 1: 合并所有样本基因序列 ---
+# --- Step 1: 合并所有样本基因序列，加样本名前缀避免 header 冲突 ---
 
-echo "[cdhit] Step 1/4: 合并 ${N_SAMPLES} 个样本基因序列..."
-cat "${FNA_FILES[@]}" > "${COMBINED_FNA}"
+echo "[cdhit] Step 1/4: 合并 ${N_SAMPLES} 个样本基因序列（添加样本名前缀防冲突）..."
+for fna in "${FNA_FILES[@]}"; do
+    sname=$(basename "$(dirname "$fna")")
+    sed "s/^>/>${sname}|/" "$fna" >> "${COMBINED_FNA}"
+done
 
 N_RAW=$(grep -c "^>" "${COMBINED_FNA}" || echo "N/A")
 echo "[cdhit] 合并基因总数: ${N_RAW}"
@@ -166,7 +169,9 @@ fi
 
 echo "[cdhit] Step 4/4: 翻译蛋白序列（seqkit translate）..."
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    seqkit translate --trim "${NR_FNA}" > "${NR_FAA}"
+    seqkit translate --trim "${NR_FNA}" | \
+    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    seqkit seq -m 1 > "${NR_FAA}"
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

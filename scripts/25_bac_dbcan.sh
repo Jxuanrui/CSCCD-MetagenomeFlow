@@ -51,7 +51,7 @@ SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/dbcan"
-DBCAN_DB="${REPO}/db/dbcan"
+DBCAN_DB="${REPO}/db/dbcan3"
 SENTINEL="${RESULT_DIR}/overview.txt"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then
@@ -74,10 +74,11 @@ conda run --prefix "${REPO}/envs/dbcan" --no-capture-output \
     run_dbcan \
         "${PROTEIN_NR}" \
         protein \
-        --tools all \
+        --tools diamond \
         --db_dir "${DBCAN_DB}" \
         --out_dir "${RESULT_DIR}" \
-        --cpu "${CPUS}"
+        --dia_cpu "${CPUS}" \
+        --hmm_cpu "${CPUS}"
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

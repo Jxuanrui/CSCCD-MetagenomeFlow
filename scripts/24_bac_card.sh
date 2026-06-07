@@ -68,6 +68,9 @@ fi
 
 mkdir -p "${RESULT_DIR}"
 
+# rgi --local reads/writes localDB/ relative to CWD; cd ensures load and main share the same localDB
+cd "${RESULT_DIR}"
+
 echo "[card] 加载 CARD 本地数据库..."
 conda run --prefix "${REPO}/envs/amr" --no-capture-output \
     rgi load \

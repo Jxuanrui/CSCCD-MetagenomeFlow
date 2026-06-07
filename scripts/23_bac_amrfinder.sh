@@ -50,7 +50,7 @@ SECONDS=0
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/amrfinder"
 OUTPUT="${RESULT_DIR}/amrfinder_results.tsv"
-AMR_DB="${REPO}/db/amrfinder"
+AMR_DB="${REPO}/db/amrfinder/latest"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then
     echo "[ERROR] 蛋白序列文件不存在: ${PROTEIN_NR}"; exit 1

@@ -139,14 +139,19 @@
     bash ${PROJ_DIR}/scripts/21_bac_eggnog.sh \
         -t ${t} -w ${wd} -r ${PROJ_DIR}
 
-    # 步骤 22-31：各专项数据库注释（并行运行，互不依赖）
+    # 步骤 22-27, 29-31：聚合注释（不依赖单个样本）
     for script in \
         22_bac_kegg 23_bac_amrfinder 24_bac_card 25_bac_dbcan \
-        26_bac_vfdb 27_bac_bacmet 28_bac_antismash \
+        26_bac_vfdb 27_bac_bacmet \
         29_bac_defense_finder 30_bac_ncyc 31_bac_pcyc; do
         bash ${PROJ_DIR}/scripts/${script}.sh \
             -t ${t} -w ${wd} -r ${PROJ_DIR}
     done
+
+    # 步骤 28：antiSMASH 次级代谢产物（per-sample，基于单样本组装）
+    cat ${wd}/samples.txt | rush -j ${j} \
+        "bash ${PROJ_DIR}/scripts/28_bac_antismash.sh \
+             -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
     # 结果：${wd}/result/{eggnog,kegg,amrfinder,card,dbcan,vfdb,bacmet,antismash,defense_finder,ncyc,pcyc}/
 
 
