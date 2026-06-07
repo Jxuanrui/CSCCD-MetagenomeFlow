@@ -5,7 +5,7 @@
 #         工具版本：DIAMOND 2.x（conda env: assembly）
 # 依  赖: 18_bac_cdhit.sh 的输出（protein_nr.fa）
 # 输  入: ${WORKDIR}/result/assembly/cdhit/protein_nr.fa
-# 输  出: ${WORKDIR}/result/annotation/bacmet/bacmet_hits.tsv
+# 输  出: ${WORKDIR}/result/bacmet/bacmet_hits.tsv
 #
 # 参  考: BacMet (Pal et al. 2014); DIAMOND (Buchfink et al. 2015)
 # 用  法: bash 27_bac_bacmet.sh -t CPUS -w WORKDIR -r REPO
@@ -43,7 +43,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/annotation/bacmet"
+RESULT_DIR="${WORKDIR}/result/bacmet"
 OUTPUT="${RESULT_DIR}/bacmet_hits.tsv"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then

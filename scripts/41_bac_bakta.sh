@@ -24,7 +24,7 @@
 show_help() { cat << EOF
 用法: bash 41_bac_bakta.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
-  -t  线程数（每个 Bakta 进程使用 ${SLOTS:-1} 线程，总负载 = MAGs × SLOTS）
+  -t  线程数（每个 Bakta 进程使用 ${CPUS:-1} 线程，总负载 = MAGs × CPUS）
   -w  工作目录
   -r  MaxMetagenome 项目根目录
 EOF

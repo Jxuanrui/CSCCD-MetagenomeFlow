@@ -4,10 +4,10 @@
 # 功  能: 宏基因组双端测序数据质量控制（接头去除、低质量修剪、统计报告）
 # 输  入: ${WORKDIR}/data/${SAMPLE}_1.fastq.gz
 #         ${WORKDIR}/data/${SAMPLE}_2.fastq.gz
-# 输  出: ${WORKDIR}/result/qc/fastp/${SAMPLE}/${SAMPLE}_1.fastq.gz  (clean reads)
-#         ${WORKDIR}/result/qc/fastp/${SAMPLE}/${SAMPLE}_2.fastq.gz
-#         ${WORKDIR}/result/qc/fastp/${SAMPLE}/${SAMPLE}.json
-#         ${WORKDIR}/result/qc/fastp/${SAMPLE}/${SAMPLE}.html
+# 输  出: ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}_1.fastq.gz  (clean reads)
+#         ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}_2.fastq.gz
+#         ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}.json
+#         ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}.html
 # 临时文件: ${WORKDIR}/temp/fastp/${SAMPLE}/
 # 用  法: bash 01_qc_fastp.sh -s SRR28210342 -t 16 -w /path/to/Project_example -r /path/to/MaxMetagenome
 # ==============================================================================
@@ -46,7 +46,7 @@ SECONDS=0
 
 INPUT_DIR=${WORKDIR}/data
 TEMP_DIR=${WORKDIR}/temp/fastp/${SAMPLE}
-RESULT_DIR=${WORKDIR}/result/qc/fastp/${SAMPLE}
+RESULT_DIR=${WORKDIR}/result/fastp/${SAMPLE}
 
 INPUT_R1=${INPUT_DIR}/${SAMPLE}_1.fastq.gz
 INPUT_R2=${INPUT_DIR}/${SAMPLE}_2.fastq.gz

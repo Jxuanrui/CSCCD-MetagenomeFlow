@@ -5,7 +5,7 @@
 #         工具版本：eggNOG-mapper 2.1.13（conda env: eggnog）
 # 依  赖: 18_bac_cdhit.sh 的输出（protein_nr.fa）
 # 输  入: ${WORKDIR}/result/assembly/cdhit/protein_nr.fa
-# 输  出: ${WORKDIR}/result/annotation/eggnog/
+# 输  出: ${WORKDIR}/result/eggnog/
 #           eggnog.emapper.annotations      — 主注释表（COG/KO/GO/EC/CAZy）
 #           eggnog.emapper.seed_orthologs   — 同源 OG 命中
 #
@@ -65,7 +65,7 @@ SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 EGGNOG_DB="${REPO}/db/eggnog"
-RESULT_DIR="${WORKDIR}/result/annotation/eggnog"
+RESULT_DIR="${WORKDIR}/result/eggnog"
 OUTPUT_PREFIX="eggnog"
 ANNOTATIONS="${RESULT_DIR}/${OUTPUT_PREFIX}.emapper.annotations"
 TEMP_DIR="${RESULT_DIR}/tmp"
@@ -109,6 +109,7 @@ conda run --prefix "${REPO}/envs/eggnog" --no-capture-output \
         -m diamond \
         --itype proteins \
         --data_dir "${EGGNOG_DB}" \
+        --dbmem \
         -i "${PROTEIN_NR}" \
         --cpu "${CPUS}" \
         -o "${OUTPUT_PREFIX}" \

@@ -7,7 +7,8 @@
 # 依  赖: 01_qc_fastp.sh → 02_qc_kneaddata.sh（clean reads）
 #         16_bac_megahit.sh（contigs）
 # 输  入: ${WORKDIR}/result/assembly/megahit/{sample}/{sample}.contigs.fa
-#         ${WORKDIR}/temp/qc/kneaddata/{sample}/{sample}_1/2.kneaddata.clean.fastq.gz
+#         ${WORKDIR}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz
+#         ${WORKDIR}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz
 # 输  出: ${WORKDIR}/result/binning/coverm/{sample}/
 #           {sample}.bam        — 排序后的 BAM（SemiBin2 输入）
 #           depth.txt            — MetaBAT2/MaxBin2 格式深度表
@@ -46,8 +47,8 @@ CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/binning/coverm/${SAMPLE}"
 BAM="${OUTDIR}/${SAMPLE}.bam"
 DEPTH="${OUTDIR}/depth.txt"
-R1="${WORKDIR}/temp/qc/kneaddata/${SAMPLE}/${SAMPLE}_1_kneaddata.fastq.gz"
-R2="${WORKDIR}/temp/qc/kneaddata/${SAMPLE}/${SAMPLE}_2_kneaddata.fastq.gz"
+R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing: ${CONTIGS}"; exit 1; fi
 
@@ -66,7 +67,11 @@ if [ ! -f "${BAM}" ] || [ ! -s "${BAM}" ]; then
             -r "${CONTIGS}" \
             -1 "${R1}" -2 "${R2}" \
             -o "${OUTDIR}"
-    # coverm make 默认输出 ${SAMPLE}.bam 到 -o 目录
+    # coverm make 输出 BAM 文件名包含 contig/read 信息，重命名为标准格式
+    GENERATED_BAM=$(ls "${OUTDIR}"/*.bam 2>/dev/null | head -1)
+    if [ -n "${GENERATED_BAM}" ] && [ "${GENERATED_BAM}" != "${BAM}" ]; then
+        mv "${GENERATED_BAM}" "${BAM}"
+    fi
     EXIT_CODE=$?
     if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] coverm make 失败"; exit ${EXIT_CODE}; fi
 fi

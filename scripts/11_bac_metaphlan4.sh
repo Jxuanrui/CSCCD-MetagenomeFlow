@@ -3,10 +3,10 @@
 # 脚本名: 11_bac_metaphlan4.sh
 # 功  能: MetaPhlAn4 细菌/古菌物种组成分析（菌株级精确分类）
 # 依  赖: 02_qc_kneaddata.sh 的输出（clean reads）
-# 输  入: ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
-#         ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
-# 输  出: ${WORKDIR}/result/taxonomy/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt
-#         ${WORKDIR}/result/taxonomy/metaphlan4/${SAMPLE}/${SAMPLE}.sam.bz2  (供 12_strainphlan4 使用)
+# 输  入: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
+#         ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
+# 输  出: ${WORKDIR}/result/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt
+#         ${WORKDIR}/result/metaphlan4/${SAMPLE}/${SAMPLE}.sam.bz2  (供 12_strainphlan4 使用)
 # 临时文件: ${WORKDIR}/temp/metaphlan4/${SAMPLE}/
 # 用  法: bash 11_bac_metaphlan4.sh -s SRR28210342 -t 16 -w /path/to/Project_example -r /path/to/MaxMetagenome
 # ==============================================================================
@@ -48,11 +48,11 @@ SECONDS=0
 
 # --- 路径设置 ---
 
-INPUT_R1="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
-INPUT_R2="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
 TEMP_DIR="${WORKDIR}/temp/metaphlan4/${SAMPLE}"
-RESULT_DIR="${WORKDIR}/result/taxonomy/metaphlan4/${SAMPLE}"
+RESULT_DIR="${WORKDIR}/result/metaphlan4/${SAMPLE}"
 
 PROFILE_OUT="${RESULT_DIR}/${SAMPLE}_profile.txt"
 SAM_OUT="${RESULT_DIR}/${SAMPLE}.sam.bz2"

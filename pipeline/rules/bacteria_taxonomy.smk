@@ -1,11 +1,11 @@
 rule metaphlan4:
     """Bacterial taxonomic profiling (strain-level, MetaPhlAn4)."""
     input:
-        r1 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
-        profile = WORKDIR + "/result/taxonomy/metaphlan4/{sample}/{sample}_profile.txt",
-        sam_bz2 = WORKDIR + "/result/taxonomy/metaphlan4/{sample}/{sample}.sam.bz2",
+        profile = WORKDIR + "/result/metaphlan4/{sample}/{sample}_profile.txt",
+        sam_bz2 = WORKDIR + "/result/metaphlan4/{sample}/{sample}.sam.bz2",
     log:
         WORKDIR + "/logs/metaphlan4/{sample}.log",
     threads: CPUS
@@ -20,11 +20,11 @@ rule metaphlan4_merge:
     """Merge per-sample MetaPhlAn4 profiles into a community matrix."""
     input:
         profiles = expand(
-            WORKDIR + "/result/taxonomy/metaphlan4/{sample}/{sample}_profile.txt",
+            WORKDIR + "/result/metaphlan4/{sample}/{sample}_profile.txt",
             sample=SAMPLES,
         ),
     output:
-        merged = WORKDIR + "/result/taxonomy/metaphlan4/merged/taxonomy.tsv",
+        merged = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
     log:
         WORKDIR + "/logs/metaphlan4_merge/merge.log",
     shell:
@@ -37,11 +37,11 @@ rule strainphlan4:
     """Strain-level phylogeny across all samples (aggregate rule)."""
     input:
         sam_files = expand(
-            WORKDIR + "/result/taxonomy/metaphlan4/{sample}/{sample}.sam.bz2",
+            WORKDIR + "/result/metaphlan4/{sample}/{sample}.sam.bz2",
             sample=SAMPLES,
         ),
     output:
-        markers_done = WORKDIR + "/result/taxonomy/strainphlan4/consensus_markers/.done",
+        markers_done = WORKDIR + "/result/strainphlan4/consensus_markers/.done",
     log:
         WORKDIR + "/logs/strainphlan4/strainphlan4.log",
     threads: CPUS
@@ -55,13 +55,13 @@ rule strainphlan4:
 rule humann3:
     """Functional pathway quantification (HUMAnN3)."""
     input:
-        r1      = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2      = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
-        profile = WORKDIR + "/result/taxonomy/metaphlan4/{sample}/{sample}_profile.txt",
+        r1      = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2      = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        profile = WORKDIR + "/result/metaphlan4/{sample}/{sample}_profile.txt",
     output:
-        pathabundance = WORKDIR + "/result/functional/humann3/{sample}/{sample}_pathabundance.tsv",
-        pathcoverage  = WORKDIR + "/result/functional/humann3/{sample}/{sample}_pathcoverage.tsv",
-        genefamilies  = WORKDIR + "/result/functional/humann3/{sample}/{sample}_genefamilies.tsv",
+        pathabundance = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance.tsv",
+        pathcoverage  = WORKDIR + "/result/humann3/{sample}/{sample}_pathcoverage.tsv",
+        genefamilies  = WORKDIR + "/result/humann3/{sample}/{sample}_genefamilies.tsv",
     log:
         WORKDIR + "/logs/humann3/{sample}.log",
     threads: CPUS
@@ -78,13 +78,13 @@ rule humann3:
 rule kraken2:
     """Fast k-mer taxonomic classification + Bracken abundance reestimation (S/G/P)."""
     input:
-        r1 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
-        report          = WORKDIR + "/result/taxonomy/kraken2/{sample}/{sample}.report",
-        bracken_species = WORKDIR + "/result/taxonomy/kraken2/{sample}/bracken/{sample}_S.bracken",
-        bracken_genus   = WORKDIR + "/result/taxonomy/kraken2/{sample}/bracken/{sample}_G.bracken",
-        bracken_phylum  = WORKDIR + "/result/taxonomy/kraken2/{sample}/bracken/{sample}_P.bracken",
+        report          = WORKDIR + "/result/kraken2/{sample}/{sample}.report",
+        bracken_species = WORKDIR + "/result/kraken2/{sample}/bracken/{sample}_S.bracken",
+        bracken_genus   = WORKDIR + "/result/kraken2/{sample}/bracken/{sample}_G.bracken",
+        bracken_phylum  = WORKDIR + "/result/kraken2/{sample}/bracken/{sample}_P.bracken",
     log:
         WORKDIR + "/logs/kraken2/{sample}.log",
     threads: CPUS
@@ -98,11 +98,11 @@ rule kraken2:
 rule centrifuger:
     """Protein-level taxonomic classification (Centrifuger + GTDB R226 + RefSeq)."""
     input:
-        r1 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
-        kreport         = WORKDIR + "/result/taxonomy/centrifuger/{sample}/{sample}.kreport.tsv",
-        classifications = WORKDIR + "/result/taxonomy/centrifuger/{sample}/{sample}.classifications.tsv.gz",
+        kreport         = WORKDIR + "/result/centrifuger/{sample}/{sample}.kreport.tsv",
+        classifications = WORKDIR + "/result/centrifuger/{sample}/{sample}.classifications.tsv.gz",
     log:
         WORKDIR + "/logs/centrifuger/{sample}.log",
     threads: CPUS

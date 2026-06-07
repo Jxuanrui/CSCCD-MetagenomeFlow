@@ -5,9 +5,9 @@
 #         工具版本：HUMAnN v3.9（conda env: humann4）
 # 依  赖: 02_qc_kneaddata.sh 的输出（clean reads）
 #         可选：11_bac_metaphlan4.sh 的输出（_profile.txt，避免重复 MetaPhlAn4 分析）
-# 输  入: ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/
-#         ${WORKDIR}/result/taxonomy/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt（可选）
-# 输  出: ${WORKDIR}/result/functional/humann3/${SAMPLE}/
+# 输  入: ${WORKDIR}/result/kneaddata/${SAMPLE}/
+#         ${WORKDIR}/result/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt（可选）
+# 输  出: ${WORKDIR}/result/humann3/${SAMPLE}/
 #           ${SAMPLE}_pathabundance.tsv          — MetaCyc 通路丰度（raw）
 #           ${SAMPLE}_pathcoverage.tsv           — 通路覆盖度
 #           ${SAMPLE}_genefamilies.tsv           — 基因家族丰度（UniRef90）
@@ -151,12 +151,12 @@ esac
 
 # --- 路径设置（输出到 humann3 目录）---
 
-INPUT_R1="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
-INPUT_R2="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
-METAPHLAN_PROFILE="${WORKDIR}/result/taxonomy/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt"
+INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+METAPHLAN_PROFILE="${WORKDIR}/result/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt"
 
 TEMP_DIR="${WORKDIR}/temp/humann3/${SAMPLE}"
-RESULT_DIR="${WORKDIR}/result/functional/humann3/${SAMPLE}"
+RESULT_DIR="${WORKDIR}/result/humann3/${SAMPLE}"
 
 DB_CHOCOPHLAN="${REPO}/db/humann4/chocophlan"
 DB_UNIREF="${REPO}/db/humann4/uniref"

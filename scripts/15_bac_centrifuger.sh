@@ -4,9 +4,9 @@
 # 功  能: Centrifuger 蛋白级精确物种分类（GTDB R226 + RefSeq，FM-index + 无损压缩）
 #         工具版本：Centrifuger v1.0.5（conda env: assembly）
 # 依  赖: 02_qc_kneaddata.sh 的输出（clean reads）
-# 输  入: ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
-#         ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
-# 输  出: ${WORKDIR}/result/taxonomy/centrifuger/${SAMPLE}/
+# 输  入: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
+#         ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
+# 输  出: ${WORKDIR}/result/centrifuger/${SAMPLE}/
 #           ${SAMPLE}.classifications.tsv.gz  — 每条 read 分类结果（压缩，大文件）
 #           ${SAMPLE}.kreport.tsv             — Kraken2 兼容格式报告（主要结果）
 #
@@ -79,10 +79,10 @@ SECONDS=0
 
 # --- 路径设置 ---
 
-INPUT_R1="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
-INPUT_R2="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
-RESULT_DIR="${WORKDIR}/result/taxonomy/centrifuger/${SAMPLE}"
+RESULT_DIR="${WORKDIR}/result/centrifuger/${SAMPLE}"
 
 DB_INDEX="${REPO}/db/centrifuger/cfr_gtdb_r226+refseq_hvfc"
 
@@ -131,12 +131,12 @@ CLASSIF_TMP="${RESULT_DIR}/${SAMPLE}.classifications.tsv"
 echo "[centrifuger] Step 1/2: 运行 centrifuger 分类..."
 
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    centrifuger \
-        -x    "${DB_INDEX}" \
-        -1    "${INPUT_R1}" \
-        -2    "${INPUT_R2}" \
-        -t    "${CPUS}" \
-        -o    "${CLASSIF_TMP}"
+    bash -c "centrifuger \
+        -x    '${DB_INDEX}' \
+        -1    '${INPUT_R1}' \
+        -2    '${INPUT_R2}' \
+        -t    '${CPUS}' \
+        > '${CLASSIF_TMP}'"
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

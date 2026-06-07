@@ -14,6 +14,7 @@ include: "rules/bacteria_taxonomy.smk"
 include: "rules/bacteria_assembly.smk"
 include: "rules/bacteria_annotation.smk"
 include: "rules/bacteria_binning.smk"
+include: "rules/virome.smk"
 
 rule all:
     input:
@@ -48,3 +49,23 @@ rule all:
                workdir=WORKDIR, sample=SAMPLES),
         WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
         WORKDIR + "/result/binning/bakta/bakta_summary.tsv",
+        # Virome assembly + QC
+        expand("{workdir}/result/virus/checkv/{sample}/quality_summary.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
+        # vOTU clustering + taxonomy
+        WORKDIR + "/result/virus/votu/votu_representatives.tsv",
+        WORKDIR + "/result/virus/votu/genomad/virus_taxonomy.tsv",
+        # vOTU abundance
+        WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
+        # vMAGs
+        WORKDIR + "/result/virus/vmag/checkv/quality_summary.tsv",
+        expand("{workdir}/result/virus/coverm_quant/{sample}.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
+        # Annotation
+        WORKDIR + "/result/virus/pharokka/pharokka_cds_final_merged_output.tsv",
+        WORKDIR + "/result/virus/phold/vOTU_phold.tsv",
+        WORKDIR + "/result/virus/vog/vog_annot.tsv",
+        WORKDIR + "/result/virus/bacphlip/bacphlip_results.tsv",
+        WORKDIR + "/result/virus/iphop/iphop_host_prediction.tsv",
+        WORKDIR + "/result/virus/vcontact3/genome_by_genome_overview.csv",
+

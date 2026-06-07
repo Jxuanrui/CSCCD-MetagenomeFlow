@@ -8,8 +8,8 @@
 # 流  程: Step1 sample2markers  → 提取每样本 consensus marker (.pkl)
 #         Step2 extract_markers → 从数据库提取目标物种 clade marker
 #         Step3 strainphlan     → 多序列比对 + 系统发育树
-# 输  入: ${WORKDIR}/result/taxonomy/metaphlan4/*/  (扫描所有 .sam.bz2)
-# 输  出: ${WORKDIR}/result/taxonomy/strainphlan4/
+# 输  入: ${WORKDIR}/result/metaphlan4/*/  (扫描所有 .sam.bz2)
+# 输  出: ${WORKDIR}/result/strainphlan4/
 #           consensus_markers/          — 每样本 .pkl（Step1，可复用）
 #           db_markers/                 — 物种 clade markers（Step2）
 #           trees/{CLADE}/              — 系统发育树、MSA（Step3）
@@ -72,8 +72,8 @@ SECONDS=0
 
 # --- 路径设置 ---
 
-METAPHLAN_DIR="${WORKDIR}/result/taxonomy/metaphlan4"
-STRAINPHLAN_DIR="${WORKDIR}/result/taxonomy/strainphlan4"
+METAPHLAN_DIR="${WORKDIR}/result/metaphlan4"
+STRAINPHLAN_DIR="${WORKDIR}/result/strainphlan4"
 
 CONSENSUS_DIR="${STRAINPHLAN_DIR}/consensus_markers"   # Step1 输出
 DB_MARKERS_DIR="${STRAINPHLAN_DIR}/db_markers"          # Step2 输出

@@ -3,11 +3,11 @@
 # 脚本名: 11b_bac_metaphlan4_merge.sh
 # 功  能: 合并所有样本的 MetaPhlAn4 物种丰度表，生成项目级多样本矩阵
 # 依  赖: 11_bac_metaphlan4.sh 的输出（每个样本的 _profile.txt）
-# 输  入: ${WORKDIR}/result/taxonomy/metaphlan4/*/  （扫描所有已完成样本）
-# 输  出: ${WORKDIR}/result/taxonomy/metaphlan4/merged/taxonomy.tsv     （全层级丰度表，供统计分析）
-#         ${WORKDIR}/result/taxonomy/metaphlan4/merged/taxonomy_species.tsv  （仅菌种级）
-#         ${WORKDIR}/result/taxonomy/metaphlan4/merged/taxonomy_genus.tsv    （仅菌属级）
-#         ${WORKDIR}/result/taxonomy/metaphlan4/merged/taxonomy_species.csv  （菌种级 CSV，列=样本，行=物种）
+# 输  入: ${WORKDIR}/result/metaphlan4/*/  （扫描所有已完成样本）
+# 输  出: ${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv     （全层级丰度表，供统计分析）
+#         ${WORKDIR}/result/metaphlan4/merged/taxonomy_species.tsv  （仅菌种级）
+#         ${WORKDIR}/result/metaphlan4/merged/taxonomy_genus.tsv    （仅菌属级）
+#         ${WORKDIR}/result/metaphlan4/merged/taxonomy_species.csv  （菌种级 CSV，列=样本，行=物种）
 # 用  法: bash 11b_bac_metaphlan4_merge.sh -w /path/to/Project_example -r /path/to/MaxMetagenome
 # ==============================================================================
 
@@ -44,7 +44,7 @@ SECONDS=0
 
 # --- 路径设置 ---
 
-PROFILE_DIR="${WORKDIR}/result/taxonomy/metaphlan4"
+PROFILE_DIR="${WORKDIR}/result/metaphlan4"
 MERGED_DIR="${PROFILE_DIR}/merged"
 
 TAXONOMY_TSV="${MERGED_DIR}/taxonomy.tsv"

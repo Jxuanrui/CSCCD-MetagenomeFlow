@@ -3,7 +3,11 @@ set -e
 
 # 功能：使用 kneaddata 去除宿主污染序列
 # 依赖：01_qc_fastp.sh 的输出（clean reads）
-# 输出：去宿主后的 fastq.gz + 统计日志
+# 输入：${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}_1.fastq.gz
+#       ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}_2.fastq.gz
+# 输出：${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
+#       ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
+#       ${WORKDIR}/result/kneaddata/${SAMPLE}/stats.txt
 
 # ===== 参数解析 =====
 show_help() {
@@ -45,11 +49,11 @@ if [ -z "$SAMPLE" ] || [ -z "$THREADS" ] || [ -z "$WORKDIR" ] || [ -z "$REPO" ];
 fi
 
 # ===== 路径和环境 =====
-FASTP_OUT="${WORKDIR}/result/qc/fastp/${SAMPLE}"
+FASTP_OUT="${WORKDIR}/result/fastp/${SAMPLE}"
 INPUT_R1="${FASTP_OUT}/${SAMPLE}_1.fastq.gz"
 INPUT_R2="${FASTP_OUT}/${SAMPLE}_2.fastq.gz"
 
-OUTDIR="${WORKDIR}/result/qc/kneaddata/${SAMPLE}"
+OUTDIR="${WORKDIR}/result/kneaddata/${SAMPLE}"
 LOGFILE="${OUTDIR}/kneaddata.log"
 
 # kneaddata 宿主数据库（人类基因组）

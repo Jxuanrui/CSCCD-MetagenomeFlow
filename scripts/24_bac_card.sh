@@ -2,10 +2,10 @@
 # ==============================================================================
 # 脚本名: 24_bac_card.sh
 # 功  能: 抗生素耐药基因综合注释（CARD/RGI）
-#         工具版本：RGI 6.x + CARD 3.x（conda env: rgi）
+#         工具版本：RGI 6.x + CARD 3.x（conda env: amr）
 # 依  赖: 18_bac_cdhit.sh 的输出（protein_nr.fa）
 # 输  入: ${WORKDIR}/result/assembly/cdhit/protein_nr.fa
-# 输  出: ${WORKDIR}/result/annotation/card/
+# 输  出: ${WORKDIR}/result/card/
 #           rgi_results.txt       — RGI 文本报告（含 Best_Hit_ARO、抗性机制等）
 #           rgi_results.json      — RGI JSON 报告（下游分析用）
 #
@@ -50,7 +50,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/annotation/card"
+RESULT_DIR="${WORKDIR}/result/card"
 OUTPUT_PREFIX="${RESULT_DIR}/rgi_results"
 CARD_DB="${REPO}/db/card/card.json"
 
@@ -69,7 +69,7 @@ fi
 mkdir -p "${RESULT_DIR}"
 
 echo "[card] 加载 CARD 本地数据库..."
-conda run --prefix "${REPO}/envs/rgi" --no-capture-output \
+conda run --prefix "${REPO}/envs/amr" --no-capture-output \
     rgi load \
         --card_json "${CARD_DB}" \
         --local
@@ -81,7 +81,7 @@ fi
 
 echo "[card] 开始 RGI 耐药基因注释 | 线程: ${CPUS}"
 
-conda run --prefix "${REPO}/envs/rgi" --no-capture-output \
+conda run --prefix "${REPO}/envs/amr" --no-capture-output \
     rgi main \
         --input_sequence "${PROTEIN_NR}" \
         --output_file "${OUTPUT_PREFIX}" \

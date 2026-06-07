@@ -2,10 +2,10 @@
 # ==============================================================================
 # 脚本名: 23_bac_amrfinder.sh
 # 功  能: 抗生素耐药基因检测（AMRFinderPlus）
-#         工具版本：AMRFinderPlus 3.12+（conda env: amrfinder）
+#         工具版本：AMRFinderPlus 3.12+（conda env: amr）
 # 依  赖: 18_bac_cdhit.sh 的输出（protein_nr.fa）
 # 输  入: ${WORKDIR}/result/assembly/cdhit/protein_nr.fa
-# 输  出: ${WORKDIR}/result/annotation/amrfinder/
+# 输  出: ${WORKDIR}/result/amrfinder/
 #           amrfinder_results.tsv — 耐药基因完整报告
 #
 # ── 关键参数 ──────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/annotation/amrfinder"
+RESULT_DIR="${WORKDIR}/result/amrfinder"
 OUTPUT="${RESULT_DIR}/amrfinder_results.tsv"
 AMR_DB="${REPO}/db/amrfinder"
 
@@ -68,7 +68,7 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[amrfinder] 开始耐药基因检测 | 线程: ${CPUS}"
 
-conda run --prefix "${REPO}/envs/amrfinder" --no-capture-output \
+conda run --prefix "${REPO}/envs/amr" --no-capture-output \
     amrfinder \
         --protein "${PROTEIN_NR}" \
         --database "${AMR_DB}" \

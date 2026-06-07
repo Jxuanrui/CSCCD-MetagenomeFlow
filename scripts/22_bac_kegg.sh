@@ -5,7 +5,7 @@
 #         工具版本：DIAMOND 2.x（conda env: assembly）
 # 依  赖: 18_bac_cdhit.sh 的输出（protein_nr.fa）
 # 输  入: ${WORKDIR}/result/assembly/cdhit/protein_nr.fa
-# 输  出: ${WORKDIR}/result/annotation/kegg/
+# 输  出: ${WORKDIR}/result/kegg/
 #           kegg_diamond.tsv    — diamond 比对结果（BLAST m6 格式）
 #
 # ── 数据库说明 ────────────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/annotation/kegg"
+RESULT_DIR="${WORKDIR}/result/kegg"
 OUTPUT="${RESULT_DIR}/kegg_diamond.tsv"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then

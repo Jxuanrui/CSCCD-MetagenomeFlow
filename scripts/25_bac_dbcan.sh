@@ -5,7 +5,7 @@
 #         工具版本：run_dbcan 4.x（conda env: dbcan）
 # 依  赖: 18_bac_cdhit.sh 的输出（protein_nr.fa）
 # 输  入: ${WORKDIR}/result/assembly/cdhit/protein_nr.fa
-# 输  出: ${WORKDIR}/result/annotation/dbcan/
+# 输  出: ${WORKDIR}/result/dbcan/
 #           overview.txt  — 三工具投票综合结果（HMMER/DIAMOND/eCAMI）
 #           hmmer.out     — HMMER HMM 搜索结果
 #           diamond.out   — DIAMOND 比对结果
@@ -50,7 +50,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/annotation/dbcan"
+RESULT_DIR="${WORKDIR}/result/dbcan"
 DBCAN_DB="${REPO}/db/dbcan"
 SENTINEL="${RESULT_DIR}/overview.txt"
 

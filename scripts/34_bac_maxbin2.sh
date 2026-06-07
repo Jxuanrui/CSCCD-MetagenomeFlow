@@ -77,6 +77,5 @@ for f in "${OUTDIR}"/bin.*.fasta; do
     grep '^>' "$f" | sed "s/^>//" | awk -v bin="$bname" '{print $1"\t"bin}'
 done > "${SENTINEL}"
 
-N_BINS=$(grep -c '^>' "${OUTDIR}"/*.fasta 2>/dev/null || echo 0)
 N_FA=$(ls "${OUTDIR}"/bin.*.fasta 2>/dev/null | wc -l || echo 0)
 echo "[maxbin2] 完成，耗时 ${SECONDS}s | bins: ${N_FA}"

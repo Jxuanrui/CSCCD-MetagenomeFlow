@@ -5,8 +5,9 @@
 #         工具版本：CoverM 0.7+（conda env: coverm）
 # 依  赖: 38_bac_drep.sh 的去冗余 MAGs + 质控 reads
 # 输  入: ${WORKDIR}/result/binning/drep/dereplicated_genomes/*.fa
-#         ${WORKDIR}/temp/qc/kneaddata/{sample}/{sample}_1/2_kneaddata.fastq.gz
-# 输  出: ${WORKDIR}/result/binning/coverm_quant/{sample}.tsv
+#         ${WORKDIR}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz
+#         ${WORKDIR}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz
+# 输  出: ${WORKDIR}/result/coverm_quant/{sample}/{sample}.tsv
 #           — 每样本一行，列=各 MAG 的相对丰度/RPKM/TPM
 #
 # 参  考: CoverM docs; Olm et al. (dRep companion)
@@ -40,9 +41,10 @@ done
 
 SECONDS=0
 MAGS_DIR="${WORKDIR}/result/binning/drep/dereplicated_genomes"
-OUTPUT="${WORKDIR}/result/binning/coverm_quant/${SAMPLE}.tsv"
-R1="${WORKDIR}/temp/qc/kneaddata/${SAMPLE}/${SAMPLE}_1_kneaddata.fastq.gz"
-R2="${WORKDIR}/temp/qc/kneaddata/${SAMPLE}/${SAMPLE}_2_kneaddata.fastq.gz"
+RESULT_DIR="${WORKDIR}/result/coverm_quant/${SAMPLE}"
+OUTPUT="${RESULT_DIR}/${SAMPLE}.tsv"
+R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
 if [ ! -d "${MAGS_DIR}" ] || [ -z "$(ls "${MAGS_DIR}"/*.fa 2>/dev/null)" ]; then
     echo "[ERROR] 去冗余 MAGs 不存在: ${MAGS_DIR}"; exit 1
@@ -50,7 +52,7 @@ fi
 
 if [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then echo "[coverm_quant] 结果已存在，跳过"; exit 0; fi
 
-mkdir -p "$(dirname "${OUTPUT}")"
+mkdir -p "${RESULT_DIR}"
 
 echo "[coverm_quant] ${SAMPLE} | MAG 定量 ..."
 conda run --prefix "${REPO}/envs/coverm" --no-capture-output \

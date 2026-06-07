@@ -4,7 +4,7 @@
 # 功  能: MEGAHIT 宏基因组从头组装（de novo assembly）
 #         工具版本：MEGAHIT v1.2.9（conda env: assembly）
 # 依  赖: 02_qc_kneaddata.sh 的输出（clean reads）
-# 输  入: ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1/2.kneaddata.fastq.gz
+# 输  入: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
 # 输  出: ${WORKDIR}/result/assembly/megahit/${SAMPLE}/
 #           ${SAMPLE}.contigs.fa    — 最终组装结果（下游 Prodigal/CD-HIT/Salmon 输入）
 #           ${SAMPLE}.megahit.log   — 组装日志（k值选择、运行参数）
@@ -88,8 +88,8 @@ SECONDS=0
 
 # --- 路径设置 ---
 
-INPUT_R1="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
-INPUT_R2="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
 RESULT_DIR="${WORKDIR}/result/assembly/megahit/${SAMPLE}"
 CONTIGS="${RESULT_DIR}/${SAMPLE}.contigs.fa"

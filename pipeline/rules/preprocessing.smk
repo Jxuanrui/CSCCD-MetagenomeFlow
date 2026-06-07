@@ -4,10 +4,10 @@ rule fastp_qc:
         r1 = WORKDIR + "/data/{sample}_1.fastq.gz",
         r2 = WORKDIR + "/data/{sample}_2.fastq.gz",
     output:
-        r1   = WORKDIR + "/result/qc/fastp/{sample}/{sample}_1.fastq.gz",
-        r2   = WORKDIR + "/result/qc/fastp/{sample}/{sample}_2.fastq.gz",
-        json = WORKDIR + "/result/qc/fastp/{sample}/{sample}.json",
-        html = WORKDIR + "/result/qc/fastp/{sample}/{sample}.html",
+        r1   = WORKDIR + "/result/fastp/{sample}/{sample}_1.fastq.gz",
+        r2   = WORKDIR + "/result/fastp/{sample}/{sample}_2.fastq.gz",
+        json = WORKDIR + "/result/fastp/{sample}/{sample}.json",
+        html = WORKDIR + "/result/fastp/{sample}/{sample}.html",
     log:
         WORKDIR + "/logs/fastp/{sample}.log",
     threads: CPUS
@@ -21,11 +21,11 @@ rule fastp_qc:
 rule kneaddata:
     """Host decontamination (human genome removal)."""
     input:
-        r1 = WORKDIR + "/result/qc/fastp/{sample}/{sample}_1.fastq.gz",
-        r2 = WORKDIR + "/result/qc/fastp/{sample}/{sample}_2.fastq.gz",
+        r1 = WORKDIR + "/result/fastp/{sample}/{sample}_1.fastq.gz",
+        r2 = WORKDIR + "/result/fastp/{sample}/{sample}_2.fastq.gz",
     output:
-        r1 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     log:
         WORKDIR + "/logs/kneaddata/{sample}.log",
     threads: CPUS

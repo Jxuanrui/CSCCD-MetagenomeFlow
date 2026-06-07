@@ -2,10 +2,10 @@
 # ==============================================================================
 # 脚本名: 29_bac_defense_finder.sh
 # 功  能: 细菌防御系统检测（CRISPR/Restriction/其他免疫系统）
-#         工具版本：DefenseFinder 1.x + MacSyFinder 2.x（conda env: defensefinder）
+#         工具版本：DefenseFinder 1.x + MacSyFinder 2.x（conda env: defense-finder）
 # 依  赖: 18_bac_cdhit.sh 的输出（protein_nr.fa）
 # 输  入: ${WORKDIR}/result/assembly/cdhit/protein_nr.fa
-# 输  出: ${WORKDIR}/result/annotation/defense_finder/
+# 输  出: ${WORKDIR}/result/defense_finder/
 #           defense_finder_systems.tsv  — 检出防御系统汇总
 #           defense_finder_genes.tsv    — 基因级别注释
 #
@@ -49,9 +49,9 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/annotation/defense_finder"
+RESULT_DIR="${WORKDIR}/result/defense_finder"
 SENTINEL="${RESULT_DIR}/defense_finder_systems.tsv"
-DF_DB="${REPO}/db/defense_finder"
+DF_DB="${REPO}/db/defense-finder/defense-finder-db"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then
     echo "[ERROR] 蛋白序列文件不存在: ${PROTEIN_NR}"; exit 1
@@ -65,7 +65,7 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[defense_finder] 开始防御系统检测 | 线程: ${CPUS}"
 
-conda run --prefix "${REPO}/envs/defensefinder" --no-capture-output \
+conda run --prefix "${REPO}/envs/defense-finder" --no-capture-output \
     defense-finder run \
         --models-dir "${DF_DB}" \
         --db-type unordered \

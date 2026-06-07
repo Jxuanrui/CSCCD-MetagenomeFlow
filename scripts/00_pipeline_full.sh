@@ -52,23 +52,23 @@
         "bash ${PROJ_DIR}/scripts/01_qc_fastp.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
 
-    # 结果位置：${wd}/result/qc/fastp/{sample}/
-    # 下游输入：${wd}/result/qc/fastp/{sample}/{sample}_1.fastq.gz
+    # 结果位置：${wd}/result/fastp/{sample}/
+    # 下游输入：${wd}/result/fastp/{sample}/{sample}_1.fastq.gz
 
 
 # --- 步骤 02：去宿主（KneadData）---
 
-    # 单样本测试
+    # 单样本测试（kneaddata 固定使用 human 数据库，不需额外参数）
     bash ${PROJ_DIR}/scripts/02_qc_kneaddata.sh \
-        -s ${i} -t ${t} -w ${wd} -r ${PROJ_DIR} -host human
+        -s ${i} -t ${t} -w ${wd} -r ${PROJ_DIR}
 
-    # 多样本并行（-host 支持 human/mouse/rat）
+    # 多样本并行
     cat ${wd}/samples.txt | rush -j ${j} \
         "bash ${PROJ_DIR}/scripts/02_qc_kneaddata.sh \
-             -s {} -t ${t} -w ${wd} -r ${PROJ_DIR} -host human"
+             -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
 
-    # 结果位置：${wd}/result/qc/kneaddata/{sample}/
-    # 下游输入：${wd}/result/qc/kneaddata/{sample}/{sample}_1.fastq.gz
+    # 结果位置：${wd}/result/kneaddata/{sample}/
+    # 下游输入：${wd}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz (注意文件名含 .kneaddata 后缀)
 
 
 # ==============================================================================
@@ -81,30 +81,30 @@
     cat ${wd}/samples.txt | rush -j ${j} \
         "bash ${PROJ_DIR}/scripts/11_bac_metaphlan4.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
-    # 结果：${wd}/result/taxonomy/metaphlan4/
+    # 结果：${wd}/result/metaphlan4/
 
     # 步骤 12：StrainPhlAn4 菌株追踪（依赖步骤 11 的 sam.bz2 输出）
     bash ${PROJ_DIR}/scripts/12_bac_strainphlan4.sh \
         -t ${t} -w ${wd} -r ${PROJ_DIR}
-    # 结果：${wd}/result/taxonomy/strainphlan4/
+    # 结果：${wd}/result/strainphlan4/
 
-    # 步骤 13：HUMAnN4 功能通路定量
+    # 步骤 13：HUMAnN3 功能通路定量
     cat ${wd}/samples.txt | rush -j 1 \
-        "bash ${PROJ_DIR}/scripts/13_bac_humann4.sh \
+        "bash ${PROJ_DIR}/scripts/13_bac_humann3.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
-    # 结果：${wd}/result/function/humann4/
+    # 结果：${wd}/result/humann3/
 
     # 步骤 14：Kraken2 + Bracken 物种分类
     cat ${wd}/samples.txt | rush -j ${j} \
         "bash ${PROJ_DIR}/scripts/14_bac_kraken2.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
-    # 结果：${wd}/result/taxonomy/kraken2/
+    # 结果：${wd}/result/kraken2/
 
     # 步骤 15：Centrifuger 蛋白级精确分类
     cat ${wd}/samples.txt | rush -j ${j} \
         "bash ${PROJ_DIR}/scripts/15_bac_centrifuger.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
-    # 结果：${wd}/result/taxonomy/centrifuger/
+    # 结果：${wd}/result/centrifuger/
 
 
 # --- Assembly + 基因预测与定量（步骤 16-20）---
@@ -113,7 +113,7 @@
     cat ${wd}/samples.txt | rush -j ${j} \
         "bash ${PROJ_DIR}/scripts/16_bac_megahit.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
-    # 结果：${wd}/result/assembly/megahit/{sample}/
+    # 结果：${wd}/result/megahit/{sample}/
 
     # 步骤 17：Prodigal 基因预测
     cat ${wd}/samples.txt | rush -j ${j} \
@@ -130,7 +130,7 @@
     cat ${wd}/samples.txt | rush -j ${j} \
         "bash ${PROJ_DIR}/scripts/20_bac_salmon_quant.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
-    # 结果：${wd}/result/assembly/salmon/
+    # 结果：${wd}/result/salmon/
 
 
 # --- 功能注释（步骤 21-31，依赖步骤 17 的蛋白序列）---
@@ -147,7 +147,7 @@
         bash ${PROJ_DIR}/scripts/${script}.sh \
             -t ${t} -w ${wd} -r ${PROJ_DIR}
     done
-    # 结果：${wd}/result/function/annotation/
+    # 结果：${wd}/result/{eggnog,kegg,amrfinder,card,dbcan,vfdb,bacmet,antismash,defense_finder,ncyc,pcyc}/
 
 
 # --- MAG 挖掘（步骤 32-41，依赖步骤 16 组装结果）---
@@ -178,8 +178,9 @@
         -t ${t} -w ${wd} -r ${PROJ_DIR}
 
     # 步骤 39-41：MAG 定量 + 分类 + 精细注释
-    bash ${PROJ_DIR}/scripts/39_bac_coverm_quant.sh \
-        -t ${t} -w ${wd} -r ${PROJ_DIR}
+    cat ${wd}/samples.txt | rush -j ${j} \
+        "bash ${PROJ_DIR}/scripts/39_bac_coverm_quant.sh \
+             -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
     bash ${PROJ_DIR}/scripts/40_bac_gtdbtk.sh \
         -t ${t} -w ${wd} -r ${PROJ_DIR}
     bash ${PROJ_DIR}/scripts/41_bac_bakta.sh \

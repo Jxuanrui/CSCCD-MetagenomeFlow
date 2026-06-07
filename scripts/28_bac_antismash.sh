@@ -5,7 +5,7 @@
 #         工具版本：antiSMASH 7.x（conda env: antismash）
 # 依  赖: 16_bac_megahit.sh 的输出（{sample}.contigs.fa，≥1000bp）
 # 输  入: ${WORKDIR}/result/assembly/megahit/{sample}/{sample}.contigs.fa
-# 输  出: ${WORKDIR}/result/annotation/antismash/{sample}/
+# 输  出: ${WORKDIR}/result/antismash/{sample}/
 #           {sample}.gbk           — 结果 GenBank 文件
 #           {sample}.json          — 结果 JSON（API用）
 #           index.html             — 可视化报告
@@ -54,9 +54,9 @@ fi
 SECONDS=0
 
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
-RESULT_DIR="${WORKDIR}/result/annotation/antismash/${SAMPLE}"
+RESULT_DIR="${WORKDIR}/result/antismash/${SAMPLE}"
 SENTINEL="${RESULT_DIR}/index.html"
-ANTISMASH_DB="${REPO}/db/antismash"
+ANTISMASH_DB="${REPO}/db/antismash/antismash-db"
 
 if [ ! -f "${CONTIGS}" ] || [ ! -s "${CONTIGS}" ]; then
     echo "[ERROR] 组装文件不存在: ${CONTIGS}"; exit 1

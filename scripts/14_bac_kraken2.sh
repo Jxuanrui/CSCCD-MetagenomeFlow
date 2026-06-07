@@ -4,9 +4,9 @@
 # 功  能: Kraken2 + Bracken 快速物种分类与丰度估计（k-mer 比对，覆盖细菌/古菌/病毒/真菌）
 #         工具版本：Kraken2 v2.1.3 + Bracken v2.x（conda env: kraken2）
 # 依  赖: 02_qc_kneaddata.sh 的输出（clean reads）
-# 输  入: ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
-#         ${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
-# 输  出: ${WORKDIR}/result/taxonomy/kraken2/${SAMPLE}/
+# 输  入: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
+#         ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
+# 输  出: ${WORKDIR}/result/kraken2/${SAMPLE}/
 #           ${SAMPLE}.report             — Kraken2 标准报告（下游 Bracken 输入）
 #           ${SAMPLE}.output.gz          — 每条 read 分类结果（压缩存储，大文件）
 #           bracken/${SAMPLE}_S.bracken  — 种级丰度估计（主要结果）
@@ -100,10 +100,10 @@ SECONDS=0
 
 # --- 路径设置 ---
 
-INPUT_R1="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
-INPUT_R2="${WORKDIR}/result/qc/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
-RESULT_DIR="${WORKDIR}/result/taxonomy/kraken2/${SAMPLE}"
+RESULT_DIR="${WORKDIR}/result/kraken2/${SAMPLE}"
 BRACKEN_DIR="${RESULT_DIR}/bracken"
 
 DB_KRAKEN="${REPO}/db/kraken2/pluspf"
