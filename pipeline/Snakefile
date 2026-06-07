@@ -13,18 +13,19 @@ include: "rules/preprocessing.smk"
 include: "rules/bacteria_taxonomy.smk"
 include: "rules/bacteria_assembly.smk"
 include: "rules/bacteria_annotation.smk"
+include: "rules/bacteria_binning.smk"
 
 rule all:
     input:
-        expand("{workdir}/result/qc/fastp/{sample}/{sample}.json",
+        expand("{workdir}/result/fastp/{sample}/{sample}.json",
                workdir=WORKDIR, sample=SAMPLES),
-        expand("{workdir}/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        expand("{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
                workdir=WORKDIR, sample=SAMPLES),
-        expand("{workdir}/result/taxonomy/metaphlan4/{sample}/{sample}_profile.txt",
+        expand("{workdir}/result/metaphlan4/{sample}/{sample}_profile.txt",
                workdir=WORKDIR, sample=SAMPLES),
-        expand("{workdir}/result/functional/humann3/{sample}/{sample}_pathabundance.tsv",
+        expand("{workdir}/result/humann3/{sample}/{sample}_pathabundance.tsv",
                workdir=WORKDIR, sample=SAMPLES),
-        expand("{workdir}/result/taxonomy/metaphlan4/merged/taxonomy.tsv",
+        expand("{workdir}/result/metaphlan4/merged/taxonomy.tsv",
                workdir=WORKDIR),
         WORKDIR + "/result/annotation/eggnog/eggnog.emapper.annotations",
         WORKDIR + "/result/annotation/kegg/kegg_diamond.tsv",
@@ -38,3 +39,12 @@ rule all:
         WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
         expand("{workdir}/result/annotation/antismash/{sample}/index.html",
                workdir=WORKDIR, sample=SAMPLES),
+        # Binning
+        expand("{workdir}/result/binning/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
+        WORKDIR + "/result/binning/checkm2/quality_report.tsv",
+        WORKDIR + "/result/binning/drep/.done",
+        expand("{workdir}/result/binning/coverm_quant/{sample}.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
+        WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
+        WORKDIR + "/result/binning/bakta/bakta_summary.tsv",
