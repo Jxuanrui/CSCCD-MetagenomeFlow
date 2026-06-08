@@ -52,6 +52,16 @@
 #   [✓] §8.7 VIBRANT 数据库（11G，KEGG 9995 + VOG 19182 + Pfam，hmmpress 完成）  2026/06/02  测试通过
 #   [✓] §8.8 antiSMASH 数据库（从 Apptainer 项目解压，9.4 GB）                   2026/06/02  测试通过（10 个模块目录）
 #   [✓] §8.9 Snakemake 9.22.0（snakemake-minimal，miniforge3 base）                2026/06-06  测试通过（dry-run DAG 构建正常）
+#   [✗] §10.1 VirSorter2 2.2+（独立环境 + 数据库，virsorter run setup）            ← 待配置
+#   [✗] §10.2 vclust 1.3+（独立环境，无专用数据库）                                ← 待配置
+#   [✗] §10.3 vRhyme 1.1.0（独立环境，无专用数据库）                               ← 待配置
+#   [✗] §10.4 PHAROKKA 1.7.3（独立环境 + 数据库 550 MB）                           ← 待配置
+#   [✗] §10.5 PHOLD 1.0.0（独立环境 + 数据库 32 GB）                               ← 待配置
+#   [✗] §10.6 BACPHLIP 0.9.6（独立环境，无专用数据库）                             ← 待配置
+#   [✗] §10.7 iPHoP 1.4.1（独立环境 + 数据库 294 GB，Virus 项目已解压）            ← 待配置
+#   [✗] §10.8 vConTACT3 3.1.3（独立环境 + 数据库 3.4 GB）                          ← 待配置
+#   [✗] §10.9 CheckV 数据库（2 GB，envs/checkv 已装，仅缺数据库）                  ← 待配置
+#   [✗] §10.10 VOG 数据库（2.4 GB，script 66 依赖，Virus 项目有 vog.tar.gz）       ← 待配置
 #   [✗] §9   MCP / RAG 服务   ← 最终步骤
 # ==============================================================================
 
@@ -1162,4 +1172,212 @@ CHECKM_CFG
 
 # ==============================================================================
 # ← 下次从此处开始：§9 MCP / RAG 服务
+# ==============================================================================
+
+
+# ==============================================================================
+# 10. Virome 流程工具（来自 Virus_Apptainer_pipline，脚本 51-69）
+# ==============================================================================
+# 说明：
+#   - Virus_Apptainer_pipline 使用 Apptainer 容器；MaxMetagenome 使用 conda 环境
+#   - 数据库从 Virus 项目压缩包解压，避免重复下载（除 virsorter2 需在线 setup）
+#   - iphop 数据库（294 GB）直接引用 Virus 项目已解压目录，不复制（节省磁盘）
+#   - 所有环境路径：${envs}/<工具名>
+#   - 所有数据库路径：${db}/<工具名>
+# ==============================================================================
+
+VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
+
+
+# --- 10.1 VirSorter2 2.2+  [✗ 待配置] ---
+# 说明：virsorter2 需要先安装再通过 `virsorter setup` 下载数据库（约 1.5 GB）
+
+    conda create --prefix ${envs}/virsorter2 -y
+    conda install --prefix ${envs}/virsorter2 -y \
+        virsorter=2 "python>=3.8" scikit-learn imbalanced-learn pandas \
+        -c bioconda -c conda-forge --no-channel-priority
+    conda run --prefix ${envs}/virsorter2 virsorter --version 2>&1 | head -1
+
+    # VirSorter2 数据库（约 1.5 GB，需要网络）
+    mkdir -p ${db}/virsorter2
+    # ----
+    # 方法1：官方在线 setup（推荐，自动下载所有模型文件）
+    # ----
+    conda run --prefix ${envs}/virsorter2 \
+        virsorter setup -d ${db}/virsorter2 -j 4
+    # ----
+    # 方法2：如无网络，从已有 virsorter run 过的 db 目录复制
+    # ----
+    # cp -r <已有 virsorter2 数据库目录>/* ${db}/virsorter2/
+    echo "VirSorter2 数据库就绪: ${db}/virsorter2/"
+
+
+# --- 10.2 vclust 1.3+  [✗ 待配置] ---
+# 说明：vclust 仅用于序列聚类（vOTU 生成），无需独立数据库
+
+    conda create --prefix ${envs}/vclust -y
+    conda install --prefix ${envs}/vclust -y vclust -c bioconda -c conda-forge
+    conda run --prefix ${envs}/vclust vclust --version 2>&1 | head -1
+    echo "vclust 环境就绪: ${envs}/vclust/"
+
+
+# --- 10.3 vRhyme 1.1.0  [✗ 待配置] ---
+# 说明：vRhyme 用于病毒 MAG 聚合（61_vir_vmag.sh），无需独立数据库
+
+    conda create --prefix ${envs}/vrhyme -y
+    conda install --prefix ${envs}/vrhyme -y vrhyme -c bioconda -c conda-forge
+    conda run --prefix ${envs}/vrhyme vRhyme --version 2>&1 | head -1
+    echo "vRhyme 环境就绪: ${envs}/vrhyme/"
+
+
+# --- 10.4 PHAROKKA 1.7.3  [✗ 待配置] ---
+# 说明：病毒基因组端到端注释工具，数据库 550 MB
+
+    conda create --prefix ${envs}/pharokka -y
+    conda install --prefix ${envs}/pharokka -y \
+        pharokka -c bioconda -c conda-forge --no-channel-priority
+    conda run --prefix ${envs}/pharokka pharokka.py --version 2>&1 | head -1
+
+    # PHAROKKA 数据库（从 Virus 项目解压，550 MB）
+    mkdir -p ${db}/pharokka
+    # ----
+    # 方法0：从 Virus_Apptainer_pipline 解压（推荐）
+    # ----
+    tar xzf ${VIRUS_PROJ}/db/pharokka-db.tar.gz \
+        -C ${db}/pharokka/ --strip-components=1 \
+        && echo "PHAROKKA 数据库就绪: ${db}/pharokka/"
+    # ----
+    # 方法1：官方自动下载
+    # ----
+    # conda run --prefix ${envs}/pharokka install_databases.py -d ${db}/pharokka
+    echo "PHAROKKA 数据库就绪: ${db}/pharokka/"
+
+
+# --- 10.5 PHOLD 1.0.0  [✗ 待配置] ---
+# 说明：病毒 ORF 结构注释（补充 PHAROKKA），数据库 32 GB（Virus 项目有压缩包）
+
+    conda create --prefix ${envs}/phold -y
+    conda install --prefix ${envs}/phold -y \
+        phold -c bioconda -c conda-forge --no-channel-priority
+    conda run --prefix ${envs}/phold phold --version 2>&1 | head -1
+
+    # PHOLD 数据库（从 Virus 项目解压，解压约 32 GB，耗时较长）
+    mkdir -p ${db}/phold
+    # ----
+    # 方法0：从 Virus_Apptainer_pipline 解压（推荐，约 20-30 分钟）
+    # ----
+    tar xzf ${VIRUS_PROJ}/db/phold-db.tar.gz \
+        -C ${db}/phold/ --strip-components=1 \
+        && echo "PHOLD 数据库就绪: ${db}/phold/"
+    # ----
+    # 方法1：官方自动下载
+    # ----
+    # conda run --prefix ${envs}/phold phold install -d ${db}/phold
+    echo "PHOLD 数据库就绪: ${db}/phold/"
+
+
+# --- 10.6 BACPHLIP 0.9.6  [✗ 待配置] ---
+# 说明：噬菌体生活方式预测（裂解/溶原），无需独立数据库（内置 HMM 模型）
+
+    conda create --prefix ${envs}/bacphlip -y
+    # 注：bacphlip 官方 conda 包名为 bacphlip，python 3.8 更稳定
+    conda install --prefix ${envs}/bacphlip -y \
+        python=3.8 -c conda-forge
+    conda run --prefix ${envs}/bacphlip pip install bacphlip
+    # 安装 hmmer（bacphlip 依赖 hmmscan）
+    conda install --prefix ${envs}/bacphlip -y hmmer -c bioconda -c conda-forge
+    conda run --prefix ${envs}/bacphlip python -m bacphlip --version 2>&1 | head -1
+    echo "BACPHLIP 环境就绪: ${envs}/bacphlip/"
+
+
+# --- 10.7 iPHoP 1.4.1  [✗ 待配置] ---
+# 说明：病毒-宿主关联预测，数据库 294 GB（Virus 项目已解压，直接引用）
+
+    conda create --prefix ${envs}/iphop -y
+    conda install --prefix ${envs}/iphop -y \
+        iphop -c bioconda -c conda-forge --no-channel-priority
+    conda run --prefix ${envs}/iphop iphop --version 2>&1 | head -1
+
+    # iPHoP 数据库（294 GB，Virus 项目已解压，直接软链接节省磁盘）
+    # 注：目录结构为 iphop-db/Jun_2025_pub_rw/
+    mkdir -p ${db}/iphop
+    # ----
+    # 方法0：软链接 Virus 项目已解压目录（推荐，节省 294 GB）
+    # ----
+    ln -sfn ${VIRUS_PROJ}/db/iphop-db/Jun_2025_pub_rw \
+        ${db}/iphop/Jun_2025_pub_rw \
+        && echo "iPHoP 数据库软链接就绪: ${db}/iphop/"
+    # ----
+    # 方法1：官方下载（需要大量时间和磁盘，不推荐）
+    # ----
+    # conda run --prefix ${envs}/iphop iphop download --db_dir ${db}/iphop
+    echo "iPHoP 数据库就绪: ${db}/iphop/"
+
+
+# --- 10.8 vConTACT3 3.1.3  [✗ 待配置] ---
+# 说明：病毒分类基因共享网络，数据库 3.4 GB
+
+    conda create --prefix ${envs}/vcontact3 -y
+    conda install --prefix ${envs}/vcontact3 -y \
+        vcontact3 -c bioconda -c conda-forge --no-channel-priority
+    conda run --prefix ${envs}/vcontact3 vcontact3 --version 2>&1 | head -1
+
+    # vConTACT3 数据库（从 Virus 项目解压，3.4 GB）
+    mkdir -p ${db}/vcontact3
+    # ----
+    # 方法0：从 Virus_Apptainer_pipline 解压（推荐）
+    # ----
+    tar xzf ${VIRUS_PROJ}/db/vcontact3-db.tar.gz \
+        -C ${db}/vcontact3/ --strip-components=1 \
+        && echo "vConTACT3 数据库就绪: ${db}/vcontact3/"
+    # ----
+    # 方法1：官方构建
+    # ----
+    # conda run --prefix ${envs}/vcontact3 \
+    #     vcontact3 prepare_databases --db-path ${db}/vcontact3/
+    echo "vConTACT3 数据库就绪: ${db}/vcontact3/"
+
+
+# --- 10.9 CheckV 数据库  [✗ 待配置] ---
+# 说明：envs/checkv 已安装（§5.1），仅缺数据库（2 GB）
+
+    mkdir -p ${db}/checkv
+    # ----
+    # 方法0：从 Virus_Apptainer_pipline 解压（推荐，2.1 GB tar.gz）
+    # 注：tar 内顶层目录为 checkv-db/，用 --strip-components=1 直接解压到 ${db}/checkv/
+    # ----
+    tar xzf ${VIRUS_PROJ}/db/checkv-db.tar.gz \
+        -C ${db}/checkv/ --strip-components=1 \
+        && echo "CheckV 数据库就绪: ${db}/checkv/"
+    ls ${db}/checkv/ 2>/dev/null | head -5
+    # ----
+    # 方法1：官方自动下载
+    # ----
+    # conda run --prefix ${envs}/checkv checkv download_database ${db}/checkv
+
+
+# --- 10.10 VOG 数据库（script 66 依赖）  [✗ 待配置] ---
+# 说明：VOG HMM 数据库（2.4 GB），供 66_vir_vog.sh 使用
+
+    mkdir -p ${db}/vogdb
+    # ----
+    # 方法0：从 Virus_Apptainer_pipline 解压（推荐，2.4 GB tar.gz）
+    # 注：解压后结构为 vog/vog.hmm.gz, vog/vog.dmnd, vog/misc/ 等
+    # ----
+    tar xzf ${VIRUS_PROJ}/db/vog.tar.gz \
+        -C ${db}/vogdb/ --strip-components=1 \
+        && echo "VOG 数据库就绪: ${db}/vogdb/"
+    # 解压 VOG HMM（压缩格式需先解压）
+    if [ -f "${db}/vogdb/vog.hmm.gz" ]; then
+        gunzip -k ${db}/vogdb/vog.hmm.gz
+        mv ${db}/vogdb/vog.hmm ${db}/vogdb/VOG.hmm
+        echo "VOG HMM 解压完成: ${db}/vogdb/VOG.hmm"
+    fi
+    ls -lh ${db}/vogdb/ 2>/dev/null
+    echo "VOG 数据库就绪: ${db}/vogdb/"
+
+
+# ==============================================================================
+# ← 下次从此处开始：§11 VOG annotation TSV（vog_annotations.tsv 需从 VOGDB 官网获取）
+#   网址：https://vogdb.org/download
 # ==============================================================================

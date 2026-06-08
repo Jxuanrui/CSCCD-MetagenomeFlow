@@ -42,19 +42,25 @@ SECONDS=0
 CONTIGS="${WORKDIR}/result/virus/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/virus/virsorter2/${SAMPLE}"
 SENTINEL="${OUTDIR}/final-viral-boundary.tsv"
+VS2_DB="${REPO}/db/virsorter2"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing: ${CONTIGS}"; exit 1; fi
+if [ ! -d "${VS2_DB}" ]; then echo "[ERROR] VirSorter2 数据库不存在: ${VS2_DB}"; exit 1; fi
 if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[virsorter2] 结果已存在，跳过"; exit 0; fi
 
 echo "[virsorter2] ${SAMPLE} | VirSorter2 病毒预测 ..."
+# virsorter2 内部会调用 conda info --json 检测 conda 环境
+# 需显式传入 CONDA_EXE 确保找到 conda 可执行文件
+CONDA_EXE="${REPO}/miniforge3/bin/conda" \
 conda run --prefix "${REPO}/envs/virsorter2" --no-capture-output \
     virsorter run \
         -w "${OUTDIR}" \
         -i "${CONTIGS}" \
+        --db-dir "${VS2_DB}" \
         --min-length 1000 \
         --include-groups "dsDNAphage,ssDNA,RNA,NCLDV,lavidaviridae" \
         -j "${CPUS}" \
-        --verbose 2>&1 | tail -5
+        --verbose 2>&1
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] virsorter2 失败"; exit ${EXIT_CODE}; fi

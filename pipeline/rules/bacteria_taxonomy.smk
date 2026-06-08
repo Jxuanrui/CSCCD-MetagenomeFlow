@@ -60,6 +60,7 @@ rule humann3:
         profile = WORKDIR + "/result/metaphlan4/{sample}/{sample}_profile.txt",
     output:
         pathabundance = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance.tsv",
+        pathabundance_relab = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance_relab.tsv",
         pathcoverage  = WORKDIR + "/result/humann3/{sample}/{sample}_pathcoverage.tsv",
         genefamilies  = WORKDIR + "/result/humann3/{sample}/{sample}_genefamilies.tsv",
     log:

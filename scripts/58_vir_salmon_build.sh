@@ -62,13 +62,23 @@ cat "${ALL_FFN}" "${VOTU_FA}" > "${INDEX_DIR}/gentrome.fasta"
 # decoy = vOTU only
 grep '^>' "${VOTU_FA}" | sed 's/^>//' > "${INDEX_DIR}/decoys.txt"
 
-echo "[salmon_build] 构建 Salmon index ..."
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    salmon index \
-        -t "${INDEX_DIR}/gentrome.fasta" \
-        -d "${INDEX_DIR}/decoys.txt" \
-        -i "${INDEX_DIR}" \
-        -p "${CPUS}" \
-        --keepDuplicates
+if [ ! -s "${INDEX_DIR}/decoys.txt" ]; then
+    echo "[salmon_build] WARN: decoys.txt 为空（可能是测试数据无病毒序列）"
+    echo "       跳过 decoy，仅构建标准 index"
+    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+        salmon index \
+            -t "${INDEX_DIR}/gentrome.fasta" \
+            -i "${INDEX_DIR}" \
+            -p "${CPUS}" \
+            --keepDuplicates
+else
+    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+        salmon index \
+            -t "${INDEX_DIR}/gentrome.fasta" \
+            -d "${INDEX_DIR}/decoys.txt" \
+            -i "${INDEX_DIR}" \
+            -p "${CPUS}" \
+            --keepDuplicates
+fi
 
 echo "[salmon_build] 完成，耗时 ${SECONDS}s"

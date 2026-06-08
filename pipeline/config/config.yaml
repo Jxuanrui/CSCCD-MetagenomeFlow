@@ -1,5 +1,9 @@
 samples:
-  - "SRR001"
+  - "S01"
+  - "S02"
+  - "S03"
+  - "S04"
+  - "S05"
 
 workdir: "/home/labuser/Course/Maxmetagenome/Project/Project_example"
 repo: "/home/labuser/Course/Maxmetagenome"

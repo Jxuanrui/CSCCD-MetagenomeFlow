@@ -55,8 +55,8 @@ if [ ! -d "${BAM_DIR}" ] || [ -z "$(ls "${BAM_DIR}"/*.bam 2>/dev/null)" ]; then
     mkdir -p "${BAM_DIR}"
     for sid_dir in "${WORKDIR}"/result/virus/assembly/*/; do
         sid=$(basename "$sid_dir")
-        R1="${WORKDIR}/temp/qc/kneaddata/${sid}/${sid}_1_kneaddata.fastq.gz"
-        R2="${WORKDIR}/temp/qc/kneaddata/${sid}/${sid}_2_kneaddata.fastq.gz"
+        R1="${WORKDIR}/result/kneaddata/${sid}/${sid}_1.kneaddata.fastq.gz"
+        R2="${WORKDIR}/result/kneaddata/${sid}/${sid}_2.kneaddata.fastq.gz"
         [ ! -f "$R1" ] && continue
         conda run --prefix "${REPO}/envs/coverm" --no-capture-output \
             coverm make \
@@ -80,12 +80,20 @@ conda run --prefix "${REPO}/envs/vrhyme" --no-capture-output \
         -t "${CPUS}" \
         --iter 15
 
+EXIT_CODE=$?
+if [ ${EXIT_CODE} -ne 0 ]; then
+    echo "[WARN] vRhyme 分箱失败（exit code: ${EXIT_CODE}），无法生成 vMAGs"
+    touch "${SENTINEL}"
+    echo "[vmag] 完成，耗时 ${SECONDS}s | vMAGs: 0（vRhyme 失败）"
+    exit 0
+fi
+
 # 步骤 2: 提取 bins
 echo "[vmag] 步骤 2/3: 提取 vMAGs ..."
 conda run --prefix "${REPO}/envs/vrhyme" --no-capture-output \
     vRhyme -i "${VOTU_FA}" -b "${BAM_DIR}"/*.bam \
         -o "${OUTDIR}/vrhyme" -l 10000 -t "${CPUS}" --iter 15 \
-        --derep_only 2>/dev/null || true
+        --derep_only
 
 # 简易提取: 从 vrhyme 输出提取 vMAGs
 if [ -d "${OUTDIR}/vrhyme" ]; then

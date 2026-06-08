@@ -58,10 +58,11 @@ rule vir_virsorter2:
 rule vir_checkv_contig:
     """Viral contig quality assessment — merge geNomad + VirSorter2 then run CheckV."""
     input:
-        genomad_summary = WORKDIR + "/result/virus/genomad/{sample}/summary/virus_summary.tsv",
+        genomad_summary = WORKDIR + "/result/virus/genomad/{sample}/identify/{sample}_summary/{sample}_virus_summary.tsv",
         vs2_boundary    = WORKDIR + "/result/virus/virsorter2/{sample}/final-viral-boundary.tsv",
     output:
         quality_summary = WORKDIR + "/result/virus/checkv/{sample}/quality_summary.tsv",
+        viruses_fna     = WORKDIR + "/result/virus/checkv/{sample}/viruses.fna",
     log:
         WORKDIR + "/logs/virus/checkv_contig/{sample}.log",
     threads: CPUS
@@ -190,10 +191,6 @@ rule vir_vmag:
     """vMAG binning via vRhyme (multi-sample coverage + protein features)."""
     input:
         contigs  = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
-        bam_files = expand(
-            WORKDIR + "/result/virus/votu/bam/{sample}.bam",
-            sample=SAMPLES,
-        ),
     output:
         vmag_done = WORKDIR + "/result/virus/vmag/bins/.done",
     log:

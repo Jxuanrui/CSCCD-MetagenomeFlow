@@ -52,6 +52,8 @@ GENOMAD_DB="${REPO}/db/genomad"
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing: ${CONTIGS}"; exit 1; fi
 if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[genomad] 结果已存在，跳过"; exit 0; fi
 
+mkdir -p "${OUTDIR}"
+
 echo "[genomad] ${SAMPLE} | geNomad 病毒鉴定 ..."
 conda run --prefix "${REPO}/envs/genomad" --no-capture-output \
     genomad end-to-end \

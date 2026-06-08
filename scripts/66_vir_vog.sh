@@ -46,9 +46,9 @@ VOG_ANNOT="${REPO}/db/vogdb/vog_annotations.tsv"
 
 if [ ! -f "${PROTEINS}" ] || [ ! -s "${PROTEINS}" ]; then
     echo "[WARN] 无病毒蛋白序列；尝试从 pharokka 结果收集 ..."
-    for f in "${WORKDIR}"/result/virus/pharokka/*/prodigal-gv.faa 2>/dev/null; do
+    for f in "${WORKDIR}"/result/virus/pharokka/*/prodigal-gv.faa; do
         [ -f "$f" ] && { PROTEINS="$f"; break; }
-    done
+    done 2>/dev/null
 fi
 if [ ! -f "${PROTEINS}" ]; then echo "[ERROR] 无法找到病毒蛋白序列"; exit 1; fi
 if [ ! -f "${VOG_HMM}" ]; then echo "[WARN] VOG HMM 数据库不存在: ${VOG_HMM}"; mkdir -p "${OUTDIR}"; touch "${HITS}"; exit 0; fi
