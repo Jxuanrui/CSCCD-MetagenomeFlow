@@ -16,6 +16,7 @@ include: "rules/bacteria_annotation.smk"
 include: "rules/bacteria_binning.smk"
 include: "rules/virome.smk"
 include: "rules/mycobiome.smk"
+include: "rules/statistics.smk"
 
 rule all:
     input:
@@ -95,3 +96,10 @@ rule all:
         WORKDIR + "/result/virus/bacphlip/bacphlip_results.tsv",
         WORKDIR + "/result/virus/iphop/iphop_host_prediction.tsv",
         WORKDIR + "/result/virus/vcontact3/genome_by_genome_overview.csv",
+        # Statistics
+        WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
+        WORKDIR + "/result/stat/diff/diff_summary.tsv",
+        WORKDIR + "/result/stat/network/network_summary.txt",
+        WORKDIR + "/result/stat/visualization/plots.done",
+        WORKDIR + "/result/stat/ml/siamcat_done.txt",
+        WORKDIR + "/result/stat/crosscohort/crosscohort_done.txt",
