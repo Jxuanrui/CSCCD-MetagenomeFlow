@@ -15,8 +15,8 @@ BINNING = WORKDIR + "/result/binning"
 rule coverm_depth:
     input:
         contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
-        r1 = WORKDIR + "/temp/qc/kneaddata/{sample}/{sample}_1_kneaddata.fastq.gz",
-        r2 = WORKDIR + "/temp/qc/kneaddata/{sample}/{sample}_2_kneaddata.fastq.gz",
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
         bam = BINNING + "/coverm/{sample}/{sample}.bam",
         depth = BINNING + "/coverm/{sample}/depth.txt",
@@ -108,8 +108,8 @@ rule drep:
 rule coverm_quant:
     input:
         mags = BINNING + "/drep/.done",
-        r1 = WORKDIR + "/temp/qc/kneaddata/{sample}/{sample}_1_kneaddata.fastq.gz",
-        r2 = WORKDIR + "/temp/qc/kneaddata/{sample}/{sample}_2_kneaddata.fastq.gz",
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
         tsv = BINNING + "/coverm_quant/{sample}.tsv",
     shell:
