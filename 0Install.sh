@@ -52,16 +52,16 @@
 #   [✓] §8.7 VIBRANT 数据库（11G，KEGG 9995 + VOG 19182 + Pfam，hmmpress 完成）  2026/06/02  测试通过
 #   [✓] §8.8 antiSMASH 数据库（从 Apptainer 项目解压，9.4 GB）                   2026/06/02  测试通过（10 个模块目录）
 #   [✓] §8.9 Snakemake 9.22.0（snakemake-minimal，miniforge3 base）                2026/06-06  测试通过（dry-run DAG 构建正常）
-#   [✗] §10.1 VirSorter2 2.2+（独立环境 + 数据库，virsorter run setup）            ← 待配置
-#   [✗] §10.2 vclust 1.3+（独立环境，无专用数据库）                                ← 待配置
-#   [✗] §10.3 vRhyme 1.1.0（独立环境，无专用数据库）                               ← 待配置
-#   [✗] §10.4 PHAROKKA 1.7.3（独立环境 + 数据库 550 MB）                           ← 待配置
-#   [✗] §10.5 PHOLD 1.0.0（独立环境 + 数据库 32 GB）                               ← 待配置
-#   [✗] §10.6 BACPHLIP 0.9.6（独立环境，无专用数据库）                             ← 待配置
-#   [✗] §10.7 iPHoP 1.4.1（独立环境 + 数据库 294 GB，Virus 项目已解压）            ← 待配置
-#   [✗] §10.8 vConTACT3 3.1.3（独立环境 + 数据库 3.4 GB）                          ← 待配置
-#   [✗] §10.9 CheckV 数据库（2 GB，envs/checkv 已装，仅缺数据库）                  ← 待配置
-#   [✗] §10.10 VOG 数据库（2.4 GB，script 66 依赖，Virus 项目有 vog.tar.gz）       ← 待配置
+#   [✓] §10.1 VirSorter2 2.2.4（独立环境 + 数据库）                               2026-06-08  已安装
+#   [✓] §10.2 vclust 1.3.1（独立环境，无专用数据库）                              2026-06-08  已安装
+#   [✓] §10.3 vRhyme 1.1.0（独立环境，无专用数据库）                              2026-06-08  已安装
+#   [✓] §10.4 PHAROKKA 1.9.1（独立环境 + 数据库 1.9G，命令：pharokka.py）        2026-06-08  已安装
+#   [✓] §10.5 PHOLD 1.2.5（独立环境 + 数据库）                                   2026-06-08  已安装
+#   [✓] §10.6 BACPHLIP 0.9.6（独立环境 + hmmer 3.4）                             2026-06-08  已安装
+#   [✓] §10.7 iPHoP 1.4.2（独立环境 + 数据库软链接 → Virus_Apptainer_pipline）   2026-06-08  已安装
+#   [✓] §10.8 vConTACT3 3.1.6（独立环境 + 数据库 v230）                          2026-06-08  已安装
+#   [✓] §10.9 CheckV 1.1.1（数据库 genome_db + hmm_db 就绪）                     2026-06-08  已安装
+#   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv）  2026-06-08  已安装
 #   [✗] §9   MCP / RAG 服务   ← 最终步骤
 # ==============================================================================
 
@@ -1189,7 +1189,7 @@ CHECKM_CFG
 VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
 
-# --- 10.1 VirSorter2 2.2+  [✗ 待配置] ---
+# --- 10.1 VirSorter2 2.2.4  [✓ 已完成 2026-06-08] ---
 # 说明：virsorter2 需要先安装再通过 `virsorter setup` 下载数据库（约 1.5 GB）
 
     conda create --prefix ${envs}/virsorter2 -y
@@ -1212,7 +1212,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "VirSorter2 数据库就绪: ${db}/virsorter2/"
 
 
-# --- 10.2 vclust 1.3+  [✗ 待配置] ---
+# --- 10.2 vclust 1.3.1  [✓ 已完成 2026-06-08] ---
 # 说明：vclust 仅用于序列聚类（vOTU 生成），无需独立数据库
 
     conda create --prefix ${envs}/vclust -y
@@ -1221,7 +1221,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "vclust 环境就绪: ${envs}/vclust/"
 
 
-# --- 10.3 vRhyme 1.1.0  [✗ 待配置] ---
+# --- 10.3 vRhyme 1.1.0  [✓ 已完成 2026-06-08] ---
 # 说明：vRhyme 用于病毒 MAG 聚合（61_vir_vmag.sh），无需独立数据库
 
     conda create --prefix ${envs}/vrhyme -y
@@ -1230,7 +1230,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "vRhyme 环境就绪: ${envs}/vrhyme/"
 
 
-# --- 10.4 PHAROKKA 1.7.3  [✗ 待配置] ---
+# --- 10.4 PHAROKKA 1.9.1  [✓ 已完成 2026-06-08] ---
 # 说明：病毒基因组端到端注释工具，数据库 550 MB
 
     conda create --prefix ${envs}/pharokka -y
@@ -1253,7 +1253,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "PHAROKKA 数据库就绪: ${db}/pharokka/"
 
 
-# --- 10.5 PHOLD 1.0.0  [✗ 待配置] ---
+# --- 10.5 PHOLD 1.2.5  [✓ 已完成 2026-06-08] ---
 # 说明：病毒 ORF 结构注释（补充 PHAROKKA），数据库 32 GB（Virus 项目有压缩包）
 
     conda create --prefix ${envs}/phold -y
@@ -1276,7 +1276,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "PHOLD 数据库就绪: ${db}/phold/"
 
 
-# --- 10.6 BACPHLIP 0.9.6  [✗ 待配置] ---
+# --- 10.6 BACPHLIP 0.9.6  [✓ 已完成 2026-06-08] ---
 # 说明：噬菌体生活方式预测（裂解/溶原），无需独立数据库（内置 HMM 模型）
 
     conda create --prefix ${envs}/bacphlip -y
@@ -1290,7 +1290,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "BACPHLIP 环境就绪: ${envs}/bacphlip/"
 
 
-# --- 10.7 iPHoP 1.4.1  [✗ 待配置] ---
+# --- 10.7 iPHoP 1.4.2  [✓ 已完成 2026-06-08] ---
 # 说明：病毒-宿主关联预测，数据库 294 GB（Virus 项目已解压，直接引用）
 
     conda create --prefix ${envs}/iphop -y
@@ -1314,7 +1314,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "iPHoP 数据库就绪: ${db}/iphop/"
 
 
-# --- 10.8 vConTACT3 3.1.3  [✗ 待配置] ---
+# --- 10.8 vConTACT3 3.1.6  [✓ 已完成 2026-06-08] ---
 # 说明：病毒分类基因共享网络，数据库 3.4 GB
 
     conda create --prefix ${envs}/vcontact3 -y
@@ -1338,7 +1338,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "vConTACT3 数据库就绪: ${db}/vcontact3/"
 
 
-# --- 10.9 CheckV 数据库  [✗ 待配置] ---
+# --- 10.9 CheckV 数据库  [✓ 已完成 2026-06-08] ---
 # 说明：envs/checkv 已安装（§5.1），仅缺数据库（2 GB）
 
     mkdir -p ${db}/checkv
@@ -1356,7 +1356,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # conda run --prefix ${envs}/checkv checkv download_database ${db}/checkv
 
 
-# --- 10.10 VOG 数据库（script 66 依赖）  [✗ 待配置] ---
+# --- 10.10 VOG 数据库  [✓ 已完成 2026-06-08] ---
 # 说明：VOG HMM 数据库（2.4 GB），供 66_vir_vog.sh 使用
 
     mkdir -p ${db}/vogdb
@@ -1378,6 +1378,6 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
 
 # ==============================================================================
-# ← 下次从此处开始：§11 VOG annotation TSV（vog_annotations.tsv 需从 VOGDB 官网获取）
+# ← §10 全部完成。下一步：§9 MCP / RAG 服务（最终步骤）
 #   网址：https://vogdb.org/download
 # ==============================================================================

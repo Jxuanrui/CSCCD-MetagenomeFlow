@@ -62,6 +62,8 @@ fi
 
 if [ ! -s "${ALL_VIRUS}" ]; then echo "[ERROR] 无病毒 contigs"; exit 1; fi
 
+mkdir -p "${OUTDIR}/vclust"
+
 # Step 2: vclust prefilter
 echo "[votu_gen] 步骤 2/4: vclust prefilter ..."
 conda run --prefix "${REPO}/envs/vclust" --no-capture-output \

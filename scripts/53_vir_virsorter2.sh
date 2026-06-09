@@ -41,7 +41,7 @@ done
 SECONDS=0
 CONTIGS="${WORKDIR}/result/virus/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/virus/virsorter2/${SAMPLE}"
-SENTINEL="${OUTDIR}/final-viral-boundary.tsv"
+SENTINEL="${OUTDIR}/final-viral-combined.fa"
 VS2_DB="${REPO}/db/virsorter2"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing: ${CONTIGS}"; exit 1; fi
@@ -53,7 +53,7 @@ echo "[virsorter2] ${SAMPLE} | VirSorter2 病毒预测 ..."
 # 需显式传入 CONDA_EXE 确保找到 conda 可执行文件
 CONDA_EXE="${REPO}/miniforge3/bin/conda" \
 conda run --prefix "${REPO}/envs/virsorter2" --no-capture-output \
-    virsorter run \
+    virsorter run --use-conda-off \
         -w "${OUTDIR}" \
         -i "${CONTIGS}" \
         --db-dir "${VS2_DB}" \

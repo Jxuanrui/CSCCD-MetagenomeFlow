@@ -39,7 +39,7 @@ SECONDS=0
 VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
 OUTDIR="${WORKDIR}/result/virus/votu/genomad"
 TAXONOMY="${OUTDIR}/virus_taxonomy.tsv"
-GENOMAD_DB="${REPO}/db/genomad"
+GENOMAD_DB="${REPO}/db/genomad/genomad/genomad_db"
 
 if [ ! -f "${VOTU_FA}" ] || [ ! -s "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在: ${VOTU_FA}"; exit 1; fi
 if [ -f "${TAXONOMY}" ] && [ -s "${TAXONOMY}" ]; then echo "[votu_genomad] 结果已存在，跳过"; exit 0; fi
@@ -58,9 +58,12 @@ conda run --prefix "${REPO}/envs/genomad" --no-capture-output \
         "${GENOMAD_DB}"
 
 # 提取分类注释
-TAXONOMY_SRC="$(find "${OUTDIR}/identify" -type f \( -name 'virus_taxonomy.tsv' -o -name 'vOTU_taxonomy.tsv' \) | head -n 1)"
-if [ -z "${TAXONOMY_SRC}" ]; then
-    TAXONOMY_SRC="$(find "${OUTDIR}/identify" -type f -name '*taxonomy.tsv' | head -n 1)"
+TAXONOMY_SRC="${OUTDIR}/vOTU.contigs_summary/vOTU.contigs_virus_summary.tsv"
+if [ ! -f "${TAXONOMY_SRC}" ]; then
+    TAXONOMY_SRC="$(find "${OUTDIR}" -type f -path '*/*.contigs_summary/*.contigs_virus_summary.tsv' | head -n 1)"
+fi
+if [ -z "${TAXONOMY_SRC}" ] || [ ! -f "${TAXONOMY_SRC}" ]; then
+    TAXONOMY_SRC="$(find "${OUTDIR}" -type f -name '*taxonomy.tsv' | head -n 1)"
 fi
 if [ -n "${TAXONOMY_SRC}" ] && [ -f "${TAXONOMY_SRC}" ]; then
     cp "${TAXONOMY_SRC}" "${TAXONOMY}"

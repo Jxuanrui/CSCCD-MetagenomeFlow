@@ -6,8 +6,8 @@
 # 依  赖: 51_vir_megahit.sh 的 contigs
 # 输  入: ${WORKDIR}/result/virus/assembly/{sample}/{sample}.contigs.fa
 # 输  出: ${WORKDIR}/result/virus/genomad/{sample}/
-#           identify/virus_summary.tsv  — 病毒鉴定汇总
-#           annotate/taxonomy.tsv       — 分类注释
+#           *.contigs_summary/*virus_summary.tsv  — 病毒鉴定汇总
+#           *.contigs_annotate/*taxonomy.tsv      — 分类注释
 #
 # ── 关键参数 ──────────────────────────────────────────────────────────────────
 #   --sensitivity 7.5    搜索灵敏度（越高越灵敏，推荐 4.2-7.5）
@@ -46,8 +46,8 @@ done
 SECONDS=0
 CONTIGS="${WORKDIR}/result/virus/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/virus/genomad/${SAMPLE}"
-SENTINEL="${OUTDIR}/identify/${SAMPLE}_summary/${SAMPLE}_virus_summary.tsv"
-GENOMAD_DB="${REPO}/db/genomad"
+SENTINEL="${OUTDIR}/${SAMPLE}.contigs_summary/${SAMPLE}.contigs_virus_summary.tsv"
+GENOMAD_DB="${REPO}/db/genomad/genomad/genomad_db"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing: ${CONTIGS}"; exit 1; fi
 if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[genomad] 结果已存在，跳过"; exit 0; fi

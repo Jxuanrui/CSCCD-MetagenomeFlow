@@ -53,7 +53,7 @@ CHK_DB="${REPO}/db/checkv"
 if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[checkv] 结果已存在，跳过"; exit 0; fi
 
 # Step 1: 合并 geNomad + VirSorter2 病毒序列后去重
-GENOMAD_VIRUS="${GENOMAD_DIR}/identify/${SAMPLE}_summary/${SAMPLE}_virus.fasta"
+GENOMAD_VIRUS="${GENOMAD_DIR}/${SAMPLE}.contigs_summary/${SAMPLE}.contigs_virus.fna"
 VS2_VIRUS="${VS2_DIR}/final-viral-combined.fasta"
 
 if [ -f "${GENOMAD_VIRUS}" ] && [ -f "${VS2_VIRUS}" ]; then
