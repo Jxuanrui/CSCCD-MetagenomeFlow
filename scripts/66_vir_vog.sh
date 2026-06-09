@@ -2,9 +2,9 @@
 # ==============================================================================
 # 脚本名: 66_vir_vog.sh
 # 功  能: VOG HMM 扫描（跨界病毒 HMM 数据库）
-#         工具版本：HMMER 3.3+（conda env: assembly）
-# 依  赖: 64_vir_pharokka.sh 的预测蛋白（prodigal-gv.faa）
-# 输  入: ${WORKDIR}/result/virus/pharokka/prodigal-gv.faa
+#         工具版本：HMMER 3.3+（conda env: bacphlip）
+# 依  赖: 64_vir_pharokka.sh 的预测蛋白（phanotate.faa）
+# 输  入: ${WORKDIR}/result/virus/pharokka/phanotate.faa
 # 输  出: ${WORKDIR}/result/virus/vog/
 #           vog_hits.tsv    — HMM 命中表
 #           vog_annot.tsv   — VOG 功能注释
@@ -37,8 +37,8 @@ for v in CPUS WORKDIR REPO; do
 done
 
 SECONDS=0
-PROTEINS="${WORKDIR}/result/virus/pharokka/prodigal-gv.faa"
-[ -f "$PROTEINS" ] || PROTEINS="${WORKDIR}/result/virus/pharokka/prodigal-gv.faa"
+PROTEINS="${WORKDIR}/result/virus/pharokka/phanotate.faa"
+[ -f "$PROTEINS" ] || PROTEINS="${WORKDIR}/result/virus/pharokka/phanotate.faa"
 OUTDIR="${WORKDIR}/result/virus/vog"
 HITS="${OUTDIR}/vog_hits.tsv"
 VOG_HMM="${REPO}/db/vogdb/VOG.hmm"
@@ -46,7 +46,7 @@ VOG_ANNOT="${REPO}/db/vogdb/vog_annotations.tsv"
 
 if [ ! -f "${PROTEINS}" ] || [ ! -s "${PROTEINS}" ]; then
     echo "[WARN] 无病毒蛋白序列；尝试从 pharokka 结果收集 ..."
-    for f in "${WORKDIR}"/result/virus/pharokka/*/prodigal-gv.faa; do
+    for f in "${WORKDIR}"/result/virus/pharokka/*/phanotate.faa; do
         [ -f "$f" ] && { PROTEINS="$f"; break; }
     done 2>/dev/null
 fi
@@ -58,9 +58,9 @@ if [ -f "${HITS}" ] && [ -s "${HITS}" ]; then echo "[vog] 结果已存在，跳�
 mkdir -p "${OUTDIR}"
 
 echo "[vog] VOG HMM 扫描 ..."
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+conda run --prefix "${REPO}/envs/bacphlip" --no-capture-output \
     hmmsearch \
-        --cut_ga \
+        -E 1e-5 \
         --cpu "${CPUS}" \
         -o /dev/null \
         --tblout "${HITS}" \

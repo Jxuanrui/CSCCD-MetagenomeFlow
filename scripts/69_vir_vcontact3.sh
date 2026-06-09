@@ -44,11 +44,11 @@ done
 
 SECONDS=0
 VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
-PROTEINS="${WORKDIR}/result/virus/pharokka/prodigal-gv.faa"
+PROTEINS="${WORKDIR}/result/virus/pharokka/phanotate.faa"
 G2G="${WORKDIR}/result/virus/votu/votu_gene2genome.tsv"
 LEN="${WORKDIR}/result/virus/votu/votu_lengths.tsv"
 OUTDIR="${WORKDIR}/result/virus/vcontact3"
-SENTINEL="${OUTDIR}/genome_by_genome_overview.csv"
+SENTINEL="${OUTDIR}/exports/final_assignments.csv"
 VDB="${REPO}/db/vcontact3"
 
 if [ ! -f "${VOTU_FA}" ] || [ ! -s "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在"; exit 1; fi
@@ -90,7 +90,7 @@ conda run --prefix "${REPO}/envs/vcontact3" --no-capture-output \
         --output "${OUTDIR}" \
         --db-path "${VDB}" \
         -t "${CPUS}" \
-        -e graphml cytoscape d3js completeness
+        -e graphml cytoscape completeness
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[WARN] vcontact3 失败（exit: ${EXIT_CODE}）"; touch "${SENTINEL}"; fi

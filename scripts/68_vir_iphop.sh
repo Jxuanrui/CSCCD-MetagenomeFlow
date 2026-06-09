@@ -6,7 +6,8 @@
 # 依  赖: 56_vir_votu_gen.sh 的 vOTU 序列
 # 输  入: ${WORKDIR}/result/virus/votu/contigs/virus.fasta
 # 输  出: ${WORKDIR}/result/virus/iphop/
-#           iphop_host_prediction.tsv  — 宿主预测表
+#           Host_prediction_to_genus_m90.csv — 宿主预测表（属级汇总）
+#           Host_prediction_to_genome_m90.csv — 宿主预测表（基因组级）
 #
 # ── 数据库 ────────────────────────────────────────────────────────────────────
 #   iPHoP 数据库需预下载至 ${REPO}/db/iphop/
@@ -42,8 +43,8 @@ done
 SECONDS=0
 VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
 OUTDIR="${WORKDIR}/result/virus/iphop"
-SENTINEL="${OUTDIR}/iphop_host_prediction.tsv"
-IPHOP_DB="${REPO}/db/iphop"
+SENTINEL="${OUTDIR}/Host_prediction_to_genus_m90.csv"
+IPHOP_DB="${REPO}/db/iphop/Jun_2025_pub_rw"
 
 if [ ! -f "${VOTU_FA}" ] || [ ! -s "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在"; exit 1; fi
 if [ ! -d "${IPHOP_DB}" ]; then echo "[WARN] iPHoP 数据库不存在: ${IPHOP_DB}，跳过"; mkdir -p "${OUTDIR}"; touch "${SENTINEL}"; exit 0; fi
@@ -57,8 +58,7 @@ conda run --prefix "${REPO}/envs/iphop" --no-capture-output \
         --fa_file "${VOTU_FA}" \
         --db_dir "${IPHOP_DB}" \
         --out_dir "${OUTDIR}" \
-        --num_threads "${CPUS}" \
-        --min_length 1000
+        --num_threads "${CPUS}"
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[WARN] iphop 失败（exit: ${EXIT_CODE}）"; touch "${SENTINEL}"; fi

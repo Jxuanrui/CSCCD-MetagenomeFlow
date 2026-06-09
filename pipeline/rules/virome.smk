@@ -28,7 +28,7 @@ rule vir_genomad:
     input:
         contigs = WORKDIR + "/result/virus/assembly/{sample}/{sample}.contigs.fa",
     output:
-        virus_summary = WORKDIR + "/result/virus/genomad/{sample}/identify/{sample}_summary/{sample}_virus_summary.tsv",
+        virus_summary = WORKDIR + "/result/virus/genomad/{sample}/{sample}.contigs_summary/{sample}.contigs_virus_summary.tsv",
     log:
         WORKDIR + "/logs/virus/genomad/{sample}.log",
     threads: CPUS
@@ -58,7 +58,7 @@ rule vir_virsorter2:
 rule vir_checkv_contig:
     """Viral contig quality assessment — merge geNomad + VirSorter2 then run CheckV."""
     input:
-        genomad_summary = WORKDIR + "/result/virus/genomad/{sample}/identify/{sample}_summary/{sample}_virus_summary.tsv",
+        genomad_summary = WORKDIR + "/result/virus/genomad/{sample}/{sample}.contigs_summary/{sample}.contigs_virus_summary.tsv",
         vs2_boundary    = WORKDIR + "/result/virus/virsorter2/{sample}/final-viral-boundary.tsv",
     output:
         quality_summary = WORKDIR + "/result/virus/checkv/{sample}/quality_summary.tsv",
@@ -244,7 +244,7 @@ rule vir_pharokka:
     output:
         pharokka_gff = WORKDIR + "/result/virus/pharokka/pharokka.gff",
         pharokka_cds = WORKDIR + "/result/virus/pharokka/pharokka_cds_final_merged_output.tsv",
-        prodigal_faa = WORKDIR + "/result/virus/pharokka/prodigal-gv.faa",
+        pharokka_faa = WORKDIR + "/result/virus/pharokka/phanotate.faa",
     log:
         WORKDIR + "/logs/virus/pharokka/pharokka.log",
     threads: CPUS
@@ -272,7 +272,7 @@ rule vir_phold:
 rule vir_vog:
     """Cross-species viral HMM scanning (VOGDB)."""
     input:
-        prodigal_faa = WORKDIR + "/result/virus/pharokka/prodigal-gv.faa",
+        pharokka_faa = WORKDIR + "/result/virus/pharokka/phanotate.faa",
     output:
         vog_hits   = WORKDIR + "/result/virus/vog/vog_hits.tsv",
         vog_annot  = WORKDIR + "/result/virus/vog/vog_annot.tsv",
@@ -305,7 +305,7 @@ rule vir_iphop:
     input:
         votu_fasta = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
     output:
-        host_tsv = WORKDIR + "/result/virus/iphop/iphop_host_prediction.tsv",
+        host_tsv = WORKDIR + "/result/virus/iphop/Host_prediction_to_genus_m90.csv",
     log:
         WORKDIR + "/logs/virus/iphop/iphop.log",
     threads: CPUS
@@ -319,9 +319,9 @@ rule vir_vcontact3:
     """Viral taxonomy via gene-sharing network (vConTACT3)."""
     input:
         votu_fasta  = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
-        prodigal_faa = WORKDIR + "/result/virus/pharokka/prodigal-gv.faa",
+        prodigal_faa = WORKDIR + "/result/virus/pharokka/phanotate.faa",
     output:
-        vcontact_overview = WORKDIR + "/result/virus/vcontact3/genome_by_genome_overview.csv",
+        vcontact_overview = WORKDIR + "/result/virus/vcontact3/exports/final_assignments.csv",
     log:
         WORKDIR + "/logs/virus/vcontact3/vcontact3.log",
     threads: CPUS
