@@ -77,6 +77,10 @@ rule all:
                workdir=WORKDIR, sample=SAMPLES),
         WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
         WORKDIR + "/result/binning/bakta/bakta_summary.tsv",
+        # WGS (MLST, Pan-genome, SNP)
+        WORKDIR + "/result/wgs/mlst/mlst.tsv",
+        WORKDIR + "/result/wgs/pangenome/summary_statistics.txt",
+        WORKDIR + "/result/wgs/snippy/core.tsv",
         # Virome assembly + QC
         expand("{workdir}/result/virus/checkv/{sample}/quality_summary.tsv",
                workdir=WORKDIR, sample=SAMPLES),

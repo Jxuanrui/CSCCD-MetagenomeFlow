@@ -137,3 +137,36 @@ rule bakta:
         summary = BINNING + "/bakta/bakta_summary.tsv",
     shell:
         "bash {REPO}/scripts/41_bac_bakta.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 41b: MLST typing of dereplicated MAGs (aggregate) ──────────────────────
+
+rule bac_mlst:
+    input:
+        drep_done = BINNING + "/drep/.done",
+    output:
+        tsv = WORKDIR + "/result/wgs/mlst/mlst.tsv",
+    shell:
+        "bash {REPO}/scripts/41b_bac_mlst.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 41c: Pan-genome analysis of MAG annotations (aggregate) ────────────────
+
+rule bac_pangenome:
+    input:
+        bakta_summary = BINNING + "/bakta/bakta_summary.tsv",
+    output:
+        summary = WORKDIR + "/result/wgs/pangenome/summary_statistics.txt",
+    shell:
+        "bash {REPO}/scripts/41c_bac_pangenome.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 41d: SNP/InDel analysis of dereplicated MAGs (aggregate) ───────────────
+
+rule bac_snippy:
+    input:
+        drep_done = BINNING + "/drep/.done",
+    output:
+        core_tsv = WORKDIR + "/result/wgs/snippy/core.tsv",
+    shell:
+        "bash {REPO}/scripts/41d_bac_snippy.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
