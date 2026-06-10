@@ -96,6 +96,10 @@ rule all:
         WORKDIR + "/result/virus/bacphlip/bacphlip_results.tsv",
         WORKDIR + "/result/virus/iphop/Host_prediction_to_genus_m90.csv",
         WORKDIR + "/result/virus/vcontact3/exports/final_assignments.csv",
+        # WGS integration (41b/41c/41d)
+        WORKDIR + "/result/wgs/mlst/mlst.tsv",
+        WORKDIR + "/result/wgs/pangenome/summary_statistics.txt",
+        WORKDIR + "/result/wgs/snippy/core.tsv",
         # Statistics
         WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
         WORKDIR + "/result/stat/diff/diff_summary.tsv",
@@ -103,3 +107,6 @@ rule all:
         WORKDIR + "/result/stat/visualization/plots.done",
         WORKDIR + "/result/stat/ml/siamcat_done.txt",
         WORKDIR + "/result/stat/crosscohort/crosscohort_done.txt",
+        WORKDIR + "/result/stat/batch/corrected_matrices.done",
+        WORKDIR + "/result/stat/batch/evaluation_report.tsv",
+        WORKDIR + "/result/stat/report/report.done",
