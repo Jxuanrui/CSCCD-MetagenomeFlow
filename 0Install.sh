@@ -1378,6 +1378,105 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
 
 # ==============================================================================
-# ← §10 全部完成。下一步：§9 MCP / RAG 服务（最终步骤）
-#   网址：https://vogdb.org/download
+# §11 真菌分析数据库（Mycobiome）
+# ==============================================================================
+
+
+# --- 11.1 肠道真菌参考数据库（gut_fungi DIAMOND DB） [✓ 已完成 2026-06-10] ---
+# 说明：供 74_fun_blast_gutdb.sh 使用，基于 NCBI 肠道真菌基因组（19G fasta）
+#       使用 diamond blastn 模式比对 reads → 鉴定真菌物种
+# 数据源：/data/mydirectory/db/fungi_human_gut_reference/combined.fasta
+
+    mkdir -p ${db}/fungi
+
+    # ----
+    # 方法0：从本服务器复制并构建 DMND（推荐，19G fasta → ~8G DMND，需数小时）
+    # ----
+    if [ ! -f "${db}/fungi/gut_fungi.dmnd" ]; then
+        cp /data/mydirectory/db/fungi_human_gut_reference/combined.fasta ${db}/fungi/combined.fasta
+        conda run --prefix ${envs}/assembly diamond makedb \
+            --in ${db}/fungi/combined.fasta \
+            -d ${db}/fungi/gut_fungi \
+            --threads $(nproc) --ignore-warnings
+        echo "肠道真菌 DIAMOND DB 构建完成"
+    fi
+
+    # ----
+    # 方法1：官方 NCBI 数据集下载
+    # ----
+    # 使用 ncbi_datasets 工具下载肠道真菌基因组集合，合并后构建 DMND
+    # datasets download genome taxon fungi --refseq --annotated --include genome
+    # unzip ncbi_dataset.zip && cat ncbi_dataset/data/*/*.fna > combined.fasta
+    # conda run --prefix ${envs}/assembly diamond makedb --in combined.fasta -d gut_fungi --threads $(nproc) --ignore-warnings
+
+    ls -lh ${db}/fungi/gut_fungi.dmnd 2>/dev/null
+
+
+# --- 11.2 MEROPS 蛋白酶 DIAMOND 索引 [✓ 已完成 2026-06-10] ---
+# 说明：供 86_fun_merops.sh 使用，从 peptidases.fasta.gz 构建 DIAMOND 蛋白索引
+#       1,227,939 条序列，287M 氨基酸，308M .dmnd
+
+    # 构建 DIAMOND 索引（去除 fasta 中可能存在的空格字符）
+    if [ ! -f "${db}/merops/peptidases.dmnd" ]; then
+        gzip -dc ${db}/merops/peptidases.fasta.gz \
+            | sed '/^[^>]/s/ //g' \
+            | conda run --prefix ${envs}/assembly diamond makedb \
+                --in /dev/stdin -d ${db}/merops/peptidases --threads $(nproc)
+        echo "MEROPS DIAMOND 索引构建完成"
+    fi
+
+    ls -lh ${db}/merops/peptidases.dmnd 2>/dev/null
+
+
+# --- 11.3 Eukfinder 真核生物 MAG 回收工具 [✓ 已完成 2026-06-10] ---
+# 说明：供 79_fun_eukfinder.sh 使用，已安装至 envs/assembly
+#       版本：1.2.4（bioconda），Python 3.6+
+#       功能：从宏基因组中回收真核生物基因组（真菌、原生动物等）
+
+    if ! conda run --prefix ${envs}/assembly bash -lc 'command -v Eukfinder_long' 2>/dev/null; then
+        conda install -p ${envs}/assembly -y eukfinder -c bioconda -c conda-forge
+        echo "Eukfinder 安装完成"
+    fi
+    conda run --prefix ${envs}/assembly eukfinder -h 2>&1 | head -3
+
+
+# --- 11.4 FunOMIC 真菌专用 WGS 流程 [⚠️ 待下载 — 未找到本地数据源] ---
+# 说明：供 75_fun_funomics.sh 使用
+#       脚本含自动回退：未检测到 funomic 命令时 → 使用 DIAMOND blastx 标记基因分类
+# 数据源：需从官方仓库下载
+#   - GitHub: https://github.com/zhanglab/FunOMIC
+#   - 数据库：~1.4G 标记基因（FunOMIC 官方提供）
+# 当前状态：未安装（脚本回退路径也需 db/funomic/*.dmnd）
+
+    # mkdir -p ${db}/funomic
+    # # TODO: 下载 FunOMIC 标记基因数据库
+    # # wget -c https://...funomic_db.tar.gz -O ${db}/funomic/funomic_db.tar.gz
+    # # tar xvf ${db}/funomic/funomic_db.tar.gz -C ${db}/funomic/
+    # # 然后构建 DIAMOND 索引（回退路径使用）
+    # # conda run --prefix ${envs}/assembly diamond makedb --in ${db}/funomic/markers.fasta -d ${db}/funomic/markers
+    # echo "[WARN] FunOMIC 数据库未安装 — 手动下载后执行上述命令"
+    # echo "      脚本 75 会自动检测 funomic 命令并回退到 DIAMOND 分类"
+
+
+# --- 11.5 CCMetagen + KMA/NCBI nt 数据库 [⚠️ 待下载 — 大文件] ---
+# 说明：供 76_fun_ccmetagen.sh 使用，CCMetagen 综合真核+原核分类
+#       基于 KMA 比对 NCBI nt 全库，结果通过 CCMetagen 生成分类谱系
+# 数据源：NCBI nt（981G BLAST 格式已存在 /data/mydirectory/db/NCBI_nt/）
+#         但 KMA 索引需要额外构建（~165G 解压 + 数天索引时间）
+# 预索引方案：下载 Figshare 预构建 KMA nt 索引（~103G 压缩）
+#   - https://melbourne.figshare.com/projects/CCMetagen_databases/195755
+# 当前状态：KMA 工具已安装至 envs/amr，CCMetagen 和 KMA 索引未部署
+# 建议：仅在有足够磁盘空间（>200G 空闲）时部署
+
+    # # 安装 CCMetagen
+    # conda install -p ${envs}/assembly -y ccmetagen -c bioconda -c conda-forge
+    # # 下载并解压预索引 KMA nt 数据库
+    # # mkdir -p ${db}/kma
+    # # wget -c https://figshare...ncbi_nt_kma.zip -O ${db}/kma/ncbi_nt_kma.zip
+    # # unzip ${db}/kma/ncbi_nt_kma.zip -d ${db}/kma/
+    # echo "[WARN] CCMetagen/KMA 数据库未安装 — 需 >200G 磁盘空间，延迟部署"
+
+
+# ==============================================================================
+# ← §11 全部完成。
 # ==============================================================================

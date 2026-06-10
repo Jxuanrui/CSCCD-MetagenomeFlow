@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 74_fun_blast_gutdb.sh
-# 功  能: DIAMOND blastx 比对肠道真菌数据库（gut fungi DB）
+# 功  能: DIAMOND blastn 比对肠道真菌参考基因组数据库（gut fungi DB）
 #         工具版本：DIAMOND 2.x（conda env: assembly）
+#     注: combined.fasta 为核苷酸基因组序列 (WGS)，使用 blastn 而非 blastx
 # 依  赖: 02_qc_kneaddata.sh 的输出（clean reads）
 # 输  入: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
 #         ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
@@ -68,7 +69,7 @@ mkdir -p "${OUTDIR}"
 zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${TMP_FASTQ}"
 
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    diamond blastx \
+    diamond blastn \
         --db "${DB_FILE}" \
         --query "${TMP_FASTQ}" \
         --out "${OUTPUT_TSV}" \
