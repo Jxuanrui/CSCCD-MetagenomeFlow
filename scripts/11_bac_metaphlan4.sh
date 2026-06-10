@@ -98,6 +98,12 @@ fi
 
 mkdir -p "${TEMP_DIR}" "${RESULT_DIR}"
 
+# 清理可能残留的 mapout 中间文件（MetaPhlAn4 拒绝覆盖已存在的 mapout）
+if [ -f "${MAPOUT}" ]; then
+    echo "[INFO] 清理残留 mapout 文件: ${MAPOUT}"
+    rm -f "${MAPOUT}"
+fi
+
 echo "[metaphlan4] 开始物种组成分析: ${SAMPLE}"
 echo "[metaphlan4] 输入: ${INPUT_R1}"
 echo "[metaphlan4]       ${INPUT_R2}"
