@@ -62,8 +62,7 @@ conda run --prefix "${REPO}/envs/dbcan" --no-capture-output \
         protein \
         --tools all \
         --db_dir "${DBCAN_DB}" \
-        --out_dir "${RESULT_DIR}" \
-        --cpu "${CPUS}"
+        --out_dir "${RESULT_DIR}"
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] run_dbcan 失败"; exit ${EXIT_CODE}; fi
