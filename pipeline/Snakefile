@@ -17,6 +17,9 @@ include: "rules/bacteria_binning.smk"
 include: "rules/virome.smk"
 include: "rules/mycobiome.smk"
 include: "rules/statistics.smk"
+include: "rules/rag.smk"
+
+RAG_REFRESH = config.get("rag_refresh", "false").lower() == "true"
 
 rule all:
     input:

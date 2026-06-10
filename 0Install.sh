@@ -62,7 +62,7 @@
 #   [✓] §10.8 vConTACT3 3.1.6（独立环境 + 数据库 v230）                          2026-06-08  已安装
 #   [✓] §10.9 CheckV 1.1.1（数据库 genome_db + hmm_db 就绪）                     2026-06-08  已安装
 #   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv）  2026-06-08  已安装
-#   [✗] §9   MCP / RAG 服务   ← 最终步骤
+#   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
 # ==============================================================================
 
 
@@ -1176,7 +1176,46 @@ CHECKM_CFG
 
 
 # ==============================================================================
-# 10. Virome 流程工具（来自 Virus_Apptainer_pipline，脚本 51-69）
+# 9. MCP / RAG 知识库服务
+# ==============================================================================
+# 说明：
+#   - 安装 rag conda 环境，含 ChromaDB（向量库）+ sentence-transformers（嵌入）
+#   - 建立经验知识库（docs/experience/ + docs/ + 脚本注释）
+#   - 建立文献知识库（PubTator 3.0 + PMC OA）
+#   - 启动 MCP stdio 服务器，供 Claude Code 调用
+# ==============================================================================
+
+# --- 9.1 创建 RAG conda 环境 ---
+
+    conda create --prefix ${envs}/rag python=3.10 -y 2>/dev/null
+    conda run --prefix ${envs}/rag pip install -q chromadb sentence-transformers requests
+
+    # 验证安装
+    conda run --prefix ${envs}/rag python -c "
+import chromadb; print(f'ChromaDB: {chromadb.__version__}')
+import sentence_transformers; print(f'sentence-transformers: {sentence_transformers.__version__}')
+import requests; print(f'requests: {requests.__version__}')
+" 2>/dev/null
+
+# --- 9.2 构建经验知识库 ---
+
+    conda run --prefix ${envs}/rag python mcp/indexer.py --repo ${PROJ_DIR} 2>/dev/null
+
+# --- 9.3 构建文献知识库（可选，需网络）---
+
+    # 首次构建（建议选择非高峰时段运行）
+    # conda run --prefix ${envs}/rag python mcp/literature_pipeline.py --repo ${PROJ_DIR} --max-articles 100
+
+# --- 9.4 注册 MCP 服务器（可选）---
+
+    # 在 Claude Code 中注册：
+    # claude mcp add meta-server-rag -- python ${PROJ_DIR}/mcp/server.py
+
+echo "§9 MCP / RAG 服务安装完成"
+
+# ==============================================================================
+# ← 下次从此处开始：§10 Virome 流程工具（已安装）
+# ==============================================================================
 # ==============================================================================
 # 说明：
 #   - Virus_Apptainer_pipline 使用 Apptainer 容器；MaxMetagenome 使用 conda 环境

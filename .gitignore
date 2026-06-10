@@ -1,49 +1,39 @@
+
 # ==============================================================================
-# MaxMetagenome .gitignore
-# 只追踪脚本、文档、配置文件；排除所有大型二进制/环境/数据库目录
-# ==============================================================================
-
-# Miniforge3 自包含环境（~27G）
-miniforge3/
-
-# Conda 工具环境（~23G）
-envs/
-
-# R 包库（~1.4G）
-Rlib/
-
-# 所有数据库（~700G）
-db/
-
-# 参考项目（大型 zip，体积过大不入库）
-Reference/
-
-# 分析项目数据（测序数据/中间文件/结果体积过大，不入库）
-Project/*/data/
-Project/*/temp/
-Project/*/result/
-
-# tool_learner 缓存已合并至 docs/tools_ref/（动态学习内容不入库）
-docs/tools_ref/*.auto.md
-
-# Snakemake 运行时缓存
-.snakemake/
-
-# Python 缓存
-__pycache__/
-*.pyc
-*.pyo
-
-# 系统文件
-.DS_Store
-*.swp
-*.swo
 *~
-
-# conda 临时文件
-.conda/
-*.tar.gz
 *.conda
-
-# 日志
+.conda/
+# conda 临时文件
+# Conda 工具环境（~23G）
+db/
+docs/tools_ref/*.auto.md
+.DS_Store
+envs/
 *.log
+# MaxMetagenome .gitignore
+mcp/chromadb_data/
+mcp/data/
+miniforge3/
+# Miniforge3 自包含环境（~27G）
+Project/*/data/
+Project/*/result/
+Project/*/temp/
+*.pyc
+__pycache__/
+*.pyo
+# Python 缓存
+Reference/
+Rlib/
+# R 包库（~1.4G）
+.snakemake/
+# Snakemake 运行时缓存
+*.swo
+*.swp
+*.tar.gz
+# tool_learner 缓存已合并至 docs/tools_ref/（动态学习内容不入库）
+# 分析项目数据（测序数据/中间文件/结果体积过大，不入库）
+# 参考项目（大型 zip，体积过大不入库）
+# 只追踪脚本、文档、配置文件；排除所有大型二进制/环境/数据库目录
+# 所有数据库（~700G）
+# 日志
+# 系统文件
