@@ -54,19 +54,32 @@ if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[checkv] 结果已�
 
 # Step 1: 合并 geNomad + VirSorter2 病毒序列后去重
 GENOMAD_VIRUS="${GENOMAD_DIR}/${SAMPLE}.contigs_summary/${SAMPLE}.contigs_virus.fna"
-VS2_VIRUS="${VS2_DIR}/final-viral-combined.fasta"
+# VirSorter2 2.2.4 输出 final-viral-combined.fa（非 .fasta）
+VS2_VIRUS="${VS2_DIR}/final-viral-combined.fa"
+if [ ! -f "${VS2_VIRUS}" ]; then
+    VS2_VIRUS="${VS2_DIR}/final-viral-combined.fasta"
+fi
 
-if [ -f "${GENOMAD_VIRUS}" ] && [ -f "${VS2_VIRUS}" ]; then
+# 检查输入文件是否存在且非空
+HAS_GENOMAD=false; HAS_VS2=false
+[ -f "${GENOMAD_VIRUS}" ] && [ -s "${GENOMAD_VIRUS}" ] && HAS_GENOMAD=true
+[ -f "${VS2_VIRUS}" ] && [ -s "${VS2_VIRUS}" ] && HAS_VS2=true
+
+if $HAS_GENOMAD || $HAS_VS2; then
     mkdir -p "${CONTIGS_DIR}"
-    cat "${GENOMAD_VIRUS}" "${VS2_VIRUS}" > "${CONTIGS_DIR}/_merged.fasta"
+    > "${CONTIGS_DIR}/_merged.fasta"
+    $HAS_GENOMAD && cat "${GENOMAD_VIRUS}" >> "${CONTIGS_DIR}/_merged.fasta"
+    $HAS_VS2 && cat "${VS2_VIRUS}" >> "${CONTIGS_DIR}/_merged.fasta"
     conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         seqkit rmdup -s -o "${VIRAL_CONTIGS}" "${CONTIGS_DIR}/_merged.fasta"
     rm -f "${CONTIGS_DIR}/_merged.fasta"
-elif [ -f "${GENOMAD_VIRUS}" ]; then
-    mkdir -p "${CONTIGS_DIR}"
-    cp "${GENOMAD_VIRUS}" "${VIRAL_CONTIGS}"
 else
-    echo "[ERROR] 无病毒预测结果（geNomad/VirSorter2）"; exit 1
+    echo "[WARN] S01 中未检测到病毒序列: geNomad 和 VirSorter2 均无有效输出"
+    mkdir -p "${OUTDIR}"
+    echo -e "sample_id\tnum_viral\tnuc_contam\tcompleteness\tcompleteness_method\tcontamination\tcontamination_method\tkmer_freq\tn50\tlength_max\ttotal_length\tgene_count\tviral_genes\thost_genes\tprovirus" > "${SENTINEL}"
+    echo "0\t0\t0\t0.0\tN/A\t0.0\tN/A\tNA\t0\t0\t0\t0\t0\t0\tN/A" >> "${SENTINEL}"
+    echo "[checkv] 生成空摘要（sentinel），下游步骤可正常感知"
+    exit 0
 fi
 
 # Step 2: CheckV
