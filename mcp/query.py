@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -146,16 +147,23 @@ def main():
 
     try:
         import chromadb
-        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
     except ImportError as exc:
         print(
             f"[query] ERROR missing dependency in runtime environment: {exc}. "
-            "Expected chromadb in the selected Python env.",
+            "Expected chromadb and sentence-transformers fallback support in the selected Python env.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    model = ONNXMiniLM_L6_V2()
+    try:
+        from sentence_transformers import SentenceTransformer
+
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        model = SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
+    except Exception:
+        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
+
+        model = ONNXMiniLM_L6_V2()
     client = chromadb.PersistentClient(str(chroma_dir))
 
     try:
@@ -164,7 +172,10 @@ def main():
         print(f"[query] ERROR failed to load collection: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    query_embedding = model([args.query])[0]
+    if hasattr(model, "encode"):
+        query_embedding = model.encode([args.query]).tolist()[0]
+    else:
+        query_embedding = model([args.query])[0]
     where_filter = load_filter(args.filter)
 
     all_rows = []

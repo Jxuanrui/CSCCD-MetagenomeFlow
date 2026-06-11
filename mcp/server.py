@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -43,9 +44,15 @@ def _load_runtime(repo):
         chroma_dir.mkdir(parents=True, exist_ok=True)
         _CLIENT = chromadb.PersistentClient(str(chroma_dir))
     if _MODEL is None:
-        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
+        try:
+            from sentence_transformers import SentenceTransformer
 
-        _MODEL = ONNXMiniLM_L6_V2()
+            os.environ["HF_HUB_OFFLINE"] = "1"
+            _MODEL = SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
+        except Exception:
+            from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
+
+            _MODEL = ONNXMiniLM_L6_V2()
 
 
 def _trim_document(text, limit=500):
@@ -103,7 +110,10 @@ def _handle_search(repo, params):
     n_results = int(params.get("n_results") or 5)
     where_filter = params.get("filters")
     collections = _get_collections(collection_name)
-    query_embedding = _MODEL([query_text])[0]
+    if hasattr(_MODEL, "encode"):
+        query_embedding = _MODEL.encode([query_text]).tolist()[0]
+    else:
+        query_embedding = _MODEL([query_text])[0]
 
     rows = []
     for collection in collections:

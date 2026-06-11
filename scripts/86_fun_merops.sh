@@ -58,7 +58,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     diamond blastp \
         --db "${DB_FILE}" \
         --query "${COMBINED_FAA}" \
-        --output "${OUTPUT_TSV}" \
+        --out "${OUTPUT_TSV}" \
         --outfmt 6 qseqid sseqid pident length evalue bitscore \
         --evalue 1e-5 \
         --max-target-seqs 1 \

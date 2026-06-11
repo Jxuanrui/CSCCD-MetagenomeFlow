@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 74_fun_blast_gutdb.sh
-# 功  能: DIAMOND blastn 比对肠道真菌参考基因组数据库（gut fungi DB）
+# 功  能: DIAMOND blastx 比对肠道真菌参考基因组数据库（gut fungi DB）
 #         工具版本：DIAMOND 2.x（conda env: assembly）
-#     注: combined.fasta 为核苷酸基因组序列 (WGS)，使用 blastn 而非 blastx
+#     注: combined.fasta 为核苷酸基因组序列 (WGS)，使用 DIAMOND blastx 按
+#          6-框翻译比对。DMND 数据库通过 diamond makedb --ignore-warnings 构建。
 # 依  赖: 02_qc_kneaddata.sh 的输出（clean reads）
 # 输  入: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
 #         ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
@@ -48,6 +49,7 @@ DB_FILE=""
 if [ ! -f "${INPUT_R1}" ]; then echo "[ERROR] 输入文件不存在: ${INPUT_R1}"; exit 1; fi
 if [ ! -f "${INPUT_R2}" ]; then echo "[ERROR] 输入文件不存在: ${INPUT_R2}"; exit 1; fi
 
+# 自动搜索 DIAMOND 数据库
 if [ -f "${REPO}/db/fungi/gut_fungi.dmnd" ]; then
     DB_FILE="${REPO}/db/fungi/gut_fungi.dmnd"
 else
@@ -56,7 +58,7 @@ fi
 if [ -z "${DB_FILE}" ]; then
     echo "[ERROR] 未找到真菌 DIAMOND 数据库: ${REPO}/db/fungi/"
     echo "        期望文件: ${REPO}/db/fungi/gut_fungi.dmnd"
-    echo "        构建示例: diamond makedb --in gut_fungi.fa -d ${REPO}/db/fungi/gut_fungi"
+    echo "        构建示例: diamond makedb --in combined.fasta -d ${REPO}/db/fungi/gut_fungi --ignore-warnings"
     exit 1
 fi
 
@@ -69,13 +71,13 @@ mkdir -p "${OUTDIR}"
 zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${TMP_FASTQ}"
 
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    diamond blastn \
+    diamond blastx \
         --db "${DB_FILE}" \
         --query "${TMP_FASTQ}" \
         --out "${OUTPUT_TSV}" \
-        --outfmt 6 qseqid sseqid pident length evalue bitscore staxids \
+        --outfmt 6 qseqid sseqid pident length evalue bitscore \
         --evalue 1e-5 \
-        --max-target-seqs 1 \
+        --max-target-seqs 5 \
         --threads "${CPUS}" \
         --sensitive
 EXIT_CODE=$?
@@ -88,4 +90,3 @@ fi
 
 N_HITS=$(wc -l < "${OUTPUT_TSV}" 2>/dev/null || echo "0")
 echo "[fun_blast_gutdb] 完成，耗时 ${SECONDS}s | 命中: ${N_HITS}"
-

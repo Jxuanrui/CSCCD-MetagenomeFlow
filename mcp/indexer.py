@@ -181,7 +181,6 @@ def main():
 
     try:
         import chromadb
-        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
         from doc_parser import (
             parse_experience_doc,
             parse_script_header,
@@ -193,13 +192,26 @@ def main():
     except ImportError as exc:
         print(
             f"[indexer] ERROR missing dependency in runtime environment: {exc}. "
-            "Expected chromadb and yaml support in the selected Python env.",
+            "Expected chromadb, sentence-transformers fallback support, and yaml support in the selected Python env.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    model = ONNXMiniLM_L6_V2()
-    set_tokenizer(None)
+    try:
+        from sentence_transformers import SentenceTransformer
+
+        import os
+        os.environ['HF_HUB_OFFLINE'] = '1'
+        model = SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
+        if hasattr(model, "tokenizer"):
+            set_tokenizer(model.tokenizer)
+        else:
+            set_tokenizer(None)
+    except Exception:
+        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
+
+        model = ONNXMiniLM_L6_V2()
+        set_tokenizer(None)
 
     chroma_dir = repo / "mcp" / "chromadb_data"
     chroma_dir.mkdir(parents=True, exist_ok=True)
@@ -236,7 +248,10 @@ def main():
         ids = [f"exp_{index}" for index in range(batch_start, batch_start + len(batch))]
         texts = [item[0] for item in batch]
         metadatas = [item[1] for item in batch]
-        embeddings = model(texts)
+        if hasattr(model, "encode"):
+            embeddings = model.encode(texts).tolist()
+        else:
+            embeddings = model(texts)
         collection.add(
             ids=ids,
             embeddings=embeddings,
