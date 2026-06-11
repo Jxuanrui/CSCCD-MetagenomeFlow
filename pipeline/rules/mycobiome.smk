@@ -91,23 +91,6 @@ rule fun_funomic:
         "> {log} 2>&1"
 
 
-rule fun_ccmetagen:
-    """KMA + CCMetagen-based fungal classification."""
-    input:
-        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
-    output:
-        out = WORKDIR + "/result/fungi/ccmetagen/{sample}/{sample}_species.txt",
-    log:
-        WORKDIR + "/logs/fungi/ccmetagen/{sample}.log",
-    threads: CPUS
-    shell:
-        "bash {REPO}/scripts/76_fun_ccmetagen.sh "
-        "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
-        "> {log} 2>&1"
-
-
 rule fun_microfisher:
     """MicroFisher-style fungal profile derived from Kraken2 classifications."""
     input:
