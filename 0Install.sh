@@ -1170,8 +1170,14 @@ CHECKM_CFG
     #     && rm -f ${db}/antismash/antismash_db.tar.gz
 
 
+# --- 8.9 Snakemake ---
+
+    # §8.9 — Snakemake（snakemake-minimal，项目内 miniforge3 base）
+    ${soft}/bin/conda install -y -n base -c conda-forge -c bioconda "snakemake-minimal>=9.0.0"
+
+
 # ==============================================================================
-# ← 下次从此处开始：§9 MCP / RAG 服务
+# §9 MCP / RAG 服务（已完成 2026-06-10）
 # ==============================================================================
 
 
