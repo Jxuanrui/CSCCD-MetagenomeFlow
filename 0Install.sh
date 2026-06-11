@@ -64,6 +64,7 @@
 #   [✓] §10.9 CheckV 1.1.1（数据库 genome_db + hmm_db 就绪）                     2026-06-08  已安装
 #   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv）  2026-06-08  已安装
 #   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建）        2026-06-11  已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
+#   [✓] §11.6 WGS 融入模块（mlst 2.11 + roary 3.12.0 in envs/prokaWGS；snippy 4.0.2 in envs/snippy）  2026-06-11  已安装
 #   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
 # ==============================================================================
 
@@ -1569,6 +1570,30 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # # unzip ${db}/kma/ncbi_nt_kma.zip -d ${db}/kma/
     # echo "[WARN] CCMetagen/KMA 数据库未安装 — 需 >200G 磁盘空间，延迟部署"
 
+
+
+# --- 11.6 WGS 融入模块：MLST / 泛基因组 / SNP 变异检测 [✓ 已完成 2026-06-11] ---
+# 说明：供 41b_bac_mlst.sh、41c_bac_pangenome.sh、41d_bac_snippy.sh 使用
+#       工具均安装在项目内 conda 环境（envs/prokaWGS、envs/snippy）
+#
+# 工具清单：
+#   - mlst     v2.11   (envs/prokaWGS)  — MAG 多位点序列分型，PubMLST 自动检测
+#   - roary    v3.12.0 (envs/prokaWGS)  — 泛基因组分析，需 ≥3 个 GFF（Prokka 注释输出）
+#   - snippy   v4.0.2  (envs/snippy)    — SNP/InDel 变异检测 + snippy-core + snippy-clean_full_aln
+#
+# 安装命令（首次部署时运行）：
+    # ${soft}/bin/conda create -y -p ${envs}/prokaWGS \
+    #     -c bioconda -c conda-forge \
+    #     mlst=2.11 roary=3.12.0 blast any2fasta mafft perl-bioperl
+
+    # ${soft}/bin/conda create -y -p ${envs}/snippy \
+    #     -c bioconda -c conda-forge \
+    #     snippy=4.0.2 snp-sites snp-dists
+
+# 验证：
+    # conda run --prefix ${envs}/prokaWGS mlst --version  # mlst 2.11
+    # conda run --prefix ${envs}/prokaWGS roary -w        # roary version line
+    # conda run --prefix ${envs}/snippy snippy --version  # snippy 4.0.2
 
 # ==============================================================================
 # ← §11 全部完成。
