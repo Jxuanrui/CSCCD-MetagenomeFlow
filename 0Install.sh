@@ -1552,23 +1552,10 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
         echo "[WARN] FunOMIC GitHub 仓库不可用，75_fun_funomics.sh 将使用 DIAMOND 回退"
 
 
-# --- 11.5 CCMetagen + KMA/NCBI nt 数据库 [⚠️ 待下载 — 大文件] ---
-# 说明：供 76_fun_ccmetagen.sh 使用，CCMetagen 综合真核+原核分类
-#       基于 KMA 比对 NCBI nt 全库，结果通过 CCMetagen 生成分类谱系
-# 数据源：NCBI nt（981G BLAST 格式已存在 /data/mydirectory/db/NCBI_nt/）
-#         但 KMA 索引需要额外构建（~165G 解压 + 数天索引时间）
-# 预索引方案：下载 Figshare 预构建 KMA nt 索引（~103G 压缩）
-#   - https://melbourne.figshare.com/projects/CCMetagen_databases/195755
-# 当前状态：KMA 工具已安装至 envs/amr，CCMetagen 和 KMA 索引未部署
-# 建议：仅在有足够磁盘空间（>200G 空闲）时部署
-
-    # # 安装 CCMetagen
-    # conda install -p ${envs}/assembly -y ccmetagen -c bioconda -c conda-forge
-    # # 下载并解压预索引 KMA nt 数据库
-    # # mkdir -p ${db}/kma
-    # # wget -c https://figshare...ncbi_nt_kma.zip -O ${db}/kma/ncbi_nt_kma.zip
-    # # unzip ${db}/kma/ncbi_nt_kma.zip -d ${db}/kma/
-    # echo "[WARN] CCMetagen/KMA 数据库未安装 — 需 >200G 磁盘空间，延迟部署"
+# --- 11.5 CCMetagen + KMA/NCBI nt 数据库 [✗ 永久跳过 — 用户确认不需要] ---
+# 说明：76_fun_ccmetagen.sh 已从 Snakemake pipeline rule all 中移除
+#       registry.yaml 中状态已更新为 removed
+#       真菌分类由 71/72/75/77 四条路径覆盖，CCMetagen 不影响分析完整性
 
 
 
