@@ -44,3 +44,4 @@ skills/discovery/report/
 *.md~
 # 编辑器临时 md 文件
 九种 RAG 架构详解.md
+.tmp/

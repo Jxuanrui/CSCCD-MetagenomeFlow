@@ -36,6 +36,7 @@
 #   [✓] §6.2 CRAN 包（vegan 2.7.5 / ggplot2 4.0.3 / dplyr 等 16 个）  2026/06/01  测试通过
 #   [✓] §6.3 Bioconductor 包（phyloseq / DESeq2 / edgeR / microbiome / treeio / Maaslin2）  2026/06/01  测试通过
 #   [✓] §6.4 ANCOMBC 2.12.0 + ggtree 4.0.4（conda bioconda 安装）  2026/06/01  测试通过
+#   [✓] §6.5 统计 R 包 (SIAMCAT / curatedMGD / MMUPHin / ConQuR / MBECS / sva / BatchQC)  2026/06/11  测试通过
 #   [✓] §7.1 assembly 环境扩充（centrifuger 1.0.5 / mmseqs2 13.45 / seqtk 1.4）  2026/06/02  测试通过
 #   [✓] §7.3 genomad 1.12.0（独立环境，--no-channel-priority）                    2026/06/02  测试通过
 #   [✓] §7.5 功能注释数据库（vfdb/bacmet/merops/sarg/phi/mvirdb/tcdb/ncyc/pcyc/amrfinder/genomad）  2026/06/02  测试通过
@@ -62,6 +63,7 @@
 #   [✓] §10.8 vConTACT3 3.1.6（独立环境 + 数据库 v230）                          2026-06-08  已安装
 #   [✓] §10.9 CheckV 1.1.1（数据库 genome_db + hmm_db 就绪）                     2026-06-08  已安装
 #   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv）  2026-06-08  已安装
+#   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建）        2026-06-11  已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
 #   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
 # ==============================================================================
 
@@ -852,19 +854,55 @@ CHECKM_CFG
     "
 
 
-# --- 6.4 activate.sh 中加入 Rlib 路径 ---
+# --- 6.5 统计 R 包（SIAMCAT / curatedMetagenomicData / MMUPHin / ConQuR / MBECS / sva / BatchQC）---
+
+    # 注：全部安装到项目内 Rlib，不写入系统库
+    # 注：ConQuR 依赖 GUniFrac，需编译 C++；当前 conda R 的 Makeconf 指向
+    #     x86_64-conda-linux-gnu-c++，故在项目内创建同名 wrapper 到系统 gcc/g++
+    mkdir -p ${PROJ_DIR}/Rlib ${PROJ_DIR}/.tmp/r-toolchain/bin
+    ln -sf /usr/bin/gcc ${PROJ_DIR}/.tmp/r-toolchain/bin/x86_64-conda-linux-gnu-cc
+    ln -sf /usr/bin/g++ ${PROJ_DIR}/.tmp/r-toolchain/bin/x86_64-conda-linux-gnu-c++
+    ln -sf /usr/bin/cpp ${PROJ_DIR}/.tmp/r-toolchain/bin/x86_64-conda-linux-gnu-cpp
+
+    PATH="${PROJ_DIR}/.tmp/r-toolchain/bin:${PATH}" \
+    ${PROJ_DIR}/miniforge3/bin/Rscript -e "
+    options(repos = c(CRAN = 'https://cloud.r-project.org'))
+    lib <- '${PROJ_DIR}/Rlib'
+    .libPaths(c(lib, .libPaths()))
+    if (!requireNamespace('BiocManager', quietly=TRUE))
+        install.packages('BiocManager', lib=lib)
+    BiocManager::install(c(
+        'SIAMCAT',
+        'curatedMetagenomicData',
+        'MMUPHin',
+        'MBECS',
+        'sva',
+        'BatchQC'
+    ), lib=lib, update=FALSE, ask=FALSE)
+    if (!requireNamespace('remotes', quietly=TRUE))
+        install.packages('remotes', lib=lib)
+    if (!requireNamespace('ConQuR', quietly=TRUE)) {
+        remotes::install_github('wdl2459/ConQuR', lib=lib, upgrade='never')
+    }
+    "
+
+
+# --- 6.6 activate.sh 中加入 Rlib 路径 ---
 
     # 将 Rlib 路径写入 activate.sh，每次 source 后 R 自动找到项目包
     echo "export R_LIBS_USER=\"${PROJ_DIR}/Rlib\"" \
         >> ${PROJ_DIR}/scripts/activate.sh
 
 
-# --- 6.5 版本验证 ---
+# --- 6.7 版本验证 ---
 
     ${PROJ_DIR}/miniforge3/bin/Rscript -e "
     lib <- '${PROJ_DIR}/Rlib'
     .libPaths(c(lib, .libPaths()))
-    pkgs <- c('vegan','ggplot2','phyloseq','DESeq2','ANCOMBC','ggtree','Maaslin2')
+    pkgs <- c(
+        'vegan','ggplot2','phyloseq','DESeq2','ANCOMBC','ggtree','Maaslin2',
+        'SIAMCAT','curatedMetagenomicData','MMUPHin','ConQuR','MBECS','sva','BatchQC'
+    )
     for (p in pkgs) {
         v <- tryCatch(as.character(packageVersion(p)), error=function(e) 'NOT INSTALLED')
         cat(sprintf('  %-15s %s\n', p, v))
@@ -1485,22 +1523,32 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     conda run --prefix ${envs}/assembly eukfinder -h 2>&1 | head -3
 
 
-# --- 11.4 FunOMIC 真菌专用 WGS 流程 [⚠️ 待下载 — 未找到本地数据源] ---
+# --- 11.4 FunOMIC 真菌专用 WGS 流程 [✓ 已完成 2026-06-11] ---
 # 说明：供 75_fun_funomics.sh 使用
 #       脚本含自动回退：未检测到 funomic 命令时 → 使用 DIAMOND blastx 标记基因分类
-# 数据源：需从官方仓库下载
-#   - GitHub: https://github.com/zhanglab/FunOMIC
-#   - 数据库：~1.4G 标记基因（FunOMIC 官方提供）
-# 当前状态：未安装（脚本回退路径也需 db/funomic/*.dmnd）
+# 数据源：本地 tarball
+#   - /home/labuser/FunOMIC-P.tar.xz  → 功能蛋白 DIAMOND 数据库
+#   - /home/labuser/FunOMIC-T.tar.xz  → Bowtie2 分类索引
+# 当前状态：数据库已部署；envs/funomic 已创建，但 GitHub 包仓库不可用，脚本当前走 DIAMOND 回退
 
-    # mkdir -p ${db}/funomic
-    # # TODO: 下载 FunOMIC 标记基因数据库
-    # # wget -c https://...funomic_db.tar.gz -O ${db}/funomic/funomic_db.tar.gz
-    # # tar xvf ${db}/funomic/funomic_db.tar.gz -C ${db}/funomic/
-    # # 然后构建 DIAMOND 索引（回退路径使用）
-    # # conda run --prefix ${envs}/assembly diamond makedb --in ${db}/funomic/markers.fasta -d ${db}/funomic/markers
-    # echo "[WARN] FunOMIC 数据库未安装 — 手动下载后执行上述命令"
-    # echo "      脚本 75 会自动检测 funomic 命令并回退到 DIAMOND 分类"
+    mkdir -p "${db}/funomic/P"
+    tar -xJf /home/labuser/FunOMIC-P.tar.xz \
+        --strip-components=6 \
+        -C "${db}/funomic/P"
+    ls -lh "${db}/funomic/P/"
+    ls -lh "${db}/funomic/P/"*.dmnd
+
+    mkdir -p "${db}/funomic/T"
+    tar -xJf /home/labuser/FunOMIC-T.tar.xz \
+        --strip-components=1 \
+        -C "${db}/funomic/T"
+    ls -lh "${db}/funomic/T/"
+
+    ${soft}/bin/conda create -y -p "${envs}/funomic" \
+        python=3.9 -c conda-forge
+    "${envs}/funomic/bin/pip" install \
+        git+https://github.com/zhanglab/FunOMIC.git || \
+        echo "[WARN] FunOMIC GitHub 仓库不可用，75_fun_funomics.sh 将使用 DIAMOND 回退"
 
 
 # --- 11.5 CCMetagen + KMA/NCBI nt 数据库 [⚠️ 待下载 — 大文件] ---
