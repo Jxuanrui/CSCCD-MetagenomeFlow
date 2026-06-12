@@ -145,7 +145,8 @@ def main():
 
     downloaded_pmcids = fetch_all_pmcs(search_results_path, data_dir, max_articles=args.max_articles)
     extracted_methods = extract_all_methods(pmc_dir, methods_dir)
-    annotations = annotate_all(downloaded_pmcids, annotations_dir, pmc_dir, methods_dir)
+    # Skip PubTator annotation on this server (NCBI IP blocked)
+    annotations = {}
 
     updated_rows = _load_jsonl(search_results_path)
     article_lookup = _build_article_lookup(updated_rows)
@@ -154,7 +155,9 @@ def main():
     model = None
     if extracted_methods:
         try:
-            model = sentence_transformers.SentenceTransformer("BAAI/bge-small-zh-v1.5")
+            import os
+            os.environ['HF_HUB_OFFLINE'] = '1'
+            model = sentence_transformers.SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
             if hasattr(model, "tokenizer"):
                 set_tokenizer(model.tokenizer)
         except Exception as exc:

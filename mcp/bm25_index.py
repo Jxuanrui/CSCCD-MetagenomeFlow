@@ -63,7 +63,8 @@ class BM25Index:
                 handle,
             )
 
-    def load(self, path: Path) -> bool:
+    def load(self, path) -> bool:
+        path = Path(path)
         if not path.exists():
             return False
         with open(path, "rb") as handle:

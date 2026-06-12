@@ -4,23 +4,18 @@ import json
 import re
 import sys
 import time
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
 
 
-ELINK_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi"
-EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+EUROPE_PMC_SEARCH_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+EUROPE_PMC_FULLTEXT_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTextXML"
 USER_AGENT = "MaxMetagenome/1.0"
 
 
 def warn(message):
     print(f"[pmc_fetch] WARNING {message}", file=sys.stderr)
-
-
-def _is_blocked_response(text):
-    return "WWW Error Blocked Diagnostic" in str(text)
 
 
 def _safe_get(url, params, sleep_seconds):
@@ -29,10 +24,11 @@ def _safe_get(url, params, sleep_seconds):
         try:
             response = requests.get(url, params=params, headers=headers, timeout=60)
             time.sleep(sleep_seconds)
+            if response.status_code == 404:
+                # Resource does not exist; no point retrying.
+                return None
             if response.status_code >= 400:
                 raise RuntimeError(f"http {response.status_code}")
-            if _is_blocked_response(response.text):
-                raise RuntimeError("blocked by NCBI")
             return response
         except Exception as exc:
             if attempt == 0:
@@ -58,29 +54,34 @@ def _normalize_pmcid(value):
     return match.group(0).upper() if match else text
 
 
-def _extract_pmcid_from_json(payload):
+def _extract_pmcid_from_search(payload):
     if not isinstance(payload, dict):
         return ""
-    for linkset in payload.get("linksets") or []:
-        for key in ["linksetdbs", "linksetdb"]:
-            for link_group in linkset.get(key) or []:
-                for link_id in link_group.get("links") or []:
-                    pmcid = _normalize_pmcid(link_id)
-                    if pmcid:
-                        return pmcid
+    results = (payload.get("resultList") or {}).get("result") or []
+    for result in results:
+        pmcid = _normalize_pmcid((result or {}).get("pmcid"))
+        if pmcid:
+            return pmcid
     return ""
 
 
-def _extract_pmcid_from_xml(text):
-    try:
-        root = ET.fromstring(text)
-    except Exception:
+def _resolve_pmcid(pmid):
+    response = _safe_get(
+        EUROPE_PMC_SEARCH_URL,
+        {
+            "query": f"EXT_ID:{pmid} AND SRC:MED",
+            "resultType": "core",
+            "format": "json",
+        },
+        sleep_seconds=0.5,
+    )
+    if response is None:
         return ""
-    for element in root.iter():
-        if str(element.tag).endswith("Id") and element.text:
-            pmcid = _normalize_pmcid(element.text)
-            if pmcid:
-                return pmcid
+
+    try:
+        return _extract_pmcid_from_search(response.json())
+    except Exception as exc:
+        warn(f"failed to parse Europe PMC search response for PMID {pmid}: {exc}")
     return ""
 
 
@@ -105,31 +106,6 @@ def _write_jsonl(path, rows):
     file_path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
 
 
-def _resolve_pmcid(pmid):
-    response = _safe_get(
-        ELINK_URL,
-        {
-            "dbfrom": "pubmed",
-            "db": "pmc",
-            "id": pmid,
-            "retmode": "json",
-        },
-        sleep_seconds=1.0,
-    )
-    if response is None:
-        return ""
-
-    try:
-        payload = response.json()
-        pmcid = _extract_pmcid_from_json(payload)
-        if pmcid:
-            return pmcid
-    except Exception:
-        pass
-
-    return _extract_pmcid_from_xml(response.text)
-
-
 def fetch_pmc_xml(pmcid, output_dir):
     normalized_pmcid = _normalize_pmcid(pmcid)
     if not normalized_pmcid:
@@ -142,21 +118,16 @@ def fetch_pmc_xml(pmcid, output_dir):
         return xml_path
 
     response = _safe_get(
-        EFETCH_URL,
-        {
-            "db": "pmc",
-            "id": normalized_pmcid,
-            "rettype": "xml",
-            "retmode": "xml",
-        },
-        sleep_seconds=1.0,
+        EUROPE_PMC_FULLTEXT_URL.format(pmcid=normalized_pmcid),
+        None,
+        sleep_seconds=0.5,
     )
     if response is None:
         return None
 
     text = response.text.strip()
     if not text.startswith("<"):
-        warn(f"unexpected efetch response for {normalized_pmcid}")
+        warn(f"unexpected Europe PMC fullTextXML response for {normalized_pmcid}")
         return None
 
     xml_path.write_text(text, encoding="utf-8")
@@ -181,6 +152,10 @@ def fetch_all_pmcs(search_results_jsonl, output_dir, max_articles=None):
                     row["pmcid"] = pmcid
 
         if not pmcid or pmcid in seen_pmcids:
+            continue
+
+        # Skip if not OA (has_fulltext flag from Europe PMC search)
+        if not row.get("has_fulltext"):
             continue
 
         xml_path = fetch_pmc_xml(pmcid, output_dir)
