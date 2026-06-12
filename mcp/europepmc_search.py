@@ -204,6 +204,34 @@ SEARCH_TOPICS = [
         "id": "bile_acid_metabolism",
         "terms": '("bile acid metabolism" OR "bile acids")',
     },
+    {
+        "id": "mag_quality_mimag",
+        "terms": '("MIMAG" OR "minimum information about a metagenome-assembled genome") AND ("MAG quality" OR completeness OR contamination OR standards)',
+    },
+    {
+        "id": "crispr_spacer_host",
+        "terms": '(CRISPR AND spacer AND ("host prediction" OR "host assignment" OR phage))',
+    },
+    {
+        "id": "eukfinder_fungal_mag",
+        "terms": '("Eukfinder" OR EukFinder) AND (fungal OR eukaryotic OR binning OR MAG)',
+    },
+    {
+        "id": "eggnog_functional_annotation",
+        "terms": '("eggNOG-mapper" OR eggNOG OR "eggNOG mapper") AND ("functional annotation" OR COG OR KEGG OR GO)',
+    },
+    {
+        "id": "kegg_pathway_gut",
+        "terms": '(KEGG AND pathway AND gut AND metagenomics)',
+    },
+    {
+        "id": "fastp_kneaddata_qc",
+        "terms": '("fastp" OR KneadData) AND ("quality control" OR preprocessing OR "host removal")',
+    },
+    {
+        "id": "dastool_bin_refinement",
+        "terms": '("DAS Tool" OR DAS_Tool OR DASTool) AND ("bin refinement" OR binning OR integration)',
+    },
 ]
 
 
