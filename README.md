@@ -1,7 +1,7 @@
-# MaxMetagenome — 宏基因组深度挖掘分析平台
+# MaxMetagenome — 完整宏基因组多维度分析平台
 
 **作者**: Jxuanrui  
-**版本**: 0.2  **日期**: 2026-06-06  
+**版本**: v1.0.0  **日期**: 2026-06-12  
 **平台**: Linux x86_64 (Ubuntu 22.04+)  
 **环境管理**: Miniforge3（自包含，支持跨服务器迁移）
 
@@ -9,457 +9,266 @@
 
 ## 项目概述
 
-MaxMetagenome 是一个综合性宏基因组深度挖掘分析平台，覆盖从原始测序数据到功能注释、MAG 挖掘、深度生态学解析的完整分析体系，支持细菌、病毒、真菌三大物种维度并行分析。
+MaxMetagenome 是一个面向肠道微生物组研究的**完整多维度宏基因组分析平台**，覆盖从原始测序数据到论文级统计可视化的全流程，支持三大生命域并行分析。
 
-**核心特性**：
-- 三大分析维度：细菌（脚本 11-41）/ 病毒（51-69）/ 真菌（71-86）
-- 三种运行模式：逐步模式（研究级精细控制）/ Bash Pipeline（轻量批量处理）/ Snakemake（生产级 DAG 流程）
-- 自包含环境：23 个独立 conda 环境，支持跨服务器迁移
-- 完整工具链：物种分类 → 功能注释 → 组装 → Binning → MAG 深度注释
+**核心指标**:
+- **87 个分析脚本**（01-98 编号，逐步执行）
+- **83 条 Snakemake 规则**（全流程 DAG，8 个规则文件）
+- **37 个独立 conda 环境**（工具隔离，避免依赖冲突）
+- **~700G 分析数据库**（含 ChocoPhlAn、UniRef90、GTDB R226、VOGDB 等）
+- **15 个 Claude Code 斜杠命令**（`/mgx-*` 前缀，AI 辅助分析）
+- **RAG 知识库**（经验文档 + 文献 Methods 索引，ChromaDB + bge-small-zh-v1.5）
+
+**设计原则**：一套脚本库，三种运行模式，零重复劳动。
+
+---
+
+## 三大分析维度
+
+| 维度 | 脚本范围 | 覆盖内容 |
+|------|----------|----------|
+| **🦠 细菌（Bacteria）** | 11 – 41d | 物种分类 · 菌株追踪 · 功能通路 · 组装 · MAG 挖掘 · 耐药 · 毒力 · CAZyme · 次级代谢 · WGS 融合 |
+| **🦠 病毒（Virome）** | 51 – 69 | 病毒鉴定 · vOTU 聚类 · 宿主预测 · 生活方式 · 基因组注释 · 宿主范围 |
+| **🍄 真菌（Mycobiome）** | 71 – 86 | 多策略分类 · 真菌组装 · MAG 回收 · CAZyme · 毒力因子 · 蛋白酶 · AMR |
+| **📊 统计分析** | 91 – 98 | Alpha/Beta 多样性 · 差异分析 · 批次校正 · ML 分类器 · 跨队列验证 · 报告生成 |
 
 ---
 
 ## 快速启动
 
+### 1. 激活项目环境（每次分析前执行）
+
 ```bash
-# 每次分析前执行（激活项目环境）
 source ~/Course/Maxmetagenome/scripts/activate.sh
 
-# 首次迁移到新服务器后执行一次
+# 首次迁移到新服务器后额外执行一次
 bash ~/Course/Maxmetagenome/scripts/checkm_config.sh
 ```
 
----
+### 2. 三种运行模式
 
-## 三种运行模式
+**模式一：逐步运行（研究级精细调控）**
 
-MaxMetagenome 支持三种互补的运行模式：
-
-### 模式一：逐步模式（Step-by-step）
-
-**定位**：研究级，每步独立运行，参数可精细调控，适合探索性分析和调试。
+每步独立运行，参数可精细调控，适合单步调试或探索性分析。
 
 ```bash
-# 单步运行示例
-bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
-bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
-bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
-bash scripts/13_bac_humann3.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome
-
-# 高深度样本（>20M reads）推荐 balanced 模式（5-10× 提速，精度损失 <5%）
-bash scripts/13_bac_humann3.sh    -s SAMPLE_ID -t 16 -w Project/Project_A -r ~/Course/Maxmetagenome --speed-mode balanced
-
-# 所有样本完成后合并
-bash scripts/11b_bac_metaphlan4_merge.sh -w Project/Project_A -r ~/Course/Maxmetagenome
+# 质控
+bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+# 去宿主
+bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+# 物种分类
+bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
 ```
 
-### 模式二：Bash Pipeline（轻量一站式）
+**模式二：Bash 一站式流程（轻量，无额外依赖）**
 
-**定位**：无额外依赖，传入 samplesheet.csv 串联步骤，适合单机小批量样本。支持 `--skip`/`--from`/`--only` 断点续跑。
-
-**第一步：准备 samplesheet.csv**
-
-```csv
-sample_id,r1,r2,host_type,project_dir
-SRR001,/path/SRR001_1.fastq.gz,/path/SRR001_2.fastq.gz,human,/path/Project_A
-SRR002,/path/SRR002_1.fastq.gz,/path/SRR002_2.fastq.gz,human,/path/Project_A
-```
-
-**第二步：运行流程**
+无需 Snakemake，传入 samplesheet.csv 串联步骤，支持断点续跑。
 
 ```bash
-# 完整流程（所有步骤）
+# 运行完整细菌流程
 bash scripts/00_pipeline_bacteria.sh \
-     -i Project/Project_A/samplesheet.csv \
-     -r ~/Course/Maxmetagenome -t 16
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16
 
-# 从去宿主步骤续跑（质控已完成）
+# 断点续跑（从 metaphlan4 步骤开始）
 bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --from kneaddata
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --from metaphlan4
 
-# 只做物种分类（跳过功能分析）
-bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --skip humann3
-
-# 多样本并行（需要安装 rush）
+# 多样本并行（需要 rush）
 bash scripts/00_pipeline_bacteria.sh \
      -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 -j 2
 ```
 
-**可用的 `--skip` 和 `--from` 步骤**：
+可用流程脚本：
 
-| 步骤名 | 对应脚本 |
-|--------|---------|
-| `qc` | 01_qc_fastp.sh |
-| `kneaddata` | 02_qc_kneaddata.sh |
-| `metaphlan4` | 11_bac_metaphlan4.sh |
-| `humann3` | 13_bac_humann3.sh |
-| `strainphlan4` | 12_bac_strainphlan4.sh |
-| `merge` | 11b_bac_metaphlan4_merge.sh |
+| 脚本 | 覆盖步骤 |
+|------|---------|
+| `00_pipeline_bacteria.sh` | 01-02 + 11-41 |
+| `00_pipeline_virome.sh` | 01-02 + 51-69 |
+| `00_pipeline_fungi.sh` | 01-02 + 71-86 |
+| `00_pipeline_full.sh` | 三维度完整流程 |
 
-### 模式三：Snakemake Pipeline（生产级，推荐）
+**模式三：Snakemake Pipeline（生产级，推荐大批量）**
 
-**定位**：基于 DAG 的自动依赖追踪，原生断点续跑，支持 HPC/多节点，适合大批量正式分析。
+基于 DAG 的自动依赖追踪，原生断点续跑，支持 HPC。
 
 ```bash
 # 1. 编辑运行参数
-vim pipeline/config/config.yaml
+vim pipeline/config/config.yaml     # 填写 samples / workdir / cpus
 
-# 2. 预演（检查依赖，不实际运行）
-snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml --dry-run
+# 2. 预演（检查 DAG，不实际运行）
+snakemake -s pipeline/Snakefile \
+  --configfile pipeline/config/config.yaml --dry-run
 
-# 3. 正式运行 / 断点续跑
-snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 16 --rerun-incomplete
+# 3. 正式运行
+snakemake -s pipeline/Snakefile \
+  --configfile pipeline/config/config.yaml \
+  -j 16 --rerun-incomplete
 ```
 
+> Snakemake 已安装在项目内 miniforge3 base 环境中，`source activate.sh` 后直接可用。
+
 ---
 
-## 分析流程总览
+## 分析脚本索引
+
+### 通用预处理（共享）
+
+| 编号 | 功能 | 工具 |
+|------|------|------|
+| 01 | 质量控制（接头去除、低质碱基修剪） | fastp |
+| 02 | 去宿主（人/鼠/大鼠） | KneadData + bowtie2 |
+
+### 🦠 细菌维度（11-41）
+
+| 编号 | 功能 | 工具 |
+|------|------|------|
+| 11/11b | 物种组成 + 多样本合并 | MetaPhlAn4 |
+| 12 | 菌株追踪与系统发育 | StrainPhlAn4 |
+| 13 | 功能通路定量 | HUMAnN3 v3.9 |
+| 14 | 快速物种分类（k-mer） | Kraken2 + Bracken |
+| 15 | 蛋白级精确分类（GTDB R226） | Centrifuger |
+| 16-20 | 组装 → 基因预测 → 去冗余 → 定量 | MEGAHIT · Prodigal · CD-HIT · Salmon |
+| 21-31 | 综合功能注释（COG/KEGG/GO/EC/AMR/CAZyme/毒力/BGC） | eggNOG · KEGG · AMRFinder · CARD · dbCAN · VFDB · BacMet · antiSMASH · Defense-Finder · NCyc · PCyc |
+| 32-41 | MAG 挖掘（分箱→整合→质控→去冗余→定量→分类→注释） | CoverM · MetaBAT2 · MaxBin2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta |
+| 41b | MLST 多位点序列分型（WGS 融入） | mlst 2.11 |
+| 41c | 泛基因组分析（WGS 融入） | Roary 3.12.0 |
+| 41d | SNP/InDel 变异检测（WGS 融入） | Snippy 4.0.2 |
+
+### 🦠 病毒维度（51-69）
+
+| 编号 | 功能 | 工具 |
+|------|------|------|
+| 51-55 | 组装 → 鉴定（双引擎共识）→ 质控 → 蛋白预测 | MEGAHIT · geNomad · VirSorter2 · CheckV · Prodigal-gv |
+| 56-60 | vOTU 聚类 → 分类 → 丰度定量 → 丰度矩阵 | vclust · geNomad · Salmon |
+| 61-63 | vMAG 重建 → 质控 → 丰度定量 | vmag · CheckV · CoverM |
+| 64-69 | 全面注释（含结构暗物质）→ 生活方式 → 宿主 → 分类网络 | PHAROKKA · PHOLD · VOGDB · BACPHLIP · iPHoP · vConTACT3 |
+
+### 🍄 真菌维度（71-86）
+
+| 编号 | 功能 | 工具 |
+|------|------|------|
+| 71-77 | 多策略分类（5 种互补方法） | Kraken2 · MetaPhlAn4 · HUMAnN4 · BLAST · FunOMIC · MicroFisher |
+| 78-80 | 真菌组装 → MAG 回收 → 基因预测 | MEGAHIT · Eukfinder · Prodigal |
+| 81-86 | 功能注释（COG/KEGG/CAZyme/毒力/AMR/蛋白酶） | eggNOG · KEGG · dbCAN3 · VFDB · AMRFinder · MEROPS |
+
+### 📊 统计分析（91-98）
+
+| 编号 | 功能 | 工具 |
+|------|------|------|
+| 91 | Alpha/Beta 多样性 | vegan/phyloseq (R) |
+| 92 | 差异分析（LEfSe/ANCOM-BC2/DESeq2/edgeR/MaAsLin2） | R |
+| 93 | 跨维度共现网络 | FastSpar/SparCC |
+| 94 | 统一可视化（热图/PCoA/桑基图/UpSet） | ggplot2 (R) |
+| 95a/95b | 批次校正（Top10 方法）→ 评估报告 | MBECS/ConQuR/MMUPHin (R) |
+| 96 | ML 筛选 + ROC 评估（lasso/RF/SVM/enet） | SIAMCAT (R) |
+| 97 | 跨队列一致性验证 | curatedMetagenomicData/SIAMCAT (R) |
+| 98 | Markdown 快照报告 | bash + Rscript |
+
+---
+
+## Claude Code AI 辅助功能
+
+本平台内置 15 个 Claude Code 斜杠命令，部署后在 Claude Code 中直接使用：
 
 ```
-原始测序数据（*.fq.gz）
-        │
-        ▼
-  ┌──────────────────────┐
-  │  第一阶段：数据预处理  │  fastp + KneadData
-  └──────────────────────┘
-        │
-   ┌────┴────┐
-   ▼         ▼
-Read-based  Assembly-based
- 分析        分析
-   │         │
-   │         ├── 基因预测+功能注释
-   │         ├── MAG 挖掘（Binning）
-   │         └── MAG 深度注释
-   │
-   └── 物种+功能+多样性+差异分析
-        │
-        ▼
-   深度挖掘（宏病毒组/AMR/共现网络）
-        │
-        ▼
-   统计分析与可视化（R）
+/mgx-welcome          — 显示欢迎页（平台概览 + 快速上手）
+/mgx-ask <问题>       — 查询 RAG 知识库（经验 + 文献）
+/mgx-plan             — 生成分析方案
+/mgx-run              — 执行分析命令
+/mgx-status           — 查看流程进度
+/mgx-integrate        — 集成新分析脚本
+/mgx-plot-ordination  — PCoA/NMDS 排序图
+/mgx-plot-composition — 物种组成图
+/mgx-plot-diversity   — Alpha 多样性图
+/mgx-plot-heatmap     — 注释热图
+/mgx-plot-network     — 共现网络图
+/mgx-plot-phylotree   — 系统发育树
+/mgx-plot-volcano     — 差异丰度图
+/graphify             — 知识图谱构建
 ```
 
----
+### RAG 知识库
 
-## 第一阶段：数据预处理
-
-### 1.1 质量控制
-- **工具**: fastp 0.22.0（`envs/fastp`）
-- **功能**: 双端测序质控、接头去除、低质量碱基修剪
-- **输入**: `seq/*.fq.gz` → **输出**: `temp/fastp/`
-
-### 1.2 宿主去除
-- **工具**: KneadData v0.12.4 + Bowtie2（`envs/kneaddata`）
-- **支持物种**: 人类（hg37，`db/kneaddata/human/`）、小鼠（C57BL/6NJ，`db/kneaddata/mouse/`）、大鼠（Rnor_6.0，`db/kneaddata/rat/`）
-- **输出**: `temp/kneaddata/`（clean reads）
+- **经验知识库**：团队经验文档（`docs/experience/`）+ 工具文档 + 脚本参数 + 技能卡
+- **文献知识库**：44 篇高分宏基因组方法学文献（PMC OA，Methods 节索引）
+- **嵌入模型**：`BAAI/bge-small-zh-v1.5`（中英双语，384 维）
 
 ---
 
-## 第二阶段：Read-based 分析
-
-### 2.1 物种组成
-
-| 工具 | 版本 | 环境 | 数据库 | 特点 |
-|------|------|------|--------|------|
-| HUMAnN v3.9 | + MetaPhlAn4 v4.2.4 | `envs/humann4` | `db/humann4/`（52G）+ `db/metaphlan4/`（40G） | 物种+功能联合分析 |
-| Kraken2 2.1.3 | + Bracken 3.1 | `envs/kraken2` | `db/kraken2/pluspf/`（77G） | k-mer 高速分类 |
-| Centrifuger 1.0.5 | — | `envs/assembly` | `db/centrifuger/`（166G，GTDB R226+RefSeq） | 蛋白级别精确分类 |
-
-### 2.2 多样性分析
-- **Alpha 多样性**: Shannon、Simpson、Chao1、ACE、Richness
-- **Beta 多样性**: Bray-Curtis PCoA、Jaccard NMDS
-- **工具**: vegan 2.7.5、phyloseq 1.54.2（R，`Rlib/`）
-
-### 2.3 差异分析
-- **ANCOM-BC2** 2.12.0：组分偏差校正（推荐）
-- **DESeq2** 1.50.2 / **edgeR** 4.8.2：负二项分布模型
-- **LEfSe** 1.1.2（`envs/lefse`）：线性判别分析
-- **MaAsLin2** 1.24.1：多变量关联分析
-
-### 2.4 菌株级分辨率
-- **StrainPhlAn4** v4.2.4（复用 `envs/humann4`）
-
----
-
-## 第三阶段：Assembly-based 分析
-
-### 3.1 基因组组装
-
-| 工具 | 版本 | 环境 | 说明 |
-|------|------|------|------|
-| MEGAHIT | 1.2.9 | `envs/assembly` | 主要组装，内存高效 |
-| metaSPAdes | 3.15.5 | `envs/assembly` | 精细组装（可选） |
-| QUAST | 5.0.2 | `envs/assembly` | 组装质量评估 |
-
-### 3.2 基因预测与定量
-
-| 工具 | 版本 | 环境 | 功能 |
-|------|------|------|------|
-| Prodigal | 2.6.3 | `envs/assembly` | 蛋白编码基因预测 |
-| CD-HIT | 4.8.1 | `envs/assembly` | 基因去冗余（95% 同一性） |
-| Salmon | 1.2.0 | `envs/assembly` | 基因丰度定量（TPM） |
-| mmseqs2 | 13.45 | `envs/assembly` | 高效序列搜索 |
-| seqtk | 1.4 | `envs/assembly` | FASTA/FASTQ 处理 |
-| CoverM | 0.7.0 | `envs/coverm` | 覆盖度计算 |
-
-### 3.3 功能基因注释
-
-所有注释基于预测蛋白序列，使用 diamond/mmseqs2 同源搜索：
-
-| 注释类型 | 工具/数据库 | 路径 | 大小 |
-|---------|-----------|------|------|
-| 综合功能（COG/KEGG/GO/EC） | eggNOG-mapper 2.1.13 | `db/eggnog/` | 48G |
-| 代谢通路（KO） | KEGG diamond | `db/kegg/` | 48G |
-| 抗生素耐药 | AMRFinder 3.10.1 | `db/amrfinder/` | 488M |
-| 抗生素耐药 | RGI 4.0.3 + CARD | `db/card/` | 48M |
-| 重金属抗性 | BacMet | `db/bacmet/` | 867M |
-| 污水抗性 | SARG+ | `db/sarg/` | 264M |
-| 毒力因子 | VFDB | `db/vfdb/` | 2.0G |
-| 植物-微生物互作 | PHI | `db/phi/` | 946M |
-| 微生物病毒 | mVIRdb | `db/mvirdb/` | 1.2G |
-| 蛋白酶 | MEROPS | `db/merops/` | 3.7G |
-| 碳水化合物酶 | dbCAN3 3.0.7 | `db/dbcan3/` | 3.5G |
-| 转运载体 | TCDB | `db/tcdb/` | 982M |
-| 氮循环 | NCyc | `db/ncyc/` | 214M |
-| 磷循环 | PCyc | `db/pcyc/` | 846M |
-| 碳循环 | CCyc | `db/ccyc/` | 12G |
-| 甲烷循环 | MCyc | `db/mcyc/` | 638M |
-| 硫循环 | SCyc | `db/scyc/` | 642M |
-| 次级代谢产物 | antiSMASH 7.1.0 | `db/antismash/` | 9.4G |
-| 可移动遗传元素 | MobileOG-db | `db/mobileog/` | 19G |
-
----
-
-## 第四阶段：MAG 挖掘（Binning）
-
-### 4.1 多算法并行分箱
-
-| 工具 | 版本 | 环境 | 算法原理 |
-|------|------|------|----------|
-| MetaBAT2 | 2.12.1 | `envs/metawrap` | 深度+四核苷酸频率 |
-| MaxBin2 | 2.2.6 | `envs/metawrap` | 丰度+组成信息 |
-| SemiBin2 | 1.5.0 | `envs/semibin` | 机器学习（自训练模型） |
-| MetaWRAP | 1.3.2 | `envs/metawrap` | 多算法整合框架 |
-| DAS_Tool | 1.1.7 | `envs/dastool` | 综合优化，去除冗余 bins |
-
-### 4.2 MAG 质量评估与去冗余
-
-| 工具 | 版本 | 环境 | 数据库 | 功能 |
-|------|------|------|--------|------|
-| CheckM2 | 1.0.1 | `envs/checkm2` | `db/checkm2/`（2.9G） | 完整度/污染率评估（ML） |
-| CheckM（内置） | 1.2.5 | `envs/metawrap` | `db/checkm/`（1.7G） | MetaWRAP 内部调用 |
-| dRep | 3.6.2 | `envs/drep` | — | ANI 97% 去冗余 |
-
-**MAG 质量标准**：高质量（完整度≥90%，污染率<5%）/ 中等质量（完整度≥50%，污染率<10%）
-
-### 4.3 MAG 分类学注释
-- **GTDB-Tk** 2.5.2（`envs/gtdbtk`），数据库 `db/gtdbtk/`（160G，GTDB R214）
-
-### 4.4 MAG 定量
-- **CoverM** 0.7.0（`envs/coverm`）：各样本 MAG 相对丰度
-- **Salmon** 1.2.0（`envs/assembly`）：基因 TPM 定量
-
-### 4.5 MAG 深度功能注释
-
-对每个高质量 MAG 进行全面功能注释（共用 §3.3 工具库），额外包括：
-
-| 工具 | 版本 | 环境 | 功能 |
-|------|------|------|------|
-| Bakta | 1.12.0 | `envs/bakta` | 全基因组精细注释（含 `db/bakta/` 3.8G） |
-| Defense-Finder | 3.0.0 | `envs/defense-finder` | CRISPR/防御系统（`db/defense-finder/` 320M） |
-| geNomad | 1.12.0 | `envs/genomad` | 病毒/质粒鉴定（`db/genomad/` 3.7G） |
-| antiSMASH | 7.1.0 | `envs/antismash` | BGC 鉴定与分类（`db/antismash/` 9.4G） |
-
----
-
-## 第五阶段：深度挖掘
-
-### 5.1 宏病毒组分析
-
-| 工具 | 版本 | 环境 | 数据库 | 功能 |
-|------|------|------|--------|------|
-| VIBRANT | 1.2.1 | `envs/vibrant` | `db/vibrant/`（~11G） | 病毒序列鉴定 |
-| CheckV | 1.1.1 | `envs/checkv` | `db/checkv/` | 病毒 MAG 质量评估 |
-| geNomad | 1.12.0 | `envs/genomad` | `db/genomad/`（3.7G） | 病毒/质粒检测 |
-
-### 5.2 抗性基因与移动遗传元素
-
-| 工具/数据库 | 版本 | 环境/路径 | 说明 |
-|------------|------|----------|------|
-| AMRFinder | 3.10.1 | `envs/amr` / `db/amrfinder/` | NCBI 官方 AMR |
-| RGI + CARD | 4.0.3 | `envs/amr` / `db/card/` | 综合抗性基因数据库 |
-| BacMet | — | `db/bacmet/` | 重金属抗性基因 |
-| SARG+ | — | `db/sarg/` | 污水/环境抗性基因 |
-| MobileOG-db | — | `db/mobileog/`（19G） | 可移动遗传元素（diamond 搜索） |
-| Defense-Finder | 3.0.0 | `envs/defense-finder` | 防御系统/CRISPR |
-
-### 5.3 次级代谢产物
-- **antiSMASH** 7.1.0（`envs/antismash`）：BGC 鉴定，数据库 `db/antismash/`（9.4G）
-
-### 5.4 共现网络分析
-- **FastSpar（SparCC）** 1.0.0（`envs/network`）：稀疏相关性共现网络
-
-### 5.5 物种系统发育
-- **Centrifuger** 1.0.5：蛋白级别精确分类，`db/centrifuger/`（166G，GTDB R226+RefSeq）
-
----
-
-## 第六阶段：统计分析与可视化
-
-### R 包环境（`Rlib/`，conda R 4.5.1）
-
-| 包 | 版本 | 用途 |
-|---|---|---|
-| vegan | 2.7.5 | 多样性分析、置换检验 |
-| phyloseq | 1.54.2 | 微生物组数据框架 |
-| ggplot2 | 4.0.3 | 可视化基础 |
-| DESeq2 | 1.50.2 | 差异丰度分析 |
-| edgeR | 4.8.2 | 差异丰度分析 |
-| ANCOMBC | 2.12.0 | 组分偏差校正差异分析（推荐） |
-| MaAsLin2 | 1.24.1 | 多变量关联分析 |
-| ggtree | 4.0.4 | 进化树可视化 |
-| treeio | 1.34.0 | 进化树数据读取 |
-| microbiome | 1.32.0 | 微生物组工具集 |
-| dplyr / tidyr | 1.2.1 / 1.3.2 | 数据处理 |
-| pheatmap | 1.0.13 | 聚类热图 |
-| ggpubr | 0.6.3 | 统计图形 |
-| patchwork | 1.3.2 | 图形布局 |
-| ggalluvial | 0.12.6 | 桑基图 |
-| UpSetR | 1.4.1 | UpSet 图 |
-
-> **执行方式**: `~/Course/Maxmetagenome/miniforge3/bin/Rscript`（conda R 4.5.1，而非系统 R）
-
----
-
-## 环境与数据库一览
-
-### Conda 环境（23个，全部在 `envs/` 下）
-
-| 环境 | 主要工具 | 版本 |
-|------|---------|------|
-| `fastp` | fastp | 0.22.0 |
-| `kneaddata` | kneaddata, bowtie2, trimmomatic | v0.12.4 |
-| `humann4` | humann, metaphlan, strainphlan4, diamond | v3.9 / v4.2.4 |
-| `lefse` | lefse | 1.1.2 |
-| `kraken2` | kraken2, bracken | 2.1.3 / 3.1 |
-| `assembly` | megahit, spades, prodigal, cd-hit, salmon, centrifuger, mmseqs2, seqtk | 多版本 |
-| `eggnog` | eggnog-mapper | 2.1.13 |
-| `metawrap` | metawrap, metabat2, maxbin2, checkm | 1.3.2 |
-| `semibin` | semibin | 1.5.0 |
-| `dastool` | das_tool | 1.1.7 |
-| `drep` | drep, checkm-genome | 3.6.2 |
-| `coverm` | coverm | 0.7.0 |
-| `gtdbtk` | gtdbtk | 2.5.2 |
-| `checkm2` | checkm2 | 1.0.1 |
-| `vibrant` | vibrant | 1.2.1 |
-| `checkv` | checkv | 1.1.1 |
-| `amr` | amrfinder, rgi | 3.10.1 / 4.0.3 |
-| `dbcan` | dbcan | 3.0.7 |
-| `antismash` | antismash | 7.1.0 |
-| `network` | fastspar | 1.0.0 |
-| `genomad` | genomad | 1.12.0 |
-| `bakta` | bakta | 1.12.0 |
-| `defense-finder` | defense-finder | 3.0.0 |
-
-### 数据库一览（总计 ~700G，全部在 `db/` 下）
-
-| 数据库 | 路径 | 大小 | 用途 |
-|-------|------|------|------|
-| KneadData | `db/kneaddata/` | 11G | 去宿主（人/鼠/鼠） |
-| HUMAnN4 | `db/humann4/` | 52G | 物种+功能 |
-| MetaPhlAn4 | `db/metaphlan4/` | 40G | 物种分类 |
-| Kraken2 PlusPF | `db/kraken2/` | 77G | 快速分类 |
-| Centrifuger | `db/centrifuger/` | 166G | GTDB R226+RefSeq |
-| eggNOG | `db/eggnog/` | 48G | 综合功能注释 |
-| KEGG | `db/kegg/` | 48G | 代谢通路 |
-| CheckM | `db/checkm/` | 1.7G | MAG 质量（旧版） |
-| CheckM2 | `db/checkm2/` | 2.9G | MAG 质量（ML） |
-| GTDB-Tk | `db/gtdbtk/` | 160G | 系统发育分类（R214） |
-| CARD | `db/card/` | 48M | 抗生素耐药 |
-| AMRFinder | `db/amrfinder/` | 488M | NCBI AMR |
-| BacMet | `db/bacmet/` | 867M | 重金属抗性 |
-| SARG+ | `db/sarg/` | 264M | 污水 AMR |
-| VFDB | `db/vfdb/` | 2.0G | 毒力因子 |
-| PHI | `db/phi/` | 946M | 病原互作 |
-| mVIRdb | `db/mvirdb/` | 1.2G | 微生物病毒 |
-| MEROPS | `db/merops/` | 3.7G | 蛋白酶 |
-| dbCAN3 | `db/dbcan3/` | 3.5G | CAZyme |
-| TCDB | `db/tcdb/` | 982M | 转运载体 |
-| NCyc | `db/ncyc/` | 214M | 氮循环 |
-| PCyc | `db/pcyc/` | 846M | 磷循环 |
-| CCyc | `db/ccyc/` | 12G | 碳循环 |
-| MCyc | `db/mcyc/` | 638M | 甲烷循环 |
-| SCyc | `db/scyc/` | 642M | 硫循环 |
-| antiSMASH | `db/antismash/` | 9.4G | BGC（生物合成基因簇） |
-| MobileOG | `db/mobileog/` | 19G | 可移动遗传元素 |
-| geNomad | `db/genomad/` | 3.7G | 病毒/质粒 |
-| VIBRANT | `db/vibrant/` | 11G | 病毒鉴定（HMM，KEGG+VOG+Pfam） |
-| Bakta | `db/bakta/` | 3.8G | 基因组注释 |
-| Defense-Finder | `db/defense-finder/` | 320M | 防御系统 |
-
----
-
-## 项目结构
-
-> 完整目录说明见 [docs/project_structure.md](docs/project_structure.md)
+## 目录结构
 
 ```
 MaxMetagenome/
-├── 0Install.sh              # 环境安装主脚本（分节 §1-§9）
-├── README.md                # 本文档
-├── CLAUDE.md                # 开发协作手册（内部）
-│
-├── scripts/                 # 分析脚本（单步骤一文件，编号 01-98）
-│   ├── activate.sh                  # 环境激活（每次分析前 source）
-│   ├── checkm_config.sh             # CheckM2 路径配置（迁移后执行一次）
-│   ├── 00_pipeline_bacteria.sh      # 细菌维度一站式 Bash 流程
-│   ├── 00_pipeline_full.sh          # 三维度全流程 Bash 脚本
-│   ├── 01_qc_fastp.sh               # 质量控制
-│   ├── 02_qc_kneaddata.sh           # 去宿主
-│   ├── 11_bac_metaphlan4.sh         # 物种组成（MetaPhlAn4）
-│   ├── 11b_bac_metaphlan4_merge.sh  # 多样本合并
-│   ├── 12_bac_strainphlan4.sh       # 菌株系统发育
-│   ├── 13_bac_humann3.sh            # 功能通路定量（HUMAnN3 v3.9）
-│   └── ...                          # 14-98 按需追加
-│
-├── pipeline/                # Snakemake 生产级流程（Mode 3）
-│   ├── Snakefile            # 入口
-│   ├── config/config.yaml   # 运行参数（samples / workdir / cpus）
-│   └── rules/               # 各模块规则（*.smk）
-│
-├── agents/                  # Agent Skills 系统
-│   ├── registry.yaml        # 全局脚本状态（78 条目）
-│   ├── skills/              # 工具卡片（*.yaml，已集成脚本各一份）
-│   └── provenance/          # 运行记录（exit_code / runtime / memory）
-│
-├── docs/                    # 文档
-│   ├── project_structure.md
-│   ├── 01_preprocessing/ / 02_read_based/ / 03_assembly/ / ...
-│   └── tools_ref/           # 工具知识文档
-│
-├── Project/                 # 分析项目目录（每个项目一个子目录）
-│   └── Project_example/
-│       ├── data/            # 原始测序数据
-│       ├── result/          # 分析结果
-│       └── temp/            # 中间文件（可删除）
-│
-├── miniforge3/              # 自包含 Python/Conda（~27G，不入库）
-├── envs/                    # 23 个 conda 工具环境（~23G，不入库）
-├── db/                      # 分析数据库（~700G，不入库）
-├── Rlib/                    # R 包库（~1.4G，不入库）
-└── Reference/               # 内部参考资料（不入库）
+├── scripts/          # 87 个分析脚本（01-98 编号）
+├── pipeline/         # Snakemake DAG 流程（8 个规则文件）
+│   ├── Snakefile
+│   ├── config/config.yaml
+│   └── rules/        # preprocessing · bacteria_taxonomy · bacteria_assembly
+│                     # bacteria_annotation · bacteria_binning · virome
+│                     # mycobiome · statistics · rag
+├── agents/
+│   ├── registry.yaml # 全局脚本状态追踪（87 条目）
+│   └── skills/       # 82 个工具卡片（YAML）
+├── .claude/
+│   ├── commands/     # 15 个用户斜杠命令（/mgx-*）
+│   └── skills/       # 15 个 CC 内部技能文件
+├── docs/
+│   ├── 01_preprocessing/ · 02_read_based/ · 03_assembly/
+│   ├── 04_binning/  · 05_virus/ · 05_stats/ · 05_deep_mining/
+│   ├── experience/   # 12 个团队经验文档（可编辑，自动索引到 RAG）
+│   └── project_structure.md
+├── mcp/              # RAG MCP 服务（ChromaDB + 文献 Pipeline）
+├── skills/           # 外部技能发现系统
+├── 0Install.sh       # 环境 & 数据库安装主脚本（§1-§15）
+├── CLAUDE.md         # CC + Codex 协作手册
+└── README.md         # 本文件
 ```
 
 ---
 
-## 安装状态
+## 磁盘空间需求
 
-详见 `0Install.sh` 头部进度表，最新状态（2026-06-06）：
+| 组件 | 空间 | 说明 |
+|------|------|------|
+| miniforge3 + 37 envs | ~50 GB | conda 工具环境，自包含 |
+| db/ 数据库 | ~700 GB | 见分析脚本索引 |
+| Project 数据（100 样本） | ~2 TB | 原始 ~1TB + 中间/结果 ~1TB |
+| scripts + pipeline + docs | < 50 MB | git 追踪部分 |
 
-- ✅ §0-§8.9 全部完成并测试通过（含 Snakemake 9.22.0 安装）
-- ✅ 分析脚本：01 / 02 / 11 / 11b / 12 / 13 / 14 / 15 / 16 已完成并集成至 Snakemake pipeline
-- ✅ Snakemake pipeline：preprocessing + bacteria_taxonomy + bacteria_assembly 规则就绪
-- ⏳ §9 MCP/RAG 服务（待配置）
+---
+
+## 迁移到新服务器
+
+```bash
+# 1. 克隆仓库
+git clone git@gitee.com:JXR1314/meta-servergenome.git
+cd meta-servergenome
+
+# 2. 安装环境（首次，约数小时）
+bash 0Install.sh
+
+# 3. 激活并验证
+source scripts/activate.sh
+bash scripts/checkm_config.sh
+
+# 4. 验证 Claude Code 集成（开发环境）
+claude mcp list   # 应看到 codex: ✓ Connected
+```
+
+---
+
+## 经验文档贡献
+
+在 `docs/experience/` 目录按 `TEMPLATE.md` 格式添加 `.md` 文件，保存后运行：
+
+```bash
+conda run --prefix miniforge3 python mcp/indexer.py
+```
+
+即可同步到 RAG 知识库，`/mgx-ask` 可直接检索该经验。
+
+---
+
+## 参考工具
+
+MetaPhlAn4 · HUMAnN3 · Kraken2/Bracken · Centrifuger · MEGAHIT · Prodigal · CD-HIT · Salmon · eggNOG-mapper · AMRFinderPlus · CARD/RGI · dbCAN3 · antiSMASH · MetaBAT2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta · mlst · Roary · Snippy · geNomad · VirSorter2 · CheckV · iPHoP · vConTACT3 · PHAROKKA · PHOLD · VOGDB · BACPHLIP · FunOMIC · MicroFisher · Eukfinder · MEROPS · SIAMCAT · DESeq2 · MMUPHin · ConQuR
