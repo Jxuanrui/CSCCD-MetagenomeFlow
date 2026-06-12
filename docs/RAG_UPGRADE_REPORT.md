@@ -286,17 +286,21 @@ doc3 (MEGAHIT 相关):   0.0000
 #### 3.4 metaWRAP bin_refinement 参数
 - [ ] 整理为 `docs/benchmarks/metawrap_binrefinement.md`
 
-### Phase 4 — 经验文档验证闭环（待执行）
+### Phase 4 — 经验文档验证闭环（已完成 2026-06-12）
 
-#### 4.1 /mgx-learn 增强
-- [ ] 运行完成后自动匹配对应 experience 文档
-- [ ] 将实际参数、样本数、结果指标追加到 `## Verified` 章节
-- [ ] 更新 `author` 字段为实际运行者
-- [ ] 将 `status: pending` 升级为 `status: validated`
+#### 4.1 /mgx-learn 增强 ✅
+- [x] 运行完成后自动匹配对应 experience 文档（按 tool 名归一化匹配）
+- [x] 将实际参数、样本数、结果指标追加到 `## Verified` 章节
+- [x] 更新 `author` 字段为实际运行者
+- [x] exit_code == 0 时将 pending 升级为 `validated — 已通过实际运行验证`
+- [x] exit_code != 0 时保留 pending 并添加 ⚠️ Run failed 标记
+- 技能文件：`.claude/skills/mgx-learn.md`
 
-#### 4.2 provenance 记录标准化
-- [ ] 定义 `agents/provenance/*.json` 格式规范
-- [ ] 关键字段：script_id, user, timestamp, params, input_samples, output_metrics, exit_code
+#### 4.2 provenance 记录标准化 ✅
+- [x] 定义 `agents/provenance/*.json` 格式规范
+- [x] 关键字段：wf_run_id, step_id, tool, tool_version, user, sample_id, workdir, inputs, outputs, params, metrics, started_at, duration_sec, exit_code, status, error_message, enriched_into_skill
+- [x] 各工具推荐 metrics 字段（species 数、N50、bin 质量等）
+- 规范文件：`agents/provenance/SCHEMA.md`
 
 ---
 
@@ -385,4 +389,5 @@ rank_bm25>=0.2.2
 ---
 
 **报告生成时间**: 2026-06-12 13:40 UTC+8  
-**下一步行动**: 执行 Phase 3（四大来源导入）前，先运行 `python mcp/literature_pipeline.py` 构建完整文献库并验证检索效果。
+**最后更新**: 2026-06-12 16:45 UTC+8  
+**下一步行动**: 待 pip 安装完成后，运行 `python mcp/literature_pipeline.py --repo . --max-articles 100` 构建完整文献库并验证检索效果。
