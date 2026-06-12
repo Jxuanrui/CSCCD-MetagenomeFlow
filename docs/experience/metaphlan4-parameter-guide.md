@@ -2,7 +2,7 @@
 tool: "metaphlan4"
 dimension: "bacteria"
 category: "taxonomy"
-author: ""
+author: "labuser"
 date: "2026-06-11"
 tags: [parameter-tuning, species-profiling, strain-analysis]
 scenario: [gut-microbiome, high-depth, paired-end]
@@ -65,7 +65,11 @@ metaphlan merged.fastq.gz \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+**Status**: validated — 已通过实际运行验证
+
+- 2026-06-12 — User: labuser, Sample: S01, Params: database=mpa_vOct22_CHOCOPhlAnSGB_202212, threads=16, input_type=fastq, Exit: 0, Duration: 84s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
+  - Metrics: n_species=28, n_genus=45, total_taxa=125, top_phylum=Firmicutes (78.9%)
+  - 合并双端后单文件输入方式工作正常，SAM 文件已保留供 StrainPhlAn4 使用
 
 ## References（可选）
 
