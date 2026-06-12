@@ -2,7 +2,7 @@
 tool: "gtdbtk"
 dimension: "bacteria"
 category: "taxonomy"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [mag-classification, gtdb, reference-consistency]
 scenario: [gut-microbiome, cross-cohort, high-depth]
@@ -56,7 +56,7 @@ gtdbtk classify_wf \
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

@@ -2,7 +2,7 @@
 tool: "checkv-quality"
 dimension: "virome"
 category: "qc"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [virus-qc, completeness, deduplication]
 scenario: [paired-end, high-depth, low-biomass]
@@ -54,7 +54,7 @@ checkv end_to_end virus_contigs.fasta result/virus/checkv/sample -d db/checkv -t
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

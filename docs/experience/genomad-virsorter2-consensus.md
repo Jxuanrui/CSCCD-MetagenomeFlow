@@ -2,7 +2,7 @@
 tool: "genomad-virsorter2"
 dimension: "virome"
 category: "annotation"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [virus-identification, consensus, sensitivity-specificity]
 scenario: [paired-end, high-depth, low-biomass]
@@ -54,7 +54,7 @@ VirSorter2 建议保留 `--min-length 1000`，不建议为了多捞一些短片�
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

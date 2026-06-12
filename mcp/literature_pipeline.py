@@ -10,10 +10,10 @@ import sentence_transformers
 
 from cache_dir import get_data_dir
 from doc_parser import chunk_text, set_tokenizer
+from europepmc_search import search_all_queries
 from methods_extractor import extract_all_methods
 from pmc_fetch import fetch_all_pmcs
 from pubtator_annotate import annotate_all
-from pubtator_search import search_all_queries
 
 
 def warn(message):
@@ -176,7 +176,7 @@ def main():
         if annotation_entry.get("entities"):
             entities = annotation_entry["entities"]
 
-        chunks = chunk_text(methods_text, chunk_size=250, overlap=40)
+        chunks = chunk_text(methods_text, chunk_size=512, overlap=80)
         if not chunks:
             continue
 
@@ -193,6 +193,8 @@ def main():
                     "title": article.get("title") or "",
                     "year": article.get("year") or "",
                     "journal": article.get("journal") or "",
+                    "cited_by": article.get("cited_by") or 0,
+                    "has_fulltext": bool(article.get("has_fulltext") or False),
                     "entities": entities,
                     "chunk_index": index,
                 }
@@ -227,6 +229,15 @@ def main():
             documents=texts,
             metadatas=metadatas,
         )
+
+    from bm25_index import BM25Index
+
+    bm25_path = repo / "mcp" / "bm25_data" / "literature_kb.pkl"
+    bm25_documents = [(doc_id, document) for doc_id, document, _ in chunk_rows]
+    bm25_idx = BM25Index()
+    bm25_idx.build(bm25_documents)
+    bm25_idx.save(bm25_path)
+    print(f"BM25 index saved: {len(bm25_documents)} docs -> {bm25_path}")
 
     skipped_articles = max(0, len(set(downloaded_pmcids)) - processed_articles)
     print(

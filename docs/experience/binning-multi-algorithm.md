@@ -2,7 +2,7 @@
 tool: "binning-workflow"
 dimension: "bacteria"
 category: "binning"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [multi-binner, dastool, mag-recovery]
 scenario: [gut-microbiome, high-depth, paired-end]
@@ -56,7 +56,7 @@ DAS_Tool 建议至少接入 `2` 个 binner，正式分析优先凑齐 `3` 个；
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

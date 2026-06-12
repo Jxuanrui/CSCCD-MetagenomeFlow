@@ -2,7 +2,7 @@
 tool: "kraken2"
 dimension: "bacteria"
 category: "taxonomy"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [database-choice, confidence-threshold, bracken]
 scenario: [gut-microbiome, paired-end, low-biomass]
@@ -59,7 +59,7 @@ Bracken 保留脚本默认 `-t 10`，不要轻易降到 `0`；否则很多仅由
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

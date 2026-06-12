@@ -2,7 +2,7 @@
 tool: "metaphlan4"
 dimension: "bacteria"
 category: "taxonomy"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [parameter-tuning, species-profiling, strain-analysis]
 scenario: [gut-microbiome, high-depth, paired-end]
@@ -65,7 +65,7 @@ metaphlan merged.fastq.gz \
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

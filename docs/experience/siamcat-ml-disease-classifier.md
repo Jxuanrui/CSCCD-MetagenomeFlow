@@ -2,7 +2,7 @@
 tool: "siamcat-ml"
 dimension: "stats"
 category: "stats"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [machine-learning, biomarker, disease-classifier]
 scenario: [cross-cohort, gut-microbiome, high-depth]
@@ -56,7 +56,7 @@ bash 96_stat_ml_siamcat.sh \
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

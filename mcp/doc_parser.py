@@ -159,7 +159,7 @@ def _split_by_chars(text, chunk_size, overlap):
     return chunks
 
 
-def chunk_text(text, chunk_size=300, overlap=50):
+def chunk_text(text, chunk_size=512, overlap=80):
     """按段落优先切分文本，必要时降级到句子或字符窗口。"""
     try:
         if not text or not text.strip():

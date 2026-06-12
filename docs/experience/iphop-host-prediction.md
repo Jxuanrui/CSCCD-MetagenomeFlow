@@ -2,7 +2,7 @@
 tool: "iphop-host"
 dimension: "virome"
 category: "annotation"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [host-prediction, virus-host, database-size]
 scenario: [gut-microbiome, high-depth, cross-cohort]
@@ -54,7 +54,7 @@ iphop predict \
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

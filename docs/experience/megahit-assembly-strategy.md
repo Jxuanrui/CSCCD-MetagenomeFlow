@@ -2,7 +2,7 @@
 tool: "megahit-assembly"
 dimension: "bacteria"
 category: "assembly"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [assembly-strategy, min-contig, mag-recovery]
 scenario: [gut-microbiome, high-depth, paired-end]
@@ -56,7 +56,7 @@ megahit \
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

@@ -2,7 +2,7 @@
 tool: "batch-correction"
 dimension: "stats"
 category: "stats"
-author: "CC (auto-generated draft)"
+author: ""
 date: "2026-06-11"
 tags: [batch-correction, cross-cohort, method-comparison]
 scenario: [cross-cohort, gut-microbiome, high-depth]
@@ -56,7 +56,7 @@ DEBIAS-M 建议视为可选增强项，不要把它作为是否完成批次校�
 
 ## Verified
 
-- draft — based on tool documentation and script analysis, pending team validation
+- pending — 基于工具文档与脚本分析推导，待实际运行验证
 
 ## References（可选）
 

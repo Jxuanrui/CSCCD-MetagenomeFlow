@@ -259,6 +259,18 @@ def main():
             metadatas=metadatas,
         )
 
+    from bm25_index import BM25Index
+
+    bm25_path = repo / "mcp" / "bm25_data" / "experience_kb.pkl"
+    bm25_documents = [
+        (f"exp_{index}", text)
+        for index, (text, _) in enumerate(all_chunks)
+    ]
+    bm25_idx = BM25Index()
+    bm25_idx.build(bm25_documents)
+    bm25_idx.save(bm25_path)
+    print(f"BM25 index saved: {len(bm25_documents)} docs -> {bm25_path}")
+
     print(f"Indexed {len(all_chunks)} chunks into experience_kb")
 
 
