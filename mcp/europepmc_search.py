@@ -340,7 +340,7 @@ def search_europepmc(query, client, max_results=50):
     while len(rows) < max_results:
         payload = client.request(
             {
-                "query": query,
+                "query": f"({query}) AND OPEN_ACCESS:Y",
                 "resultType": "core",
                 "pageSize": PAGE_SIZE,
                 "format": "json",
