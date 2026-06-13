@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-13T01:40:17.870533+00:00",
+  "timestamp": "2026-06-13T01:51:48.522963+00:00",
   "n_questions": 15,
   "modes": {
     "hybrid": {
@@ -7,7 +7,7 @@
       "recall_at_3": 0.8,
       "recall_at_5": 1.0,
       "mrr_at_5": 0.6177777777777779,
-      "mean_latency_ms": 185.27266666666668,
+      "mean_latency_ms": 37.8392,
       "per_query": [
         {
           "id": "metaphlan4_params",
@@ -21,39 +21,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 226.984,
+          "latency_ms": 107.938,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_131",
+              "doc_id": "exp_158",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
               "distance": 0.15515506267547607,
               "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Recommendation\n\n核心推荐是保留脚本默认运行方式，不要在当前流程里强行改回 `-1/-2` 直接输入。\n\n当前版本推荐参数与流程如下：\n\n```bash\nmetaphlan merged.fastq.gz \\\n  --input_type fastq \\\n  --db_dir db/metaphlan4 \\\n  -x mpa_vOct22_CHOCOPhlAnSGB_202212 \\\n  --nproc"
             },
             {
               "rank": 2,
-              "doc_id": "exp_134",
+              "doc_id": "exp_161",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
               "distance": 0.16006451845169067,
               "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## References（可选）\n\n- `scripts/11_bac_metaphlan4.sh`\n- `agents/skills/11_bac_metaphlan4.yaml`\n- `scripts/12_bac_strainphlan4.sh`\n- `scripts/13_bac_humann3.sh`"
             },
             {
               "rank": 3,
-              "doc_id": "exp_133",
+              "doc_id": "exp_160",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
               "distance": 0.17700326442718506,
               "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Verified\n\n**Status**: validated — 已通过实际运行验证\n\n- 2026-06-12 — User: labuser, Sample: S01, Params: database=mpa_vOct22_CHOCOPhlAnSGB_202212, threads=16, input_type=fastq, Exit: 0, Duration: 84s, Workdir: /home/labuser"
             },
             {
               "rank": 4,
-              "doc_id": "exp_130",
+              "doc_id": "exp_157",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
               "distance": 0.2035229206085205,
               "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Scenario\n\n> 适用于经去宿主后的双端宏基因组样本，需要稳定获得物种组成，并为后续 StrainPhlAn4 与 HUMAnN3 复用分类结果。\n\n推荐场景是肠道、口腔或粪便等中高深度样本，单样本常见在 10M 到 80M reads。\n\n如果目标只是快速粗分类，Kraken2 更快；如果目标是标志基因驱动的稳健物种谱与后续菌株分析，优先保留 MetaPhlAn4。\n\n脚本默认数据库是 `mpa_vOct22"
             },
             {
               "rank": 5,
-              "doc_id": "exp_132",
+              "doc_id": "exp_159",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
               "distance": 0.22239315509796143,
               "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Rationale\n\n- **为什么不直接用双文件输入**：该脚本明确说明当前部署的 MetaPhlAn4 v4.2.4 在这里采用“先合并再分析”的兼容方案，继续沿用最稳妥。\n- **为什么线程不需要过高**：MetaPhlAn4 主要瓶颈是 marker 比对与后处理，超过 `16` 线程后加速通常不再线性。\n- **为什么保留 `mapout`**：它缓存了 bowtie2 的中间结果，后续若需复查 profi"
@@ -72,39 +72,39 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.2,
-          "latency_ms": 150.324,
+          "latency_ms": 17.236,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_187",
+              "doc_id": "exp_221",
               "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
               "distance": 0.21990686655044556,
               "snippet": "# HUMAnN3 速度优化指南\n## 使用方法\n\n### 方法 1：直接调用脚本\n\n```bash\n# 标准模式（默认）\nbash scripts/13_bac_humann3.sh \\\n     -s SRR28210342 -t 16 \\\n     -w Project/Project_example \\\n     -r ~/Course/Maxmetagenome\n\n# 平衡模式（推荐）\nbash scripts/13_bac_humann3.sh \\\n     -s"
             },
             {
               "rank": 2,
-              "doc_id": "exp_177",
+              "doc_id": "exp_211",
               "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3.md",
               "distance": 0.1900486946105957,
               "snippet": "# HUMAnN 3 — 功能通路定量\n## 速度模式（`--speed-mode`）\n\n| 模式 | 耗时（16 线程）| 精度 | 适用场景 |\n|------|-------------|------|---------|\n| `standard` | 2-6h | 最高 | 发表级分析 |\n| `balanced` | 1-3h | 高 | 常规研究 |\n| `fast` | 0.5-1h | 中 | 初步探索 |\n\n详见 `docs/02_read_based/hu"
             },
             {
               "rank": 3,
-              "doc_id": "exp_190",
+              "doc_id": "exp_224",
               "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
               "distance": 0.23553436994552612,
               "snippet": "# HUMAnN3 速度优化指南\n## 磁盘空间管理\n\n| 目录 | 大小 | 用途 | balanced/fast 清理 |\n|------|------|------|-------------------|\n| `temp/humann3/` | 60-100G | custom db + 索引 + 中间文件 | 自动删除 |\n| `result/functional/humann3/` | 50-200MB | 最终结果 | 保留 |\n\n**建议**：\n- 生产环境使"
             },
             {
               "rank": 4,
-              "doc_id": "exp_186",
+              "doc_id": "exp_220",
               "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
               "distance": 0.2251330018043518,
               "snippet": "# HUMAnN3 速度优化指南\n## 核心提速原理\n\n---\n\n### 4. 只用 R1（fast 模式）\n\n**作用**：HUMAnN3 不考虑双端配对信息，只用 R1 端结果与 R1+R2 高度相关\n\n**提速**：2×（数据量减半）\n\n**代价**：\n- 通路丰度相关性 >0.95（来自 EasyMetagenome 经验）\n- 低丰度物种的基因可能覆盖度下降\n\n---\n\n### 5. `--diamond-options \"--block-size 6.0\"`（fa"
             },
             {
               "rank": 5,
-              "doc_id": "exp_89",
+              "doc_id": "exp_109",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/humann3-speed-mode.md",
               "distance": 0.2019006609916687,
               "snippet": "# HUMAnN3 standard、balanced 与 fast 模式选择建议\n## Recommendation\n\n默认推荐：`--speed-mode balanced`。\n\n对应关键参数如下：\n\n```bash\nhumann \\\n  --prescreen-threshold 1.0 \\\n  --memory-use maximum \\\n  --taxonomic-profile sample_profile.txt \\\n  --remove-temp-output"
@@ -123,39 +123,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 176.956,
+          "latency_ms": 14.916,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_111",
+              "doc_id": "exp_138",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-database-choice.md",
               "distance": 0.3013131022453308,
               "snippet": "# Kraken2 数据库与置信度阈值选择建议\n## References（可选）\n\n- `scripts/14_bac_kraken2.sh`\n- `agents/skills/14_bac_kraken2.yaml`\n- Bracken 输出：`*_S.bracken`、`*_G.bracken`、`*_P.bracken`\n- `result/kraken2/{sample}/{sample}.report`"
             },
             {
               "rank": 2,
-              "doc_id": "exp_196",
+              "doc_id": "exp_230",
               "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/kraken2.md",
               "distance": 0.3457368016242981,
               "snippet": "# Kraken2 + Bracken — 快速物种分类\n## 数据库（`db/kraken2/`）\n\n| 数据库 | 大小 | 特点 |\n|--------|------|------|\n| `standard_8G/` | 8G | 精简版，适合内存受限环境 |\n| `standard/` | ~60G | 全库，精度更高 |\n| `PlusPF/` | ~140G | 含真菌、植物，用于真菌脚本 71 |"
             },
             {
               "rank": 3,
-              "doc_id": "exp_110",
+              "doc_id": "exp_137",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-database-choice.md",
               "distance": 0.30218857526779175,
               "snippet": "# Kraken2 数据库与置信度阈值选择建议\n## Verified\n\n- pending — 基于工具文档与脚本分析推导，待实际运行验证"
             },
             {
               "rank": 4,
-              "doc_id": "exp_115",
+              "doc_id": "exp_142",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-fungi-database.md",
               "distance": 0.35707247257232666,
               "snippet": "# Kraken2 PlusPF 真菌快速筛查与 Bracken 重估建议\n## Rationale\n\n- **为什么必须用 PlusPF**：standard Kraken2 数据库通常不包含足够 fungi 参考，PlusPF 才覆盖 fungi 和 protozoa，适合做真菌初筛。\n- **为什么不把 Kraken2 作为最终主表**：PlusPF 的真菌参考仍有限，且 k-mer 分类对近缘真菌、污染序列和数据库偏倚敏感。\n- **为什么 `--confidence"
             },
             {
               "rank": 5,
-              "doc_id": "exp_113",
+              "doc_id": "exp_140",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-fungi-database.md",
               "distance": 0.371442973613739,
               "snippet": "# Kraken2 PlusPF 真菌快速筛查与 Bracken 重估建议\n## Recommendation\n\n推荐使用 PlusPF 数据库、`--confidence 0.1` 和 Bracken 种级重估；`--confidence` 不建议设为 `0`，否则低复杂度或近缘误配会明显增多。\n\n```bash\n# Run Kraken2 with the PlusPF database for fungal first-pass screening.\nkraken2 \\"
@@ -174,39 +174,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 170.933,
+          "latency_ms": 14.748,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_118",
+              "doc_id": "exp_145",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
               "distance": 0.23633766174316406,
               "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Scenario\n\n> 适用于去宿主后的双端宏基因组样本，需要在 contig 数量、下游注释灵敏度和 MAG 回收质量之间做取舍。\n\n同一个样本做”功能注释”和”分箱回收”时，最优组装参数不一定相同。\n\n本项目脚本已经把选择压缩到两个核心维度：`--presets` 与 `--min-contig-len`。\n\n**关键参数速查**：`--min-contig-len 500`（通用注释）/ `1000-15"
             },
             {
               "rank": 2,
-              "doc_id": "exp_226",
+              "doc_id": "exp_260",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": 0.33229488134384155,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 功能\n\nMEGAHIT 使用多 k-mer 策略（successive k-mer sizes）和内存高效的稀疏图（SDBG）对宏基因组 shotgun 数据进行组装，兼顾速度和内存效率，是目前宏基因组 de novo 组装的主流选择。"
             },
             {
               "rank": 3,
-              "doc_id": "exp_228",
+              "doc_id": "exp_262",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": 0.3169231414794922,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `-1` / `-2` | R1/R2 路径 | 成对读段输入 |\n| `--k-list` | `21,29,39,59,79,99,119,141` | 多 k-mer 阶梯（含 k=141 可提升连续性） |\n| `--min-contig-len` | 500（病毒 1500）| 最短输出 contig 长度 |\n| `--num"
             },
             {
               "rank": 4,
-              "doc_id": "exp_230",
+              "doc_id": "exp_264",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": 0.30545318126678467,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 质量评估指标\n\n| 指标 | 参考范围（肠道宏基因组） |\n|------|----------------------|\n| 总 contig 数 | 50,000–500,000 |\n| N50 | 1,000–10,000 bp |\n| 最长 contig | 50,000–500,000 bp |\n| 总长度 | 100 Mb–2 Gb |"
             },
             {
               "rank": 5,
-              "doc_id": "exp_231",
+              "doc_id": "exp_265",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": 0.3128907084465027,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 注意事项\n\n- 宏基因组复杂度高，组装 N50 远低于单菌基因组；N50 > 1 kb 即为良好结果\n- `--presets meta-sensitive` 增加低丰度序列召回，代价是组装时间增加约 2×\n- 若样本测序深度 < 5G bases，建议先用 `--k-list 21,41,61,81,99` 降低 k-mer 范围\n- 输出 contigs 直接用于后续基因预测（Prodigal）和 Binning"
@@ -225,39 +225,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 175.313,
+          "latency_ms": 24.582,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_151",
+              "doc_id": "exp_185",
               "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
               "distance": 0.26441794633865356,
               "snippet": "# fastp — 读段质量控制\n## Overview\n\n**版本**: 0.22.0 | **环境**: `envs/fastp` | **脚本**: `scripts/01_qc_fastp.sh`"
             },
             {
               "rank": 2,
-              "doc_id": "exp_63",
+              "doc_id": "exp_83",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/fastp-quality-control.md",
               "distance": 0.2697661519050598,
               "snippet": "# fastp 双端 WGS 原始数据质控参数建议\n## References（可选）\n\n- `scripts/01_qc_fastp.sh`"
             },
             {
               "rank": 3,
-              "doc_id": "exp_61",
+              "doc_id": "exp_81",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/fastp-quality-control.md",
               "distance": 0.28931665420532227,
               "snippet": "# fastp 双端 WGS 原始数据质控参数建议\n## Rationale\n\n- **为什么用 Q20**：Q20 对应约 1% 碱基错误率，在 shotgun metagenomics 中能平衡测序错误控制与低丰度物种 reads 保留；过高阈值会显著增加数据损失。\n- **为什么允许 40% 低质量碱基**：`--unqualified_percent_limit 40` 避免因为局部质量下降而整条 read 被过度丢弃，适合复杂肠道样本的后续分类和组装。\n- **为什"
             },
             {
               "rank": 4,
-              "doc_id": "exp_157",
+              "doc_id": "exp_191",
               "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
               "distance": 0.28329724073410034,
               "snippet": "# fastp — 读段质量控制\n## 官方链接\n\n- GitHub: https://github.com/OpenGene/fastp\n- 论文: Chen et al. 2018, Bioinformatics 34(17):i884-i890"
             },
             {
               "rank": 5,
-              "doc_id": "exp_152",
+              "doc_id": "exp_186",
               "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
               "distance": 0.2959938049316406,
               "snippet": "# fastp — 读段质量控制\n## 功能\n\n对原始 paired-end FASTQ 进行质量控制：接头自动识别和去除、低质量碱基修剪、polyX 去除、质量过滤，输出 JSON+HTML 报告。"
@@ -276,39 +276,39 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.2,
-          "latency_ms": 186.43,
+          "latency_ms": 78.601,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_159",
+              "doc_id": "exp_193",
               "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
               "distance": 0.36098963022232056,
               "snippet": "# KneadData — 宿主序列去除\n## 功能\n\n使用 Bowtie2 将读段比对到宿主基因组（人/小鼠/大鼠），去除比对成功的宿主序列，保留非宿主微生物读段，同时用 Trimmomatic 进行补充质控。"
             },
             {
               "rank": 2,
-              "doc_id": "exp_158",
+              "doc_id": "exp_192",
               "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
               "distance": 0.34473109245300293,
               "snippet": "# KneadData — 宿主序列去除\n## Overview\n\n**版本**: v0.12.4 | **环境**: `envs/kneaddata` | **脚本**: `scripts/02_qc_kneaddata.sh`"
             },
             {
               "rank": 3,
-              "doc_id": "exp_164",
+              "doc_id": "exp_198",
               "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
               "distance": 0.3589290380477905,
               "snippet": "# KneadData — 宿主序列去除\n## 注意事项\n\n- 宿主去除率通常 1-15%（肠道样本）；若 >50% 说明样本质量差或选错宿主数据库\n- 输出 R1/R2 文件名含 `kneaddata_paired` 中间态，脚本已自动重命名为标准格式\n- 若无宿主数据库，脚本跳过比对直接链接 fastp 输出"
             },
             {
               "rank": 4,
-              "doc_id": "exp_162",
+              "doc_id": "exp_196",
               "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
               "distance": 0.3747166395187378,
               "snippet": "# KneadData — 宿主序列去除\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `--reference-db` | `db/kneaddata/human_hg38_index` | Bowtie2 宿主索引路径 |\n| `--trimmomatic` | auto | Trimmomatic jar 路径（conda 自动检测） |\n| `--trimmomatic-options` | `SLIDINGWI"
             },
             {
               "rank": 5,
-              "doc_id": "exp_101",
+              "doc_id": "exp_128",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kneaddata-host-removal.md",
               "distance": 0.37248408794403076,
               "snippet": "# kneaddata 肠道样本人源宿主去除建议\n## Recommendation\n\n项目脚本默认读取 fastp 输出，使用 `${REPO}/db/kneaddata/human` 作为人源数据库，并跳过重复 trimming：\n\n```bash\n# Run host removal after fastp.\nbash scripts/02_qc_kneaddata.sh \\\n  -s S01 \\\n  -t 16 \\\n  -w /path/to/project \\\n  "
@@ -327,39 +327,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 202.288,
+          "latency_ms": 43.403,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_315",
+              "doc_id": "exp_349",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/metabat2.md",
               "distance": 0.2683377265930176,
               "snippet": "# MetaBAT2 — 宏基因组 Binning\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `-i` | contigs FASTA | 输入序列 |\n| `-a` | 深度文件路径 | jgi_summarize_bam_contig_depths 输出 |\n| `-o` | bin 输出前缀 | 输出路径 |\n| `-m` | 2500 | 最短 contig 长度（bp，推荐 ≥1500） |\n| `-t` "
             },
             {
               "rank": 2,
-              "doc_id": "exp_127",
+              "doc_id": "exp_154",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
               "distance": 0.24596548080444336,
               "snippet": "# MetaBAT2 MAG 分箱参数建议\n## Rationale\n\n- **为什么最小 contig 长度用 1500 bp**：MetaBAT2 默认常用 2500 bp 对复杂肠道样本可能偏严；1500 bp 能纳入更多中短 contigs，提高 MAG completeness。\n- **为什么设置 `--minCVSum 0`**：低丰度或覆盖度波动较小的 bins 可能被 CV 过滤排除，关闭该过滤有助于恢复低丰度菌株。\n- **为什么必须使用 depth**："
             },
             {
               "rank": 3,
-              "doc_id": "exp_125",
+              "doc_id": "exp_152",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
               "distance": 0.26986849308013916,
               "snippet": "# MetaBAT2 MAG 分箱参数建议\n## Recommendation\n\n项目脚本已经把 MetaBAT2 最小 contig 长度设为 `1500 bp`，并使用上游覆盖度文件：\n\n```bash\n# Run MetaBAT2 through the project wrapper.\nbash scripts/33_bac_metabat2.sh \\\n  -s S01 \\\n  -t 16 \\\n  -w /path/to/project \\\n  -r /path/to"
             },
             {
               "rank": 4,
-              "doc_id": "exp_126",
+              "doc_id": "exp_153",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
               "distance": 0.3347146511077881,
               "snippet": "# MetaBAT2 MAG 分箱参数建议\n## Recommendation\n\n```bash\n# Summarize cross-sample depth for one contig set.\njgi_summarize_bam_contig_depths \\\n  --outputDepth result/binning/metabat2/cohort/depth.txt \\\n  result/binning/align/S01/*.bam \\\n  result/bin"
             },
             {
               "rank": 5,
-              "doc_id": "exp_314",
+              "doc_id": "exp_348",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/metabat2.md",
               "distance": 0.34131163358688354,
               "snippet": "# MetaBAT2 — 宏基因组 Binning\n## 输入 / 输出\n\n| 项目 | 路径 |\n|------|------|\n| 输入 contigs | `result/assembly/megahit/{sample}/{sample}.contigs.fa` |\n| 覆盖深度表 | `result/binning/coverm/{sample}/depth.txt` |\n| 输出 bins | `result/binning/metabat2/{sample}/b"
@@ -378,39 +378,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 193.129,
+          "latency_ms": 57.166,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_264",
+              "doc_id": "exp_298",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
               "distance": 0.18738031387329102,
               "snippet": "# CheckM2 — MAG 质量评估\n## 质量标准（默认过滤阈值）\n\n| 质量级别 | 完整性 | 污染率 |\n|---------|-------|-------|\n| 高质量（HQ） | ≥90% | ≤5% |\n| 中质量（MQ） | ≥50% | ≤10% |\n| 低质量（LQ） | <50% | - |\n\n脚本默认保留 Completeness ≥ 50%, Contamination ≤ 10%（MQ+HQ）。"
             },
             {
               "rank": 2,
-              "doc_id": "exp_261",
+              "doc_id": "exp_295",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
               "distance": 0.3004741072654724,
               "snippet": "# CheckM2 — MAG 质量评估\n## 功能\n\n使用机器学习模型（基于 Diamond 蛋白比对特征）评估 MAG 的完整性（Completeness）和污染率（Contamination），取代依赖 lineage-specific marker genes 的 CheckM v1。对所有系统发育分支均有良好覆盖，特别适合新物种。"
             },
             {
               "rank": 3,
-              "doc_id": "exp_14",
+              "doc_id": "exp_20",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkm2-quality-thresholds.md",
               "distance": 0.29988980293273926,
               "snippet": "# CheckM2 MAG 质量分级阈值建议\n## Recommendation\n\n```bash\n# Add MIMAG-style quality tiers from CheckM2 report.\nawk -F'\\t' 'BEGIN{OFS=\"\\t\"}\n  NR==1 {print $0, \"quality_tier\"; next}\n  $2>=90 && $3<=5 {print $0, \"high_quality\"; next}\n  $2>=50 && $3<=1"
             },
             {
               "rank": 4,
-              "doc_id": "exp_792",
+              "doc_id": "exp_826",
               "source": "/home/labuser/Course/Maxmetagenome/scripts/37_bac_checkm2.sh",
               "distance": 0.31561386585235596,
               "snippet": "Script: 37_bac_checkm2\nTool: CheckM2 1.1+\nFunction: MAG 质量评估（CheckM2 ML 模型，预测完整度和污染度）\n工具版本：CheckM2 1.1+（conda env: checkm2）\nInputs: ${WORKDIR}/result/binning/dastool/*/bins/*.fa\nOutputs: ${WORKDIR}/result/binning/checkm2/quality_report.tsv\n"
             },
             {
               "rank": 5,
-              "doc_id": "exp_15",
+              "doc_id": "exp_21",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkm2-quality-thresholds.md",
               "distance": 0.2803943157196045,
               "snippet": "# CheckM2 MAG 质量分级阈值建议\n## Rationale\n\n- **为什么用 MIMAG 阈值**：completeness `>=90%` 且 contamination `<=5%`、以及 completeness `>=50%` 且 contamination `<=10%` 是 MAG 发表和跨项目比较最常用的质量分层。\n- **为什么 CheckM2 适合高通量 QC**：CheckM2 使用神经网络和机器学习特征，不完全依赖 marker gene "
@@ -430,39 +430,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 183.455,
+          "latency_ms": 99.656,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_283",
+              "doc_id": "exp_317",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
               "distance": 0.1726551055908203,
               "snippet": "# DAS_Tool — 多算法 Binning 整合\n## DAS_Tool 打分原理\n\n每个 contig 根据来自多种工具的 bin 分配计算分数：\n- **一致性加分**：多工具同意同一分配 → 高分\n- **重复惩罚**：同一 contig 被分配到多个不同 bin → 扣分\n- **大小惩罚**：异常大的 bin → 轻微扣分\n\n最终选择 `score_threshold` 以上的 bin，确保质量门槛。"
             },
             {
               "rank": 2,
-              "doc_id": "exp_278",
+              "doc_id": "exp_312",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
               "distance": 0.1668025255203247,
               "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 功能\n\nDAS_Tool（Dereplication, Aggregation and Scoring Tool）整合来自多种 binning 算法的结果，通过对每个 contig 的 bin 分配进行打分和去冗余，选出最高质量的非冗余 bin 集合，显著优于任何单一 binning 工具。"
             },
             {
               "rank": 3,
-              "doc_id": "exp_282",
+              "doc_id": "exp_316",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
               "distance": 0.17698532342910767,
               "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 输出统计格式（summary.tsv）\n\n```\nbin        size    contigs  N50     completeness  contamination  score\nbin.1      2.1Mb   45       85000   95.2          2.3            0.89\nbin.2      1.8Mb   38       72000   87.4   "
             },
             {
               "rank": 4,
-              "doc_id": "exp_284",
+              "doc_id": "exp_318",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
               "distance": 0.19880372285842896,
               "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 注意事项\n\n- DAS_Tool 要求至少 2 种工具的 tsv 输入；若某工具完全没有输出 bin，脚本会跳过该工具\n- `score_threshold 0.5` 较保守；若想保留更多 bin 可降至 0.3，但污染率会升高\n- DAS_Tool 输出的 bins 即为 CheckM2 的输入，命名格式会保留原始 bin 工具前缀"
             },
             {
               "rank": 5,
-              "doc_id": "exp_277",
+              "doc_id": "exp_311",
               "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
               "distance": 0.18418997526168823,
               "snippet": "# DAS_Tool — 多算法 Binning 整合\n## Overview\n\n**版本**: 1.1.7 | **环境**: `envs/dastool` | **脚本**: `scripts/36_bac_dastool.sh`"
@@ -482,39 +482,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 183.717,
+          "latency_ms": 20.99,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_417",
+              "doc_id": "exp_451",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": 0.2552751302719116,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 注意事项\n\n- geNomad 数据库约 10 GB（v1.11），位于 `db/genomad/`，运行前需确保已下载\n- `--sensitivity` 设为 7.5 是灵敏度和计算时间的折中；小样本可降至 4.2 加快速度\n- geNomad 对短序列（<1kb）灵敏度有限，Contigs 长度建议 ≥1.5kb（已在 MEGAHIT 组装中控制）"
             },
             {
               "rank": 2,
-              "doc_id": "exp_75",
+              "doc_id": "exp_95",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
               "distance": 0.31376904249191284,
               "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Scenario\n\n> 适用于已经完成宏基因组组装的肠道样本，需要从 contigs 中识别病毒、噬菌体和质粒候选，并为后续 CheckV、vOTU 构建和生活方式分析提供高可信输入。\n\n典型输入是去宿主后的 WGS metagenome 组装结果，推荐先对 contig 做长度预过滤，再同时运行 geNomad 和 VirSorter2。\n\n如果目标是病毒发现，geNomad 适合作为主召回工具"
             },
             {
               "rank": 3,
-              "doc_id": "exp_411",
+              "doc_id": "exp_445",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": 0.3216065764427185,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## Overview\n\n**版本**: 1.11+ | **环境**: `envs/genomad` | **脚本**: `scripts/52_vir_genomad.sh` / `57_vir_votu_genomad.sh`"
             },
             {
               "rank": 4,
-              "doc_id": "exp_414",
+              "doc_id": "exp_448",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": 0.30651336908340454,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `--sensitivity` | 7.5 | 搜索灵敏度（4.2–7.5，越高越灵敏） |\n| `--splits` | 4 | 分块数（降低内存峰值） |\n| `--cleanup` | on | 删除中间临时文件 |\n| `--threads` | CPUS | 线程数 |"
             },
             {
               "rank": 5,
-              "doc_id": "exp_415",
+              "doc_id": "exp_449",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": 0.32627153396606445,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## geNomad vs VirSorter2 互补策略\n\n| 特性 | geNomad | VirSorter2 |\n|------|---------|------------|\n| 算法 | 神经网络（nn-classification） | 多重分类器 + 标记基因 |\n| 灵敏度 | 高（~7.5） | 高（5 组病毒群） |\n| 特异度 | 极高 | 高 |\n| 质粒预测 | **支持** | 不支持 |\n|"
@@ -534,39 +534,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 180.707,
+          "latency_ms": 14.576,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_24",
+              "doc_id": "exp_30",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
               "distance": 0.2068241834640503,
               "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Recommendation\n\n推荐将 geNomad 与 VirSorter2 候选合并去重后运行 `checkv end_to_end`，并使用 `quality_summary.tsv` 作为唯一过滤主表。\n\n```bash\n# Merge candidate viral contigs from geNomad and VirSorter2.\ncat result/virus/genomad/samp"
             },
             {
               "rank": 2,
-              "doc_id": "exp_25",
+              "doc_id": "exp_31",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
               "distance": 0.22151029109954834,
               "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Recommendation\n\n# Mark near-complete genomes.\ncsvtk filter2 -t -f '$completeness >= 90 && $contamination <= 5' \\\n  result/virus/checkv/sample/quality_summary.tsv \\\n  > result/virus/checkv/sample/near_comple"
             },
             {
               "rank": 3,
-              "doc_id": "exp_29",
+              "doc_id": "exp_35",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
               "distance": 0.215246319770813,
               "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## References（可选）\n\n- `scripts/54_vir_checkv_contig.sh`\n- `docs/experience/checkv-quality-filter.md`\n- 上游来源：`scripts/52_vir_genomad.sh`\n- 上游来源：`scripts/53_vir_virsorter2.sh`"
             },
             {
               "rank": 4,
-              "doc_id": "exp_28",
+              "doc_id": "exp_34",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
               "distance": 0.22483927011489868,
               "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Verified\n\n- pending — 基于工具文档与脚本分析推导，待实际运行验证"
             },
             {
               "rank": 5,
-              "doc_id": "exp_27",
+              "doc_id": "exp_33",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
               "distance": 0.2795788049697876,
               "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Rationale\n\n结 合 completeness 、 contamination 和 hallmark genes 。 - * * 为 什 么 完 整 度 估 计 有 生 物 学 依 据 * * ： checkv 利 用 病 毒 hallmark genes 、 参 考 基 因 组 和 基 因 内 容 模 型 估 计 完 整 度 ， 比 单 纯 按 contig 长 度 筛 选 可 靠 。\n- **为什"
@@ -585,39 +585,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 187.652,
+          "latency_ms": 30.034,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_585",
+              "doc_id": "exp_619",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
               "distance": 0.22930830717086792,
               "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 与 FunOMIC / CCMetagen 的对比\n\n| 工具 | 方法 | 数据库 | 速度 | 精度 |\n|------|------|--------|------|------|\n| FunOMIC（75） | marker + 功能蛋白 | 1.6M markers + 3.4M proteins | 中 | 高（推荐） |\n| CCMetagen（76） | KMA | NCBI nt 全库 | 较慢 | "
             },
             {
               "rank": 2,
-              "doc_id": "exp_64",
+              "doc_id": "exp_84",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/funomic-fungi-profiling.md",
               "distance": 0.28230178356170654,
               "snippet": "# FunOMIC 真菌 WGS 分类与功能谱分析建议\n## Scenario\n\n> 适用于肠道 WGS metagenomics 中的真菌群落分析，尤其是低丰度 fungi 需要比通用 k-mer 分类器更稳健的物种识别和功能解释时。\n\n典型输入是已经完成质控和宿主去除的双端 reads，样本可以来自粪便、肠内容物或其他低真菌负荷的微生物组项目。\n\n如果研究问题明确聚焦 mycobiome，FunOMIC 应作为真菌主分析工具；Kraken2 PlusPF 更适合做快速筛查"
             },
             {
               "rank": 3,
-              "doc_id": "exp_587",
+              "doc_id": "exp_621",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
               "distance": 0.2631785273551941,
               "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 官方链接\n\n- DIAMOND: https://github.com/bbuchfink/diamond\n- GutDB: 参考肠道真菌基因组集合（非独立工具）"
             },
             {
               "rank": 4,
-              "doc_id": "exp_580",
+              "doc_id": "exp_614",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
               "distance": 0.24717921018600464,
               "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## Overview\n\n**版本**: DIAMOND BLAST | **环境**: `envs/assembly` | **脚本**: `scripts/74_fun_blast_gutdb.sh`"
             },
             {
               "rank": 5,
-              "doc_id": "exp_639",
+              "doc_id": "exp_673",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/funomics.md",
               "distance": 0.295185923576355,
               "snippet": "# FunOMIC — 真菌分类与功能分析\n## 功能\n\nFunOMIC 使用真菌 marker 与功能蛋白数据库进行真菌 WGS 分类和功能分析。当前项目已部署两套本地数据库，脚本 75 优先尝试 `funomic classify`，若未检测到命令则自动回退到 `diamond blastx`。"
@@ -636,39 +636,39 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 190.22,
+          "latency_ms": 13.537,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_54",
+              "doc_id": "exp_74",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
               "distance": 0.28603893518447876,
               "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Recommendation\n\n```bash\nbash scripts/79_fun_eukfinder.sh \\\n  -s sample \\\n  -t 16 \\\n  -w Project/Project_example \\\n  -r /home/labuser/Course/Maxmetagenome\n```\n\nEukfinder 输出的真核 contigs 进入 binning 后，应使用 CheckM-Eu"
             },
             {
               "rank": 2,
-              "doc_id": "exp_55",
+              "doc_id": "exp_75",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
               "distance": 0.2923569679260254,
               "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Rationale\n\n- **为什么需要先做真菌分类**：71/72 输出能判断样本是否有足够真菌信号，避免对几乎无真菌 reads 的样本投入昂贵组装和 binning。\n- **为什么要单独重组装 fungal reads**：全量 metagenome 中细菌 reads 占主导，直接组装会稀释真菌覆盖度并产生大量原核 contig 干扰。\n- **为什么不能依赖 MetaBAT2/MaxBin2**：这"
             },
             {
               "rank": 3,
-              "doc_id": "exp_52",
+              "doc_id": "exp_72",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
               "distance": 0.3158653974533081,
               "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Scenario\n\n> 适用于从肠道宏基因组中回收真核或真菌 MAG，尤其是已经通过 Kraken2 PlusPF、FunOMIC 或其他 71/72 真菌分类结果确认样本存在真菌 reads 后。\n\n典型流程不是把全量 metagenome contigs 直接交给通用 binning 工具，而是先识别或提取真菌 reads，单独重组装，再用 Eukfinder 识别真核 contigs 并进入 eMAG 回"
             },
             {
               "rank": 4,
-              "doc_id": "exp_632",
+              "doc_id": "exp_666",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/eukfinder.md",
               "distance": 0.3133981227874756,
               "snippet": "# Eukfinder — 真核生物 MAG 回收\n## 分析流程\n\n```\n真菌组装 contigs → Eukfinder_long 真核识别 → 真核 contigs 分类\n                                            → 真核 MAG 回收 → 后续蛋白预测 + 注释\n```"
             },
             {
               "rank": 5,
-              "doc_id": "exp_57",
+              "doc_id": "exp_77",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
               "distance": 0.32391053438186646,
               "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Verified\n\n- pending — 基于工具文档与脚本分析推导，待实际运行验证"
@@ -687,39 +687,39 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.2,
-          "latency_ms": 191.427,
+          "latency_ms": 15.117,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_333",
+              "doc_id": "exp_367",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
               "distance": 0.3405616879463196,
               "snippet": "# 批次校正与评估\n## Step 1（95a）— 批量校正方法\n\n脚本 95a 运行多种批次校正方法，包括：\n- **ConQuR**: 分位数回归\n- **MMUPHin**: Meta 分析批次校正\n- **ComBat-seq**: 基于负二项回归\n- **Harmony**: 软聚类校正\n- **limma::removeBatchEffect**: 线性模型"
             },
             {
               "rank": 2,
-              "doc_id": "exp_337",
+              "doc_id": "exp_371",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
               "distance": 0.3519018888473511,
               "snippet": "# 批次校正与评估\n## R 依赖包\n\n`MBECS`, `ConQuR`, `MMUPHin`, `sva`, `limma`, `harmony`, `vegan`, `tidyverse`"
             },
             {
               "rank": 3,
-              "doc_id": "exp_330",
+              "doc_id": "exp_364",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
               "distance": 0.4141138195991516,
               "snippet": "# 批次校正与评估\n## 功能\n\n对多中心/多批次宏基因组数据进行批次校正。95a 运行多种校正方法，95b 评估各方法效果并推荐最佳方法。"
             },
             {
               "rank": 4,
-              "doc_id": "exp_329",
+              "doc_id": "exp_363",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
               "distance": 0.35704392194747925,
               "snippet": "# 批次校正与评估\n## Overview\n\n**环境**: `envs/r_stat` | **脚本**: `scripts/95a_stat_batch_correct.sh` / `95b_stat_batch_evaluate.sh`"
             },
             {
               "rank": 5,
-              "doc_id": "exp_0",
+              "doc_id": "exp_6",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/batch-correction-strategy.md",
               "distance": 0.44541746377944946,
               "snippet": "# 宏基因组批次校正方法的分层使用建议\n## Scenario\n\n> 适用于跨中心、跨批次或跨平台的菌群丰度矩阵，需要比较多种批次校正方法而不是押注单一算法。\n\n本项目脚本不会只输出一个“校正后真值矩阵”，而是并行生成 ConQuR、MMUPHin、ComBat、RUVIII、PercentileNorm、BMC 和 DEBIAS-M 的结果。\n\n因此经验重点不是宣布谁永远最好，而是给出默认优先级与排除规则。"
@@ -738,42 +738,1596 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 179.555,
+          "latency_ms": 15.088,
           "top_results": [
             {
               "rank": 1,
-              "doc_id": "exp_387",
+              "doc_id": "exp_421",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.3400954604148865,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## R 依赖包\n\n`SIAMCAT`, `phyloseq`, `tidyverse`"
             },
             {
               "rank": 2,
-              "doc_id": "exp_384",
+              "doc_id": "exp_418",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.3478761911392212,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 输出\n\n| 文件 | 内容 |\n|------|------|\n| `siamcat_auc_summary.tsv` | 四种模型 AUC 汇总 |\n| `siamcat_done.txt` | 完成标志（含 AUC 列表） |\n| `siamcat_{model}.rds` | SIAMCAT 模型对象（可 reload 查看） |\n| `siamcat_{model}_evaluation.pdf` | ROC / "
             },
             {
               "rank": 3,
-              "doc_id": "exp_140",
+              "doc_id": "exp_167",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/siamcat-ml-disease-classifier.md",
               "distance": 0.36601364612579346,
               "snippet": "# SIAMCAT 疾病分类模型的默认建模策略建议\n## Scenario\n\n> 适用于病例对照或分组明确的宏基因组项目，希望构建可解释的分类模型，而不是只做单变量差异检验。\n\n本项目脚本面向的是聚合矩阵层的机器学习，输入来自 merged taxonomy、病毒表或联合特征。\n\n真正影响结果可信度的不是”模型能不能跑通”，而是样本数、分组定义、特征过滤和交叉验证设计。\n\n**关键参数速查**：`--folds 10`（10 折交叉验证，默认）；训练模型：lasso / ri"
             },
             {
               "rank": 4,
-              "doc_id": "exp_379",
+              "doc_id": "exp_413",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.37249237298965454,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## Overview\n\n**环境**: `envs/r_stat` | **脚本**: `scripts/96_stat_ml_siamcat.sh`"
             },
             {
               "rank": 5,
-              "doc_id": "exp_380",
+              "doc_id": "exp_414",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.39550042152404785,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 功能\n\n使用 SIAMCAT 框架对微生物组特征（物种分类丰度）进行机器学习建模，支持 Lasso / Ridge / Elastic Net / Random Forest 四种算法，输出 10 折交叉验证 AUC、模型评估图和 Top 特征重要性排序，用于识别最具判别力的生物标志物。"
+            }
+          ]
+        }
+      ]
+    },
+    "dense": {
+      "recall_at_1": 0.5333333333333333,
+      "recall_at_3": 0.7333333333333333,
+      "recall_at_5": 0.8,
+      "mrr_at_5": 0.6277777777777778,
+      "mean_latency_ms": 24.4702,
+      "per_query": [
+        {
+          "id": "metaphlan4_params",
+          "query": "MetaPhlAn4 双端样本参数设置 mapout samout",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "metaphlan4-parameter-guide"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 89.04,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_158",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": 0.15515506267547607,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Recommendation\n\n核心推荐是保留脚本默认运行方式，不要在当前流程里强行改回 `-1/-2` 直接输入。\n\n当前版本推荐参数与流程如下：\n\n```bash\nmetaphlan merged.fastq.gz \\\n  --input_type fastq \\\n  --db_dir db/metaphlan4 \\\n  -x mpa_vOct22_CHOCOPhlAnSGB_202212 \\\n  --nproc"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_161",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": 0.16006451845169067,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## References（可选）\n\n- `scripts/11_bac_metaphlan4.sh`\n- `agents/skills/11_bac_metaphlan4.yaml`\n- `scripts/12_bac_strainphlan4.sh`\n- `scripts/13_bac_humann3.sh`"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_160",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": 0.17700326442718506,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Verified\n\n**Status**: validated — 已通过实际运行验证\n\n- 2026-06-12 — User: labuser, Sample: S01, Params: database=mpa_vOct22_CHOCOPhlAnSGB_202212, threads=16, input_type=fastq, Exit: 0, Duration: 84s, Workdir: /home/labuser"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_157",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": 0.2035229206085205,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Scenario\n\n> 适用于经去宿主后的双端宏基因组样本，需要稳定获得物种组成，并为后续 StrainPhlAn4 与 HUMAnN3 复用分类结果。\n\n推荐场景是肠道、口腔或粪便等中高深度样本，单样本常见在 10M 到 80M reads。\n\n如果目标只是快速粗分类，Kraken2 更快；如果目标是标志基因驱动的稳健物种谱与后续菌株分析，优先保留 MetaPhlAn4。\n\n脚本默认数据库是 `mpa_vOct22"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_159",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": 0.22239315509796143,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Rationale\n\n- **为什么不直接用双文件输入**：该脚本明确说明当前部署的 MetaPhlAn4 v4.2.4 在这里采用“先合并再分析”的兼容方案，继续沿用最稳妥。\n- **为什么线程不需要过高**：MetaPhlAn4 主要瓶颈是 marker 比对与后处理，超过 `16` 线程后加速通常不再线性。\n- **为什么保留 `mapout`**：它缓存了 bowtie2 的中间结果，后续若需复查 profi"
+            }
+          ]
+        },
+        {
+          "id": "humann3_speed",
+          "query": "HUMAnN3 速度模式 balanced fast 参数",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "humann3-speed-mode"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 12.306,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_108",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/humann3-speed-mode.md",
+              "distance": 0.1732327938079834,
+              "snippet": "# HUMAnN3 standard、balanced 与 fast 模式选择建议\n## Scenario\n\n> 适用于去宿主后的双端宏基因组样本，需要在功能通路精度、运行时间和队列吞吐之间做明确取舍。\n\n本项目脚本已经把 HUMAnN3 的关键决策点集中到 `--speed-mode`，因此经验文档的重点不是“能不能跑”，而是“什么场景切到哪一档”。\n\n当样本深度超过约 20M reads、且队列规模较大时，速度模式的收益会非常明显。\n\n如果项目目标是发表级通路结果、稀有物"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_211",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3.md",
+              "distance": 0.1900486946105957,
+              "snippet": "# HUMAnN 3 — 功能通路定量\n## 速度模式（`--speed-mode`）\n\n| 模式 | 耗时（16 线程）| 精度 | 适用场景 |\n|------|-------------|------|---------|\n| `standard` | 2-6h | 最高 | 发表级分析 |\n| `balanced` | 1-3h | 高 | 常规研究 |\n| `fast` | 0.5-1h | 中 | 初步探索 |\n\n详见 `docs/02_read_based/hu"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_109",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/humann3-speed-mode.md",
+              "distance": 0.2019006609916687,
+              "snippet": "# HUMAnN3 standard、balanced 与 fast 模式选择建议\n## Recommendation\n\n默认推荐：`--speed-mode balanced`。\n\n对应关键参数如下：\n\n```bash\nhumann \\\n  --prescreen-threshold 1.0 \\\n  --memory-use maximum \\\n  --taxonomic-profile sample_profile.txt \\\n  --remove-temp-output"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_221",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
+              "distance": 0.21990686655044556,
+              "snippet": "# HUMAnN3 速度优化指南\n## 使用方法\n\n### 方法 1：直接调用脚本\n\n```bash\n# 标准模式（默认）\nbash scripts/13_bac_humann3.sh \\\n     -s SRR28210342 -t 16 \\\n     -w Project/Project_example \\\n     -r ~/Course/Maxmetagenome\n\n# 平衡模式（推荐）\nbash scripts/13_bac_humann3.sh \\\n     -s"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_220",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
+              "distance": 0.2251330018043518,
+              "snippet": "# HUMAnN3 速度优化指南\n## 核心提速原理\n\n---\n\n### 4. 只用 R1（fast 模式）\n\n**作用**：HUMAnN3 不考虑双端配对信息，只用 R1 端结果与 R1+R2 高度相关\n\n**提速**：2×（数据量减半）\n\n**代价**：\n- 通路丰度相关性 >0.95（来自 EasyMetagenome 经验）\n- 低丰度物种的基因可能覆盖度下降\n\n---\n\n### 5. `--diamond-options \"--block-size 6.0\"`（fa"
+            }
+          ]
+        },
+        {
+          "id": "kraken2_db",
+          "query": "Kraken2 数据库选择 Standard PlusPF Standard-8",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "kraken2-database-choice"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 42.336,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_138",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-database-choice.md",
+              "distance": 0.3013131022453308,
+              "snippet": "# Kraken2 数据库与置信度阈值选择建议\n## References（可选）\n\n- `scripts/14_bac_kraken2.sh`\n- `agents/skills/14_bac_kraken2.yaml`\n- Bracken 输出：`*_S.bracken`、`*_G.bracken`、`*_P.bracken`\n- `result/kraken2/{sample}/{sample}.report`"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_137",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-database-choice.md",
+              "distance": 0.30218857526779175,
+              "snippet": "# Kraken2 数据库与置信度阈值选择建议\n## Verified\n\n- pending — 基于工具文档与脚本分析推导，待实际运行验证"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_134",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-database-choice.md",
+              "distance": 0.32370525598526,
+              "snippet": "# Kraken2 数据库与置信度阈值选择建议\n## Recommendation\n\n默认推荐使用脚本中的 PlusPF 数据库，不建议在正式项目里直接降到极小库，除非内存或时长已经成为硬约束。\n\n推荐的默认调用保持如下：\n\n```bash\nkraken2 \\\n  --db db/kraken2/pluspf \\\n  --paired R1.fastq.gz R2.fastq.gz \\\n  --confidence 0.1 \\\n  --report-zero-counts \\"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_135",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-database-choice.md",
+              "distance": 0.3319331407546997,
+              "snippet": "# Kraken2 数据库与置信度阈值选择建议\n## Rationale\n\n- **为什么 PlusPF 是默认库**：它同时覆盖细菌、古菌、病毒、真菌和原生生物，更符合宏基因组项目“广覆盖”的实际需求。\n- **为什么不默认用更小库**：缩库会明显降低分类覆盖，尤其会牺牲非细菌成分与边缘类群。\n- **为什么 `0.1` 是常规平衡点**：脚本把它定义为肠道宏基因组的推荐值，既能压掉一部分弱 k-mer 噪声，又不会像 `0.3+` 那样过度保守。\n- **为什么低生物量场"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_230",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/kraken2.md",
+              "distance": 0.3457368016242981,
+              "snippet": "# Kraken2 + Bracken — 快速物种分类\n## 数据库（`db/kraken2/`）\n\n| 数据库 | 大小 | 特点 |\n|--------|------|------|\n| `standard_8G/` | 8G | 精简版，适合内存受限环境 |\n| `standard/` | ~60G | 全库，精度更高 |\n| `PlusPF/` | ~140G | 含真菌、植物，用于真菌脚本 71 |"
+            }
+          ]
+        },
+        {
+          "id": "megahit_assembly",
+          "query": "MEGAHIT 组装 min-contig-len k-mer 参数",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "megahit-assembly-strategy"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 10.541,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_145",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
+              "distance": 0.23633766174316406,
+              "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Scenario\n\n> 适用于去宿主后的双端宏基因组样本，需要在 contig 数量、下游注释灵敏度和 MAG 回收质量之间做取舍。\n\n同一个样本做”功能注释”和”分箱回收”时，最优组装参数不一定相同。\n\n本项目脚本已经把选择压缩到两个核心维度：`--presets` 与 `--min-contig-len`。\n\n**关键参数速查**：`--min-contig-len 500`（通用注释）/ `1000-15"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_146",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
+              "distance": 0.27296632528305054,
+              "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Recommendation\n\n如果目标是通用下游分析，保持脚本默认：\n\n```bash\nmegahit \\\n  -1 R1.fastq.gz \\\n  -2 R2.fastq.gz \\\n  --presets meta-large \\\n  --min-contig-len 500 \\\n  -m 0.9 \\\n  -t 16\n```\n\n如果目标是 MAG 挖掘、CoverM 深度估计和后续 binning，建议把 "
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_147",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
+              "distance": 0.27586376667022705,
+              "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Rationale\n\n- **为什么 `meta-large` 是默认主选**：脚本给出的 k 值列表更适合肠道这类中高多样性宏基因组，通常能在连续性与复杂度之间取得较稳平衡。\n- **为什么 `500 bp` 适合通用分析**：短 contig 虽然不一定适合分箱，但对基因预测、功能注释和病毒线索保留更友好。\n- **为什么 MAG 工作流要提高到 `1000-1500 bp`**：较长 contig 的四核"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_264",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
+              "distance": 0.30545318126678467,
+              "snippet": "# MEGAHIT — 宏基因组组装\n## 质量评估指标\n\n| 指标 | 参考范围（肠道宏基因组） |\n|------|----------------------|\n| 总 contig 数 | 50,000–500,000 |\n| N50 | 1,000–10,000 bp |\n| 最长 contig | 50,000–500,000 bp |\n| 总长度 | 100 Mb–2 Gb |"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_265",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
+              "distance": 0.3128907084465027,
+              "snippet": "# MEGAHIT — 宏基因组组装\n## 注意事项\n\n- 宏基因组复杂度高，组装 N50 远低于单菌基因组；N50 > 1 kb 即为良好结果\n- `--presets meta-sensitive` 增加低丰度序列召回，代价是组装时间增加约 2×\n- 若样本测序深度 < 5G bases，建议先用 `--k-list 21,41,61,81,99` 降低 k-mer 范围\n- 输出 contigs 直接用于后续基因预测（Prodigal）和 Binning"
+            }
+          ]
+        },
+        {
+          "id": "fastp_qc",
+          "query": "fastp 质控 adapter removal length_required Q20",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "fastp-quality-control"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 10.554,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_185",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
+              "distance": 0.26441794633865356,
+              "snippet": "# fastp — 读段质量控制\n## Overview\n\n**版本**: 0.22.0 | **环境**: `envs/fastp` | **脚本**: `scripts/01_qc_fastp.sh`"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_83",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/fastp-quality-control.md",
+              "distance": 0.2697661519050598,
+              "snippet": "# fastp 双端 WGS 原始数据质控参数建议\n## References（可选）\n\n- `scripts/01_qc_fastp.sh`"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_188",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
+              "distance": 0.28083568811416626,
+              "snippet": "# fastp — 读段质量控制\n## 关键参数（脚本默认值）\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `--cut_front` | on | 从 5' 端滑窗修剪低质量碱基 |\n| `--cut_tail` | on | 从 3' 端滑窗修剪 |\n| `--cut_mean_quality` | 20 | 滑窗均质阈值 |\n| `--qualified_quality_phred` | 15 | 每碱基最低质量 |\n| `--"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_191",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
+              "distance": 0.28329724073410034,
+              "snippet": "# fastp — 读段质量控制\n## 官方链接\n\n- GitHub: https://github.com/OpenGene/fastp\n- 论文: Chen et al. 2018, Bioinformatics 34(17):i884-i890"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_80",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/fastp-quality-control.md",
+              "distance": 0.28850018978118896,
+              "snippet": "# fastp 双端 WGS 原始数据质控参数建议\n## Recommendation\n\n项目脚本已经固定使用 Q20、最小长度 50 bp、双端接头自动检测，并保留 HTML 与 JSON 报告：\n\n```bash\n# Run the project wrapper.\nbash scripts/01_qc_fastp.sh \\\n  -s S01 \\\n  -t 16 \\\n  -w /path/to/project \\\n  -r /path/to/Maxmetagenome\n`"
+            }
+          ]
+        },
+        {
+          "id": "kneaddata_host",
+          "query": "KneadData 去宿主 bowtie2 hg37dec very-sensitive-local",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "kneaddata-host-removal"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.25,
+          "latency_ms": 10.545,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_192",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
+              "distance": 0.34473109245300293,
+              "snippet": "# KneadData — 宿主序列去除\n## Overview\n\n**版本**: v0.12.4 | **环境**: `envs/kneaddata` | **脚本**: `scripts/02_qc_kneaddata.sh`"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_198",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
+              "distance": 0.3589290380477905,
+              "snippet": "# KneadData — 宿主序列去除\n## 注意事项\n\n- 宿主去除率通常 1-15%（肠道样本）；若 >50% 说明样本质量差或选错宿主数据库\n- 输出 R1/R2 文件名含 `kneaddata_paired` 中间态，脚本已自动重命名为标准格式\n- 若无宿主数据库，脚本跳过比对直接链接 fastp 输出"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_193",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
+              "distance": 0.36098963022232056,
+              "snippet": "# KneadData — 宿主序列去除\n## 功能\n\n使用 Bowtie2 将读段比对到宿主基因组（人/小鼠/大鼠），去除比对成功的宿主序列，保留非宿主微生物读段，同时用 Trimmomatic 进行补充质控。"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_132",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kneaddata-host-removal.md",
+              "distance": 0.3610053062438965,
+              "snippet": "# kneaddata 肠道样本人源宿主去除建议\n## References（可选）\n\n- `scripts/02_qc_kneaddata.sh`"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_129",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kneaddata-host-removal.md",
+              "distance": 0.3684513568878174,
+              "snippet": "# kneaddata 肠道样本人源宿主去除建议\n## Recommendation\n\n```bash\n# Keep paired reads and orphan reads for downstream assembly if present.\ngzip -c result/kneaddata/S01/S01_paired_1.fastq > result/kneaddata/S01/S01_1.kneaddata.fastq.gz\ngzip -c result/knea"
+            }
+          ]
+        },
+        {
+          "id": "metabat2_bin",
+          "query": "MetaBAT2 binning depth 最小长度 minCVSum 参数",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "metabat2-binning-parameters"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 34.842,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_154",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
+              "distance": 0.24596548080444336,
+              "snippet": "# MetaBAT2 MAG 分箱参数建议\n## Rationale\n\n- **为什么最小 contig 长度用 1500 bp**：MetaBAT2 默认常用 2500 bp 对复杂肠道样本可能偏严；1500 bp 能纳入更多中短 contigs，提高 MAG completeness。\n- **为什么设置 `--minCVSum 0`**：低丰度或覆盖度波动较小的 bins 可能被 CV 过滤排除，关闭该过滤有助于恢复低丰度菌株。\n- **为什么必须使用 depth**："
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_349",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/metabat2.md",
+              "distance": 0.2683377265930176,
+              "snippet": "# MetaBAT2 — 宏基因组 Binning\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `-i` | contigs FASTA | 输入序列 |\n| `-a` | 深度文件路径 | jgi_summarize_bam_contig_depths 输出 |\n| `-o` | bin 输出前缀 | 输出路径 |\n| `-m` | 2500 | 最短 contig 长度（bp，推荐 ≥1500） |\n| `-t` "
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_152",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
+              "distance": 0.26986849308013916,
+              "snippet": "# MetaBAT2 MAG 分箱参数建议\n## Recommendation\n\n项目脚本已经把 MetaBAT2 最小 contig 长度设为 `1500 bp`，并使用上游覆盖度文件：\n\n```bash\n# Run MetaBAT2 through the project wrapper.\nbash scripts/33_bac_metabat2.sh \\\n  -s S01 \\\n  -t 16 \\\n  -w /path/to/project \\\n  -r /path/to"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_156",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
+              "distance": 0.3291076421737671,
+              "snippet": "# MetaBAT2 MAG 分箱参数建议\n## References（可选）\n\n- `scripts/33_bac_metabat2.sh`\n- `scripts/32_bac_coverm_depth.sh`"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_352",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/metabat2.md",
+              "distance": 0.32983583211898804,
+              "snippet": "# MetaBAT2 — 宏基因组 Binning\n## 注意事项\n\n- MetaBAT2 对低覆盖度样本（<5× 平均深度）效果差；建议与 MaxBin2 和 SemiBin2 联用\n- `-m 2500` 可提高 bin 质量但减少 contig 数量；若样本较差可降至 1500\n- contig2bin TSV 格式为两列：`contig_ID\\tbin_ID`，DAS_Tool 需要此格式"
+            }
+          ]
+        },
+        {
+          "id": "checkm2_quality",
+          "query": "CheckM2 MAG 质量 HQ MQ MIMAG 完整度 污染率",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "checkm2-quality-thresholds"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "mrr_at_5": 0.0,
+          "latency_ms": 78.605,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_298",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
+              "distance": 0.18738031387329102,
+              "snippet": "# CheckM2 — MAG 质量评估\n## 质量标准（默认过滤阈值）\n\n| 质量级别 | 完整性 | 污染率 |\n|---------|-------|-------|\n| 高质量（HQ） | ≥90% | ≤5% |\n| 中质量（MQ） | ≥50% | ≤10% |\n| 低质量（LQ） | <50% | - |\n\n脚本默认保留 Completeness ≥ 50%, Contamination ≤ 10%（MQ+HQ）。"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_294",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
+              "distance": 0.22878992557525635,
+              "snippet": "# CheckM2 — MAG 质量评估\n## Overview\n\n**版本**: 1.0.1 | **环境**: `envs/checkm2` | **脚本**: `scripts/37_bac_checkm2.sh`"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_296",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
+              "distance": 0.2554023265838623,
+              "snippet": "# CheckM2 — MAG 质量评估\n## 输入 / 输出\n\n| 项目 | 路径 |\n|------|------|\n| 输入 bins | `result/binning/dastool/*/bins/*.fa` |\n| 质量报告 | `result/binning/checkm2/quality_report.tsv` |\n| 过滤报告 | `result/binning/checkm2/checkm2_filtered/filtered_report.tsv` |"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_299",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
+              "distance": 0.2621890902519226,
+              "snippet": "# CheckM2 — MAG 质量评估\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `--input` | bin 目录 | 输入 FASTA 目录 |\n| `--output-directory` | `result/binning/checkm2/` | 输出目录 |\n| `--threads` | CPUS | 线程数 |\n| `--database_path` | `db/checkm2/` | 数据库路径 "
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_303",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
+              "distance": 0.2659180760383606,
+              "snippet": "# CheckM2 — MAG 质量评估\n## 官方链接\n\n- GitHub: https://github.com/chklovski/CheckM2\n- 论文: Chklovski et al. 2023, Nature Methods 20:1203-1212"
+            }
+          ]
+        },
+        {
+          "id": "dastool_refine",
+          "query": "DAS_Tool 多算法 bin 整合 score_threshold diamond",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "dastool-bin-refinement",
+            "04_binning/dastool"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 11.095,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_312",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": 0.1668025255203247,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 功能\n\nDAS_Tool（Dereplication, Aggregation and Scoring Tool）整合来自多种 binning 算法的结果，通过对每个 contig 的 bin 分配进行打分和去冗余，选出最高质量的非冗余 bin 集合，显著优于任何单一 binning 工具。"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_317",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": 0.1726551055908203,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## DAS_Tool 打分原理\n\n每个 contig 根据来自多种工具的 bin 分配计算分数：\n- **一致性加分**：多工具同意同一分配 → 高分\n- **重复惩罚**：同一 contig 被分配到多个不同 bin → 扣分\n- **大小惩罚**：异常大的 bin → 轻微扣分\n\n最终选择 `score_threshold` 以上的 bin，确保质量门槛。"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_316",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": 0.17698532342910767,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 输出统计格式（summary.tsv）\n\n```\nbin        size    contigs  N50     completeness  contamination  score\nbin.1      2.1Mb   45       85000   95.2          2.3            0.89\nbin.2      1.8Mb   38       72000   87.4   "
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_311",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": 0.18418997526168823,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## Overview\n\n**版本**: 1.1.7 | **环境**: `envs/dastool` | **脚本**: `scripts/36_bac_dastool.sh`"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_315",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": 0.19007205963134766,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 示例命令\n\n```bash\n# 整合三种 binning 结果\nbash scripts/36_bac_dastool.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome\n\n# 查看整合结果统计\ncat result/binning/dastool/SAMPLE01/SAMPLE01_DASTool_summary.tsv | col"
+            }
+          ]
+        },
+        {
+          "id": "genomad_virus",
+          "query": "geNomad 病毒鉴定 score 阈值 1500bp 最小长度",
+          "dimension": "virome",
+          "expected_doc_prefixes": [
+            "genomad-virus-identification",
+            "genomad-virsorter2-consensus"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.3333333333333333,
+          "latency_ms": 10.638,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_451",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
+              "distance": 0.2552751302719116,
+              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 注意事项\n\n- geNomad 数据库约 10 GB（v1.11），位于 `db/genomad/`，运行前需确保已下载\n- `--sensitivity` 设为 7.5 是灵敏度和计算时间的折中；小样本可降至 4.2 加快速度\n- geNomad 对短序列（<1kb）灵敏度有限，Contigs 长度建议 ≥1.5kb（已在 MEGAHIT 组装中控制）"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_448",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
+              "distance": 0.30651336908340454,
+              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `--sensitivity` | 7.5 | 搜索灵敏度（4.2–7.5，越高越灵敏） |\n| `--splits` | 4 | 分块数（降低内存峰值） |\n| `--cleanup` | on | 删除中间临时文件 |\n| `--threads` | CPUS | 线程数 |"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_96",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
+              "distance": 0.31375372409820557,
+              "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Recommendation\n\n正式分析建议先过滤 `1500 bp` 以下 contig，再运行 geNomad end-to-end，并保留病毒、质粒和生活方式预测结果。\n\n```bash\n# Filter short contigs before viral discovery.\nseqkit seq -m 1500 assembly/sample.contigs.fa > assembly"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_95",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
+              "distance": 0.31376904249191284,
+              "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Scenario\n\n> 适用于已经完成宏基因组组装的肠道样本，需要从 contigs 中识别病毒、噬菌体和质粒候选，并为后续 CheckV、vOTU 构建和生活方式分析提供高可信输入。\n\n典型输入是去宿主后的 WGS metagenome 组装结果，推荐先对 contig 做长度预过滤，再同时运行 geNomad 和 VirSorter2。\n\n如果目标是病毒发现，geNomad 适合作为主召回工具"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_97",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
+              "distance": 0.31624269485473633,
+              "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Recommendation\n\n```bash\n# Run VirSorter2 on the same filtered contig set.\nvirsorter run \\\n  -i assembly/sample.contigs.min1500.fa \\\n  -w result/virus/virsorter2/sample \\\n  --db-dir db/virsorter2 \\\n  -"
+            }
+          ]
+        },
+        {
+          "id": "checkv_viral",
+          "query": "CheckV 病毒 completeness 过滤 provirus 修剪",
+          "dimension": "virome",
+          "expected_doc_prefixes": [
+            "checkv-virus-quality",
+            "checkv-quality-filter"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 10.486,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_30",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": 0.2068241834640503,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Recommendation\n\n推荐将 geNomad 与 VirSorter2 候选合并去重后运行 `checkv end_to_end`，并使用 `quality_summary.tsv` 作为唯一过滤主表。\n\n```bash\n# Merge candidate viral contigs from geNomad and VirSorter2.\ncat result/virus/genomad/samp"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_35",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": 0.215246319770813,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## References（可选）\n\n- `scripts/54_vir_checkv_contig.sh`\n- `docs/experience/checkv-quality-filter.md`\n- 上游来源：`scripts/52_vir_genomad.sh`\n- 上游来源：`scripts/53_vir_virsorter2.sh`"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_31",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": 0.22151029109954834,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Recommendation\n\n# Mark near-complete genomes.\ncsvtk filter2 -t -f '$completeness >= 90 && $contamination <= 5' \\\n  result/virus/checkv/sample/quality_summary.tsv \\\n  > result/virus/checkv/sample/near_comple"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_34",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": 0.22483927011489868,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Verified\n\n- pending — 基于工具文档与脚本分析推导，待实际运行验证"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_438",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/checkv.md",
+              "distance": 0.23431307077407837,
+              "snippet": "# CheckV — 病毒序列质量评估\n## Overview\n\n**版本**: 1.0.3 | **环境**: `envs/checkv` | **脚本**: `scripts/54_vir_checkv_contig.sh` / `62_vir_checkv_mag.sh`"
+            }
+          ]
+        },
+        {
+          "id": "funomic_fungi",
+          "query": "FunOMIC 真菌 marker 数据库 1.6M 肠道真菌",
+          "dimension": "mycobiome",
+          "expected_doc_prefixes": [
+            "funomic-fungi-profiling"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "mrr_at_5": 0.0,
+          "latency_ms": 10.055,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_619",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
+              "distance": 0.22930830717086792,
+              "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 与 FunOMIC / CCMetagen 的对比\n\n| 工具 | 方法 | 数据库 | 速度 | 精度 |\n|------|------|--------|------|------|\n| FunOMIC（75） | marker + 功能蛋白 | 1.6M markers + 3.4M proteins | 中 | 高（推荐） |\n| CCMetagen（76） | KMA | NCBI nt 全库 | 较慢 | "
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_614",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
+              "distance": 0.24717921018600464,
+              "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## Overview\n\n**版本**: DIAMOND BLAST | **环境**: `envs/assembly` | **脚本**: `scripts/74_fun_blast_gutdb.sh`"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_618",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
+              "distance": 0.2589239478111267,
+              "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 输出格式（BLAST m8）\n\n```\nqseqid   sseqid   pident   length   mismatch   gapopen   qstart   qend   sstart   send   evalue   bitscore\n```"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_621",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
+              "distance": 0.2631785273551941,
+              "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 官方链接\n\n- DIAMOND: https://github.com/bbuchfink/diamond\n- GutDB: 参考肠道真菌基因组集合（非独立工具）"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_616",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
+              "distance": 0.26321136951446533,
+              "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 用法\n\n```bash\nbash scripts/74_fun_blast_gutdb.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome\n```\n\n| 参数 | 必需 | 默认 | 含义 |\n|------|------|------|------|\n| `-s` | 是 | — | 样本 ID |\n| `-t` | 否 | 8 | 线程数"
+            }
+          ]
+        },
+        {
+          "id": "eukfinder_mag",
+          "query": "Eukfinder 真核 MAG binning BUSCO 质量评估",
+          "dimension": "mycobiome",
+          "expected_doc_prefixes": [
+            "eukfinder-fungi-mag"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 10.62,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_74",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
+              "distance": 0.28603893518447876,
+              "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Recommendation\n\n```bash\nbash scripts/79_fun_eukfinder.sh \\\n  -s sample \\\n  -t 16 \\\n  -w Project/Project_example \\\n  -r /home/labuser/Course/Maxmetagenome\n```\n\nEukfinder 输出的真核 contigs 进入 binning 后，应使用 CheckM-Eu"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_75",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
+              "distance": 0.2923569679260254,
+              "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Rationale\n\n- **为什么需要先做真菌分类**：71/72 输出能判断样本是否有足够真菌信号，避免对几乎无真菌 reads 的样本投入昂贵组装和 binning。\n- **为什么要单独重组装 fungal reads**：全量 metagenome 中细菌 reads 占主导，直接组装会稀释真菌覆盖度并产生大量原核 contig 干扰。\n- **为什么不能依赖 MetaBAT2/MaxBin2**：这"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_665",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/eukfinder.md",
+              "distance": 0.30600595474243164,
+              "snippet": "# Eukfinder — 真核生物 MAG 回收\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `-i` | contigs FASTA | 输入组装序列 |\n| `-o` | 样本目录 | 输出路径 |\n| `-t` | CPUS | 线程数 |"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_666",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/eukfinder.md",
+              "distance": 0.3133981227874756,
+              "snippet": "# Eukfinder — 真核生物 MAG 回收\n## 分析流程\n\n```\n真菌组装 contigs → Eukfinder_long 真核识别 → 真核 contigs 分类\n                                            → 真核 MAG 回收 → 后续蛋白预测 + 注释\n```"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_662",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/eukfinder.md",
+              "distance": 0.31559914350509644,
+              "snippet": "# Eukfinder — 真核生物 MAG 回收\n## Overview\n\n**环境**: `envs/assembly` | **脚本**: `scripts/79_fun_eukfinder.sh`"
+            }
+          ]
+        },
+        {
+          "id": "batch_correction",
+          "query": "批次校正 ConQuR MMUPHin ComBat-seq 多中心",
+          "dimension": "statistics",
+          "expected_doc_prefixes": [
+            "batch-correction-strategy"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "mrr_at_5": 0.0,
+          "latency_ms": 13.572,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_367",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
+              "distance": 0.3405616879463196,
+              "snippet": "# 批次校正与评估\n## Step 1（95a）— 批量校正方法\n\n脚本 95a 运行多种批次校正方法，包括：\n- **ConQuR**: 分位数回归\n- **MMUPHin**: Meta 分析批次校正\n- **ComBat-seq**: 基于负二项回归\n- **Harmony**: 软聚类校正\n- **limma::removeBatchEffect**: 线性模型"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_371",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
+              "distance": 0.3519018888473511,
+              "snippet": "# 批次校正与评估\n## R 依赖包\n\n`MBECS`, `ConQuR`, `MMUPHin`, `sva`, `limma`, `harmony`, `vegan`, `tidyverse`"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_363",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
+              "distance": 0.35704392194747925,
+              "snippet": "# 批次校正与评估\n## Overview\n\n**环境**: `envs/r_stat` | **脚本**: `scripts/95a_stat_batch_correct.sh` / `95b_stat_batch_evaluate.sh`"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_365",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
+              "distance": 0.4066697955131531,
+              "snippet": "# 批次校正与评估\n## 用法\n\n```bash\n# 第一步：运行多种批次校正方法\nbash scripts/95a_stat_batch_correct.sh \\\n    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \\\n    -m metadata.csv -b batch \\\n    -g group\n\n# 第二步：评估并推荐最佳方法\nbash scripts/95b_stat_batch_evaluate.s"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_364",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
+              "distance": 0.4141138195991516,
+              "snippet": "# 批次校正与评估\n## 功能\n\n对多中心/多批次宏基因组数据进行批次校正。95a 运行多种校正方法，95b 评估各方法效果并推荐最佳方法。"
+            }
+          ]
+        },
+        {
+          "id": "siamcat_ml",
+          "query": "SIAMCAT 机器学习 lasso RF 疾病分类器 ROC AUC",
+          "dimension": "statistics",
+          "expected_doc_prefixes": [
+            "siamcat-ml-disease-classifier"
+          ],
+          "effective_mode": "dense",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.3333333333333333,
+          "latency_ms": 11.818,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_421",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
+              "distance": 0.3400954604148865,
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## R 依赖包\n\n`SIAMCAT`, `phyloseq`, `tidyverse`"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_418",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
+              "distance": 0.3478761911392212,
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 输出\n\n| 文件 | 内容 |\n|------|------|\n| `siamcat_auc_summary.tsv` | 四种模型 AUC 汇总 |\n| `siamcat_done.txt` | 完成标志（含 AUC 列表） |\n| `siamcat_{model}.rds` | SIAMCAT 模型对象（可 reload 查看） |\n| `siamcat_{model}_evaluation.pdf` | ROC / "
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_167",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/siamcat-ml-disease-classifier.md",
+              "distance": 0.36601364612579346,
+              "snippet": "# SIAMCAT 疾病分类模型的默认建模策略建议\n## Scenario\n\n> 适用于病例对照或分组明确的宏基因组项目，希望构建可解释的分类模型，而不是只做单变量差异检验。\n\n本项目脚本面向的是聚合矩阵层的机器学习，输入来自 merged taxonomy、病毒表或联合特征。\n\n真正影响结果可信度的不是”模型能不能跑通”，而是样本数、分组定义、特征过滤和交叉验证设计。\n\n**关键参数速查**：`--folds 10`（10 折交叉验证，默认）；训练模型：lasso / ri"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_415",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
+              "distance": 0.36776721477508545,
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 用法\n\n```bash\n# 默认（细菌维度，10折交叉验证）\nbash scripts/96_stat_ml_siamcat.sh \\\n    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \\\n    -m metadata.csv -g group\n\n# 全维度交叉（细菌+病毒联合）\nbash scripts/96_stat_ml_siamcat.sh \\\n   "
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_413",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
+              "distance": 0.37249237298965454,
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## Overview\n\n**环境**: `envs/r_stat` | **脚本**: `scripts/96_stat_ml_siamcat.sh`"
+            }
+          ]
+        }
+      ]
+    },
+    "sparse": {
+      "recall_at_1": 0.3333333333333333,
+      "recall_at_3": 0.6,
+      "recall_at_5": 0.8666666666666667,
+      "mrr_at_5": 0.5188888888888888,
+      "mean_latency_ms": 5.2036,
+      "per_query": [
+        {
+          "id": "metaphlan4_params",
+          "query": "MetaPhlAn4 双端样本参数设置 mapout samout",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "metaphlan4-parameter-guide"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 6.176,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_161",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": null,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## References（可选）\n\n- `scripts/11_bac_metaphlan4.sh`\n- `agents/skills/11_bac_metaphlan4.yaml`\n- `scripts/12_bac_strainphlan4.sh`\n- `scripts/13_bac_humann3.sh`"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_158",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": null,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Recommendation\n\n核心推荐是保留脚本默认运行方式，不要在当前流程里强行改回 `-1/-2` 直接输入。\n\n当前版本推荐参数与流程如下：\n\n```bash\nmetaphlan merged.fastq.gz \\\n  --input_type fastq \\\n  --db_dir db/metaphlan4 \\\n  -x mpa_vOct22_CHOCOPhlAnSGB_202212 \\\n  --nproc"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_157",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": null,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Scenario\n\n> 适用于经去宿主后的双端宏基因组样本，需要稳定获得物种组成，并为后续 StrainPhlAn4 与 HUMAnN3 复用分类结果。\n\n推荐场景是肠道、口腔或粪便等中高深度样本，单样本常见在 10M 到 80M reads。\n\n如果目标只是快速粗分类，Kraken2 更快；如果目标是标志基因驱动的稳健物种谱与后续菌株分析，优先保留 MetaPhlAn4。\n\n脚本默认数据库是 `mpa_vOct22"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_160",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": null,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Verified\n\n**Status**: validated — 已通过实际运行验证\n\n- 2026-06-12 — User: labuser, Sample: S01, Params: database=mpa_vOct22_CHOCOPhlAnSGB_202212, threads=16, input_type=fastq, Exit: 0, Duration: 84s, Workdir: /home/labuser"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_159",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metaphlan4-parameter-guide.md",
+              "distance": null,
+              "snippet": "# MetaPhlAn4 双端样本参数与输出保留建议\n## Rationale\n\n- **为什么不直接用双文件输入**：该脚本明确说明当前部署的 MetaPhlAn4 v4.2.4 在这里采用“先合并再分析”的兼容方案，继续沿用最稳妥。\n- **为什么线程不需要过高**：MetaPhlAn4 主要瓶颈是 marker 比对与后处理，超过 `16` 线程后加速通常不再线性。\n- **为什么保留 `mapout`**：它缓存了 bowtie2 的中间结果，后续若需复查 profi"
+            }
+          ]
+        },
+        {
+          "id": "humann3_speed",
+          "query": "HUMAnN3 速度模式 balanced fast 参数",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "humann3-speed-mode"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "mrr_at_5": 0.0,
+          "latency_ms": 5.273,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_224",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
+              "distance": null,
+              "snippet": "# HUMAnN3 速度优化指南\n## 磁盘空间管理\n\n| 目录 | 大小 | 用途 | balanced/fast 清理 |\n|------|------|------|-------------------|\n| `temp/humann3/` | 60-100G | custom db + 索引 + 中间文件 | 自动删除 |\n| `result/functional/humann3/` | 50-200MB | 最终结果 | 保留 |\n\n**建议**：\n- 生产环境使"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_221",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
+              "distance": null,
+              "snippet": "# HUMAnN3 速度优化指南\n## 使用方法\n\n### 方法 1：直接调用脚本\n\n```bash\n# 标准模式（默认）\nbash scripts/13_bac_humann3.sh \\\n     -s SRR28210342 -t 16 \\\n     -w Project/Project_example \\\n     -r ~/Course/Maxmetagenome\n\n# 平衡模式（推荐）\nbash scripts/13_bac_humann3.sh \\\n     -s"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_225",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
+              "distance": null,
+              "snippet": "# HUMAnN3 速度优化指南\n## 常见问题\n\n### Q1：balanced 模式会丢失哪些物种的功能？\n\n**A**：只丢失丰度 <5% 的物种。对于 62M reads 样本，5% 阈值 = 3.1M reads，足够覆盖常见肠道/环境物种的功能基因。\n\n### Q2：fast 模式适合发表吗？\n\n**A**：不推荐。只用 R1 + 阈值 10% 会丢失低丰度物种信息，结果可重复性降低。仅用于快速探索。\n\n### Q3：如何判断样本适合哪种模式？\n\n**A**：先运"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_218",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
+              "distance": null,
+              "snippet": "# HUMAnN3 速度优化指南\n## 速度模式对比\n\n| 模式 | 物种阈值 | 输入 | 内存 | 自动清理 | 速度 | 精度 | 适用场景 |\n|------|---------|------|------|---------|------|------|---------|\n| **standard** | 1% | 双端合并 | 最小 | 否 | 1× | 100% | 低深度样本（<20M reads），需要最高精度 |\n| **balanced** | 5% "
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_220",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/humann3_speed_optimization.md",
+              "distance": null,
+              "snippet": "# HUMAnN3 速度优化指南\n## 核心提速原理\n\n---\n\n### 4. 只用 R1（fast 模式）\n\n**作用**：HUMAnN3 不考虑双端配对信息，只用 R1 端结果与 R1+R2 高度相关\n\n**提速**：2×（数据量减半）\n\n**代价**：\n- 通路丰度相关性 >0.95（来自 EasyMetagenome 经验）\n- 低丰度物种的基因可能覆盖度下降\n\n---\n\n### 5. `--diamond-options \"--block-size 6.0\"`（fa"
+            }
+          ]
+        },
+        {
+          "id": "kraken2_db",
+          "query": "Kraken2 数据库选择 Standard PlusPF Standard-8",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "kraken2-database-choice"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.3333333333333333,
+          "latency_ms": 5.283,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_230",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/kraken2.md",
+              "distance": null,
+              "snippet": "# Kraken2 + Bracken — 快速物种分类\n## 数据库（`db/kraken2/`）\n\n| 数据库 | 大小 | 特点 |\n|--------|------|------|\n| `standard_8G/` | 8G | 精简版，适合内存受限环境 |\n| `standard/` | ~60G | 全库，精度更高 |\n| `PlusPF/` | ~140G | 含真菌、植物，用于真菌脚本 71 |"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_233",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/02_read_based/kraken2.md",
+              "distance": null,
+              "snippet": "# Kraken2 + Bracken — 快速物种分类\n## MetaPhlAn4 vs Kraken2 选择指南\n\n| 场景 | 推荐 |\n|------|------|\n| 高精度、菌株级分类 | MetaPhlAn4 |\n| 快速探索性分析 | Kraken2+Bracken |\n| 病毒/真菌检测 | Kraken2（PlusPF 库） |\n| 发表级分析 | MetaPhlAn4 |"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_138",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-database-choice.md",
+              "distance": null,
+              "snippet": "# Kraken2 数据库与置信度阈值选择建议\n## References（可选）\n\n- `scripts/14_bac_kraken2.sh`\n- `agents/skills/14_bac_kraken2.yaml`\n- Bracken 输出：`*_S.bracken`、`*_G.bracken`、`*_P.bracken`\n- `result/kraken2/{sample}/{sample}.report`"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_137",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-database-choice.md",
+              "distance": null,
+              "snippet": "# Kraken2 数据库与置信度阈值选择建议\n## Verified\n\n- pending — 基于工具文档与脚本分析推导，待实际运行验证"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_139",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kraken2-fungi-database.md",
+              "distance": null,
+              "snippet": "# Kraken2 PlusPF 真菌快速筛查与 Bracken 重估建议\n## Scenario\n\n> 适用于在完整 FunOMIC 分析前，快速判断肠道 WGS 样本中是否存在可检测真菌信号，并获得初步属级或种级丰度参考。\n\n典型输入是 KneadData 或同类流程去宿主后的双端 reads。该策略适合队列预筛、样本质控和计算资源规划，不建议作为 mycobiome 最终主分析。\n\n如果使用 Kraken2 做真菌筛查，必须使用包含 fungi 的 PlusPF 数据库"
+            }
+          ]
+        },
+        {
+          "id": "megahit_assembly",
+          "query": "MEGAHIT 组装 min-contig-len k-mer 参数",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "megahit-assembly-strategy"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.25,
+          "latency_ms": 4.493,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_260",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
+              "distance": null,
+              "snippet": "# MEGAHIT — 宏基因组组装\n## 功能\n\nMEGAHIT 使用多 k-mer 策略（successive k-mer sizes）和内存高效的稀疏图（SDBG）对宏基因组 shotgun 数据进行组装，兼顾速度和内存效率，是目前宏基因组 de novo 组装的主流选择。"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_777",
+              "source": "/home/labuser/Course/Maxmetagenome/scripts/16_bac_megahit.sh",
+              "distance": null,
+              "snippet": "Script: 16_bac_megahit\nTool: MEGAHIT v1.2.9\nFunction: MEGAHIT 宏基因组从头组装（de novo assembly）\n工具版本：MEGAHIT v1.2.9（conda env: assembly）\nInputs: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz\nOutputs: ${WORKDIR}/result/assemb"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_262",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
+              "distance": null,
+              "snippet": "# MEGAHIT — 宏基因组组装\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `-1` / `-2` | R1/R2 路径 | 成对读段输入 |\n| `--k-list` | `21,29,39,59,79,99,119,141` | 多 k-mer 阶梯（含 k=141 可提升连续性） |\n| `--min-contig-len` | 500（病毒 1500）| 最短输出 contig 长度 |\n| `--num"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_145",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
+              "distance": null,
+              "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Scenario\n\n> 适用于去宿主后的双端宏基因组样本，需要在 contig 数量、下游注释灵敏度和 MAG 回收质量之间做取舍。\n\n同一个样本做”功能注释”和”分箱回收”时，最优组装参数不一定相同。\n\n本项目脚本已经把选择压缩到两个核心维度：`--presets` 与 `--min-contig-len`。\n\n**关键参数速查**：`--min-contig-len 500`（通用注释）/ `1000-15"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_265",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
+              "distance": null,
+              "snippet": "# MEGAHIT — 宏基因组组装\n## 注意事项\n\n- 宏基因组复杂度高，组装 N50 远低于单菌基因组；N50 > 1 kb 即为良好结果\n- `--presets meta-sensitive` 增加低丰度序列召回，代价是组装时间增加约 2×\n- 若样本测序深度 < 5G bases，建议先用 `--k-list 21,41,61,81,99` 降低 k-mer 范围\n- 输出 contigs 直接用于后续基因预测（Prodigal）和 Binning"
+            }
+          ]
+        },
+        {
+          "id": "fastp_qc",
+          "query": "fastp 质控 adapter removal length_required Q20",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "fastp-quality-control"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 4.326,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_1091",
+              "source": "/home/labuser/Course/Maxmetagenome/pipeline/rules/preprocessing.smk",
+              "distance": null,
+              "snippet": "Rule: fastp_qc\nInputs: /data/{sample}_1.fastq.gz, /data/{sample}_2.fastq.gz\nOutputs: /result/fastp/{sample}/{sample}_1.fastq.gz, /result/fastp/{sample}/{sample}_2.fastq.gz, /result/fastp/{sample}/{sample}.json, /result/fastp/{sample}/{sampl"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_81",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/fastp-quality-control.md",
+              "distance": null,
+              "snippet": "# fastp 双端 WGS 原始数据质控参数建议\n## Rationale\n\n- **为什么用 Q20**：Q20 对应约 1% 碱基错误率，在 shotgun metagenomics 中能平衡测序错误控制与低丰度物种 reads 保留；过高阈值会显著增加数据损失。\n- **为什么允许 40% 低质量碱基**：`--unqualified_percent_limit 40` 避免因为局部质量下降而整条 read 被过度丢弃，适合复杂肠道样本的后续分类和组装。\n- **为什"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_185",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
+              "distance": null,
+              "snippet": "# fastp — 读段质量控制\n## Overview\n\n**版本**: 0.22.0 | **环境**: `envs/fastp` | **脚本**: `scripts/01_qc_fastp.sh`"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_191",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
+              "distance": null,
+              "snippet": "# fastp — 读段质量控制\n## 官方链接\n\n- GitHub: https://github.com/OpenGene/fastp\n- 论文: Chen et al. 2018, Bioinformatics 34(17):i884-i890"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_186",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/fastp.md",
+              "distance": null,
+              "snippet": "# fastp — 读段质量控制\n## 功能\n\n对原始 paired-end FASTQ 进行质量控制：接头自动识别和去除、低质量碱基修剪、polyX 去除、质量过滤，输出 JSON+HTML 报告。"
+            }
+          ]
+        },
+        {
+          "id": "kneaddata_host",
+          "query": "KneadData 去宿主 bowtie2 hg37dec very-sensitive-local",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "kneaddata-host-removal"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.25,
+          "latency_ms": 4.587,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_193",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
+              "distance": null,
+              "snippet": "# KneadData — 宿主序列去除\n## 功能\n\n使用 Bowtie2 将读段比对到宿主基因组（人/小鼠/大鼠），去除比对成功的宿主序列，保留非宿主微生物读段，同时用 Trimmomatic 进行补充质控。"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_195",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
+              "distance": null,
+              "snippet": "# KneadData — 宿主序列去除\n## 数据库（`db/kneaddata/`）\n\n| 数据库 | 用途 |\n|--------|------|\n| `human_hg38_index/` | 人类基因组 GRCh38 Bowtie2 索引 |\n| `mouse_C57BL_6NJ/`（可选）| 小鼠基因组 |\n| `rat_mRatBN7_2/`（可选）| 大鼠基因组 |"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_196",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
+              "distance": null,
+              "snippet": "# KneadData — 宿主序列去除\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `--reference-db` | `db/kneaddata/human_hg38_index` | Bowtie2 宿主索引路径 |\n| `--trimmomatic` | auto | Trimmomatic jar 路径（conda 自动检测） |\n| `--trimmomatic-options` | `SLIDINGWI"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_128",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/kneaddata-host-removal.md",
+              "distance": null,
+              "snippet": "# kneaddata 肠道样本人源宿主去除建议\n## Recommendation\n\n项目脚本默认读取 fastp 输出，使用 `${REPO}/db/kneaddata/human` 作为人源数据库，并跳过重复 trimming：\n\n```bash\n# Run host removal after fastp.\nbash scripts/02_qc_kneaddata.sh \\\n  -s S01 \\\n  -t 16 \\\n  -w /path/to/project \\\n  "
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_197",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/01_preprocessing/kneaddata.md",
+              "distance": null,
+              "snippet": "# KneadData — 宿主序列去除\n## 示例命令\n\n```bash\n# 独立运行（单样本）\nbash scripts/02_qc_kneaddata.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome\n\n# 检查去宿主效率（看 kneaddata.log 第一行）\nhead -5 result/kneaddata/SAMPLE01/SAMPLE01.log\n```"
+            }
+          ]
+        },
+        {
+          "id": "metabat2_bin",
+          "query": "MetaBAT2 binning depth 最小长度 minCVSum 参数",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "metabat2-binning-parameters"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 4.911,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_349",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/metabat2.md",
+              "distance": null,
+              "snippet": "# MetaBAT2 — 宏基因组 Binning\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `-i` | contigs FASTA | 输入序列 |\n| `-a` | 深度文件路径 | jgi_summarize_bam_contig_depths 输出 |\n| `-o` | bin 输出前缀 | 输出路径 |\n| `-m` | 2500 | 最短 contig 长度（bp，推荐 ≥1500） |\n| `-t` "
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_152",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
+              "distance": null,
+              "snippet": "# MetaBAT2 MAG 分箱参数建议\n## Recommendation\n\n项目脚本已经把 MetaBAT2 最小 contig 长度设为 `1500 bp`，并使用上游覆盖度文件：\n\n```bash\n# Run MetaBAT2 through the project wrapper.\nbash scripts/33_bac_metabat2.sh \\\n  -s S01 \\\n  -t 16 \\\n  -w /path/to/project \\\n  -r /path/to"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_153",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
+              "distance": null,
+              "snippet": "# MetaBAT2 MAG 分箱参数建议\n## Recommendation\n\n```bash\n# Summarize cross-sample depth for one contig set.\njgi_summarize_bam_contig_depths \\\n  --outputDepth result/binning/metabat2/cohort/depth.txt \\\n  result/binning/align/S01/*.bam \\\n  result/bin"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_154",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/metabat2-binning-parameters.md",
+              "distance": null,
+              "snippet": "# MetaBAT2 MAG 分箱参数建议\n## Rationale\n\n- **为什么最小 contig 长度用 1500 bp**：MetaBAT2 默认常用 2500 bp 对复杂肠道样本可能偏严；1500 bp 能纳入更多中短 contigs，提高 MAG completeness。\n- **为什么设置 `--minCVSum 0`**：低丰度或覆盖度波动较小的 bins 可能被 CV 过滤排除，关闭该过滤有助于恢复低丰度菌株。\n- **为什么必须使用 depth**："
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_1058",
+              "source": "/home/labuser/Course/Maxmetagenome/pipeline/rules/bacteria_binning.smk",
+              "distance": null,
+              "snippet": "Rule: metabat2\nInputs: /result/assembly/megahit/{sample}/{sample}.contigs.fa, /coverm/{sample}/depth.txt\nOutputs: /metabat2/{sample}/{sample}.tsv\nrule metabat2:\n    input:\n        contigs = WORKDIR + \"/result/assembly/megahit/{sample}/{samp"
+            }
+          ]
+        },
+        {
+          "id": "checkm2_quality",
+          "query": "CheckM2 MAG 质量 HQ MQ MIMAG 完整度 污染率",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "checkm2-quality-thresholds"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "mrr_at_5": 0.0,
+          "latency_ms": 5.599,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_298",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
+              "distance": null,
+              "snippet": "# CheckM2 — MAG 质量评估\n## 质量标准（默认过滤阈值）\n\n| 质量级别 | 完整性 | 污染率 |\n|---------|-------|-------|\n| 高质量（HQ） | ≥90% | ≤5% |\n| 中质量（MQ） | ≥50% | ≤10% |\n| 低质量（LQ） | <50% | - |\n\n脚本默认保留 Completeness ≥ 50%, Contamination ≤ 10%（MQ+HQ）。"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_826",
+              "source": "/home/labuser/Course/Maxmetagenome/scripts/37_bac_checkm2.sh",
+              "distance": null,
+              "snippet": "Script: 37_bac_checkm2\nTool: CheckM2 1.1+\nFunction: MAG 质量评估（CheckM2 ML 模型，预测完整度和污染度）\n工具版本：CheckM2 1.1+（conda env: checkm2）\nInputs: ${WORKDIR}/result/binning/dastool/*/bins/*.fa\nOutputs: ${WORKDIR}/result/binning/checkm2/quality_report.tsv\n"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_295",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/checkm2.md",
+              "distance": null,
+              "snippet": "# CheckM2 — MAG 质量评估\n## 功能\n\n使用机器学习模型（基于 Diamond 蛋白比对特征）评估 MAG 的完整性（Completeness）和污染率（Contamination），取代依赖 lineage-specific marker genes 的 CheckM v1。对所有系统发育分支均有良好覆盖，特别适合新物种。"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_29",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": null,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Scenario\n\n> 适用于 geNomad 和 VirSorter2 已完成候选病毒识别后，需要对病毒 contig 做完整度、污染、provirus 边界和近完整基因组状态评估。\n\n典型样本是肠道 WGS metagenome 组装 contigs，输入应优先来自 geNomad 高分结果与 VirSorter2 共识集合，而不是未经筛选的全量组装序列。\n\nCheckV 在这里承担类似 MIMAG 思路"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_323",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/drep.md",
+              "distance": null,
+              "snippet": "# dRep — MAG 去冗余\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `-g` | 输入 FASTA 列表 | 待去冗余 MAGs |\n| `--checkM_method` | `checkm2` | 使用 CheckM2 质量评分 |\n| `--genomeInfo` | CheckM2 报告 | 提供 completeness/contamination |\n| `-pa` | 0.9 | 初级聚类 AN"
+            }
+          ]
+        },
+        {
+          "id": "dastool_refine",
+          "query": "DAS_Tool 多算法 bin 整合 score_threshold diamond",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "dastool-bin-refinement",
+            "04_binning/dastool"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 4.802,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_317",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": null,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## DAS_Tool 打分原理\n\n每个 contig 根据来自多种工具的 bin 分配计算分数：\n- **一致性加分**：多工具同意同一分配 → 高分\n- **重复惩罚**：同一 contig 被分配到多个不同 bin → 扣分\n- **大小惩罚**：异常大的 bin → 轻微扣分\n\n最终选择 `score_threshold` 以上的 bin，确保质量门槛。"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_318",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": null,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 注意事项\n\n- DAS_Tool 要求至少 2 种工具的 tsv 输入；若某工具完全没有输出 bin，脚本会跳过该工具\n- `score_threshold 0.5` 较保守；若想保留更多 bin 可降至 0.3，但污染率会升高\n- DAS_Tool 输出的 bins 即为 CheckM2 的输入，命名格式会保留原始 bin 工具前缀"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_312",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": null,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 功能\n\nDAS_Tool（Dereplication, Aggregation and Scoring Tool）整合来自多种 binning 算法的结果，通过对每个 contig 的 bin 分配进行打分和去冗余，选出最高质量的非冗余 bin 集合，显著优于任何单一 binning 工具。"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_316",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/04_binning/dastool.md",
+              "distance": null,
+              "snippet": "# DAS_Tool — 多算法 Binning 整合\n## 输出统计格式（summary.tsv）\n\n```\nbin        size    contigs  N50     completeness  contamination  score\nbin.1      2.1Mb   45       85000   95.2          2.3            0.89\nbin.2      1.8Mb   38       72000   87.4   "
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_36",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/dastool-bin-refinement.md",
+              "distance": null,
+              "snippet": "# DAS_Tool 多分箱结果整合优化建议\n## Scenario\n\n> 适用于已经分别运行 MetaBAT2、MaxBin2、CONCOCT 或 SemiBin2 等多个 binner 的组装结果，需要通过多算法 bin 整合（consensus binning）获得更可靠的 MAG 集合。DAS_Tool 核心参数：`--score_threshold 0.5`（默认均衡）/ `0.3`（高召回）；`--search_engine diamond`（速度快于 BLAST"
+            }
+          ]
+        },
+        {
+          "id": "genomad_virus",
+          "query": "geNomad 病毒鉴定 score 阈值 1500bp 最小长度",
+          "dimension": "virome",
+          "expected_doc_prefixes": [
+            "genomad-virus-identification",
+            "genomad-virsorter2-consensus"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 5.453,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_95",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
+              "distance": null,
+              "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Scenario\n\n> 适用于已经完成宏基因组组装的肠道样本，需要从 contigs 中识别病毒、噬菌体和质粒候选，并为后续 CheckV、vOTU 构建和生活方式分析提供高可信输入。\n\n典型输入是去宿主后的 WGS metagenome 组装结果，推荐先对 contig 做长度预过滤，再同时运行 geNomad 和 VirSorter2。\n\n如果目标是病毒发现，geNomad 适合作为主召回工具"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_451",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
+              "distance": null,
+              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 注意事项\n\n- geNomad 数据库约 10 GB（v1.11），位于 `db/genomad/`，运行前需确保已下载\n- `--sensitivity` 设为 7.5 是灵敏度和计算时间的折中；小样本可降至 4.2 加快速度\n- geNomad 对短序列（<1kb）灵敏度有限，Contigs 长度建议 ≥1.5kb（已在 MEGAHIT 组装中控制）"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_838",
+              "source": "/home/labuser/Course/Maxmetagenome/scripts/52_vir_genomad.sh",
+              "distance": null,
+              "snippet": "Script: 52_vir_genomad\nTool: geNomad 1.11+\nFunction: 病毒/质粒鉴定 + 生活方式预测（geNomad 端到端）\n工具版本：geNomad 1.11+（conda env: genomad）\nInputs: ${WORKDIR}/result/virus/assembly/{sample}/{sample}.contigs.fa\nOutputs: ${WORKDIR}/result/virus/genomad/{sample"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_445",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
+              "distance": null,
+              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## Overview\n\n**版本**: 1.11+ | **环境**: `envs/genomad` | **脚本**: `scripts/52_vir_genomad.sh` / `57_vir_votu_genomad.sh`"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_447",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
+              "distance": null,
+              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 输入 / 输出\n\n### 脚本 52 — 病毒鉴定（per-sample）\n\n| 项目 | 路径 |\n|------|------|\n| 输入 contigs | `result/virus/assembly/{sample}/{sample}.contigs.fa` |\n| 病毒汇总 | `result/virus/genomad/{sample}/{sample}.contigs_virus_summary.ts"
+            }
+          ]
+        },
+        {
+          "id": "checkv_viral",
+          "query": "CheckV 病毒 completeness 过滤 provirus 修剪",
+          "dimension": "virome",
+          "expected_doc_prefixes": [
+            "checkv-virus-quality",
+            "checkv-quality-filter"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 5.039,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_31",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": null,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Recommendation\n\n# Mark near-complete genomes.\ncsvtk filter2 -t -f '$completeness >= 90 && $contamination <= 5' \\\n  result/virus/checkv/sample/quality_summary.tsv \\\n  > result/virus/checkv/sample/near_comple"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_33",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": null,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Rationale\n\n结 合 completeness 、 contamination 和 hallmark genes 。 - * * 为 什 么 完 整 度 估 计 有 生 物 学 依 据 * * ： checkv 利 用 病 毒 hallmark genes 、 参 考 基 因 组 和 基 因 内 容 模 型 估 计 完 整 度 ， 比 单 纯 按 contig 长 度 筛 选 可 靠 。\n- **为什"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_30",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": null,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Recommendation\n\n推荐将 geNomad 与 VirSorter2 候选合并去重后运行 `checkv end_to_end`，并使用 `quality_summary.tsv` 作为唯一过滤主表。\n\n```bash\n# Merge candidate viral contigs from geNomad and VirSorter2.\ncat result/virus/genomad/samp"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_34",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/checkv-virus-quality.md",
+              "distance": null,
+              "snippet": "# CheckV 病毒 contig 质量分级与污染修剪建议\n## Verified\n\n- pending — 基于工具文档与脚本分析推导，待实际运行验证"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_439",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/checkv.md",
+              "distance": null,
+              "snippet": "# CheckV — 病毒序列质量评估\n## 功能\n\nCheckV 对病毒 contigs 或 vMAGs 进行端到端质量评估，预测完整度（completeness）和污染（contamination），并鉴定原前病毒（provirus）区域。在本流程中有两处应用：contig 级（54）和 vMAG 级（62）。"
+            }
+          ]
+        },
+        {
+          "id": "funomic_fungi",
+          "query": "FunOMIC 真菌 marker 数据库 1.6M 肠道真菌",
+          "dimension": "mycobiome",
+          "expected_doc_prefixes": [
+            "funomic-fungi-profiling"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 5.941,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_619",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
+              "distance": null,
+              "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 与 FunOMIC / CCMetagen 的对比\n\n| 工具 | 方法 | 数据库 | 速度 | 精度 |\n|------|------|--------|------|------|\n| FunOMIC（75） | marker + 功能蛋白 | 1.6M markers + 3.4M proteins | 中 | 高（推荐） |\n| CCMetagen（76） | KMA | NCBI nt 全库 | 较慢 | "
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_84",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/funomic-fungi-profiling.md",
+              "distance": null,
+              "snippet": "# FunOMIC 真菌 WGS 分类与功能谱分析建议\n## Scenario\n\n> 适用于肠道 WGS metagenomics 中的真菌群落分析，尤其是低丰度 fungi 需要比通用 k-mer 分类器更稳健的物种识别和功能解释时。\n\n典型输入是已经完成质控和宿主去除的双端 reads，样本可以来自粪便、肠内容物或其他低真菌负荷的微生物组项目。\n\n如果研究问题明确聚焦 mycobiome，FunOMIC 应作为真菌主分析工具；Kraken2 PlusPF 更适合做快速筛查"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_673",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/funomics.md",
+              "distance": null,
+              "snippet": "# FunOMIC — 真菌分类与功能分析\n## 功能\n\nFunOMIC 使用真菌 marker 与功能蛋白数据库进行真菌 WGS 分类和功能分析。当前项目已部署两套本地数据库，脚本 75 优先尝试 `funomic classify`，若未检测到命令则自动回退到 `diamond blastx`。"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_615",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
+              "distance": null,
+              "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 功能\n\n使用 DIAMOND blastx 将宏基因组 reads 比对到肠道真菌参考数据库（GutDB，47 GB），进行高精度真菌物种鉴定。适合对分类学精度要求高的场景，但计算资源消耗大。"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_678",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/funomics.md",
+              "distance": null,
+              "snippet": "# FunOMIC — 真菌分类与功能分析\n## 与其他真菌分类工具对比\n\n| 工具 | 方法 | 数据库 | 推荐场景 |\n|------|------|--------|---------|\n| **FunOMIC** | 标记基因 + 功能蛋白 | 160万 marker + 340万蛋白 | **推荐**，如果已安装 |\n| CCMetagen | KMA + NCBI nt 全库 | NCBI nt | 无近缘参考也可检测 |\n| MetaPhlAn4 真核 | 标"
+            }
+          ]
+        },
+        {
+          "id": "eukfinder_mag",
+          "query": "Eukfinder 真核 MAG binning BUSCO 质量评估",
+          "dimension": "mycobiome",
+          "expected_doc_prefixes": [
+            "eukfinder-fungi-mag"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 6.452,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_74",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
+              "distance": null,
+              "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Recommendation\n\n```bash\nbash scripts/79_fun_eukfinder.sh \\\n  -s sample \\\n  -t 16 \\\n  -w Project/Project_example \\\n  -r /home/labuser/Course/Maxmetagenome\n```\n\nEukfinder 输出的真核 contigs 进入 binning 后，应使用 CheckM-Eu"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_76",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
+              "distance": null,
+              "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Rationale\n\n评 估 ， 原 核 质 量 模 型 会 误 判 。 - * * 为 什 么 占 位 文 件 不 能 当 作 阴 性 结 果 * * ： 脚 本 在 未 安 装 eukfinder 时 会 输 出 说 明 文 件 以 不 中 断 流 程 ， 这 表 示 工 具 缺 失 ， 不 表 示 样 本 没 有 真 核 contig 。\n- **为什么需要后续人工复核**：eMAG 候选常混有低覆盖 c"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_75",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
+              "distance": null,
+              "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Rationale\n\n- **为什么需要先做真菌分类**：71/72 输出能判断样本是否有足够真菌信号，避免对几乎无真菌 reads 的样本投入昂贵组装和 binning。\n- **为什么要单独重组装 fungal reads**：全量 metagenome 中细菌 reads 占主导，直接组装会稀释真菌覆盖度并产生大量原核 contig 干扰。\n- **为什么不能依赖 MetaBAT2/MaxBin2**：这"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_72",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
+              "distance": null,
+              "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## Scenario\n\n> 适用于从肠道宏基因组中回收真核或真菌 MAG，尤其是已经通过 Kraken2 PlusPF、FunOMIC 或其他 71/72 真菌分类结果确认样本存在真菌 reads 后。\n\n典型流程不是把全量 metagenome contigs 直接交给通用 binning 工具，而是先识别或提取真菌 reads，单独重组装，再用 Eukfinder 识别真核 contigs 并进入 eMAG 回"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_78",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/eukfinder-fungi-mag.md",
+              "distance": null,
+              "snippet": "# Eukfinder 真菌 eMAG 回收与质量评估建议\n## References（可选）\n\n- `scripts/79_fun_eukfinder.sh`\n- `docs/tools_ref/eukfinder.md`\n- 上游来源：`scripts/71_fun_kraken2_fungi.sh`\n- 上游来源：`scripts/75_fun_funomics.sh`"
+            }
+          ]
+        },
+        {
+          "id": "batch_correction",
+          "query": "批次校正 ConQuR MMUPHin ComBat-seq 多中心",
+          "dimension": "statistics",
+          "expected_doc_prefixes": [
+            "batch-correction-strategy"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.25,
+          "latency_ms": 4.032,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_367",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
+              "distance": null,
+              "snippet": "# 批次校正与评估\n## Step 1（95a）— 批量校正方法\n\n脚本 95a 运行多种批次校正方法，包括：\n- **ConQuR**: 分位数回归\n- **MMUPHin**: Meta 分析批次校正\n- **ComBat-seq**: 基于负二项回归\n- **Harmony**: 软聚类校正\n- **limma::removeBatchEffect**: 线性模型"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_371",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
+              "distance": null,
+              "snippet": "# 批次校正与评估\n## R 依赖包\n\n`MBECS`, `ConQuR`, `MMUPHin`, `sva`, `limma`, `harmony`, `vegan`, `tidyverse`"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_364",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/batch_correct.md",
+              "distance": null,
+              "snippet": "# 批次校正与评估\n## 功能\n\n对多中心/多批次宏基因组数据进行批次校正。95a 运行多种校正方法，95b 评估各方法效果并推荐最佳方法。"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_6",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/batch-correction-strategy.md",
+              "distance": null,
+              "snippet": "# 宏基因组批次校正方法的分层使用建议\n## Scenario\n\n> 适用于跨中心、跨批次或跨平台的菌群丰度矩阵，需要比较多种批次校正方法而不是押注单一算法。\n\n本项目脚本不会只输出一个“校正后真值矩阵”，而是并行生成 ConQuR、MMUPHin、ComBat、RUVIII、PercentileNorm、BMC 和 DEBIAS-M 的结果。\n\n因此经验重点不是宣布谁永远最好，而是给出默认优先级与排除规则。"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_7",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/batch-correction-strategy.md",
+              "distance": null,
+              "snippet": "# 宏基因组批次校正方法的分层使用建议\n## Recommendation\n\n默认推荐顺序：先看 `MMUPHin`、`ConQuR`、`ComBat` 三类主结果，再把其他方法作为敏感性分析。\n\n推荐调用方式如下：\n\n```bash\nbash 95a_stat_batch_correct.sh \\\n  -w PROJECT -r REPO -t 16 \\\n  -m metadata.csv -b batch \\\n  -g disease\n```\n\n`-b` 必须是真正的批次"
+            }
+          ]
+        },
+        {
+          "id": "siamcat_ml",
+          "query": "SIAMCAT 机器学习 lasso RF 疾病分类器 ROC AUC",
+          "dimension": "statistics",
+          "expected_doc_prefixes": [
+            "siamcat-ml-disease-classifier"
+          ],
+          "effective_mode": "sparse",
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.2,
+          "latency_ms": 5.687,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_414",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
+              "distance": null,
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 功能\n\n使用 SIAMCAT 框架对微生物组特征（物种分类丰度）进行机器学习建模，支持 Lasso / Ridge / Elastic Net / Random Forest 四种算法，输出 10 折交叉验证 AUC、模型评估图和 Top 特征重要性排序，用于识别最具判别力的生物标志物。"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_418",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
+              "distance": null,
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 输出\n\n| 文件 | 内容 |\n|------|------|\n| `siamcat_auc_summary.tsv` | 四种模型 AUC 汇总 |\n| `siamcat_done.txt` | 完成标志（含 AUC 列表） |\n| `siamcat_{model}.rds` | SIAMCAT 模型对象（可 reload 查看） |\n| `siamcat_{model}_evaluation.pdf` | ROC / "
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_421",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
+              "distance": null,
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## R 依赖包\n\n`SIAMCAT`, `phyloseq`, `tidyverse`"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_413",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
+              "distance": null,
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## Overview\n\n**环境**: `envs/r_stat` | **脚本**: `scripts/96_stat_ml_siamcat.sh`"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_167",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/siamcat-ml-disease-classifier.md",
+              "distance": null,
+              "snippet": "# SIAMCAT 疾病分类模型的默认建模策略建议\n## Scenario\n\n> 适用于病例对照或分组明确的宏基因组项目，希望构建可解释的分类模型，而不是只做单变量差异检验。\n\n本项目脚本面向的是聚合矩阵层的机器学习，输入来自 merged taxonomy、病毒表或联合特征。\n\n真正影响结果可信度的不是”模型能不能跑通”，而是样本数、分组定义、特征过滤和交叉验证设计。\n\n**关键参数速查**：`--folds 10`（10 折交叉验证，默认）；训练模型：lasso / ri"
             }
           ]
         }
