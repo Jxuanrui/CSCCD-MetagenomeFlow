@@ -138,9 +138,12 @@ def fetch_all_pmcs(search_results_jsonl, output_dir, max_articles=None):
     rows = _load_jsonl(search_results_jsonl)
     downloaded = []
     seen_pmcids = set()
+    new_downloads = 0
+
+    pmc_dir = Path(output_dir) / "pmc_xml"
 
     for row in rows:
-        if max_articles is not None and len(downloaded) >= max_articles:
+        if max_articles is not None and new_downloads >= max_articles:
             break
 
         pmcid = _normalize_pmcid(row.get("pmcid"))
@@ -158,11 +161,14 @@ def fetch_all_pmcs(search_results_jsonl, output_dir, max_articles=None):
         if not row.get("has_fulltext"):
             continue
 
+        already_exists = (pmc_dir / f"{pmcid}.xml").exists()
         xml_path = fetch_pmc_xml(pmcid, output_dir)
         if xml_path is None:
             continue
         seen_pmcids.add(pmcid)
         downloaded.append(pmcid)
+        if not already_exists:
+            new_downloads += 1
 
     _write_jsonl(search_results_jsonl, rows)
     return downloaded

@@ -232,6 +232,46 @@ SEARCH_TOPICS = [
         "id": "dastool_bin_refinement",
         "terms": '("DAS Tool" OR DAS_Tool OR DASTool) AND ("bin refinement" OR binning OR integration)',
     },
+    {
+        "id": "vrhyme_vmag_binning",
+        "terms": '(vRhyme OR "viral MAG" OR vMAG) AND (binning OR "genome binning" OR "multi-sample" OR metagenome)',
+    },
+    {
+        "id": "vcontact3_phage_taxonomy",
+        "terms": '(vConTACT OR vConTACT2 OR vConTACT3) AND ("gene sharing" OR "phage taxonomy" OR classification OR network)',
+    },
+    {
+        "id": "bacphlip_lifestyle_prediction",
+        "terms": '(BACPHLIP OR "lytic" OR "lysogenic") AND ("lifestyle prediction" OR "phage lifestyle" OR "temperate phage" OR virome)',
+    },
+    {
+        "id": "gut_virome_disease",
+        "terms": '("gut virome" OR "gut phageome" OR bacteriophage) AND (disease OR IBD OR CRC OR dysbiosis OR diversity)',
+    },
+    {
+        "id": "phage_bacteria_interaction",
+        "terms": '(phage OR bacteriophage) AND bacteria AND (coevolution OR interaction OR "gut microbiome" OR infection OR predation)',
+    },
+    {
+        "id": "fungal_cazyme_gut",
+        "terms": '(fungal OR fungi OR mycobiome) AND (CAZyme OR "carbohydrate-active" OR "glycoside hydrolase") AND (gut OR metagenomics)',
+    },
+    {
+        "id": "antifungal_resistance_gut",
+        "terms": '("antifungal resistance" OR "antifungal AMR" OR azole OR echinocandin) AND (Candida OR Aspergillus OR gut OR metagenomics)',
+    },
+    {
+        "id": "gut_candida_colonization",
+        "terms": '(Candida AND gut AND (colonization OR dysbiosis OR disease OR "microbiome" OR IBD OR CRC))',
+    },
+    {
+        "id": "fungi_bacteria_crossdomain",
+        "terms": '(fungi OR mycobiome) AND bacteria AND ("cross-kingdom" OR "interkingdom" OR "co-occurrence" OR interaction OR gut)',
+    },
+    {
+        "id": "viral_dark_matter_phold",
+        "terms": '("viral dark matter" OR PHOLD OR "phage annotation" OR VOG OR VOGDB) AND ("structural protein" OR "unknown function" OR metagenomics)',
+    },
 ]
 
 
