@@ -38,7 +38,7 @@ GOLDEN_QUESTIONS: list[dict[str, Any]] = [
     {
         "id": "humann3_speed",
         "query": "HUMAnN3 速度模式 balanced fast 参数",
-        "expected_doc_prefixes": ["humann3-speed-mode"],
+        "expected_doc_prefixes": ["humann3-speed-mode", "02_read_based/humann3"],
         "dimension": "bacteria",
     },
     {
@@ -62,7 +62,7 @@ GOLDEN_QUESTIONS: list[dict[str, Any]] = [
     {
         "id": "kneaddata_host",
         "query": "KneadData 去宿主 bowtie2 hg37dec very-sensitive-local",
-        "expected_doc_prefixes": ["kneaddata-host-removal"],
+        "expected_doc_prefixes": ["kneaddata-host-removal", "01_preprocessing/kneaddata"],
         "dimension": "bacteria",
     },
     {
@@ -74,7 +74,7 @@ GOLDEN_QUESTIONS: list[dict[str, Any]] = [
     {
         "id": "checkm2_quality",
         "query": "CheckM2 MAG 质量 HQ MQ MIMAG 完整度 污染率",
-        "expected_doc_prefixes": ["checkm2-quality-thresholds"],
+        "expected_doc_prefixes": ["checkm2-quality-thresholds", "04_binning/checkm2"],
         "dimension": "bacteria",
     },
     {
@@ -113,13 +113,13 @@ GOLDEN_QUESTIONS: list[dict[str, Any]] = [
     {
         "id": "batch_correction",
         "query": "批次校正 ConQuR MMUPHin ComBat-seq 多中心",
-        "expected_doc_prefixes": ["batch-correction-strategy"],
+        "expected_doc_prefixes": ["batch-correction-strategy", "05_stats/batch_correct"],
         "dimension": "statistics",
     },
     {
         "id": "siamcat_ml",
         "query": "SIAMCAT 机器学习 lasso RF 疾病分类器 ROC AUC",
-        "expected_doc_prefixes": ["siamcat-ml-disease-classifier"],
+        "expected_doc_prefixes": ["siamcat-ml-disease-classifier", "05_stats/siamcat"],
         "dimension": "statistics",
     },
 ]

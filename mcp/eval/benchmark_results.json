@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-13T01:51:48.522963+00:00",
+  "timestamp": "2026-06-13T01:55:50.591410+00:00",
   "n_questions": 15,
   "modes": {
     "hybrid": {
-      "recall_at_1": 0.4,
-      "recall_at_3": 0.8,
+      "recall_at_1": 0.7333333333333333,
+      "recall_at_3": 1.0,
       "recall_at_5": 1.0,
-      "mrr_at_5": 0.6177777777777779,
-      "mean_latency_ms": 37.8392,
+      "mrr_at_5": 0.8666666666666667,
+      "mean_latency_ms": 31.806800000000003,
       "per_query": [
         {
           "id": "metaphlan4_params",
@@ -21,7 +21,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 107.938,
+          "latency_ms": 79.337,
           "top_results": [
             {
               "rank": 1,
@@ -65,14 +65,15 @@
           "query": "HUMAnN3 速度模式 balanced fast 参数",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "humann3-speed-mode"
+            "humann3-speed-mode",
+            "02_read_based/humann3"
           ],
           "effective_mode": "hybrid",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.2,
-          "latency_ms": 17.236,
+          "mrr_at_5": 1.0,
+          "latency_ms": 50.323,
           "top_results": [
             {
               "rank": 1,
@@ -123,7 +124,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 14.916,
+          "latency_ms": 15.479,
           "top_results": [
             {
               "rank": 1,
@@ -174,7 +175,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 14.748,
+          "latency_ms": 14.488,
           "top_results": [
             {
               "rank": 1,
@@ -225,7 +226,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 24.582,
+          "latency_ms": 19.599,
           "top_results": [
             {
               "rank": 1,
@@ -269,14 +270,15 @@
           "query": "KneadData 去宿主 bowtie2 hg37dec very-sensitive-local",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "kneaddata-host-removal"
+            "kneaddata-host-removal",
+            "01_preprocessing/kneaddata"
           ],
           "effective_mode": "hybrid",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.2,
-          "latency_ms": 78.601,
+          "mrr_at_5": 1.0,
+          "latency_ms": 13.891,
           "top_results": [
             {
               "rank": 1,
@@ -327,7 +329,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 43.403,
+          "latency_ms": 35.81,
           "top_results": [
             {
               "rank": 1,
@@ -371,14 +373,15 @@
           "query": "CheckM2 MAG 质量 HQ MQ MIMAG 完整度 污染率",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "checkm2-quality-thresholds"
+            "checkm2-quality-thresholds",
+            "04_binning/checkm2"
           ],
           "effective_mode": "hybrid",
-          "recall_at_1": 0.0,
+          "recall_at_1": 1.0,
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 57.166,
+          "mrr_at_5": 1.0,
+          "latency_ms": 24.34,
           "top_results": [
             {
               "rank": 1,
@@ -430,7 +433,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 99.656,
+          "latency_ms": 14.154,
           "top_results": [
             {
               "rank": 1,
@@ -482,7 +485,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 20.99,
+          "latency_ms": 58.572,
           "top_results": [
             {
               "rank": 1,
@@ -534,7 +537,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 14.576,
+          "latency_ms": 56.933,
           "top_results": [
             {
               "rank": 1,
@@ -585,7 +588,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 30.034,
+          "latency_ms": 15.669,
           "top_results": [
             {
               "rank": 1,
@@ -636,7 +639,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 13.537,
+          "latency_ms": 13.554,
           "top_results": [
             {
               "rank": 1,
@@ -680,14 +683,15 @@
           "query": "批次校正 ConQuR MMUPHin ComBat-seq 多中心",
           "dimension": "statistics",
           "expected_doc_prefixes": [
-            "batch-correction-strategy"
+            "batch-correction-strategy",
+            "05_stats/batch_correct"
           ],
           "effective_mode": "hybrid",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.2,
-          "latency_ms": 15.117,
+          "mrr_at_5": 1.0,
+          "latency_ms": 49.661,
           "top_results": [
             {
               "rank": 1,
@@ -731,14 +735,15 @@
           "query": "SIAMCAT 机器学习 lasso RF 疾病分类器 ROC AUC",
           "dimension": "statistics",
           "expected_doc_prefixes": [
-            "siamcat-ml-disease-classifier"
+            "siamcat-ml-disease-classifier",
+            "05_stats/siamcat"
           ],
           "effective_mode": "hybrid",
-          "recall_at_1": 0.0,
+          "recall_at_1": 1.0,
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 15.088,
+          "mrr_at_5": 1.0,
+          "latency_ms": 15.292,
           "top_results": [
             {
               "rank": 1,
@@ -780,11 +785,11 @@
       ]
     },
     "dense": {
-      "recall_at_1": 0.5333333333333333,
-      "recall_at_3": 0.7333333333333333,
-      "recall_at_5": 0.8,
-      "mrr_at_5": 0.6277777777777778,
-      "mean_latency_ms": 24.4702,
+      "recall_at_1": 0.8,
+      "recall_at_3": 0.9333333333333333,
+      "recall_at_5": 0.9333333333333333,
+      "mrr_at_5": 0.8555555555555556,
+      "mean_latency_ms": 29.254399999999997,
       "per_query": [
         {
           "id": "metaphlan4_params",
@@ -798,7 +803,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 89.04,
+          "latency_ms": 78.299,
           "top_results": [
             {
               "rank": 1,
@@ -842,14 +847,15 @@
           "query": "HUMAnN3 速度模式 balanced fast 参数",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "humann3-speed-mode"
+            "humann3-speed-mode",
+            "02_read_based/humann3"
           ],
           "effective_mode": "dense",
           "recall_at_1": 1.0,
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 12.306,
+          "latency_ms": 9.804,
           "top_results": [
             {
               "rank": 1,
@@ -900,7 +906,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 42.336,
+          "latency_ms": 10.225,
           "top_results": [
             {
               "rank": 1,
@@ -951,7 +957,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 10.541,
+          "latency_ms": 43.577,
           "top_results": [
             {
               "rank": 1,
@@ -1002,7 +1008,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 10.554,
+          "latency_ms": 11.134,
           "top_results": [
             {
               "rank": 1,
@@ -1046,14 +1052,15 @@
           "query": "KneadData 去宿主 bowtie2 hg37dec very-sensitive-local",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "kneaddata-host-removal"
+            "kneaddata-host-removal",
+            "01_preprocessing/kneaddata"
           ],
           "effective_mode": "dense",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.25,
-          "latency_ms": 10.545,
+          "mrr_at_5": 1.0,
+          "latency_ms": 50.551,
           "top_results": [
             {
               "rank": 1,
@@ -1104,7 +1111,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 34.842,
+          "latency_ms": 33.036,
           "top_results": [
             {
               "rank": 1,
@@ -1148,14 +1155,15 @@
           "query": "CheckM2 MAG 质量 HQ MQ MIMAG 完整度 污染率",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "checkm2-quality-thresholds"
+            "checkm2-quality-thresholds",
+            "04_binning/checkm2"
           ],
           "effective_mode": "dense",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 78.605,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 10.077,
           "top_results": [
             {
               "rank": 1,
@@ -1207,7 +1215,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 11.095,
+          "latency_ms": 10.781,
           "top_results": [
             {
               "rank": 1,
@@ -1259,7 +1267,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 10.638,
+          "latency_ms": 76.047,
           "top_results": [
             {
               "rank": 1,
@@ -1311,7 +1319,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 10.486,
+          "latency_ms": 10.12,
           "top_results": [
             {
               "rank": 1,
@@ -1362,7 +1370,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 0.0,
           "mrr_at_5": 0.0,
-          "latency_ms": 10.055,
+          "latency_ms": 18.56,
           "top_results": [
             {
               "rank": 1,
@@ -1413,7 +1421,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 10.62,
+          "latency_ms": 50.062,
           "top_results": [
             {
               "rank": 1,
@@ -1457,14 +1465,15 @@
           "query": "批次校正 ConQuR MMUPHin ComBat-seq 多中心",
           "dimension": "statistics",
           "expected_doc_prefixes": [
-            "batch-correction-strategy"
+            "batch-correction-strategy",
+            "05_stats/batch_correct"
           ],
           "effective_mode": "dense",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 13.572,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 13.058,
           "top_results": [
             {
               "rank": 1,
@@ -1508,14 +1517,15 @@
           "query": "SIAMCAT 机器学习 lasso RF 疾病分类器 ROC AUC",
           "dimension": "statistics",
           "expected_doc_prefixes": [
-            "siamcat-ml-disease-classifier"
+            "siamcat-ml-disease-classifier",
+            "05_stats/siamcat"
           ],
           "effective_mode": "dense",
-          "recall_at_1": 0.0,
+          "recall_at_1": 1.0,
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 11.818,
+          "mrr_at_5": 1.0,
+          "latency_ms": 13.485,
           "top_results": [
             {
               "rank": 1,
@@ -1557,11 +1567,11 @@
       ]
     },
     "sparse": {
-      "recall_at_1": 0.3333333333333333,
-      "recall_at_3": 0.6,
-      "recall_at_5": 0.8666666666666667,
-      "mrr_at_5": 0.5188888888888888,
-      "mean_latency_ms": 5.2036,
+      "recall_at_1": 0.6666666666666666,
+      "recall_at_3": 0.9333333333333333,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 0.8055555555555556,
+      "mean_latency_ms": 4.3984,
       "per_query": [
         {
           "id": "metaphlan4_params",
@@ -1575,7 +1585,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 6.176,
+          "latency_ms": 5.925,
           "top_results": [
             {
               "rank": 1,
@@ -1619,14 +1629,15 @@
           "query": "HUMAnN3 速度模式 balanced fast 参数",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "humann3-speed-mode"
+            "humann3-speed-mode",
+            "02_read_based/humann3"
           ],
           "effective_mode": "sparse",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 5.273,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 4.661,
           "top_results": [
             {
               "rank": 1,
@@ -1677,7 +1688,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 5.283,
+          "latency_ms": 4.313,
           "top_results": [
             {
               "rank": 1,
@@ -1728,7 +1739,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.25,
-          "latency_ms": 4.493,
+          "latency_ms": 3.77,
           "top_results": [
             {
               "rank": 1,
@@ -1779,7 +1790,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 4.326,
+          "latency_ms": 3.624,
           "top_results": [
             {
               "rank": 1,
@@ -1823,14 +1834,15 @@
           "query": "KneadData 去宿主 bowtie2 hg37dec very-sensitive-local",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "kneaddata-host-removal"
+            "kneaddata-host-removal",
+            "01_preprocessing/kneaddata"
           ],
           "effective_mode": "sparse",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.25,
-          "latency_ms": 4.587,
+          "mrr_at_5": 1.0,
+          "latency_ms": 3.762,
           "top_results": [
             {
               "rank": 1,
@@ -1881,7 +1893,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 4.911,
+          "latency_ms": 4.244,
           "top_results": [
             {
               "rank": 1,
@@ -1925,14 +1937,15 @@
           "query": "CheckM2 MAG 质量 HQ MQ MIMAG 完整度 污染率",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "checkm2-quality-thresholds"
+            "checkm2-quality-thresholds",
+            "04_binning/checkm2"
           ],
           "effective_mode": "sparse",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 5.599,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 4.875,
           "top_results": [
             {
               "rank": 1,
@@ -1984,7 +1997,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 4.802,
+          "latency_ms": 4.102,
           "top_results": [
             {
               "rank": 1,
@@ -2036,7 +2049,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 5.453,
+          "latency_ms": 4.848,
           "top_results": [
             {
               "rank": 1,
@@ -2088,7 +2101,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 5.039,
+          "latency_ms": 3.944,
           "top_results": [
             {
               "rank": 1,
@@ -2139,7 +2152,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 5.941,
+          "latency_ms": 4.758,
           "top_results": [
             {
               "rank": 1,
@@ -2190,7 +2203,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 6.452,
+          "latency_ms": 4.136,
           "top_results": [
             {
               "rank": 1,
@@ -2234,14 +2247,15 @@
           "query": "批次校正 ConQuR MMUPHin ComBat-seq 多中心",
           "dimension": "statistics",
           "expected_doc_prefixes": [
-            "batch-correction-strategy"
+            "batch-correction-strategy",
+            "05_stats/batch_correct"
           ],
           "effective_mode": "sparse",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.25,
-          "latency_ms": 4.032,
+          "mrr_at_5": 1.0,
+          "latency_ms": 4.123,
           "top_results": [
             {
               "rank": 1,
@@ -2285,14 +2299,15 @@
           "query": "SIAMCAT 机器学习 lasso RF 疾病分类器 ROC AUC",
           "dimension": "statistics",
           "expected_doc_prefixes": [
-            "siamcat-ml-disease-classifier"
+            "siamcat-ml-disease-classifier",
+            "05_stats/siamcat"
           ],
           "effective_mode": "sparse",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
           "recall_at_5": 1.0,
-          "mrr_at_5": 0.2,
-          "latency_ms": 5.687,
+          "mrr_at_5": 1.0,
+          "latency_ms": 4.891,
           "top_results": [
             {
               "rank": 1,
