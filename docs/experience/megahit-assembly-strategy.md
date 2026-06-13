@@ -14,9 +14,11 @@ scenario: [gut-microbiome, high-depth, paired-end]
 
 > 适用于去宿主后的双端宏基因组样本，需要在 contig 数量、下游注释灵敏度和 MAG 回收质量之间做取舍。
 
-同一个样本做“功能注释”和“分箱回收”时，最优组装参数不一定相同。
+同一个样本做”功能注释”和”分箱回收”时，最优组装参数不一定相同。
 
 本项目脚本已经把选择压缩到两个核心维度：`--presets` 与 `--min-contig-len`。
+
+**关键参数速查**：`--min-contig-len 500`（通用注释）/ `1000-1500`（MAG binning）；`--presets meta-large`（默认）/ `meta-sensitive`（低丰度）；k-mer 列表 `21,29,39,59,79,99,119,141`；`-m 0.9` 内存上限；`-t 16` 线程。组装后关键输出：`final.contigs.fa`，N50 和 total assembly size 通过 `seqkit stats` 获取。
 
 ## Recommendation
 

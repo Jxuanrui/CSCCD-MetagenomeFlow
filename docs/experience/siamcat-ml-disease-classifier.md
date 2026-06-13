@@ -16,7 +16,9 @@ scenario: [cross-cohort, gut-microbiome, high-depth]
 
 本项目脚本面向的是聚合矩阵层的机器学习，输入来自 merged taxonomy、病毒表或联合特征。
 
-真正影响结果可信度的不是“模型能不能跑通”，而是样本数、分组定义、特征过滤和交叉验证设计。
+真正影响结果可信度的不是”模型能不能跑通”，而是样本数、分组定义、特征过滤和交叉验证设计。
+
+**关键参数速查**：`--folds 10`（10 折交叉验证，默认）；训练模型：lasso / ridge / enet / RF（random forest）；评估指标：ROC-AUC（主要）+ PR-AUC；至少 10 个重叠样本；主输出 `siamcat_auc_summary.tsv`（各模型 AUC 对比）+ `siamcat_top_features.tsv`（前 20 特征）。
 
 ## Recommendation
 

@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-12T10:18:45.567160+00:00",
+  "timestamp": "2026-06-13T01:33:26.080427+00:00",
   "n_questions": 15,
   "modes": {
     "hybrid": {
-      "recall_at_1": 0.26666666666666666,
-      "recall_at_3": 0.4666666666666667,
-      "recall_at_5": 0.6666666666666666,
-      "mrr_at_5": 0.39555555555555555,
-      "mean_latency_ms": 186.04286666666667,
+      "recall_at_1": 0.4,
+      "recall_at_3": 0.8,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 0.6177777777777779,
+      "mean_latency_ms": 187.71553333333335,
       "per_query": [
         {
           "id": "metaphlan4_params",
@@ -21,7 +21,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 244.627,
+          "latency_ms": 233.538,
           "top_results": [
             {
               "rank": 1,
@@ -72,7 +72,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.2,
-          "latency_ms": 165.084,
+          "latency_ms": 192.63,
           "top_results": [
             {
               "rank": 1,
@@ -123,7 +123,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 188.391,
+          "latency_ms": 175.367,
           "top_results": [
             {
               "rank": 1,
@@ -170,46 +170,46 @@
             "megahit-assembly-strategy"
           ],
           "effective_mode": "hybrid",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 217.548,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 177.637,
           "top_results": [
             {
               "rank": 1,
+              "doc_id": "exp_108",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
+              "distance": 0.23633766174316406,
+              "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Scenario\n\n> 适用于去宿主后的双端宏基因组样本，需要在 contig 数量、下游注释灵敏度和 MAG 回收质量之间做取舍。\n\n同一个样本做”功能注释”和”分箱回收”时，最优组装参数不一定相同。\n\n本项目脚本已经把选择压缩到两个核心维度：`--presets` 与 `--min-contig-len`。\n\n**关键参数速查**：`--min-contig-len 500`（通用注释）/ `1000-15"
+            },
+            {
+              "rank": 2,
               "doc_id": "exp_206",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": 0.33229488134384155,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 功能\n\nMEGAHIT 使用多 k-mer 策略（successive k-mer sizes）和内存高效的稀疏图（SDBG）对宏基因组 shotgun 数据进行组装，兼顾速度和内存效率，是目前宏基因组 de novo 组装的主流选择。"
             },
             {
-              "rank": 2,
+              "rank": 3,
               "doc_id": "exp_208",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": 0.3169231414794922,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `-1` / `-2` | R1/R2 路径 | 成对读段输入 |\n| `--k-list` | `21,29,39,59,79,99,119,141` | 多 k-mer 阶梯（含 k=141 可提升连续性） |\n| `--min-contig-len` | 500（病毒 1500）| 最短输出 contig 长度 |\n| `--num"
             },
             {
-              "rank": 3,
+              "rank": 4,
               "doc_id": "exp_210",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": 0.30545318126678467,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 质量评估指标\n\n| 指标 | 参考范围（肠道宏基因组） |\n|------|----------------------|\n| 总 contig 数 | 50,000–500,000 |\n| N50 | 1,000–10,000 bp |\n| 最长 contig | 50,000–500,000 bp |\n| 总长度 | 100 Mb–2 Gb |"
             },
             {
-              "rank": 4,
+              "rank": 5,
               "doc_id": "exp_211",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": 0.3128907084465027,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 注意事项\n\n- 宏基因组复杂度高，组装 N50 远低于单菌基因组；N50 > 1 kb 即为良好结果\n- `--presets meta-sensitive` 增加低丰度序列召回，代价是组装时间增加约 2×\n- 若样本测序深度 < 5G bases，建议先用 `--k-list 21,41,61,81,99` 降低 k-mer 范围\n- 输出 contigs 直接用于后续基因预测（Prodigal）和 Binning"
-            },
-            {
-              "rank": 5,
-              "doc_id": "exp_723",
-              "source": "/home/labuser/Course/Maxmetagenome/scripts/16_bac_megahit.sh",
-              "distance": 0.34976810216903687,
-              "snippet": "Script: 16_bac_megahit\nTool: MEGAHIT v1.2.9\nFunction: MEGAHIT 宏基因组从头组装（de novo assembly）\n工具版本：MEGAHIT v1.2.9（conda env: assembly）\nInputs: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz\nOutputs: ${WORKDIR}/result/assemb"
             }
           ]
         },
@@ -225,7 +225,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 206.106,
+          "latency_ms": 173.701,
           "top_results": [
             {
               "rank": 1,
@@ -276,7 +276,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.2,
-          "latency_ms": 219.535,
+          "latency_ms": 203.055,
           "top_results": [
             {
               "rank": 1,
@@ -327,7 +327,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 192.447,
+          "latency_ms": 214.511,
           "top_results": [
             {
               "rank": 1,
@@ -378,7 +378,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 195.815,
+          "latency_ms": 199.138,
           "top_results": [
             {
               "rank": 1,
@@ -422,14 +422,15 @@
           "query": "DAS_Tool 多算法 bin 整合 score_threshold diamond",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "dastool-bin-refinement"
+            "dastool-bin-refinement",
+            "04_binning/dastool"
           ],
           "effective_mode": "hybrid",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 167.476,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 170.776,
           "top_results": [
             {
               "rank": 1,
@@ -478,10 +479,10 @@
           ],
           "effective_mode": "hybrid",
           "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 170.961,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 175.811,
           "top_results": [
             {
               "rank": 1,
@@ -492,31 +493,31 @@
             },
             {
               "rank": 2,
+              "doc_id": "exp_65",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
+              "distance": 0.31376904249191284,
+              "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Scenario\n\n> 适用于已经完成宏基因组组装的肠道样本，需要从 contigs 中识别病毒、噬菌体和质粒候选，并为后续 CheckV、vOTU 构建和生活方式分析提供高可信输入。\n\n典型输入是去宿主后的 WGS metagenome 组装结果，推荐先对 contig 做长度预过滤，再同时运行 geNomad 和 VirSorter2。\n\n如果目标是病毒发现，geNomad 适合作为主召回工具"
+            },
+            {
+              "rank": 3,
               "doc_id": "exp_391",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": 0.3216065764427185,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## Overview\n\n**版本**: 1.11+ | **环境**: `envs/genomad` | **脚本**: `scripts/52_vir_genomad.sh` / `57_vir_votu_genomad.sh`"
             },
             {
-              "rank": 3,
+              "rank": 4,
               "doc_id": "exp_394",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": 0.30651336908340454,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 关键参数\n\n| 参数 | 默认 | 含义 |\n|------|------|------|\n| `--sensitivity` | 7.5 | 搜索灵敏度（4.2–7.5，越高越灵敏） |\n| `--splits` | 4 | 分块数（降低内存峰值） |\n| `--cleanup` | on | 删除中间临时文件 |\n| `--threads` | CPUS | 线程数 |"
             },
             {
-              "rank": 4,
+              "rank": 5,
               "doc_id": "exp_395",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": 0.32627153396606445,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## geNomad vs VirSorter2 互补策略\n\n| 特性 | geNomad | VirSorter2 |\n|------|---------|------------|\n| 算法 | 神经网络（nn-classification） | 多重分类器 + 标记基因 |\n| 灵敏度 | 高（~7.5） | 高（5 组病毒群） |\n| 特异度 | 极高 | 高 |\n| 质粒预测 | **支持** | 不支持 |\n|"
-            },
-            {
-              "rank": 5,
-              "doc_id": "exp_393",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
-              "distance": 0.3435237407684326,
-              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 输入 / 输出\n\n### 脚本 52 — 病毒鉴定（per-sample）\n\n| 项目 | 路径 |\n|------|------|\n| 输入 contigs | `result/virus/assembly/{sample}/{sample}.contigs.fa` |\n| 病毒汇总 | `result/virus/genomad/{sample}/{sample}.contigs_virus_summary.ts"
             }
           ]
         },
@@ -533,7 +534,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 162.119,
+          "latency_ms": 176.485,
           "top_results": [
             {
               "rank": 1,
@@ -581,10 +582,10 @@
           ],
           "effective_mode": "hybrid",
           "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 162.213,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 173.262,
           "top_results": [
             {
               "rank": 1,
@@ -595,17 +596,17 @@
             },
             {
               "rank": 2,
+              "doc_id": "exp_54",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/funomic-fungi-profiling.md",
+              "distance": 0.28230178356170654,
+              "snippet": "# FunOMIC 真菌 WGS 分类与功能谱分析建议\n## Scenario\n\n> 适用于肠道 WGS metagenomics 中的真菌群落分析，尤其是低丰度 fungi 需要比通用 k-mer 分类器更稳健的物种识别和功能解释时。\n\n典型输入是已经完成质控和宿主去除的双端 reads，样本可以来自粪便、肠内容物或其他低真菌负荷的微生物组项目。\n\n如果研究问题明确聚焦 mycobiome，FunOMIC 应作为真菌主分析工具；Kraken2 PlusPF 更适合做快速筛查"
+            },
+            {
+              "rank": 3,
               "doc_id": "exp_567",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
               "distance": 0.2631785273551941,
               "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 官方链接\n\n- DIAMOND: https://github.com/bbuchfink/diamond\n- GutDB: 参考肠道真菌基因组集合（非独立工具）"
-            },
-            {
-              "rank": 3,
-              "doc_id": "exp_619",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/funomics.md",
-              "distance": 0.295185923576355,
-              "snippet": "# FunOMIC — 真菌分类与功能分析\n## 功能\n\nFunOMIC 使用真菌 marker 与功能蛋白数据库进行真菌 WGS 分类和功能分析。当前项目已部署两套本地数据库，脚本 75 优先尝试 `funomic classify`，若未检测到命令则自动回退到 `diamond blastx`。"
             },
             {
               "rank": 4,
@@ -616,10 +617,10 @@
             },
             {
               "rank": 5,
-              "doc_id": "exp_624",
+              "doc_id": "exp_619",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/funomics.md",
-              "distance": 0.28787147998809814,
-              "snippet": "# FunOMIC — 真菌分类与功能分析\n## 与其他真菌分类工具对比\n\n| 工具 | 方法 | 数据库 | 推荐场景 |\n|------|------|--------|---------|\n| **FunOMIC** | 标记基因 + 功能蛋白 | 160万 marker + 340万蛋白 | **推荐**，如果已安装 |\n| CCMetagen | KMA + NCBI nt 全库 | NCBI nt | 无近缘参考也可检测 |\n| MetaPhlAn4 真核 | 标"
+              "distance": 0.295185923576355,
+              "snippet": "# FunOMIC — 真菌分类与功能分析\n## 功能\n\nFunOMIC 使用真菌 marker 与功能蛋白数据库进行真菌 WGS 分类和功能分析。当前项目已部署两套本地数据库，脚本 75 优先尝试 `funomic classify`，若未检测到命令则自动回退到 `diamond blastx`。"
             }
           ]
         },
@@ -635,7 +636,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 162.981,
+          "latency_ms": 191.834,
           "top_results": [
             {
               "rank": 1,
@@ -686,7 +687,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.2,
-          "latency_ms": 171.678,
+          "latency_ms": 173.072,
           "top_results": [
             {
               "rank": 1,
@@ -734,10 +735,10 @@
           ],
           "effective_mode": "hybrid",
           "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 163.662,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.3333333333333333,
+          "latency_ms": 184.916,
           "top_results": [
             {
               "rank": 1,
@@ -755,35 +756,35 @@
             },
             {
               "rank": 3,
+              "doc_id": "exp_125",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/siamcat-ml-disease-classifier.md",
+              "distance": 0.36601364612579346,
+              "snippet": "# SIAMCAT 疾病分类模型的默认建模策略建议\n## Scenario\n\n> 适用于病例对照或分组明确的宏基因组项目，希望构建可解释的分类模型，而不是只做单变量差异检验。\n\n本项目脚本面向的是聚合矩阵层的机器学习，输入来自 merged taxonomy、病毒表或联合特征。\n\n真正影响结果可信度的不是”模型能不能跑通”，而是样本数、分组定义、特征过滤和交叉验证设计。\n\n**关键参数速查**：`--folds 10`（10 折交叉验证，默认）；训练模型：lasso / ri"
+            },
+            {
+              "rank": 4,
               "doc_id": "exp_359",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.37249237298965454,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## Overview\n\n**环境**: `envs/r_stat` | **脚本**: `scripts/96_stat_ml_siamcat.sh`"
             },
             {
-              "rank": 4,
+              "rank": 5,
               "doc_id": "exp_368",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.3774588704109192,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 官方链接\n\n- Bioconductor: https://bioconductor.org/packages/SIAMCAT\n- 论文: Wirbel et al. 2021, Nature Methods 18:627–638"
-            },
-            {
-              "rank": 5,
-              "doc_id": "exp_360",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
-              "distance": 0.39550042152404785,
-              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 功能\n\n使用 SIAMCAT 框架对微生物组特征（物种分类丰度）进行机器学习建模，支持 Lasso / Ridge / Elastic Net / Random Forest 四种算法，输出 10 折交叉验证 AUC、模型评估图和 Top 特征重要性排序，用于识别最具判别力的生物标志物。"
             }
           ]
         }
       ]
     },
     "dense": {
-      "recall_at_1": 0.4666666666666667,
-      "recall_at_3": 0.6,
-      "recall_at_5": 0.6666666666666666,
-      "mrr_at_5": 0.538888888888889,
-      "mean_latency_ms": 167.20766666666665,
+      "recall_at_1": 0.5333333333333333,
+      "recall_at_3": 0.7333333333333333,
+      "recall_at_5": 0.8,
+      "mrr_at_5": 0.6277777777777778,
+      "mean_latency_ms": 178.3109333333333,
       "per_query": [
         {
           "id": "metaphlan4_params",
@@ -797,7 +798,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 156.017,
+          "latency_ms": 185.204,
           "top_results": [
             {
               "rank": 1,
@@ -848,7 +849,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 144.268,
+          "latency_ms": 154.958,
           "top_results": [
             {
               "rank": 1,
@@ -899,7 +900,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 162.778,
+          "latency_ms": 181.586,
           "top_results": [
             {
               "rank": 1,
@@ -950,28 +951,28 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 176.03,
+          "latency_ms": 178.88,
           "top_results": [
             {
               "rank": 1,
+              "doc_id": "exp_108",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
+              "distance": 0.23633766174316406,
+              "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Scenario\n\n> 适用于去宿主后的双端宏基因组样本，需要在 contig 数量、下游注释灵敏度和 MAG 回收质量之间做取舍。\n\n同一个样本做”功能注释”和”分箱回收”时，最优组装参数不一定相同。\n\n本项目脚本已经把选择压缩到两个核心维度：`--presets` 与 `--min-contig-len`。\n\n**关键参数速查**：`--min-contig-len 500`（通用注释）/ `1000-15"
+            },
+            {
+              "rank": 2,
               "doc_id": "exp_109",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
               "distance": 0.27296632528305054,
               "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Recommendation\n\n如果目标是通用下游分析，保持脚本默认：\n\n```bash\nmegahit \\\n  -1 R1.fastq.gz \\\n  -2 R2.fastq.gz \\\n  --presets meta-large \\\n  --min-contig-len 500 \\\n  -m 0.9 \\\n  -t 16\n```\n\n如果目标是 MAG 挖掘、CoverM 深度估计和后续 binning，建议把 "
             },
             {
-              "rank": 2,
+              "rank": 3,
               "doc_id": "exp_110",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
               "distance": 0.27586376667022705,
               "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Rationale\n\n- **为什么 `meta-large` 是默认主选**：脚本给出的 k 值列表更适合肠道这类中高多样性宏基因组，通常能在连续性与复杂度之间取得较稳平衡。\n- **为什么 `500 bp` 适合通用分析**：短 contig 虽然不一定适合分箱，但对基因预测、功能注释和病毒线索保留更友好。\n- **为什么 MAG 工作流要提高到 `1000-1500 bp`**：较长 contig 的四核"
-            },
-            {
-              "rank": 3,
-              "doc_id": "exp_108",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
-              "distance": 0.27846759557724,
-              "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Scenario\n\n> 适用于去宿主后的双端宏基因组样本，需要在 contig 数量、下游注释灵敏度和 MAG 回收质量之间做取舍。\n\n同一个样本做“功能注释”和“分箱回收”时，最优组装参数不一定相同。\n\n本项目脚本已经把选择压缩到两个核心维度：`--presets` 与 `--min-contig-len`。"
             },
             {
               "rank": 4,
@@ -1001,7 +1002,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 174.155,
+          "latency_ms": 174.145,
           "top_results": [
             {
               "rank": 1,
@@ -1052,7 +1053,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.25,
-          "latency_ms": 195.239,
+          "latency_ms": 198.825,
           "top_results": [
             {
               "rank": 1,
@@ -1103,7 +1104,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 165.774,
+          "latency_ms": 171.071,
           "top_results": [
             {
               "rank": 1,
@@ -1154,7 +1155,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 0.0,
           "mrr_at_5": 0.0,
-          "latency_ms": 159.984,
+          "latency_ms": 165.561,
           "top_results": [
             {
               "rank": 1,
@@ -1198,14 +1199,15 @@
           "query": "DAS_Tool 多算法 bin 整合 score_threshold diamond",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "dastool-bin-refinement"
+            "dastool-bin-refinement",
+            "04_binning/dastool"
           ],
           "effective_mode": "dense",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 163.024,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 185.975,
           "top_results": [
             {
               "rank": 1,
@@ -1257,7 +1259,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 178.826,
+          "latency_ms": 185.867,
           "top_results": [
             {
               "rank": 1,
@@ -1282,17 +1284,17 @@
             },
             {
               "rank": 4,
+              "doc_id": "exp_65",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
+              "distance": 0.31376904249191284,
+              "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Scenario\n\n> 适用于已经完成宏基因组组装的肠道样本，需要从 contigs 中识别病毒、噬菌体和质粒候选，并为后续 CheckV、vOTU 构建和生活方式分析提供高可信输入。\n\n典型输入是去宿主后的 WGS metagenome 组装结果，推荐先对 contig 做长度预过滤，再同时运行 geNomad 和 VirSorter2。\n\n如果目标是病毒发现，geNomad 适合作为主召回工具"
+            },
+            {
+              "rank": 5,
               "doc_id": "exp_67",
               "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
               "distance": 0.31624269485473633,
               "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Recommendation\n\n```bash\n# Run VirSorter2 on the same filtered contig set.\nvirsorter run \\\n  -i assembly/sample.contigs.min1500.fa \\\n  -w result/virus/virsorter2/sample \\\n  --db-dir db/virsorter2 \\\n  -"
-            },
-            {
-              "rank": 5,
-              "doc_id": "exp_391",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
-              "distance": 0.3216065764427185,
-              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## Overview\n\n**版本**: 1.11+ | **环境**: `envs/genomad` | **脚本**: `scripts/52_vir_genomad.sh` / `57_vir_votu_genomad.sh`"
             }
           ]
         },
@@ -1309,7 +1311,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 158.326,
+          "latency_ms": 172.289,
           "top_results": [
             {
               "rank": 1,
@@ -1360,7 +1362,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 0.0,
           "mrr_at_5": 0.0,
-          "latency_ms": 188.044,
+          "latency_ms": 175.043,
           "top_results": [
             {
               "rank": 1,
@@ -1411,7 +1413,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 160.748,
+          "latency_ms": 166.656,
           "top_results": [
             {
               "rank": 1,
@@ -1462,7 +1464,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 0.0,
           "mrr_at_5": 0.0,
-          "latency_ms": 163.508,
+          "latency_ms": 194.541,
           "top_results": [
             {
               "rank": 1,
@@ -1510,10 +1512,10 @@
           ],
           "effective_mode": "dense",
           "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 161.394,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.3333333333333333,
+          "latency_ms": 184.063,
           "top_results": [
             {
               "rank": 1,
@@ -1531,35 +1533,35 @@
             },
             {
               "rank": 3,
+              "doc_id": "exp_125",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/siamcat-ml-disease-classifier.md",
+              "distance": 0.36601364612579346,
+              "snippet": "# SIAMCAT 疾病分类模型的默认建模策略建议\n## Scenario\n\n> 适用于病例对照或分组明确的宏基因组项目，希望构建可解释的分类模型，而不是只做单变量差异检验。\n\n本项目脚本面向的是聚合矩阵层的机器学习，输入来自 merged taxonomy、病毒表或联合特征。\n\n真正影响结果可信度的不是”模型能不能跑通”，而是样本数、分组定义、特征过滤和交叉验证设计。\n\n**关键参数速查**：`--folds 10`（10 折交叉验证，默认）；训练模型：lasso / ri"
+            },
+            {
+              "rank": 4,
               "doc_id": "exp_361",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.36776721477508545,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 用法\n\n```bash\n# 默认（细菌维度，10折交叉验证）\nbash scripts/96_stat_ml_siamcat.sh \\\n    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \\\n    -m metadata.csv -g group\n\n# 全维度交叉（细菌+病毒联合）\nbash scripts/96_stat_ml_siamcat.sh \\\n   "
             },
             {
-              "rank": 4,
+              "rank": 5,
               "doc_id": "exp_359",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.37249237298965454,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## Overview\n\n**环境**: `envs/r_stat` | **脚本**: `scripts/96_stat_ml_siamcat.sh`"
-            },
-            {
-              "rank": 5,
-              "doc_id": "exp_366",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
-              "distance": 0.3731854557991028,
-              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 注意事项\n\n- 需要每组 ≥5 个样本，总样本 ≥10 才能得到可靠 AUC\n- 二分类标签取元数据分组列的前两个水平（字母序），第一个为阴性，第二个为阳性\n- `-d all` 模式下细菌和病毒特征合并运行，每个特征加 `BAC|` / `VIR|` 前缀区分\n- 真菌维度（`-d fungi`）为实验性功能，因真菌特征数通常较少\n- SIAMCAT 的 `model.interpretation.plot` 输出 To"
             }
           ]
         }
       ]
     },
     "sparse": {
-      "recall_at_1": 0.2,
-      "recall_at_3": 0.4,
-      "recall_at_5": 0.5333333333333333,
-      "mrr_at_5": 0.3222222222222222,
-      "mean_latency_ms": 5.2276,
+      "recall_at_1": 0.3333333333333333,
+      "recall_at_3": 0.6,
+      "recall_at_5": 0.8,
+      "mrr_at_5": 0.5055555555555555,
+      "mean_latency_ms": 5.610666666666666,
       "per_query": [
         {
           "id": "metaphlan4_params",
@@ -1573,7 +1575,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 5.275,
+          "latency_ms": 5.655,
           "top_results": [
             {
               "rank": 1,
@@ -1624,7 +1626,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 0.0,
           "mrr_at_5": 0.0,
-          "latency_ms": 4.082,
+          "latency_ms": 4.611,
           "top_results": [
             {
               "rank": 1,
@@ -1675,7 +1677,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.3333333333333333,
-          "latency_ms": 3.959,
+          "latency_ms": 4.543,
           "top_results": [
             {
               "rank": 1,
@@ -1724,9 +1726,9 @@
           "effective_mode": "sparse",
           "recall_at_1": 0.0,
           "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 5.346,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.25,
+          "latency_ms": 4.485,
           "top_results": [
             {
               "rank": 1,
@@ -1751,17 +1753,17 @@
             },
             {
               "rank": 4,
+              "doc_id": "exp_108",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/megahit-assembly-strategy.md",
+              "distance": null,
+              "snippet": "# MEGAHIT 组装策略与最小 contig 长度建议\n## Scenario\n\n> 适用于去宿主后的双端宏基因组样本，需要在 contig 数量、下游注释灵敏度和 MAG 回收质量之间做取舍。\n\n同一个样本做”功能注释”和”分箱回收”时，最优组装参数不一定相同。\n\n本项目脚本已经把选择压缩到两个核心维度：`--presets` 与 `--min-contig-len`。\n\n**关键参数速查**：`--min-contig-len 500`（通用注释）/ `1000-15"
+            },
+            {
+              "rank": 5,
               "doc_id": "exp_211",
               "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
               "distance": null,
               "snippet": "# MEGAHIT — 宏基因组组装\n## 注意事项\n\n- 宏基因组复杂度高，组装 N50 远低于单菌基因组；N50 > 1 kb 即为良好结果\n- `--presets meta-sensitive` 增加低丰度序列召回，代价是组装时间增加约 2×\n- 若样本测序深度 < 5G bases，建议先用 `--k-list 21,41,61,81,99` 降低 k-mer 范围\n- 输出 contigs 直接用于后续基因预测（Prodigal）和 Binning"
-            },
-            {
-              "rank": 5,
-              "doc_id": "exp_210",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/03_assembly/megahit.md",
-              "distance": null,
-              "snippet": "# MEGAHIT — 宏基因组组装\n## 质量评估指标\n\n| 指标 | 参考范围（肠道宏基因组） |\n|------|----------------------|\n| 总 contig 数 | 50,000–500,000 |\n| N50 | 1,000–10,000 bp |\n| 最长 contig | 50,000–500,000 bp |\n| 总长度 | 100 Mb–2 Gb |"
             }
           ]
         },
@@ -1777,7 +1779,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 5.28,
+          "latency_ms": 5.579,
           "top_results": [
             {
               "rank": 1,
@@ -1828,7 +1830,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.25,
-          "latency_ms": 3.451,
+          "latency_ms": 5.473,
           "top_results": [
             {
               "rank": 1,
@@ -1879,7 +1881,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 4.004,
+          "latency_ms": 5.594,
           "top_results": [
             {
               "rank": 1,
@@ -1930,7 +1932,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 0.0,
           "mrr_at_5": 0.0,
-          "latency_ms": 6.524,
+          "latency_ms": 6.255,
           "top_results": [
             {
               "rank": 1,
@@ -1974,14 +1976,15 @@
           "query": "DAS_Tool 多算法 bin 整合 score_threshold diamond",
           "dimension": "bacteria",
           "expected_doc_prefixes": [
-            "dastool-bin-refinement"
+            "dastool-bin-refinement",
+            "04_binning/dastool"
           ],
           "effective_mode": "sparse",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 5.997,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 5.692,
           "top_results": [
             {
               "rank": 1,
@@ -2029,46 +2032,46 @@
             "genomad-virsorter2-consensus"
           ],
           "effective_mode": "sparse",
-          "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 5.275,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 6.249,
           "top_results": [
             {
               "rank": 1,
+              "doc_id": "exp_65",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virus-identification.md",
+              "distance": null,
+              "snippet": "# geNomad 病毒与质粒识别及 VirSorter2 共识筛选建议\n## Scenario\n\n> 适用于已经完成宏基因组组装的肠道样本，需要从 contigs 中识别病毒、噬菌体和质粒候选，并为后续 CheckV、vOTU 构建和生活方式分析提供高可信输入。\n\n典型输入是去宿主后的 WGS metagenome 组装结果，推荐先对 contig 做长度预过滤，再同时运行 geNomad 和 VirSorter2。\n\n如果目标是病毒发现，geNomad 适合作为主召回工具"
+            },
+            {
+              "rank": 2,
               "doc_id": "exp_397",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": null,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 注意事项\n\n- geNomad 数据库约 10 GB（v1.11），位于 `db/genomad/`，运行前需确保已下载\n- `--sensitivity` 设为 7.5 是灵敏度和计算时间的折中；小样本可降至 4.2 加快速度\n- geNomad 对短序列（<1kb）灵敏度有限，Contigs 长度建议 ≥1.5kb（已在 MEGAHIT 组装中控制）"
             },
             {
-              "rank": 2,
+              "rank": 3,
               "doc_id": "exp_784",
               "source": "/home/labuser/Course/Maxmetagenome/scripts/52_vir_genomad.sh",
               "distance": null,
               "snippet": "Script: 52_vir_genomad\nTool: geNomad 1.11+\nFunction: 病毒/质粒鉴定 + 生活方式预测（geNomad 端到端）\n工具版本：geNomad 1.11+（conda env: genomad）\nInputs: ${WORKDIR}/result/virus/assembly/{sample}/{sample}.contigs.fa\nOutputs: ${WORKDIR}/result/virus/genomad/{sample"
             },
             {
-              "rank": 3,
+              "rank": 4,
               "doc_id": "exp_391",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": null,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## Overview\n\n**版本**: 1.11+ | **环境**: `envs/genomad` | **脚本**: `scripts/52_vir_genomad.sh` / `57_vir_votu_genomad.sh`"
             },
             {
-              "rank": 4,
+              "rank": 5,
               "doc_id": "exp_393",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
               "distance": null,
               "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## 输入 / 输出\n\n### 脚本 52 — 病毒鉴定（per-sample）\n\n| 项目 | 路径 |\n|------|------|\n| 输入 contigs | `result/virus/assembly/{sample}/{sample}.contigs.fa` |\n| 病毒汇总 | `result/virus/genomad/{sample}/{sample}.contigs_virus_summary.ts"
-            },
-            {
-              "rank": 5,
-              "doc_id": "exp_395",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
-              "distance": null,
-              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## geNomad vs VirSorter2 互补策略\n\n| 特性 | geNomad | VirSorter2 |\n|------|---------|------------|\n| 算法 | 神经网络（nn-classification） | 多重分类器 + 标记基因 |\n| 灵敏度 | 高（~7.5） | 高（5 组病毒群） |\n| 特异度 | 极高 | 高 |\n| 质粒预测 | **支持** | 不支持 |\n|"
             }
           ]
         },
@@ -2085,7 +2088,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 4.678,
+          "latency_ms": 5.83,
           "top_results": [
             {
               "rank": 1,
@@ -2133,10 +2136,10 @@
           ],
           "effective_mode": "sparse",
           "recall_at_1": 0.0,
-          "recall_at_3": 0.0,
-          "recall_at_5": 0.0,
-          "mrr_at_5": 0.0,
-          "latency_ms": 6.356,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 6.286,
           "top_results": [
             {
               "rank": 1,
@@ -2147,31 +2150,31 @@
             },
             {
               "rank": 2,
+              "doc_id": "exp_54",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/funomic-fungi-profiling.md",
+              "distance": null,
+              "snippet": "# FunOMIC 真菌 WGS 分类与功能谱分析建议\n## Scenario\n\n> 适用于肠道 WGS metagenomics 中的真菌群落分析，尤其是低丰度 fungi 需要比通用 k-mer 分类器更稳健的物种识别和功能解释时。\n\n典型输入是已经完成质控和宿主去除的双端 reads，样本可以来自粪便、肠内容物或其他低真菌负荷的微生物组项目。\n\n如果研究问题明确聚焦 mycobiome，FunOMIC 应作为真菌主分析工具；Kraken2 PlusPF 更适合做快速筛查"
+            },
+            {
+              "rank": 3,
               "doc_id": "exp_619",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/funomics.md",
               "distance": null,
               "snippet": "# FunOMIC — 真菌分类与功能分析\n## 功能\n\nFunOMIC 使用真菌 marker 与功能蛋白数据库进行真菌 WGS 分类和功能分析。当前项目已部署两套本地数据库，脚本 75 优先尝试 `funomic classify`，若未检测到命令则自动回退到 `diamond blastx`。"
             },
             {
-              "rank": 3,
+              "rank": 4,
               "doc_id": "exp_561",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
               "distance": null,
               "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 功能\n\n使用 DIAMOND blastx 将宏基因组 reads 比对到肠道真菌参考数据库（GutDB，47 GB），进行高精度真菌物种鉴定。适合对分类学精度要求高的场景，但计算资源消耗大。"
             },
             {
-              "rank": 4,
+              "rank": 5,
               "doc_id": "exp_624",
               "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/funomics.md",
               "distance": null,
               "snippet": "# FunOMIC — 真菌分类与功能分析\n## 与其他真菌分类工具对比\n\n| 工具 | 方法 | 数据库 | 推荐场景 |\n|------|------|--------|---------|\n| **FunOMIC** | 标记基因 + 功能蛋白 | 160万 marker + 340万蛋白 | **推荐**，如果已安装 |\n| CCMetagen | KMA + NCBI nt 全库 | NCBI nt | 无近缘参考也可检测 |\n| MetaPhlAn4 真核 | 标"
-            },
-            {
-              "rank": 5,
-              "doc_id": "exp_567",
-              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/blast_gutdb.md",
-              "distance": null,
-              "snippet": "# BLAST GutDB — 肠道真菌参考库比对\n## 官方链接\n\n- DIAMOND: https://github.com/bbuchfink/diamond\n- GutDB: 参考肠道真菌基因组集合（非独立工具）"
             }
           ]
         },
@@ -2187,7 +2190,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 5.931,
+          "latency_ms": 5.689,
           "top_results": [
             {
               "rank": 1,
@@ -2238,7 +2241,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.25,
-          "latency_ms": 5.845,
+          "latency_ms": 5.727,
           "top_results": [
             {
               "rank": 1,
@@ -2289,7 +2292,7 @@
           "recall_at_3": 0.0,
           "recall_at_5": 0.0,
           "mrr_at_5": 0.0,
-          "latency_ms": 6.411,
+          "latency_ms": 6.492,
           "top_results": [
             {
               "rank": 1,
@@ -2321,10 +2324,10 @@
             },
             {
               "rank": 5,
-              "doc_id": "exp_362",
+              "doc_id": "exp_368",
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": null,
-              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 四种 ML 算法\n\n| 算法 | 特点 | AUC 期望 |\n|------|------|---------|\n| **Lasso** | L1 正则化，特征选择强 | 中等，特征稀疏 |\n| **Ridge** | L2 正则化，保留所有特征 | 可能最高 |\n| **Elastic Net** | L1+L2 混合，折中 | 接近最优 |\n| **Random Forest** | 非线性，特征交互 | 稳健，但解释"
+              "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 官方链接\n\n- Bioconductor: https://bioconductor.org/packages/SIAMCAT\n- 论文: Wirbel et al. 2021, Nature Methods 18:627–638"
             }
           ]
         }

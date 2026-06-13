@@ -80,7 +80,7 @@ GOLDEN_QUESTIONS: list[dict[str, Any]] = [
     {
         "id": "dastool_refine",
         "query": "DAS_Tool 多算法 bin 整合 score_threshold diamond",
-        "expected_doc_prefixes": ["dastool-bin-refinement"],
+        "expected_doc_prefixes": ["dastool-bin-refinement", "04_binning/dastool"],
         "dimension": "bacteria",
     },
     {

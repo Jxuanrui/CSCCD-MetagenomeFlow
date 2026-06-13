@@ -18,6 +18,8 @@ scenario: [gut-microbiome, whole-genome-metagenomics, low-abundance-fungi]
 
 如果研究问题明确聚焦 mycobiome，FunOMIC 应作为真菌主分析工具；Kraken2 PlusPF 更适合做快速筛查，而不是最终物种谱依据。
 
+**关键参数速查**：FunOMIC 数据库约 1.6M 物种特异 marker（T 数据库）+ 约 3.4M 功能蛋白（P 数据库），专为肠道真菌 WGS 低丰度检测设计；`--threads 16`；输出包含 classification.tsv、abundance.tsv 和 function.tsv；FunOMIC 不可用时回退到 DIAMOND blastx 比对 P 数据库。
+
 ## Recommendation
 
 推荐在 host removal 之后直接运行 FunOMIC 分类流程，输出物种丰度表和功能 profile；当前项目脚本会优先调用 `funomic classify`，未安装时回退到 DIAMOND marker 分类。

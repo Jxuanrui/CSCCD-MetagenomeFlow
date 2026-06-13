@@ -18,6 +18,8 @@ scenario: [gut-microbiome, assembled-contigs, paired-end]
 
 如果目标是病毒发现，geNomad 适合作为主召回工具；如果目标是构建发表级病毒 catalogue，应把 geNomad 高分结果与 VirSorter2 结果做交集或高置信并集。
 
+**关键参数速查**：最小长度 `1500 bp`（seqkit 预过滤）；score 阈值 `>=0.70`（主结果）/ `0.50-0.70`（候补集）；`--sensitivity 7.5`；`--splits 4`；`--cleanup` 删除中间文件。与 VirSorter2 取交集获得高可信病毒候选集。
+
 ## Recommendation
 
 正式分析建议先过滤 `1500 bp` 以下 contig，再运行 geNomad end-to-end，并保留病毒、质粒和生活方式预测结果。

@@ -12,9 +12,9 @@ scenario: [gut-microbiome, assembled-contigs, mag-recovery]
 
 ## Scenario
 
-> 适用于已经分别运行 MetaBAT2、MaxBin2、CONCOCT 或 SemiBin2 等多个 binner 的组装结果，需要通过 consensus/refinement 获得更可靠的 MAG 集合。
+> 适用于已经分别运行 MetaBAT2、MaxBin2、CONCOCT 或 SemiBin2 等多个 binner 的组装结果，需要通过多算法 bin 整合（consensus binning）获得更可靠的 MAG 集合。DAS_Tool 核心参数：`--score_threshold 0.5`（默认均衡）/ `0.3`（高召回）；`--search_engine diamond`（速度快于 BLAST）；`--duplicate_penalty 0.6`；`--write_bins 1`。至少需要两个 binner 的有效输入。
 
-在肠道宏基因组中，不同 binner 对 abundance、composition 和 marker gene 信号的利用方式不同。DAS_Tool 适合把多个候选 bin 集合整合为一套污染更低、冗余更少的 MAGs，再交给 CheckM2 和 dRep 做质量评估与去冗余。
+在肠道宏基因组中，不同 binner 对 abundance、composition 和 marker gene 信号的利用方式不同。DAS_Tool 把多个候选 bin 集合整合为污染更低、冗余更少的 MAGs，再交给 CheckM2 和 dRep 做质量评估与去冗余，通常比单一 binner 多回收 5-15% high-quality MAG。
 
 ## Recommendation
 
