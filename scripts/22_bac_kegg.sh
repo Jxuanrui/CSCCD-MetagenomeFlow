@@ -49,7 +49,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/kegg"
+RESULT_DIR="${WORKDIR}/result/annotation/kegg"
 OUTPUT="${RESULT_DIR}/kegg_diamond.tsv"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then

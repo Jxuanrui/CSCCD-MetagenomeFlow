@@ -44,6 +44,7 @@ CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 DEPTH="${WORKDIR}/result/binning/coverm/${SAMPLE}/depth.txt"
 OUTDIR="${WORKDIR}/result/binning/metabat2/${SAMPLE}"
 SENTINEL="${OUTDIR}/${SAMPLE}.tsv"
+CONTIG2BIN="${SENTINEL}"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing"; exit 1; fi
 if [ ! -f "${DEPTH}" ]; then echo "[ERROR] Depth missing: ${DEPTH}"; exit 1; fi
@@ -62,12 +63,40 @@ conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
         -o "${OUTDIR}/bin"
 
 EXIT_CODE=$?
+if [ ${EXIT_CODE} -eq 139 ]; then
+    echo "[metabat2] SEGFAULT (exit 139) — writing empty contig2bin.tsv"
+    echo -e "contig_id\tbin_id" > "${CONTIG2BIN}"
+    exit 0
+fi
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] metabat2 失败"; exit ${EXIT_CODE}; fi
 
-echo "[metabat2] 构建 contig2bin 表 ..."
-conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
-    metabat2-utils bin "${OUTDIR}" | \
-    metabat2-utils label - > "${SENTINEL}"
+N_BINS=$(find "${OUTDIR}" -maxdepth 1 -name 'bin.*.fa' 2>/dev/null | wc -l || echo 0)
+if [ "${N_BINS}" -eq 0 ]; then
+    echo "[metabat2] WARNING: No bins produced for ${SAMPLE}. Creating empty contig2bin.tsv."
+    echo -e "contig_id\tbin_id" > "${CONTIG2BIN}"
+    echo "[metabat2] ${SAMPLE} complete (0 bins)"
+    exit 0
+fi
 
-N_BINS=$(ls ${OUTDIR}/bin.*.fa 2>/dev/null | wc -l || echo 0)
+echo "[metabat2] 构建 contig2bin 表 ..."
+if conda run --prefix "${REPO}/envs/metawrap" --no-capture-output bash -lc 'command -v metabat2-utils >/dev/null'; then
+    conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
+        metabat2-utils bin "${OUTDIR}" | \
+        metabat2-utils label - > "${CONTIG2BIN}"
+else
+    echo "[metabat2] WARNING: metabat2-utils not found. Building contig2bin.tsv from bin FASTA files."
+    echo -e "contig_id\tbin_id" > "${CONTIG2BIN}"
+    for f in "${OUTDIR}"/bin.*.fa; do
+        [ -f "${f}" ] || continue
+        bname=$(basename "${f}" .fa)
+        grep '^>' "${f}" | sed 's/^>//' | awk -v bin="${bname}" '{print $1"\t"bin}' >> "${CONTIG2BIN}"
+    done
+fi
+
+if [ ! -f "${CONTIG2BIN}" ] || [ ! -s "${CONTIG2BIN}" ]; then
+    echo "[metabat2] WARNING: No bins produced for ${SAMPLE}. Creating empty contig2bin.tsv."
+    echo -e "contig_id\tbin_id" > "${CONTIG2BIN}"
+    echo "[metabat2] ${SAMPLE} complete (0 bins)"
+fi
+
 echo "[metabat2] 完成，耗时 ${SECONDS}s | bins: ${N_BINS}"

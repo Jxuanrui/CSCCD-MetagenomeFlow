@@ -1,274 +1,342 @@
-# MaxMetagenome — 完整宏基因组多维度分析平台
+# MaxMetagenome
 
-**作者**: Jxuanrui  
-**版本**: v1.0.0  **日期**: 2026-06-12  
-**平台**: Linux x86_64 (Ubuntu 22.04+)  
-**环境管理**: Miniforge3（自包含，支持跨服务器迁移）
+> A comprehensive, reproducible metagenomics platform for parallel profiling of the gut microbiome across three kingdoms — bacteria, viruses, and fungi — from raw reads to publication-ready statistics.
 
----
-
-## 项目概述
-
-MaxMetagenome 是一个面向肠道微生物组研究的**完整多维度宏基因组分析平台**，覆盖从原始测序数据到论文级统计可视化的全流程，支持三大生命域并行分析。
-
-**核心指标**:
-- **87 个分析脚本**（01-98 编号，逐步执行）
-- **83 条 Snakemake 规则**（全流程 DAG，8 个规则文件）
-- **37 个独立 conda 环境**（工具隔离，避免依赖冲突）
-- **~700G 分析数据库**（含 ChocoPhlAn、UniRef90、GTDB R226、VOGDB 等）
-- **15 个 Claude Code 斜杠命令**（`/mgx-*` 前缀，AI 辅助分析）
-- **RAG 知识库**（经验文档 + 文献 Methods 索引，ChromaDB + bge-small-zh-v1.5）
-
-**设计原则**：一套脚本库，三种运行模式，零重复劳动。
+[![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
+[![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
+[![Conda](https://img.shields.io/badge/conda%20envs-38-orange)](https://github.com/conda-forge/miniforge)
+[![Scripts](https://img.shields.io/badge/scripts-91-blue)]()
+[![RAG](https://img.shields.io/badge/RAG-6769%20chunks-purple)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 ---
 
-## 三大分析维度
+## Overview
 
-| 维度 | 脚本范围 | 覆盖内容 |
-|------|----------|----------|
-| **🦠 细菌（Bacteria）** | 11 – 41d | 物种分类 · 菌株追踪 · 功能通路 · 组装 · MAG 挖掘 · 耐药 · 毒力 · CAZyme · 次级代谢 · WGS 融合 |
-| **🦠 病毒（Virome）** | 51 – 69 | 病毒鉴定 · vOTU 聚类 · 宿主预测 · 生活方式 · 基因组注释 · 宿主范围 |
-| **🍄 真菌（Mycobiome）** | 71 – 86 | 多策略分类 · 真菌组装 · MAG 回收 · CAZyme · 毒力因子 · 蛋白酶 · AMR |
-| **📊 统计分析** | 91 – 98 | Alpha/Beta 多样性 · 差异分析 · 批次校正 · ML 分类器 · 跨队列验证 · 报告生成 |
+Gut microbiome research increasingly demands joint analysis of bacteria, viruses, and fungi — yet most published pipelines address only one kingdom at a time, require cloud infrastructure, or are difficult to reproduce across servers. **MaxMetagenome** addresses this by providing a self-contained, single-server platform that runs all three dimensions in parallel with a unified script convention and a shared Snakemake DAG.
+
+**Why MaxMetagenome?**
+
+- **Three kingdoms, one platform.** Bacteria (scripts 11–41), Virome (51–69), and Mycobiome (71–86) share the same preprocessing steps, project directory layout, and Snakemake configuration — no glue scripts, no format conversion between steps.
+- **Portable and reproducible.** All 38 conda environments and ~700 GB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
+- **Three run modes.** Step-by-step (fine-grained debugging), Bash pipeline (lightweight, no extra deps, `--from`/`--skip` checkpointing), or Snakemake DAG (production, HPC-ready, native resume). All three modes call the identical underlying scripts.
+- **Functional integration built-in.** Script `98b` generates 11 integration tables per dimension at the end of each analysis — raw (Σ TPM), relative abundance, and CLR-normalized versions — ready for LEfSe, ANCOM-BC2, MaAsLin2, SIAMCAT, and Aitchison-distance ordination without any manual post-processing.
+- **AI-assisted.** 15 Claude Code slash commands (`/mgx-*`) cover pipeline planning, execution, visualization, and new-script integration, backed by a dual-source RAG knowledge base: 1,377 chunks of team experience docs + 5,392 chunks of literature Methods sections, indexed with `BAAI/bge-small-zh-v1.5`.
 
 ---
 
-## 快速启动
+## Platform
 
-### 1. 激活项目环境（每次分析前执行）
+| Component | Details |
+|-----------|---------|
+| OS | Linux x86_64 · Ubuntu 22.04 |
+| Environment manager | Miniforge3 (self-contained, under project root) |
+| Workflow engine | Snakemake 9.22.0 |
+| Analysis scripts | 91 (numbered 00–98b) |
+| Snakemake rules | 85 across 9 rule files |
+| Conda environments | 38 isolated tool environments |
+| Databases | ~700 GB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, etc.) |
+| RAG knowledge base | 6,769 chunks (ChromaDB + bge-small-zh-v1.5) |
+
+---
+
+## Quick Start
 
 ```bash
+# Activate project environment (required before every session)
 source ~/Course/Maxmetagenome/scripts/activate.sh
 
-# 首次迁移到新服务器后额外执行一次
+# First time on a new server — run once after activation
 bash ~/Course/Maxmetagenome/scripts/checkm_config.sh
 ```
 
-### 2. 三种运行模式
+### Run Modes
 
-**模式一：逐步运行（研究级精细调控）**
-
-每步独立运行，参数可精细调控，适合单步调试或探索性分析。
+**Mode 1 — Step-by-step** (debugging, fine-grained parameter control)
 
 ```bash
-# 质控
-bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
-# 去宿主
-bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
-# 物种分类
-bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/Maxmetagenome
+bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/Maxmetagenome
+bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/Maxmetagenome
 ```
 
-**模式二：Bash 一站式流程（轻量，无额外依赖）**
-
-无需 Snakemake，传入 samplesheet.csv 串联步骤，支持断点续跑。
+**Mode 2 — Bash pipeline** (lightweight, no extra dependencies)
 
 ```bash
-# 运行完整细菌流程
-bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16
+# Full bacteria pipeline
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16
 
-# 断点续跑（从 metaphlan4 步骤开始）
-bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --from metaphlan4
+# Resume from a specific step
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --from metaphlan4
 
-# 多样本并行（需要 rush）
-bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 -j 2
+# Parallel samples (requires rush)
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 -j 2
 ```
 
-可用流程脚本：
-
-| 脚本 | 覆盖步骤 |
-|------|---------|
-| `00_pipeline_bacteria.sh` | 01-02 + 11-41 |
-| `00_pipeline_virome.sh` | 01-02 + 51-69 |
-| `00_pipeline_fungi.sh` | 01-02 + 71-86 |
-| `00_pipeline_full.sh` | 三维度完整流程 |
-
-**模式三：Snakemake Pipeline（生产级，推荐大批量）**
-
-基于 DAG 的自动依赖追踪，原生断点续跑，支持 HPC。
+**Mode 3 — Snakemake** (production, HPC, recommended for large cohorts)
 
 ```bash
-# 1. 编辑运行参数
-vim pipeline/config/config.yaml     # 填写 samples / workdir / cpus
+# Edit per-run parameters: samples list, workdir, threads
+vim pipeline/config/config.yaml
 
-# 2. 预演（检查 DAG，不实际运行）
-snakemake -s pipeline/Snakefile \
-  --configfile pipeline/config/config.yaml --dry-run
+# Dry run — inspect the DAG without executing
+snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml --dry-run
 
-# 3. 正式运行
-snakemake -s pipeline/Snakefile \
-  --configfile pipeline/config/config.yaml \
-  -j 16 --rerun-incomplete
-```
-
-> Snakemake 已安装在项目内 miniforge3 base 环境中，`source activate.sh` 后直接可用。
-
----
-
-## 分析脚本索引
-
-### 通用预处理（共享）
-
-| 编号 | 功能 | 工具 |
-|------|------|------|
-| 01 | 质量控制（接头去除、低质碱基修剪） | fastp |
-| 02 | 去宿主（人/鼠/大鼠） | KneadData + bowtie2 |
-
-### 🦠 细菌维度（11-41）
-
-| 编号 | 功能 | 工具 |
-|------|------|------|
-| 11/11b | 物种组成 + 多样本合并 | MetaPhlAn4 |
-| 12 | 菌株追踪与系统发育 | StrainPhlAn4 |
-| 13 | 功能通路定量 | HUMAnN3 v3.9 |
-| 14 | 快速物种分类（k-mer） | Kraken2 + Bracken |
-| 15 | 蛋白级精确分类（GTDB R226） | Centrifuger |
-| 16-20 | 组装 → 基因预测 → 去冗余 → 定量 | MEGAHIT · Prodigal · CD-HIT · Salmon |
-| 21-31 | 综合功能注释（COG/KEGG/GO/EC/AMR/CAZyme/毒力/BGC） | eggNOG · KEGG · AMRFinder · CARD · dbCAN · VFDB · BacMet · antiSMASH · Defense-Finder · NCyc · PCyc |
-| 32-41 | MAG 挖掘（分箱→整合→质控→去冗余→定量→分类→注释） | CoverM · MetaBAT2 · MaxBin2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta |
-| 41b | MLST 多位点序列分型（WGS 融入） | mlst 2.11 |
-| 41c | 泛基因组分析（WGS 融入） | Roary 3.12.0 |
-| 41d | SNP/InDel 变异检测（WGS 融入） | Snippy 4.0.2 |
-
-### 🦠 病毒维度（51-69）
-
-| 编号 | 功能 | 工具 |
-|------|------|------|
-| 51-55 | 组装 → 鉴定（双引擎共识）→ 质控 → 蛋白预测 | MEGAHIT · geNomad · VirSorter2 · CheckV · Prodigal-gv |
-| 56-60 | vOTU 聚类 → 分类 → 丰度定量 → 丰度矩阵 | vclust · geNomad · Salmon |
-| 61-63 | vMAG 重建 → 质控 → 丰度定量 | vmag · CheckV · CoverM |
-| 64-69 | 全面注释（含结构暗物质）→ 生活方式 → 宿主 → 分类网络 | PHAROKKA · PHOLD · VOGDB · BACPHLIP · iPHoP · vConTACT3 |
-
-### 🍄 真菌维度（71-86）
-
-| 编号 | 功能 | 工具 |
-|------|------|------|
-| 71-77 | 多策略分类（5 种互补方法） | Kraken2 · MetaPhlAn4 · HUMAnN4 · BLAST · FunOMIC · MicroFisher |
-| 78-80 | 真菌组装 → MAG 回收 → 基因预测 | MEGAHIT · Eukfinder · Prodigal |
-| 81-86 | 功能注释（COG/KEGG/CAZyme/毒力/AMR/蛋白酶） | eggNOG · KEGG · dbCAN3 · VFDB · AMRFinder · MEROPS |
-
-### 📊 统计分析（91-98）
-
-| 编号 | 功能 | 工具 |
-|------|------|------|
-| 91 | Alpha/Beta 多样性 | vegan/phyloseq (R) |
-| 92 | 差异分析（LEfSe/ANCOM-BC2/DESeq2/edgeR/MaAsLin2） | R |
-| 93 | 跨维度共现网络 | FastSpar/SparCC |
-| 94 | 统一可视化（热图/PCoA/桑基图/UpSet） | ggplot2 (R) |
-| 95a/95b | 批次校正（Top10 方法）→ 评估报告 | MBECS/ConQuR/MMUPHin (R) |
-| 96 | ML 筛选 + ROC 评估（lasso/RF/SVM/enet） | SIAMCAT (R) |
-| 97 | 跨队列一致性验证 | curatedMetagenomicData/SIAMCAT (R) |
-| 98 | Markdown 快照报告 | bash + Rscript |
-
----
-
-## Claude Code AI 辅助功能
-
-本平台内置 15 个 Claude Code 斜杠命令，部署后在 Claude Code 中直接使用：
-
-```
-/mgx-welcome          — 显示欢迎页（平台概览 + 快速上手）
-/mgx-ask <问题>       — 查询 RAG 知识库（经验 + 文献）
-/mgx-plan             — 生成分析方案
-/mgx-run              — 执行分析命令
-/mgx-status           — 查看流程进度
-/mgx-integrate        — 集成新分析脚本
-/mgx-plot-ordination  — PCoA/NMDS 排序图
-/mgx-plot-composition — 物种组成图
-/mgx-plot-diversity   — Alpha 多样性图
-/mgx-plot-heatmap     — 注释热图
-/mgx-plot-network     — 共现网络图
-/mgx-plot-phylotree   — 系统发育树
-/mgx-plot-volcano     — 差异丰度图
-/graphify             — 知识图谱构建
-```
-
-### RAG 知识库
-
-- **经验知识库**：团队经验文档（`docs/experience/`）+ 工具文档 + 脚本参数 + 技能卡
-- **文献知识库**：44 篇高分宏基因组方法学文献（PMC OA，Methods 节索引）
-- **嵌入模型**：`BAAI/bge-small-zh-v1.5`（中英双语，384 维）
-
----
-
-## 目录结构
-
-```
-MaxMetagenome/
-├── scripts/          # 87 个分析脚本（01-98 编号）
-├── pipeline/         # Snakemake DAG 流程（8 个规则文件）
-│   ├── Snakefile
-│   ├── config/config.yaml
-│   └── rules/        # preprocessing · bacteria_taxonomy · bacteria_assembly
-│                     # bacteria_annotation · bacteria_binning · virome
-│                     # mycobiome · statistics · rag
-├── agents/
-│   ├── registry.yaml # 全局脚本状态追踪（87 条目）
-│   └── skills/       # 82 个工具卡片（YAML）
-├── .claude/
-│   ├── commands/     # 15 个用户斜杠命令（/mgx-*）
-│   └── skills/       # 15 个 CC 内部技能文件
-├── docs/
-│   ├── 01_preprocessing/ · 02_read_based/ · 03_assembly/
-│   ├── 04_binning/  · 05_virus/ · 05_stats/ · 05_deep_mining/
-│   ├── experience/   # 12 个团队经验文档（可编辑，自动索引到 RAG）
-│   └── project_structure.md
-├── mcp/              # RAG MCP 服务（ChromaDB + 文献 Pipeline）
-├── skills/           # 外部技能发现系统
-├── 0Install.sh       # 环境 & 数据库安装主脚本（§1-§15）
-├── CLAUDE.md         # CC + Codex 协作手册
-└── README.md         # 本文件
+# Run (auto-resume incomplete jobs)
+snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 16 --rerun-incomplete
 ```
 
 ---
 
-## 磁盘空间需求
+## Analysis Dimensions
 
-| 组件 | 空间 | 说明 |
-|------|------|------|
-| miniforge3 + 37 envs | ~50 GB | conda 工具环境，自包含 |
-| db/ 数据库 | ~700 GB | 见分析脚本索引 |
-| Project 数据（100 样本） | ~2 TB | 原始 ~1TB + 中间/结果 ~1TB |
-| scripts + pipeline + docs | < 50 MB | git 追踪部分 |
+| Dimension | Scripts | Pipeline script |
+|-----------|---------|----------------|
+| 🦠 Bacteria | 11–41d | `00_pipeline_bacteria.sh` |
+| 🦠 Virome | 51–69 | `00_pipeline_virome.sh` |
+| 🍄 Mycobiome | 71–86 | `00_pipeline_fungi.sh` |
+| 📊 Statistics | 91–98 | — |
+| 🔗 Full | 01–98 | `00_pipeline_full.sh` |
 
 ---
 
-## 迁移到新服务器
+## Bacteria Dimension — Pipeline & Outputs
 
-```bash
-# 1. 克隆仓库
-git clone git@gitee.com:JXR1314/meta-servergenome.git
-cd meta-servergenome
-
-# 2. 安装环境（首次，约数小时）
-bash 0Install.sh
-
-# 3. 激活并验证
-source scripts/activate.sh
-bash scripts/checkm_config.sh
-
-# 4. 验证 Claude Code 集成（开发环境）
-claude mcp list   # 应看到 codex: ✓ Connected
+```
+Raw reads (*.fastq.gz)
+    │
+    ├── 01 fastp        Quality control (adapter trimming, low-quality filtering)
+    └── 02 kneaddata    Host removal (bowtie2 alignment + read filtering)
+            │
+            ├─────────────────────────────────────────────────────────────────┐
+            │  Read-based profiling                                           │  Assembly-based
+            │                                                                 │
+            │  11  MetaPhlAn4       Species composition (strain-level)        │  16  MEGAHIT        Assembly
+            │  11b MetaPhlAn4 merge Multi-sample merged profile               │  17  Prodigal       Gene prediction
+            │  12  StrainPhlAn4     Strain tracking & phylogeny               │  18  CD-HIT         Gene catalog (95% ANI)
+            │  13  HUMAnN3          Functional pathway abundance (v3.9)       │  19  Salmon build   Index construction
+            │  13b HUMAnN3 merge    Merged pathway tables                     │  20  Salmon quant   TPM quantification
+            │  14  Kraken2+Bracken  Fast k-mer classification                 │
+            │  14b Kraken2 merge    Multi-sample merged table                 │
+            │  15  Centrifuger      Protein-level classification (GTDB R226)  │
+            │  15b Centrifuger merge                                          │
+            │                                                                 │
+            │                                    ┌────────────────────────────┴──────────────────┐
+            │                                    │  Functional annotation (gene catalog, pooled)  │  MAG recovery (per-sample)
+            │                                    │                                                │
+            │                                    │  21 eggNOG         COG / KEGG KO / EC / GO    │  32 CoverM       Coverage depth
+            │                                    │  22 KEGG diamond   KO pathway hits             │  33 MetaBAT2     Binning
+            │                                    │  23 AMRFinder      Antibiotic resistance genes  │  34 MaxBin2      Binning
+            │                                    │  24 CARD / RGI     Resistance gene catalogue   │  35 SemiBin2     ML-based binning
+            │                                    │  25 dbCAN3         CAZyme families             │  36 DAS_Tool     Multi-binner refinement
+            │                                    │  26 VFDB           Virulence factors           │  37 CheckM2      MAG quality (ML)
+            │                                    │  27 BacMet         Metal resistance genes      │  38 dRep         De-replication (97% ANI)
+            │                                    │  28 antiSMASH      BGC / secondary metabolites │  39 CoverM       MAG abundance
+            │                                    │  29 Defense-Finder Bacterial defense systems   │  40 GTDB-Tk      Phylogenetic classification
+            │                                    │  30 NCyc           Nitrogen cycling genes      │  41 Bakta        Genome annotation
+            │                                    │  31 PCyc           Phosphorus cycling genes    │  41b mlst        MLST typing
+            │                                    │                                                │  41c Roary       Pan-genome
+            │                                    │                                                │  41d Snippy      SNP / InDel calling
+            │                                    └────────────────────────────┬──────────────────┘
+            │                                                                 │
+            └─────────────────────────────────────────────────────────────────┘
+                                                                    │
+                                                                    ▼
+                                            98b  Functional integration (98b_bac_integration_tables.sh)
+                                                                    │
+                                    ┌───────────────────────────────┼────────────────────────────────┐
+                                    ▼                               ▼                                ▼
+                           Raw integration tables          Normalized tables               HUMAnN3 pathway tables
+                     result/integration/bacteria/       .../normalized/               result/humann3/merged/
 ```
 
+### Integration Outputs (`result/integration/bacteria/`)
+
+Generated by `scripts/98b_bac_integration_tables.sh`. All tables follow **rows = functional features, columns = samples**.
+
+#### Raw tables (Σ TPM per feature per sample)
+
+| File | Feature axis | Annotation source |
+|------|-------------|-------------------|
+| `kegg_ko_abundance.tsv` | KEGG KO identifiers | eggNOG-mapper |
+| `cog_abundance.tsv` | COG functional categories | eggNOG-mapper |
+| `arg_abundance.tsv` | Antibiotic resistance genes (AMRFinder + CARD merged) | AMRFinder / CARD |
+| `cazyme_abundance.tsv` | CAZyme families (GH / GT / PL / CE / AA) | dbCAN3 |
+| `vfdb_abundance.tsv` | Virulence factor genes | VFDB |
+| `ncyc_abundance.tsv` | Nitrogen cycling genes (e.g. amoA, nirK, nosZ) | NCyc HMM |
+| `pcyc_abundance.tsv` | Phosphorus cycling genes | PCyc HMM |
+| `defense_abundance.tsv` | Bacterial defense system types (RM, CRISPR, etc.) | Defense-Finder |
+| `gene_annotation_matrix.tsv` | NR genes × (TPM × 6 samples + 12 annotation columns) | All sources merged |
+| `pathway_community.tsv` | Community-level pathway relative abundance | HUMAnN3 merged |
+| `pathway_species_contrib.tsv` | Pathway × contributing-species matrix | HUMAnN3 stratified |
+
+> Salmon TPM sums to 1,000,000 per sample by design. Column sums differ across functional tables because annotation coverage varies per sample — this is expected. **Use `normalized/` tables for any cross-sample comparison.**
+
+#### Normalized tables (`normalized/`, 17 files — use these for statistics)
+
+| Suffix | Method | Use for |
+|--------|--------|---------|
+| `*_relab.tsv` | Relative abundance (column sum = 1) | LEfSe · MaAsLin2 · heatmaps · Spearman correlation |
+| `*_clr.tsv` | Centered Log-Ratio (ε = 0.01) | PCoA (Aitchison) · PERMANOVA · ANCOM-BC2 · SIAMCAT |
+| `gene_annotation_matrix_relab.tsv` | Wide matrix with added `RELAB_S01..S06` columns | Gene-level association analyses |
+
+`pathway_community.tsv` and `pathway_species_contrib.tsv` are already in relative abundance from HUMAnN3 — no further normalization needed.
+
 ---
 
-## 经验文档贡献
+## Script Index
 
-在 `docs/experience/` 目录按 `TEMPLATE.md` 格式添加 `.md` 文件，保存后运行：
+### Shared preprocessing
+
+| No. | Function | Tool |
+|-----|----------|------|
+| 01 | Quality control | fastp |
+| 02 | Host removal | KneadData + bowtie2 |
+
+### 🦠 Bacteria (11–41)
+
+| No. | Function | Tool |
+|-----|----------|------|
+| 11 / 11b | Species composition + multi-sample merge | MetaPhlAn4 |
+| 12 | Strain tracking & phylogeny | StrainPhlAn4 |
+| 13 / 13b | Functional pathway abundance + merge | HUMAnN3 v3.9 |
+| 14 / 14b | Fast k-mer classification + merge | Kraken2 + Bracken |
+| 15 / 15b | Protein-level classification + merge | Centrifuger (GTDB R226) |
+| 16–20 | Assembly → gene prediction → catalog → quantification | MEGAHIT · Prodigal · CD-HIT · Salmon |
+| 21–31 | Functional annotation (COG / KEGG / AMR / CAZyme / VF / BGC / defense / nutrient cycling) | eggNOG · KEGG · AMRFinder · CARD · dbCAN3 · VFDB · BacMet · antiSMASH · Defense-Finder · NCyc · PCyc |
+| 32–41 | MAG recovery (binning → refinement → QC → dereplication → abundance → taxonomy → annotation) | CoverM · MetaBAT2 · MaxBin2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta |
+| 41b–41d | WGS integration: MLST · pan-genome · SNP/InDel calling | mlst · Roary · Snippy |
+| 98b | Functional integration tables (11 output files) | Python (pandas-free, stdlib only) |
+
+### 🦠 Virome (51–69)
+
+| No. | Function | Tool |
+|-----|----------|------|
+| 51–55 | Assembly → dual-engine identification → QC → protein prediction | MEGAHIT · geNomad · VirSorter2 · CheckV · Prodigal-gv |
+| 56–60 | vOTU clustering → taxonomy → abundance → count matrix | vclust · geNomad · Salmon |
+| 61–63 | vMAG reconstruction → QC → abundance | vmag · CheckV · CoverM |
+| 64–69 | Annotation → lifestyle prediction → host range → taxonomic network | PHAROKKA · PHOLD · VOGDB · BACPHLIP · iPHoP · vConTACT3 |
+
+### 🍄 Mycobiome (71–86)
+
+| No. | Function | Tool |
+|-----|----------|------|
+| 71–77 | Five complementary classification strategies | Kraken2 · MetaPhlAn4 · HUMAnN4 · BLAST · FunOMIC · CCMetagen · MicroFisher |
+| 78–80 | Fungal assembly → eukaryotic MAG recovery → gene prediction | MEGAHIT · Eukfinder · Prodigal |
+| 81–86 | Functional annotation (COG / KEGG / CAZyme / VF / AMR / protease) | eggNOG · KEGG · dbCAN3 · VFDB · AMRFinder · MEROPS |
+
+### 📊 Statistics (91–98)
+
+| No. | Function | Tool |
+|-----|----------|------|
+| 91 | Alpha / Beta diversity | vegan · phyloseq (R) |
+| 92 | Differential abundance (LEfSe / ANCOM-BC2 / DESeq2 / edgeR / MaAsLin2) | R |
+| 93 | Cross-kingdom co-occurrence network | FastSpar / SparCC |
+| 94 | Unified visualization (heatmap / PCoA / Sankey / UpSet) | ggplot2 (R) |
+| 95a / 95b | Batch correction (top-10 methods) → evaluation report | MBECS · ConQuR · MMUPHin (R) |
+| 96 | ML biomarker selection + ROC (lasso / RF / SVM / enet, 10-fold CV) | SIAMCAT (R) |
+| 97 | Cross-cohort replication | curatedMetagenomicData · SIAMCAT (R) |
+| 98 | Timestamped analysis snapshot report | bash + Rscript |
+
+---
+
+## AI-Assisted Features
+
+### Claude Code Slash Commands
+
+| Command | Function |
+|---------|----------|
+| `/mgx-welcome` | Platform overview and quick-start guide |
+| `/mgx-ask <query>` | Query the RAG knowledge base (experience + literature) |
+| `/mgx-plan` | Generate a per-project analysis plan |
+| `/mgx-run` | Execute analysis commands with guided parameter selection |
+| `/mgx-status` | Inspect pipeline progress and output completeness |
+| `/mgx-integrate` | Integrate a new analysis script into Snakemake + skill library |
+| `/mgx-review` | Review a Snakemake rule integration for correctness |
+| `/mgx-learn` | Record a run result to the provenance log |
+| `/mgx-plot-ordination` | PCoA / NMDS ordination plots |
+| `/mgx-plot-composition` | Species composition bar / stacked charts |
+| `/mgx-plot-diversity` | Alpha diversity plots |
+| `/mgx-plot-heatmap` | Annotation abundance heatmaps |
+| `/mgx-plot-network` | Co-occurrence network visualization |
+| `/mgx-plot-phylotree` | Phylogenetic tree rendering |
+| `/mgx-plot-volcano` | Differential abundance volcano plots |
+
+### RAG Knowledge Base
+
+| Collection | Size | Source |
+|------------|------|--------|
+| `experience_kb` | 1,377 chunks | Team experience docs (`docs/experience/`, 78 Markdown files) · tool docs · script parameters · skill cards |
+| `literature_kb` | 5,392 chunks | Methods sections from 237 OA metagenomics papers (Europe PMC fullTextXML) |
+
+Embedding model: `BAAI/bge-small-zh-v1.5` (bilingual, 384-dim). Add a new experience doc to `docs/experience/` and re-run indexer:
 
 ```bash
 conda run --prefix miniforge3 python mcp/indexer.py
 ```
 
-即可同步到 RAG 知识库，`/mgx-ask` 可直接检索该经验。
+---
+
+## Repository Layout
+
+```
+MaxMetagenome/
+├── scripts/                  91 analysis scripts (00–98b)
+├── pipeline/
+│   ├── Snakefile             DAG entry point
+│   ├── config/config.yaml    Per-run parameters (samples / workdir / threads)
+│   └── rules/                9 rule files:
+│                               preprocessing · bacteria_taxonomy · bacteria_assembly
+│                               bacteria_annotation · bacteria_binning
+│                               virome · mycobiome · statistics · rag
+├── agents/
+│   ├── registry.yaml         Global script status tracker (91 entries)
+│   └── skills/               81 tool skill cards (YAML)
+├── docs/
+│   ├── experience/           78 team experience documents (RAG source, editable)
+│   └── tools_ref/            Auto-generated tool parameter docs (WebSearch cache)
+├── mcp/                      RAG MCP server (ChromaDB + literature pipeline)
+├── .claude/skills/           15 /mgx-* Claude Code skill files
+├── db/                       ~700 GB analysis databases
+├── envs/                     38 conda environment definitions
+├── 0Install.sh               Environment + database installation (§1–§15)
+├── CLAUDE.md                 CC + Codex collaboration guide
+└── README.md
+```
 
 ---
 
-## 参考工具
+## Disk Requirements
 
-MetaPhlAn4 · HUMAnN3 · Kraken2/Bracken · Centrifuger · MEGAHIT · Prodigal · CD-HIT · Salmon · eggNOG-mapper · AMRFinderPlus · CARD/RGI · dbCAN3 · antiSMASH · MetaBAT2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta · mlst · Roary · Snippy · geNomad · VirSorter2 · CheckV · iPHoP · vConTACT3 · PHAROKKA · PHOLD · VOGDB · BACPHLIP · FunOMIC · MicroFisher · Eukfinder · MEROPS · SIAMCAT · DESeq2 · MMUPHin · ConQuR
+| Component | Space |
+|-----------|-------|
+| miniforge3 + 38 conda envs | ~50 GB |
+| `db/` databases | ~700 GB |
+| 100-sample project data (raw + intermediates + results) | ~2 TB |
+| `scripts/` + `pipeline/` + `docs/` (git-tracked) | < 100 MB |
+
+---
+
+## Migrating to a New Server
+
+```bash
+# 1. Clone the repository
+git clone git@gitee.com:JXR1314/meta-servergenome.git
+cd meta-servergenome
+
+# 2. Install all environments and databases (~hours, depending on bandwidth)
+bash 0Install.sh
+
+# 3. Activate and verify
+source scripts/activate.sh
+bash scripts/checkm_config.sh       # reconfigure CheckM2 database path
+
+# 4. Verify Claude Code integration (development environment)
+claude mcp list                     # should show: codex: ✓ Connected
+```
+
+---
+
+## Tools & References
+
+MetaPhlAn4 · StrainPhlAn4 · HUMAnN3 · Kraken2/Bracken · Centrifuger · MEGAHIT · Prodigal · CD-HIT · Salmon · eggNOG-mapper · AMRFinderPlus · CARD/RGI · dbCAN3 · antiSMASH · Defense-Finder · NCyc · PCyc · BacMet · VFDB · CoverM · MetaBAT2 · MaxBin2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta · mlst · Roary · Snippy · geNomad · VirSorter2 · CheckV · Prodigal-gv · vclust · PHAROKKA · PHOLD · VOGDB · BACPHLIP · iPHoP · vConTACT3 · FunOMIC · CCMetagen · MicroFisher · Eukfinder · MEROPS · SIAMCAT · DESeq2 · MMUPHin · ConQuR · FastSpar · MBECS · curatedMetagenomicData

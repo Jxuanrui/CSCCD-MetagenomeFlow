@@ -47,8 +47,15 @@ MAGS_DIR="${WORKDIR}/result/binning/drep/dereplicated_genomes"
 OUTDIR="${WORKDIR}/result/binning/gtdbtk"
 SENTINEL="${OUTDIR}/classify/gtdbtk.bac120.summary.tsv"
 
-if [ ! -d "${MAGS_DIR}" ] || [ -z "$(ls "${MAGS_DIR}"/*.fa 2>/dev/null)" ]; then
-    echo "[ERROR] 去冗余 MAGs 不存在: ${MAGS_DIR}"; exit 1
+N_MAGS=0
+if [ -d "${MAGS_DIR}" ]; then
+    N_MAGS=$(find "${MAGS_DIR}" -maxdepth 1 -type f -name "*.fa" | wc -l)
+fi
+if [ "${N_MAGS}" -eq 0 ]; then
+    echo "[gtdbtk] WARNING: 去冗余 MAGs 为 0，创建空结果哨兵: ${SENTINEL}"
+    mkdir -p "$(dirname "${SENTINEL}")"
+    : > "${SENTINEL}"
+    exit 0
 fi
 
 if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[gtdbtk] 结果已存在，跳过"; exit 0; fi

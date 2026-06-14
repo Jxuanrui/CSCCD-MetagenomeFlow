@@ -22,10 +22,9 @@ rule fun_kraken2:
 
 
 rule fun_metaphlan4:
-    """Fungal/eukaryotic taxonomic profiling via MetaPhlAn4."""
+    """MetaPhlAn4 eukaryote-only profiling — reuses script 11 mapout (no re-alignment)."""
     input:
-        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        profile = WORKDIR + "/result/metaphlan4/{sample}/{sample}_profile.txt",
     output:
         out = WORKDIR + "/result/fungi/metaphlan4/{sample}/{sample}_profile.txt",
     log:
@@ -39,12 +38,9 @@ rule fun_metaphlan4:
 
 
 rule fun_humann4:
-    """Filter HUMAnN stratified output to retain fungal pathway abundances."""
+    """Extract k__Eukaryota pathway contributions from HUMAnN3 stratified output."""
     input:
-        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
-        profile = WORKDIR + "/result/fungi/metaphlan4/{sample}/{sample}_profile.txt",
-        humann3_out = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance_relab.tsv",
+        stratified = WORKDIR + "/result/humann3/{sample}/stratified/{sample}_pathabundance_relab_stratified.tsv",
     output:
         out = WORKDIR + "/result/fungi/humann4/{sample}/{sample}_fungi_pathabundance.tsv",
     log:
@@ -265,4 +261,3 @@ rule fun_merops:
         "bash {REPO}/scripts/86_fun_merops.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
-

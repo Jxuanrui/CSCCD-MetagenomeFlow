@@ -49,8 +49,13 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/defense_finder"
+RESULT_DIR="${WORKDIR}/result/annotation/defense_finder"
 SENTINEL="${RESULT_DIR}/defense_finder_systems.tsv"
+RAW_SYSTEMS="${RESULT_DIR}/protein_nr_defense_finder_systems.tsv"
+RAW_GENES="${RESULT_DIR}/protein_nr_defense_finder_genes.tsv"
+RAW_HMMER="${RESULT_DIR}/protein_nr_defense_finder_hmmer.tsv"
+RENAMED_GENES="${RESULT_DIR}/defense_finder_genes.tsv"
+RENAMED_HMMER="${RESULT_DIR}/defense_finder_hmmer.tsv"
 DF_DB="${REPO}/db/defense-finder/defense-finder-db/models"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then
@@ -76,6 +81,21 @@ conda run --prefix "${REPO}/envs/defense-finder" --no-capture-output \
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] defense-finder 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
+fi
+
+if [ -f "${RAW_SYSTEMS}" ] && [ ! -f "${SENTINEL}" ]; then
+    mv "${RAW_SYSTEMS}" "${SENTINEL}"
+fi
+if [ -f "${RAW_GENES}" ] && [ ! -f "${RENAMED_GENES}" ]; then
+    mv "${RAW_GENES}" "${RENAMED_GENES}"
+fi
+if [ -f "${RAW_HMMER}" ] && [ ! -f "${RENAMED_HMMER}" ]; then
+    mv "${RAW_HMMER}" "${RENAMED_HMMER}"
+fi
+
+if [ ! -f "${SENTINEL}" ]; then
+    echo "[ERROR] DefenseFinder 运行完成，但未找到 ${SENTINEL}"
+    exit 1
 fi
 
 N_SYSTEMS=$(awk 'NR>1' "${SENTINEL}" 2>/dev/null | wc -l || echo "N/A")

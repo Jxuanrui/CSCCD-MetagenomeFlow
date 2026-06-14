@@ -55,13 +55,41 @@ if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ] && [ -d "${BINS_DIR}" ]; then
     echo "[dastool] 结果已存在，跳过"; exit 0
 fi
 
-# 检查至少两个 binner 有输出
+count_assignments() {
+    local file="$1"
+    if [ ! -f "${file}" ] || [ ! -s "${file}" ]; then
+        echo 0
+        return
+    fi
+    awk '
+        NR == 1 && $1 == "contig_id" && $2 == "bin_id" { next }
+        NF >= 2 { count++ }
+        END { print count + 0 }
+    ' "${file}"
+}
+
+METABAT2_ROWS=$(count_assignments "${METABAT2_TSV}")
+MAXBIN2_ROWS=$(count_assignments "${MAXBIN2_TSV}")
+SEMIBIN2_ROWS=$(count_assignments "${SEMIBIN2_TSV}")
+TOTAL_BINS=$((METABAT2_ROWS + MAXBIN2_ROWS + SEMIBIN2_ROWS))
+
+if [ "${TOTAL_BINS}" -le 0 ]; then
+    echo "[dastool] WARNING: No bins from any binner. Creating empty output."
+    mkdir -p "${OUTDIR}" "${BINS_DIR}"
+    > "${SENTINEL}"
+    exit 0
+fi
+
+# 检查至少两个 binner 有实际输出
 BINNERS=()
-[ -f "${METABAT2_TSV}" ] && [ -s "${METABAT2_TSV}" ] && BINNERS+=("metabat2:${METABAT2_TSV}")
-[ -f "${MAXBIN2_TSV}" ] && [ -s "${MAXBIN2_TSV}" ] && BINNERS+=("maxbin2:${MAXBIN2_TSV}")
-[ -f "${SEMIBIN2_TSV}" ] && [ -s "${SEMIBIN2_TSV}" ] && BINNERS+=("semibin2:${SEMIBIN2_TSV}")
+[ "${METABAT2_ROWS}" -gt 0 ] && BINNERS+=("metabat2:${METABAT2_TSV}")
+[ "${MAXBIN2_ROWS}" -gt 0 ] && BINNERS+=("maxbin2:${MAXBIN2_TSV}")
+[ "${SEMIBIN2_ROWS}" -gt 0 ] && BINNERS+=("semibin2:${SEMIBIN2_TSV}")
 if [ ${#BINNERS[@]} -lt 2 ]; then
-    echo "[ERROR] 需要至少 2 个 binner 的输出，当前: ${#BINNERS[@]}"; exit 1
+    echo "[dastool] WARNING: Need at least 2 non-empty binner outputs, found ${#BINNERS[@]}. Creating empty output."
+    mkdir -p "${OUTDIR}" "${BINS_DIR}"
+    > "${SENTINEL}"
+    exit 0
 fi
 
 mkdir -p "${OUTDIR}"

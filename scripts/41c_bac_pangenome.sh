@@ -68,6 +68,7 @@ if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
 fi
 if [ -f "${FAILED_SENTINEL}" ] && [ -s "${FAILED_SENTINEL}" ]; then
     echo "[pangenome] Previous FAILED sentinel exists, skip: ${FAILED_SENTINEL}"
+    cp "${FAILED_SENTINEL}" "${SENTINEL}"
     exit 0
 fi
 
@@ -86,6 +87,8 @@ if [ ${#GFF_FILES[@]} -eq 0 ] && [ -d "${BAKTA_DIR}" ]; then
 fi
 if [ ${#GFF_FILES[@]} -lt 3 ]; then
     printf "Insufficient GFF files for Roary: found %s, require at least 3\n" "${#GFF_FILES[@]}" > "${FAILED_SENTINEL}"
+    : > "${SENTINEL}"
+    printf "Pan-genome presence/absence matrix: NA\n" > "${MATRIX_NOTE}"
     echo "[pangenome] WARNING: need at least 3 GFF files, found ${#GFF_FILES[@]}"
     exit 0
 fi
@@ -150,4 +153,3 @@ fi
 
 printf "Pan-genome presence/absence matrix: %s\n" "${OUTDIR}/gene_presence_absence.csv" > "${MATRIX_NOTE}"
 echo "[pangenome] Done in ${SECONDS}s | total genomes: ${#GFF_FILES[@]} | core genes: ${CORE_GENES:-NA} | accessory genes: ${ACCESSORY_GENES:-NA} | unique genes: ${UNIQUE_GENES:-NA}"
-

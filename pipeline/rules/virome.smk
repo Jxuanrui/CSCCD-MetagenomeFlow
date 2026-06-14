@@ -179,10 +179,15 @@ rule vir_votu_table:
         abundance_table = WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
     log:
         WORKDIR + "/logs/virus/votu/table.log",
-    shell:
-        "bash {REPO}/scripts/60_vir_votu_table.sh "
-        "-m {WORKDIR}/samples.txt -w {WORKDIR} -r {REPO} "
-        "> {log} 2>&1"
+    run:
+        samples_file = WORKDIR + "/.smk_samples.txt"
+        with open(samples_file, "w") as f:
+            f.write("\n".join(SAMPLES) + "\n")
+        shell(
+            "bash " + REPO + "/scripts/60_vir_votu_table.sh "
+            "-m " + samples_file + " -w " + WORKDIR + " -r " + REPO + " "
+            "> " + str(log) + " 2>&1"
+        )
 
 
 # ── Step 5: vMAG generation ───────────────────────────────────────────────────

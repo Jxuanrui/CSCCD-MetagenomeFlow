@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 73_fun_humann4_fungi.sh
-# 功  能: 从已计算的 HUMAnN 分层通路结果中提取真菌相关通路丰度
+# 功  能: 从已计算的 HUMAnN stratified 通路结果中提取真核生物相关通路丰度
 #         工具版本：grep/awk（conda env: humann4）
-# 依  赖: 13_bac_humann3.sh 的输出（HUMAnN 分层 pathabundance）
-#         72_fun_metaphlan4_euk.sh 的输出（真菌 profile，供 pipeline 依赖管理）
-# 输  入: ${WORKDIR}/result/humann3/${SAMPLE}/${SAMPLE}_pathabundance_relab.tsv
+# 依  赖: 13_bac_humann3.sh 的输出（HUMAnN stratified pathabundance）
+# 输  入: ${WORKDIR}/result/humann3/${SAMPLE}/stratified/${SAMPLE}_pathabundance_relab_stratified.tsv
 # 输  出: ${WORKDIR}/result/fungi/humann4/${SAMPLE}/${SAMPLE}_fungi_pathabundance.tsv
 # 用  法: bash 73_fun_humann4_fungi.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
@@ -37,12 +36,12 @@ for v in SAMPLE CPUS WORKDIR REPO; do if [ -z "${!v}" ]; then echo "[ERROR] 缺�
 
 SECONDS=0
 
-INPUT_PATHABUNDANCE="${WORKDIR}/result/humann3/${SAMPLE}/${SAMPLE}_pathabundance_relab.tsv"
+INPUT_STRATIFIED="${WORKDIR}/result/humann3/${SAMPLE}/stratified/${SAMPLE}_pathabundance_relab_stratified.tsv"
 OUTDIR="${WORKDIR}/result/fungi/humann4/${SAMPLE}"
 OUTPUT_TSV="${OUTDIR}/${SAMPLE}_fungi_pathabundance.tsv"
 
-if [ ! -f "${INPUT_PATHABUNDANCE}" ]; then
-    echo "[ERROR] 输入文件不存在: ${INPUT_PATHABUNDANCE}"
+if [ ! -f "${INPUT_STRATIFIED}" ]; then
+    echo "[ERROR] 输入文件不存在: ${INPUT_STRATIFIED}"
     echo "        请先运行 13_bac_humann3.sh"
     exit 1
 fi
@@ -56,10 +55,13 @@ mkdir -p "${OUTDIR}"
 
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
     bash -lc '
-        set -euo pipefail
-        grep -E "^#|^[^|]+\t|k__Fungi|p__Ascomycota|p__Basidiomycota|p__Mucoromycota|p__Chytridiomycota|p__Microsporidia" \
-            "$1" > "$2"
-    ' _ "${INPUT_PATHABUNDANCE}" "${OUTPUT_TSV}"
+        grep -E "\|k__Eukaryota" "${1}" > "${2}" || true
+        # Add header line if output is not empty
+        if [ -s "${2}" ]; then
+            # Prepend the header from the original file
+            head -1 "${1}" | cat - "${2}" > "${2}.tmp" && mv "${2}.tmp" "${2}"
+        fi
+    ' _ "${INPUT_STRATIFIED}" "${OUTPUT_TSV}"
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] 真菌 HUMAnN4 后处理失败（exit: ${EXIT_CODE}）"
@@ -67,6 +69,5 @@ if [ ${EXIT_CODE} -ne 0 ]; then
     exit ${EXIT_CODE}
 fi
 
-N_ROWS=$(grep -vc "^#" "${OUTPUT_TSV}" 2>/dev/null || echo "0")
-echo "[fun_humann4] 完成，耗时 ${SECONDS}s | 保留行数: ${N_ROWS}"
-
+N_ROWS=$(grep -F -c "|k__Eukaryota" "${OUTPUT_TSV}" 2>/dev/null || echo "0")
+echo "[fun_humann4] 完成，耗时 ${SECONDS}s | 真核分层通路行数: ${N_ROWS}"

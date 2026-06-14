@@ -58,6 +58,7 @@ SECONDS=0
 NR_FNA="${WORKDIR}/result/assembly/cdhit/nucleotide_nr.fa"
 INDEX_DIR="${WORKDIR}/result/assembly/salmon/index"
 INDEX_INFO="${INDEX_DIR}/info.json"
+SALMON_VERSION_INFO="${INDEX_DIR}/versionInfo.json"
 
 # --- 输入检查 ---
 
@@ -71,6 +72,12 @@ fi
 
 if [ -f "${INDEX_INFO}" ]; then
     echo "[INFO] Salmon 索引已存在，跳过"
+    echo "       ${INDEX_DIR}/"
+    exit 0
+fi
+if [ -f "${SALMON_VERSION_INFO}" ]; then
+    cp "${SALMON_VERSION_INFO}" "${INDEX_INFO}"
+    echo "[INFO] 检测到已有 Salmon 索引，已补全 info.json 哨兵文件"
     echo "       ${INDEX_DIR}/"
     exit 0
 fi
@@ -102,8 +109,12 @@ if [ ${EXIT_CODE} -ne 0 ]; then
 fi
 
 if [ ! -f "${INDEX_INFO}" ]; then
-    echo "[ERROR] 索引文件 info.json 未生成，可能构建失败"
-    exit 1
+    if [ -f "${SALMON_VERSION_INFO}" ]; then
+        cp "${SALMON_VERSION_INFO}" "${INDEX_INFO}"
+    else
+        echo "[ERROR] 索引文件 info.json 未生成，且未找到 versionInfo.json"
+        exit 1
+    fi
 fi
 
 echo ""

@@ -93,7 +93,7 @@ rule antismash:
     input:
         contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
     output:
-        index = WORKDIR + "/result/annotation/antismash/{sample}/index.html",
+        index = WORKDIR + "/result/annotation/antismash/{sample}/.done",
     shell:
         "bash {REPO}/scripts/28_bac_antismash.sh -s {wildcards.sample} -t {CPUS} -w {WORKDIR} -r {REPO}"
 

@@ -84,8 +84,10 @@ if [ -d "${MAGS_DIR}" ]; then
     )
 fi
 if [ ${#MAG_FILES[@]} -eq 0 ]; then
-    echo "[ERROR] No dereplicated MAGs found under ${MAGS_DIR}"
-    exit 1
+    echo "[snippy] WARNING: no dereplicated MAGs found, creating empty sentinel: ${SENTINEL}"
+    : > "${SENTINEL}"
+    : > "${SUMMARY_FILE}"
+    exit 0
 fi
 
 SNIPPY_ENV=""
@@ -212,4 +214,3 @@ TOTAL_SNPS=$(awk 'NR > 1 {count++} END {print count + 0}' "${CORE_TAB}")
 } > "${SUMMARY_FILE}"
 
 echo "[snippy] Done in ${SECONDS}s | total MAGs: ${#MAG_FILES[@]} | successful runs: ${#SNIPPY_DIRS[@]} | total SNPs: ${TOTAL_SNPS}"
-

@@ -41,13 +41,20 @@ done
 
 SECONDS=0
 MAGS_DIR="${WORKDIR}/result/binning/drep/dereplicated_genomes"
-RESULT_DIR="${WORKDIR}/result/coverm_quant/${SAMPLE}"
+RESULT_DIR="${WORKDIR}/result/binning/coverm_quant"
 OUTPUT="${RESULT_DIR}/${SAMPLE}.tsv"
 R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
-if [ ! -d "${MAGS_DIR}" ] || [ -z "$(ls "${MAGS_DIR}"/*.fa 2>/dev/null)" ]; then
-    echo "[ERROR] 去冗余 MAGs 不存在: ${MAGS_DIR}"; exit 1
+N_MAGS=0
+if [ -d "${MAGS_DIR}" ]; then
+    N_MAGS=$(find "${MAGS_DIR}" -maxdepth 1 -type f -name "*.fa" | wc -l)
+fi
+if [ "${N_MAGS}" -eq 0 ]; then
+    echo "[coverm_quant] WARNING: 去冗余 MAGs 为 0，创建空结果哨兵: ${OUTPUT}"
+    mkdir -p "${RESULT_DIR}"
+    : > "${OUTPUT}"
+    exit 0
 fi
 
 if [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then echo "[coverm_quant] 结果已存在，跳过"; exit 0; fi

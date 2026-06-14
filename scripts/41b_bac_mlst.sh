@@ -76,8 +76,10 @@ if [ ${#MAG_FILES[@]} -eq 0 ] && [ -d "${MAGS_DIR}" ]; then
     )
 fi
 if [ ${#MAG_FILES[@]} -eq 0 ]; then
-    echo "[ERROR] No dereplicated MAGs found under ${MAGS_DIR}"
-    exit 1
+    echo "[mlst] WARNING: no dereplicated MAGs found, creating empty sentinel: ${SENTINEL}"
+    : > "${SENTINEL}"
+    : > "${RAW_OUT}"
+    exit 0
 fi
 
 USE_CONDA_ENV=0
@@ -129,4 +131,3 @@ fi
 
 DISTINCT_STS=$(awk -F'\t' 'NR > 1 && $3 != "" && $3 != "-" && $3 != "NA" {print $3}' "${SENTINEL}" | sort -u | wc -l)
 echo "[mlst] Done in ${SECONDS}s | total MAGs: ${#MAG_FILES[@]} | distinct STs: ${DISTINCT_STS}"
-

@@ -221,6 +221,25 @@ else
     TAXONOMIC_PROFILE_ARG=""
 fi
 
+# --- 真核生物 profile 合并（如果 script 72 已运行）---
+# 若 result/fungi/metaphlan4/${SAMPLE}_profile.txt 存在且含真核生物条目，
+# 将其合并到细菌 profile，使 HUMAnN3 stratified 输出包含 k__Eukaryota
+EUK_PROFILE="${WORKDIR}/result/fungi/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt"
+MERGED_PROFILE=""
+if [ -f "${EUK_PROFILE}" ] && grep -q "k__Eukaryota" "${EUK_PROFILE}" 2>/dev/null; then
+    echo "[humann3] 检测到真核生物 profile，合并细菌+真核 profile"
+    MERGED_PROFILE="${TEMP_DIR}/${SAMPLE}_merged_profile.txt"
+    # 保留细菌 profile 的注释头
+    grep "^#" "${METAPHLAN_PROFILE}" > "${MERGED_PROFILE}"
+    # 添加细菌 profile 的数据行
+    grep -v "^#" "${METAPHLAN_PROFILE}" >> "${MERGED_PROFILE}"
+    # 追加真核生物行（去掉重复注释头和 UNCLASSIFIED 行）
+    grep -v "^#\|^UNCLASSIFIED" "${EUK_PROFILE}" | grep "k__Eukaryota" >> "${MERGED_PROFILE}"
+    EUK_LINE_COUNT=$(grep -c "k__Eukaryota" "${MERGED_PROFILE}" 2>/dev/null || echo "0")
+    echo "[humann3] 合并完成，真核生物行数: ${EUK_LINE_COUNT}"
+    TAXONOMIC_PROFILE_ARG="--taxonomic-profile ${MERGED_PROFILE}"
+fi
+
 # --- 构建 diamond 额外参数（fast 模式，避免引号嵌套问题）---
 
 DIAMOND_CMD_ARGS=()
@@ -238,6 +257,9 @@ fi
 # --prescreen-threshold：在 bypass_prescreen=False 的情况下，create_custom_database()
 #   会按 threshold 过滤 profile 中的物种，只包含丰度 >= threshold 的物种对应的 ChocoPhlAn 文件。
 
+# cd to TEMP_DIR so MetaPhlAn4's hardcoded fifo_map.mapout.txt lands here, not in PROJ_DIR
+cd "${TEMP_DIR}"
+
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
     humann \
         --input                   "${MERGED_FQ}" \
@@ -249,6 +271,7 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         --o-log                   "${TEMP_DIR}/${SAMPLE}.log" \
         --prescreen-threshold     "${PRESCREEN_THRESHOLD}" \
         --memory-use              "${MEMORY_MODE}" \
+        --metaphlan-options       "-t rel_ab --tmp_dir ${TEMP_DIR}" \
         ${REMOVE_TEMP} \
         ${TAXONOMIC_PROFILE_ARG} \
         "${DIAMOND_CMD_ARGS[@]}"
@@ -260,6 +283,9 @@ if [ ${EXIT_CODE} -ne 0 ]; then
     echo "        查看日志: ${TEMP_DIR}/${SAMPLE}.log"
     exit ${EXIT_CODE}
 fi
+
+# 清理合并的临时 profile
+[ -n "${MERGED_PROFILE}" ] && rm -f "${MERGED_PROFILE}"
 
 # --- 验证并移动主输出 ---
 

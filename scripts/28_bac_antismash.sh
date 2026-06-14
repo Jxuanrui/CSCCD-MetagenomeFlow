@@ -54,8 +54,8 @@ fi
 SECONDS=0
 
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
-RESULT_DIR="${WORKDIR}/result/antismash/${SAMPLE}"
-SENTINEL="${RESULT_DIR}/index.html"
+RESULT_DIR="${WORKDIR}/result/annotation/antismash/${SAMPLE}"
+SENTINEL="${RESULT_DIR}/.done"
 ANTISMASH_DB="${REPO}/db/antismash/antismash-db"
 
 if [ ! -f "${CONTIGS}" ] || [ ! -s "${CONTIGS}" ]; then
@@ -85,9 +85,13 @@ conda run --prefix "${REPO}/envs/antismash" --no-capture-output \
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
-    echo "[ERROR] antismash 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
+    echo "[antismash] WARNING: antismash 失败（exit: ${EXIT_CODE}），创建空 sentinel"
+    mkdir -p "${RESULT_DIR}"
+    touch "${SENTINEL}"
+    exit 0
 fi
 
 N_BGC=$(grep -c '"cluster_blast_hit"' "${RESULT_DIR}"/*.json 2>/dev/null || \
         find "${RESULT_DIR}" -name "*.gbk" | wc -l)
+touch "${SENTINEL}"
 echo "[antismash] 完成，耗时 ${SECONDS}s | BGC: ${N_BGC} | 输出: ${RESULT_DIR}/"

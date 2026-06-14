@@ -50,7 +50,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/dbcan"
+RESULT_DIR="${WORKDIR}/result/annotation/dbcan"
 DBCAN_DB="${REPO}/db/dbcan3"
 SENTINEL="${RESULT_DIR}/overview.txt"
 

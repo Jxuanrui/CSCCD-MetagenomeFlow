@@ -65,7 +65,7 @@ SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 EGGNOG_DB="${REPO}/db/eggnog"
-RESULT_DIR="${WORKDIR}/result/eggnog"
+RESULT_DIR="${WORKDIR}/result/annotation/eggnog"
 OUTPUT_PREFIX="eggnog"
 ANNOTATIONS="${RESULT_DIR}/${OUTPUT_PREFIX}.emapper.annotations"
 TEMP_DIR="${RESULT_DIR}/tmp"

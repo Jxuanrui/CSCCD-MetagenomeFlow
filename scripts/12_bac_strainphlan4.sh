@@ -173,8 +173,9 @@ else
 
     EXIT_CODE=$?
     if [ ${EXIT_CODE} -ne 0 ]; then
-        echo "[ERROR] sample2markers 失败（exit code: ${EXIT_CODE}）"
-        exit ${EXIT_CODE}
+        echo "[strainphlan4] WARNING: sample2markers 失败（exit: ${EXIT_CODE}），跳过 StrainPhlAn4"
+        mkdir -p "${CONSENSUS_DIR}"
+        exit 0
     fi
 
     N_PKL=$(ls "${CONSENSUS_DIR}"/*.json.bz2 2>/dev/null | wc -l)

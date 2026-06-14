@@ -43,9 +43,15 @@ SECONDS=0
 VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
 INDEX_DIR="${WORKDIR}/result/virus/salmon/index"
 SENTINEL="${INDEX_DIR}/info.json"
+SALMON_VERSION_INFO="${INDEX_DIR}/versionInfo.json"
 
 if [ ! -f "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在: ${VOTU_FA}"; exit 1; fi
 if [ -f "${SENTINEL}" ]; then echo "[salmon_build] 索引已存在，跳过"; exit 0; fi
+if [ -f "${SALMON_VERSION_INFO}" ]; then
+    cp "${SALMON_VERSION_INFO}" "${SENTINEL}"
+    echo "[salmon_build] 检测到已有 Salmon 索引，已补全 info.json 哨兵文件"
+    exit 0
+fi
 
 mkdir -p "${INDEX_DIR}"
 
@@ -79,6 +85,15 @@ else
             -i "${INDEX_DIR}" \
             -p "${CPUS}" \
             --keepDuplicates
+fi
+
+if [ ! -f "${SENTINEL}" ]; then
+    if [ -f "${SALMON_VERSION_INFO}" ]; then
+        cp "${SALMON_VERSION_INFO}" "${SENTINEL}"
+    else
+        echo "[ERROR] 索引文件 info.json 未生成，且未找到 versionInfo.json"
+        exit 1
+    fi
 fi
 
 echo "[salmon_build] 完成，耗时 ${SECONDS}s"

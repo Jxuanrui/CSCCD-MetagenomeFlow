@@ -51,8 +51,15 @@ OUTDIR="${WORKDIR}/result/binning/drep"
 SENTINEL="${OUTDIR}/dereplicated_genomes"
 SENTINEL_FILE="${OUTDIR}/.done"
 
-if [ ! -d "${INPUT_DIR}" ] || [ -z "$(ls "${INPUT_DIR}"/*.fa 2>/dev/null)" ]; then
-    echo "[ERROR] dRep 输入目录为空: ${INPUT_DIR}"; exit 1
+N_INPUT_MAGS=0
+if [ -d "${INPUT_DIR}" ]; then
+    N_INPUT_MAGS=$(find "${INPUT_DIR}" -maxdepth 1 -type f -name "*.fa" | wc -l)
+fi
+if [ "${N_INPUT_MAGS}" -eq 0 ]; then
+    echo "[drep] WARNING: dRep 输入 MAGs 为 0，创建空结果哨兵: ${SENTINEL_FILE}"
+    mkdir -p "${OUTDIR}" "${SENTINEL}"
+    touch "${SENTINEL_FILE}"
+    exit 0
 fi
 
 if [ -f "${SENTINEL_FILE}" ]; then echo "[drep] 结果已存在，跳过"; exit 0; fi

@@ -122,6 +122,24 @@ GOLDEN_QUESTIONS: list[dict[str, Any]] = [
         "expected_doc_prefixes": ["siamcat-ml-disease-classifier", "05_stats/siamcat"],
         "dimension": "statistics",
     },
+    {
+        "id": "virsorter2_threshold",
+        "query": "VirSorter2 --min-score 阈值 与 geNomad 交集策略 高可信病毒序列",
+        "expected_doc_prefixes": ["virsorter2-virus-prediction", "genomad-virsorter2-consensus"],
+        "dimension": "virome",
+    },
+    {
+        "id": "dbcan_fungi_consensus",
+        "query": "真菌 CAZyme dbCAN 三方法共识 overview.txt HMMER DIAMOND eCAMI",
+        "expected_doc_prefixes": ["fungi-dbcan-cazyme"],
+        "dimension": "mycobiome",
+    },
+    {
+        "id": "snippy_core_snp",
+        "query": "Snippy 核心 SNP core.full.aln 泛基因组 Roary --core-definition 系统发育",
+        "expected_doc_prefixes": ["snippy-snp-detection", "pangenome-roary"],
+        "dimension": "bacteria",
+    },
 ]
 
 

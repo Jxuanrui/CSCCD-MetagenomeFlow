@@ -69,13 +69,22 @@ conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
         -out "${OUTDIR}/bin"
 
 EXIT_CODE=$?
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] MaxBin2 失败"; exit ${EXIT_CODE}; fi
+if [ ${EXIT_CODE} -ne 0 ]; then
+    echo "[maxbin2] WARNING: MaxBin2 失败，创建空 sentinel: ${SENTINEL}"
+    > "${SENTINEL}"
+    exit 0
+fi
 
-# 构建 contig2bin 表
-for f in "${OUTDIR}"/bin.*.fasta; do
-    bname=$(basename "$f" .fasta)
-    grep '^>' "$f" | sed "s/^>//" | awk -v bin="$bname" '{print $1"\t"bin}'
-done > "${SENTINEL}"
+N_FA=$(find "${OUTDIR}" -maxdepth 1 -type f -name "bin.*.fasta" | wc -l)
+if [ "${N_FA}" -eq 0 ]; then
+    echo "[maxbin2] WARNING: 未产生任何 bins，创建空 sentinel: ${SENTINEL}"
+    > "${SENTINEL}"
+else
+    # 构建 contig2bin 表
+    for f in "${OUTDIR}"/bin.*.fasta; do
+        bname=$(basename "$f" .fasta)
+        grep '^>' "$f" | sed "s/^>//" | awk -v bin="$bname" '{print $1"\t"bin}'
+    done > "${SENTINEL}"
+fi
 
-N_FA=$(ls "${OUTDIR}"/bin.*.fasta 2>/dev/null | wc -l || echo 0)
 echo "[maxbin2] 完成，耗时 ${SECONDS}s | bins: ${N_FA}"

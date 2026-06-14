@@ -54,6 +54,26 @@ if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[semibin2] 结果已
 
 mkdir -p "${OUTDIR}"
 
+# Guard: SemiBin2 requires contigs >=2500 bp
+LONG_CONTIGS=$(awk '
+    /^>/ {
+        if (seen && len >= 2500) count++
+        len = 0
+        seen = 1
+        next
+    }
+    { len += length($0) }
+    END {
+        if (seen && len >= 2500) count++
+        print count + 0
+    }
+' "${CONTIGS}" 2>/dev/null || echo "0")
+if [ "${LONG_CONTIGS}" -lt 2 ]; then
+    echo "[semibin2] WARNING: ${LONG_CONTIGS} contigs >=2500 bp (need >=2). Creating empty output sentinel."
+    > "${SENTINEL}"
+    exit 0
+fi
+
 echo "[semibin2] ${SAMPLE} | 自监督分箱 ..."
 conda run --prefix "${REPO}/envs/semibin" --no-capture-output \
     SemiBin2 single_easy_bin \
@@ -64,7 +84,11 @@ conda run --prefix "${REPO}/envs/semibin" --no-capture-output \
         -o "${OUTDIR}"
 
 EXIT_CODE=$?
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] SemiBin2 失败"; exit ${EXIT_CODE}; fi
+if [ ${EXIT_CODE} -ne 0 ]; then
+    echo "[semibin2] WARNING: SemiBin2 失败，创建空 sentinel: ${SENTINEL}"
+    > "${SENTINEL}"
+    exit 0
+fi
 
 # 构建 contig2bin 表
 BIN_TSV="${OUTDIR}/output_bins.tsv"

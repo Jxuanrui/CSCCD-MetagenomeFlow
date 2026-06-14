@@ -43,7 +43,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/pcyc"
+RESULT_DIR="${WORKDIR}/result/annotation/pcyc"
 OUTPUT="${RESULT_DIR}/pcyc_hits.tsv"
 
 if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then

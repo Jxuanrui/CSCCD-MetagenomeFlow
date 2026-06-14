@@ -1,8 +1,8 @@
 rule megahit:
     """De novo metagenome assembly (per sample, --presets meta-large)."""
     input:
-        r1 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
         contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
     log:
@@ -72,8 +72,8 @@ rule salmon_build:
 rule salmon_quant:
     """Per-sample gene abundance quantification (TPM + NumReads) using Salmon."""
     input:
-        r1         = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2         = WORKDIR + "/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        r1         = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2         = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
         index_info = WORKDIR + "/result/assembly/salmon/index/info.json",
     output:
         quant_sf = WORKDIR + "/result/assembly/salmon/{sample}/quant.sf",

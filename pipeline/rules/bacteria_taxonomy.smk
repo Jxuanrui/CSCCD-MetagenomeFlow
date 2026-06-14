@@ -58,6 +58,7 @@ rule humann3:
         r1      = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
         r2      = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
         profile = WORKDIR + "/result/metaphlan4/{sample}/{sample}_profile.txt",
+        euk_profile = ancient(WORKDIR + "/result/fungi/metaphlan4/{sample}/{sample}_profile.txt"),
     output:
         pathabundance = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance.tsv",
         pathabundance_relab = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance_relab.tsv",
@@ -110,5 +111,61 @@ rule centrifuger:
     shell:
         "bash {REPO}/scripts/15_bac_centrifuger.sh "
         "-s {wildcards.sample} -t {threads} "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule humann3_merge:
+    """Merge per-sample HUMAnN3 unstratified tables into community matrices."""
+    input:
+        paths = expand(
+            WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance_relab.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        pathabundance = WORKDIR + "/result/humann3/merged/pathabundance_relab.tsv",
+        genefamilies = WORKDIR + "/result/humann3/merged/genefamilies_relab.tsv",
+    log:
+        WORKDIR + "/logs/humann3/merge.log",
+    shell:
+        "bash {REPO}/scripts/13b_bac_humann3_merge.sh "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule kraken2_merge:
+    """Merge per-sample Bracken abundance tables into community matrices."""
+    input:
+        bracken = expand(
+            WORKDIR + "/result/kraken2/{sample}/bracken/{sample}_S.bracken",
+            sample=SAMPLES,
+        ),
+    output:
+        bracken_s = WORKDIR + "/result/kraken2/merged/bracken_S.tsv",
+        bracken_g = WORKDIR + "/result/kraken2/merged/bracken_G.tsv",
+        bracken_p = WORKDIR + "/result/kraken2/merged/bracken_P.tsv",
+    log:
+        WORKDIR + "/logs/kraken2/merge.log",
+    shell:
+        "bash {REPO}/scripts/14b_bac_kraken2_merge.sh "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule centrifuger_merge:
+    """Merge per-sample Centrifuger kreport tables into community matrices."""
+    input:
+        kreports = expand(
+            WORKDIR + "/result/centrifuger/{sample}/{sample}.kreport.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        kreport_s = WORKDIR + "/result/centrifuger/merged/kreport_S.tsv",
+        kreport_g = WORKDIR + "/result/centrifuger/merged/kreport_G.tsv",
+        kreport_p = WORKDIR + "/result/centrifuger/merged/kreport_P.tsv",
+    log:
+        WORKDIR + "/logs/centrifuger/merge.log",
+    shell:
+        "bash {REPO}/scripts/15b_bac_centrifuger_merge.sh "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"

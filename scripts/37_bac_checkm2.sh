@@ -50,7 +50,11 @@ for d in "${BINS_DIR}"/*/bins; do
 done
 
 if [ ${#BIN_FILES[@]} -eq 0 ]; then
-    echo "[ERROR] 未找到 DAS_Tool bins（检查 ${BINS_DIR}/*/bins/*.fa）"; exit 1
+    echo "[checkm2] WARNING: No bins found. Creating empty quality report."
+    mkdir -p "${WORKDIR}/result/binning/checkm2" "${FILTERED_DIR}" "${DREP_IN}"
+    echo -e "Name\tCompleteness\tContamination" > "${REPORT}"
+    echo -e "Name\tCompleteness\tContamination" > "${FILTERED_DIR}/filtered_report.tsv"
+    exit 0
 fi
 
 # 为 CheckM2 创建输入目录（符号链）

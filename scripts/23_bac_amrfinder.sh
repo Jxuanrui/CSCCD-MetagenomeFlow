@@ -48,7 +48,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/amrfinder"
+RESULT_DIR="${WORKDIR}/result/annotation/amrfinder"
 OUTPUT="${RESULT_DIR}/amrfinder_results.tsv"
 AMR_DB="${REPO}/db/amrfinder/latest"
 

@@ -50,7 +50,7 @@ fi
 SECONDS=0
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
-RESULT_DIR="${WORKDIR}/result/card"
+RESULT_DIR="${WORKDIR}/result/annotation/card"
 OUTPUT_PREFIX="${RESULT_DIR}/rgi_results"
 CARD_DB="${REPO}/db/card/card.json"
 
