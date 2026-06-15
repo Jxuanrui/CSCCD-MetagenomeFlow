@@ -66,7 +66,8 @@
 #   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建）        2026-06-11  已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
 #   [✓] §11.6 WGS 融入模块（mlst 2.11 + roary 3.12.0 in envs/prokaWGS；snippy 4.0.2 in envs/snippy）  2026-06-11  已安装
 #   [✓] §12.2 MetaEuk 真核宏基因组基因预测（envs/metaeuk）                   2026-06-15  已安装
-#   [✓] §12.1 CGF catalog 760 真菌基因组（db/cgf/genomes/）              2026-06-15  已下载
+#   [✓] §12.1 CGF catalog 760 真菌基因组（db/cgf/genomes/）              2026-06-15  已下载（709条，51条NCBI已撤回）
+#   [✓] §12.3 CGF profiler 脚本集（74b/74c/74d，Singular+Escrow 算法）  2026-06-15  已创建（74b 需 screen 运行，约2-4h）
 #   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
 # ==============================================================================
 
