@@ -66,6 +66,7 @@
 #   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建）        2026-06-11  已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
 #   [✓] §11.6 WGS 融入模块（mlst 2.11 + roary 3.12.0 in envs/prokaWGS；snippy 4.0.2 in envs/snippy）  2026-06-11  已安装
 #   [✓] §12.2 MetaEuk 真核宏基因组基因预测（envs/metaeuk）                   2026-06-15  已安装
+#   [✓] §12.1 CGF catalog 760 真菌基因组（db/cgf/genomes/）              2026-06-15  已下载
 #   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
 # ==============================================================================
 
@@ -1592,7 +1593,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # §12. 真菌基因预测增强（MetaEuk + CGF catalog）
 # ==============================================================================
 
-# --- §12.1 CGF catalog 基因组（PRJNA833221）[✗ 待下载 — 磁盘空间确认后执行] ---
+# --- §12.1 CGF catalog 基因组（PRJNA833221）[✓ 已下载 2026-06-15] ---
 # 说明：Yan et al. 2024 Cell 187 发布的 760 个肠道真菌培养基因组
 #       用途：作为 80b_fun_metaeuk.sh 的参考基因组数据库（Singular+Escrow 算法底座）
 #       数据源：NCBI BioProject PRJNA833221（约 30-60 GB）
