@@ -7,16 +7,16 @@
 #          Run in a screen/tmux session.
 #
 # Runtime estimate:
-#   MetaEuk on 709 genomes with 16 CPU: ~2-4 hours
+#   Prodigal on 709 genomes with 16 CPU: ~2-4 hours
 #   MMseqs2 clustering: ~30 min
 #   DIAMOND makedb: ~5 min
 #
 # 输  入:
 #   ${REPO}/db/cgf/genomes/GCA_*.fna
-#   ${REPO}/db/funomic/P/FunOMIC.P.v1.dmnd
 #   ${REPO}/db/cgf/assembly_report.jsonl
 # 输  出:
-#   ${REPO}/db/cgf/metaeuk_predictions/*.fas
+#   ${REPO}/db/cgf/prodigal_predictions/*.faa
+#   ${REPO}/db/cgf/prodigal_predictions/*.gff
 #   ${REPO}/db/cgf/cgf_proteins_all.faa
 #   ${REPO}/db/cgf/cgf_clusters_rep_seq.fasta
 #   ${REPO}/db/cgf/cgf_proteins.dmnd
@@ -73,10 +73,8 @@ SECONDS=0
 
 CGF_DIR="${REPO}/db/cgf"
 GENOME_DIR="${CGF_DIR}/genomes"
-PRED_DIR="${CGF_DIR}/metaeuk_predictions"
-METAEUK_TMP_DIR="${CGF_DIR}/metaeuk_tmp"
+PRED_DIR="${CGF_DIR}/prodigal_predictions"
 MMSEQS_TMP_DIR="${CGF_DIR}/mmseqs_tmp"
-FUNOMIC_DB="${REPO}/db/funomic/P/FunOMIC.P.v1.dmnd"
 ASSEMBLY_REPORT="${CGF_DIR}/assembly_report.jsonl"
 ALL_PROTEINS="${CGF_DIR}/cgf_proteins_all.faa"
 CLUSTER_PREFIX="${CGF_DIR}/cgf_clusters"
@@ -92,9 +90,7 @@ if [ -s "${DIAMOND_DB}" ] && [ -s "${SPECIES_MAP}" ]; then
 fi
 
 if [ ! -d "${GENOME_DIR}" ]; then echo "[ERROR] CGF genome directory 不存在: ${GENOME_DIR}"; exit 1; fi
-if [ ! -s "${FUNOMIC_DB}" ]; then echo "[ERROR] FunOMIC protein DB 不存在或为空: ${FUNOMIC_DB}"; exit 1; fi
 if [ ! -s "${ASSEMBLY_REPORT}" ]; then echo "[ERROR] assembly_report.jsonl 不存在或为空: ${ASSEMBLY_REPORT}"; exit 1; fi
-if [ ! -d "${REPO}/envs/metaeuk" ]; then echo "[ERROR] MetaEuk conda env 不存在: ${REPO}/envs/metaeuk"; exit 1; fi
 if [ ! -d "${REPO}/envs/assembly" ]; then echo "[ERROR] assembly conda env 不存在: ${REPO}/envs/assembly"; exit 1; fi
 
 N_GENOMES=$(find "${GENOME_DIR}" -maxdepth 1 -type f -name 'GCA_*.fna' | wc -l | tr -d ' ')
@@ -103,74 +99,65 @@ if [ "${N_GENOMES}" -eq 0 ]; then
     exit 1
 fi
 
-if [ "${CPUS}" -lt 8 ]; then
-    META_JOBS=1
-    META_THREADS="${CPUS}"
-else
-    META_JOBS=$((CPUS / 4))
-    META_THREADS=4
-fi
+META_JOBS="${CPUS}"
 
 echo "WARNING: This script runs for several hours on ${N_GENOMES} genomes. Run in a screen/tmux session."
 echo "[cgf_db_build] REPO: ${REPO}"
-echo "[cgf_db_build] CPUS: ${CPUS} | MetaEuk parallel jobs: ${META_JOBS} | threads/job: ${META_THREADS}"
+echo "[cgf_db_build] CPUS: ${CPUS} | Prodigal parallel jobs: ${META_JOBS}"
 
-mkdir -p "${PRED_DIR}" "${METAEUK_TMP_DIR}" "${CGF_DIR}"
+mkdir -p "${PRED_DIR}" "${CGF_DIR}"
 
-echo "[cgf_db_build] Step 1/5: MetaEuk gene prediction (${N_GENOMES} genomes)..."
-N_PRED_DONE=$(find "${PRED_DIR}" -maxdepth 1 -type f -name 'GCA_*.fas' -size +0c | wc -l | tr -d ' ')
+echo "[cgf_db_build] Step 1/5: Prodigal gene prediction (${N_GENOMES} genomes)..."
+N_PRED_DONE=$(find "${PRED_DIR}" -maxdepth 1 -type f -name 'GCA_*.faa' -size +0c | wc -l | tr -d ' ')
 if [ "${N_PRED_DONE}" -ge "${N_GENOMES}" ]; then
-    echo "[INFO] MetaEuk predictions already complete: ${N_PRED_DONE}/${N_GENOMES}"
+    echo "[INFO] Prodigal predictions already complete: ${N_PRED_DONE}/${N_GENOMES}"
 else
     find "${GENOME_DIR}" -maxdepth 1 -type f -name 'GCA_*.fna' -print0 | \
         xargs -0 -n 1 -P "${META_JOBS}" bash -c '
             set -euo pipefail
             pred_dir="$1"
-            tmp_root="$2"
-            funomic_db="$3"
-            repo="$4"
-            threads="$5"
-            genome="$6"
+            repo="$2"
+            genome="$3"
 
             base="$(basename "${genome}" .fna)"
             out_prefix="${pred_dir}/${base}"
-            out_fas="${out_prefix}.fas"
-            tmp_dir="${tmp_root}/${base}"
+            out_faa="${out_prefix}.faa"
+            out_gff="${out_prefix}.gff"
 
-            if [ -s "${out_fas}" ]; then
-                echo "[INFO] MetaEuk skip existing: ${base}.fas"
+            if [ -s "${out_faa}" ]; then
+                echo "[INFO] Prodigal skip existing: ${base}.faa"
                 exit 0
             fi
 
-            echo "[INFO] MetaEuk start: ${base}"
-            mkdir -p "${tmp_root}"
-            rm -rf "${tmp_dir}"
+            echo "[INFO] Prodigal start: ${base}"
 
-            conda run --prefix "${repo}/envs/metaeuk" --no-capture-output \
-                metaeuk easy-predict \
-                    "${genome}" \
-                    "${funomic_db}" \
-                    "${out_prefix}" \
-                    "${tmp_dir}" \
-                    --threads "${threads}" \
-                    -s 7.5 \
-                    --min-length 100 \
-                    --translation-table 1
-
-            if [ ! -s "${out_fas}" ]; then
-                echo "[ERROR] MetaEuk did not create protein FASTA: ${out_fas}" >&2
-                rm -f "${out_fas}" "${out_prefix}.codon.fas"
+            if ! conda run --prefix "${repo}/envs/assembly" --no-capture-output \
+                prodigal \
+                    -i "${genome}" \
+                    -a "${out_faa}" \
+                    -g 11 \
+                    -p meta \
+                    -f gff \
+                    -o "${out_gff}" \
+                    -q; then
+                echo "[INFO] Prodigal ERROR: failed ${base}" >&2
+                rm -f "${out_faa}" "${out_gff}"
                 exit 1
             fi
 
-            rm -rf "${tmp_dir}"
-            n_seq=$(grep -c "^>" "${out_fas}" 2>/dev/null || true)
-            echo "[INFO] MetaEuk done: ${base} | proteins: ${n_seq:-0}"
-        ' _ "${PRED_DIR}" "${METAEUK_TMP_DIR}" "${FUNOMIC_DB}" "${REPO}" "${META_THREADS}"
+            if [ ! -s "${out_faa}" ]; then
+                echo "[INFO] Prodigal ERROR: missing protein FASTA ${out_faa}" >&2
+                rm -f "${out_faa}" "${out_gff}"
+                exit 1
+            fi
 
-    N_PRED_DONE=$(find "${PRED_DIR}" -maxdepth 1 -type f -name 'GCA_*.fas' -size +0c | wc -l | tr -d ' ')
+            n_seq=$(grep -c "^>" "${out_faa}" 2>/dev/null || true)
+            echo "[INFO] Prodigal done: ${base} | proteins: ${n_seq:-0}"
+        ' _ "${PRED_DIR}" "${REPO}"
+
+    N_PRED_DONE=$(find "${PRED_DIR}" -maxdepth 1 -type f -name 'GCA_*.faa' -size +0c | wc -l | tr -d ' ')
     if [ "${N_PRED_DONE}" -lt "${N_GENOMES}" ]; then
-        echo "[ERROR] MetaEuk predictions incomplete: ${N_PRED_DONE}/${N_GENOMES}"
+        echo "[ERROR] Prodigal predictions incomplete: ${N_PRED_DONE}/${N_GENOMES}"
         exit 1
     fi
 fi
@@ -187,24 +174,24 @@ import re
 import sys
 
 pred_dir, out_faa = sys.argv[1], sys.argv[2]
-fas_files = sorted(glob.glob(os.path.join(pred_dir, "GCA_*.fas")))
-if not fas_files:
-    raise SystemExit(f"[ERROR] No MetaEuk FASTA files found in {pred_dir}")
+faa_files = sorted(glob.glob(os.path.join(pred_dir, "GCA_*.faa")))
+if not faa_files:
+    raise SystemExit(f"[ERROR] No predicted protein FASTA files found in {pred_dir}")
 
 tmp_out = out_faa + ".tmp"
 n_seq = 0
 n_file = 0
 
 with open(tmp_out, "w", encoding="utf-8") as out:
-    for fas in fas_files:
-        base = os.path.basename(fas)
+    for faa in faa_files:
+        base = os.path.basename(faa)
         match = re.search(r"(GCA_\d+\.\d+)", base)
         if not match:
             raise SystemExit(f"[ERROR] Cannot parse GCA accession from {base}")
         accession = match.group(1)
         file_has_seq = False
 
-        with open(fas, "r", encoding="utf-8", errors="replace") as handle:
+        with open(faa, "r", encoding="utf-8", errors="replace") as handle:
             for raw in handle:
                 line = raw.rstrip("\n")
                 if not line:
@@ -212,7 +199,7 @@ with open(tmp_out, "w", encoding="utf-8") as out:
                 if line.startswith(">"):
                     original_id = line[1:].strip().split()[0]
                     if not original_id:
-                        raise SystemExit(f"[ERROR] Empty FASTA header in {fas}")
+                        raise SystemExit(f"[ERROR] Empty FASTA header in {faa}")
                     out.write(f">{accession}__{original_id}\n")
                     n_seq += 1
                     file_has_seq = True
