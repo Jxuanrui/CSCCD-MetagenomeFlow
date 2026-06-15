@@ -65,9 +65,10 @@
 #   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv）  2026-06-08  已安装
 #   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建）        2026-06-11  已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
 #   [✓] §11.6 WGS 融入模块（mlst 2.11 + roary 3.12.0 in envs/prokaWGS；snippy 4.0.2 in envs/snippy）  2026-06-11  已安装
-#   [✓] §12.2 MetaEuk 真核宏基因组基因预测（envs/metaeuk）                   2026-06-15  已安装
 #   [✓] §12.1 CGF catalog 760 真菌基因组（db/cgf/genomes/）              2026-06-15  已下载（709条，51条NCBI已撤回）
-#   [✓] §12.3 CGF profiler 脚本集（74b/74c/74d，Singular+Escrow 算法）  2026-06-15  已创建（74b 需 screen 运行，约2-4h）
+#   [✓] §12.2 MetaEuk 真核宏基因组基因预测（envs/metaeuk）                   2026-06-15  已安装
+#   [✓] §12.3 PHF 肠道真菌数据库（db/gut_fungi_db/，760基因组基因集）    2026-06-15  已部署（Yan et al. 2024 Cell 187，Bowtie2索引构建中）
+#   [✓] §12.4 PHF 流程脚本（74a/74e/74f，Bowtie2+Singular/Escrow）      2026-06-15  已创建（论文原方法，替代原74b/74c/74d DIAMOND方案）
 #   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
 # ==============================================================================
 
@@ -1591,35 +1592,66 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
 
 # ==============================================================================
-# §12. 真菌基因预测增强（MetaEuk + CGF catalog）
+# §12. 真菌精准定量增强（PHF 数据库 + MetaEuk + CGF catalog）
 # ==============================================================================
 
 # --- §12.1 CGF catalog 基因组（PRJNA833221）[✓ 已下载 2026-06-15] ---
-# 说明：Yan et al. 2024 Cell 187 发布的 760 个肠道真菌培养基因组
-#       用途：作为 80b_fun_metaeuk.sh 的参考基因组数据库（Singular+Escrow 算法底座）
-#       数据源：NCBI BioProject PRJNA833221（约 30-60 GB）
-#       代码：https://github.com/yexianingyue/Cultivated-Gut-Fungi
-# 前置条件：
-#   - sda2（/home）剩余空间 > 100 GB，或在 /data/LYteamwork 下建目录后软链接到 db/cgf/
-#   - 软链接方式：ln -s /data/.../cgf ${PROJ_DIR}/db/cgf
+# 说明：Yan et al. 2024 Cell 187 发布的肠道真菌培养基因组
+#       用途：参考基因组存档（db/cgf/genomes/），不直接用于分析流程
+#       当前状态：709 个 .fna 文件（51 个 NCBI 已撤回，跳过）
 # 安装命令（确认空间后解注释运行）：
     # mkdir -p ${db}/cgf/genomes
-    # # 方式1：NCBI datasets CLI 批量下载
     # conda run --prefix ${envs}/assembly \
     #     datasets download genome accession --inputfile ${db}/cgf/PRJNA833221_accessions.txt \
     #     --include genome --filename ${db}/cgf/cgf_genomes.zip
-    # # 方式2：手动下载后解压
     # unzip ${db}/cgf/cgf_genomes.zip -d ${db}/cgf/genomes/
-    # ls ${db}/cgf/genomes/ | wc -l   # 应为 760
+    # ls ${db}/cgf/genomes/ | wc -l   # 应约为 709
 
 
 # --- §12.2 MetaEuk 真菌宏基因组真核基因预测 [✓ 已安装 2026-06-15] ---
-# 说明：替代 Prodigal（原核 ORF 预测器，对含内含子的真菌基因组严重低估）
-#       MetaEuk 专为宏基因组真核生物 ORF 预测设计，无需 license
-#       工具：MetaEuk（MMseqs2 生态，bioconda 可安装）
+# 说明：供 80b_fun_metaeuk.sh --method metaeuk 使用（默认为 Prodigal，MetaEuk 为可选增强）
+#       MetaEuk 专为宏基因组真核生物 ORF 预测设计，支持含内含子的真菌基因组
+#       数据库：db/metaeuk_db/fungi_refseq_mmseqs（MMseqs2 格式，由 NCBI RefSeq 真菌蛋白构建）
 #       论文：Levy Karin et al. 2020, Microbiome
 # 安装命令（在 envs/metaeuk 中）：
     # ${soft}/bin/conda create -y -p ${envs}/metaeuk \
     #     -c bioconda -c conda-forge metaeuk
     # conda run --prefix ${envs}/metaeuk metaeuk --version
-# 数据库：直接使用 db/funomic/P/FunOMIC-P.dmnd（真菌蛋白数据库）作为参考，无需额外下载
+
+
+# --- §12.3 PHF 肠道真菌数据库 [✓ 已部署 2026-06-15] ---
+# 说明：Yan et al. 2024 Cell 187 完整实现（Bowtie2 + Singular/Escrow 算法）
+#       数据库来源：来自论文作者百度网盘资源（Reference/Gut_Fungi_DB/）
+#       包含：760 基因组核酸基因集 + 人类/细菌/rRNA 过滤库 + GPA.py
+#       运行时文件已整理至 db/gut_fungi_db/：
+#         db.fungi.fa.gz          — 真菌基因集（1.3G gz，760基因组来源）
+#         db.uhgg.fa.gz           — 细菌过滤库（UHGG，3.3G gz）
+#         db.fungi_target.fa.gz   — rRNA 过滤库（3.8M gz）
+#         db.human_chm13v2.fa.gz  — 人类宿主过滤库（916M gz）
+#         GPA.py                  — Singular/Escrow 丰度计算器
+#         gene2clu.map            — 基因→物种簇映射（87M）
+#         clu.uniq_gene.sum       — 物种簇基因长度（4.8K）
+#         db.fungi.taxonomy.tsv   — 317 簇 7 级分类注释（40K）
+# Bowtie2 索引构建（一次性，约 3-5 小时，建议 screen 运行）：
+    # bash scripts/74a_fun_gut_db_build.sh -t 16 -r ${PROJ_DIR}
+    # # 验证：
+    # ls db/gut_fungi_db/bwt.index.gut_fungi_geneset.*.bt2l
+    # ls db/gut_fungi_db/bwt.index.uhgg.*.bt2
+    # ls db/gut_fungi_db/bwt.index.fungi_target.*.bt2
+    # ls db/gut_fungi_db/bwt.index.human_chm13v2.*.bt2
+
+
+# --- §12.4 PHF 流程脚本 [✓ 已创建 2026-06-15] ---
+# 脚本：74a_fun_gut_db_build.sh  — 一次性 Bowtie2 建索引
+#       74e_fun_phf_profiler.sh   — per-sample：5步过滤+Singular/Escrow（论文原方法）
+#       74f_fun_phf_aggregate.sh  — 多样本 .rc 聚合 + taxonomy join
+# 使用示例：
+    # # 步骤1（一次性，索引已构建则跳过）：
+    # bash scripts/74a_fun_gut_db_build.sh -t 16 -r ${PROJ_DIR}
+    # # 步骤2（per-sample）：
+    # bash scripts/74e_fun_phf_profiler.sh -s SAMPLE -t 16 \
+    #      -w ${PROJ_DIR}/Project/Project_example -r ${PROJ_DIR}
+    # # 步骤3（聚合）：
+    # bash scripts/74f_fun_phf_aggregate.sh \
+    #      -w ${PROJ_DIR}/Project/Project_example -r ${PROJ_DIR}
+
