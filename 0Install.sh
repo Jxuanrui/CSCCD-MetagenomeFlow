@@ -65,6 +65,7 @@
 #   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv）  2026-06-08  已安装
 #   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建）        2026-06-11  已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
 #   [✓] §11.6 WGS 融入模块（mlst 2.11 + roary 3.12.0 in envs/prokaWGS；snippy 4.0.2 in envs/snippy）  2026-06-11  已安装
+#   [✓] §12.2 MetaEuk 真核宏基因组基因预测（envs/metaeuk）                   2026-06-15  已安装
 #   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
 # ==============================================================================
 
@@ -1585,3 +1586,38 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # ==============================================================================
 # ← §11 全部完成。
 # ==============================================================================
+
+
+# ==============================================================================
+# §12. 真菌基因预测增强（MetaEuk + CGF catalog）
+# ==============================================================================
+
+# --- §12.1 CGF catalog 基因组（PRJNA833221）[✗ 待下载 — 磁盘空间确认后执行] ---
+# 说明：Yan et al. 2024 Cell 187 发布的 760 个肠道真菌培养基因组
+#       用途：作为 80b_fun_metaeuk.sh 的参考基因组数据库（Singular+Escrow 算法底座）
+#       数据源：NCBI BioProject PRJNA833221（约 30-60 GB）
+#       代码：https://github.com/yexianingyue/Cultivated-Gut-Fungi
+# 前置条件：
+#   - sda2（/home）剩余空间 > 100 GB，或在 /data/LYteamwork 下建目录后软链接到 db/cgf/
+#   - 软链接方式：ln -s /data/.../cgf ${PROJ_DIR}/db/cgf
+# 安装命令（确认空间后解注释运行）：
+    # mkdir -p ${db}/cgf/genomes
+    # # 方式1：NCBI datasets CLI 批量下载
+    # conda run --prefix ${envs}/assembly \
+    #     datasets download genome accession --inputfile ${db}/cgf/PRJNA833221_accessions.txt \
+    #     --include genome --filename ${db}/cgf/cgf_genomes.zip
+    # # 方式2：手动下载后解压
+    # unzip ${db}/cgf/cgf_genomes.zip -d ${db}/cgf/genomes/
+    # ls ${db}/cgf/genomes/ | wc -l   # 应为 760
+
+
+# --- §12.2 MetaEuk 真菌宏基因组真核基因预测 [✓ 已安装 2026-06-15] ---
+# 说明：替代 Prodigal（原核 ORF 预测器，对含内含子的真菌基因组严重低估）
+#       MetaEuk 专为宏基因组真核生物 ORF 预测设计，无需 license
+#       工具：MetaEuk（MMseqs2 生态，bioconda 可安装）
+#       论文：Levy Karin et al. 2020, Microbiome
+# 安装命令（在 envs/metaeuk 中）：
+    # ${soft}/bin/conda create -y -p ${envs}/metaeuk \
+    #     -c bioconda -c conda-forge metaeuk
+    # conda run --prefix ${envs}/metaeuk metaeuk --version
+# 数据库：直接使用 db/funomic/P/FunOMIC-P.dmnd（真菌蛋白数据库）作为参考，无需额外下载
