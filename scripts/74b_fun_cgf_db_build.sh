@@ -13,7 +13,7 @@
 #
 # 输  入:
 #   ${REPO}/db/cgf/genomes/GCA_*.fna
-#   ${REPO}/db/funomic/P/FunOMIC-P.dmnd
+#   ${REPO}/db/funomic/P/FunOMIC.P.v1.dmnd
 #   ${REPO}/db/cgf/assembly_report.jsonl
 # 输  出:
 #   ${REPO}/db/cgf/metaeuk_predictions/*.fas
@@ -76,7 +76,7 @@ GENOME_DIR="${CGF_DIR}/genomes"
 PRED_DIR="${CGF_DIR}/metaeuk_predictions"
 METAEUK_TMP_DIR="${CGF_DIR}/metaeuk_tmp"
 MMSEQS_TMP_DIR="${CGF_DIR}/mmseqs_tmp"
-FUNOMIC_DB="${REPO}/db/funomic/P/FunOMIC-P.dmnd"
+FUNOMIC_DB="${REPO}/db/funomic/P/FunOMIC.P.v1.dmnd"
 ASSEMBLY_REPORT="${CGF_DIR}/assembly_report.jsonl"
 ALL_PROTEINS="${CGF_DIR}/cgf_proteins_all.faa"
 CLUSTER_PREFIX="${CGF_DIR}/cgf_clusters"

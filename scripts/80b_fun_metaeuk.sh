@@ -5,7 +5,7 @@
 #         真核宏基因组基因预测，正确处理内含子，弥补 Prodigal 对真菌基因的低估
 # 依  赖: 78_fun_megahit.sh 的输出（${SAMPLE}_fungi.contigs.fa）
 # 输  入: ${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}_fungi.contigs.fa
-# 数  据: ${REPO}/db/funomic/P/FunOMIC-P.dmnd
+# 数  据: ${REPO}/db/funomic/P/FunOMIC.P.v1.dmnd
 # 输  出: ${WORKDIR}/result/fungi/metaeuk/${SAMPLE}/
 #           ${SAMPLE}.fas          — MetaEuk 蛋白序列输出
 #           ${SAMPLE}.codon.fas    — 核苷酸 CDS 序列
@@ -50,7 +50,7 @@ fi
 SECONDS=0
 
 INPUT_CONTIGS="${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}_fungi.contigs.fa"
-DB="${REPO}/db/funomic/P/FunOMIC-P.dmnd"
+DB="${REPO}/db/funomic/P/FunOMIC.P.v1.dmnd"
 OUTDIR="${WORKDIR}/result/fungi/metaeuk/${SAMPLE}"
 TMP_DIR="${OUTDIR}/tmp_${SAMPLE}"
 OUT_PREFIX="${OUTDIR}/${SAMPLE}"
