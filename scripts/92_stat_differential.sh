@@ -144,7 +144,8 @@ read_metadata <- function(path, group_col) {
   meta <- meta %>%
     dplyr::mutate(sample_id = as.character(sample_id), !!group_col := as.factor(.data[[group_col]])) %>%
     dplyr::filter(!is.na(sample_id), !is.na(.data[[group_col]])) %>%
-    dplyr::distinct(sample_id, .keep_all = TRUE)
+    dplyr::distinct(sample_id, .keep_all = TRUE) %>%
+    as.data.frame()
   rownames(meta) <- meta$sample_id
   meta
 }

@@ -148,7 +148,8 @@ read_metadata <- function(path, group_col) {
   meta <- meta %>%
     dplyr::mutate(sample_id = as.character(sample_id), !!group_col := as.factor(.data[[group_col]])) %>%
     dplyr::filter(!is.na(sample_id), !is.na(.data[[group_col]])) %>%
-    dplyr::distinct(sample_id, .keep_all = TRUE)
+    dplyr::distinct(sample_id, .keep_all = TRUE) %>%
+    as.data.frame()
   rownames(meta) <- meta$sample_id
   meta
 }
@@ -187,14 +188,22 @@ read_fungi_profiles <- function(dir_path) {
   files <- Sys.glob(file.path(dir_path, "*", "*_profile.txt"))
   if (length(files) == 0) stop("No fungi profile files found in ", dir_path)
   prof_list <- lapply(files, function(fp) {
-    tab <- readr::read_tsv(fp, show_col_types = FALSE, comment = "#", col_names = TRUE)
+    # Read with col_names=FALSE to avoid header stripping issue (header line starts with #)
+    raw_lines <- readLines(fp)
+    data_lines <- raw_lines[!startsWith(raw_lines, "#")]
+    if (length(data_lines) == 0) return(NULL)
+    tab <- readr::read_tsv(I(paste(data_lines, collapse = "\n")), show_col_types = FALSE,
+                           col_names = c("clade_name", "ncbi_tax_id", "relative_abundance", "additional_species"),
+                           col_types = "ccdc")
+    tab <- tab[tab$clade_name != "UNCLASSIFIED" & !is.na(tab$relative_abundance), ]
     if (nrow(tab) == 0) return(NULL)
-    feature_col <- c("clade_name", "taxonomy", names(tab)[1])[c("clade_name", "taxonomy", names(tab)[1]) %in% names(tab)][1]
-    abundance_col <- c("relative_abundance", "abundance", "fraction_total_reads", names(tab)[ncol(tab)])[c("relative_abundance", "abundance", "fraction_total_reads", names(tab)[ncol(tab)]) %in% names(tab)][1]
     sample_id <- basename(dirname(fp))
-    tibble(feature = as.character(tab[[feature_col]]), sample_id = sample_id, abundance = suppressWarnings(as.numeric(tab[[abundance_col]])))
+    tibble::tibble(feature = as.character(tab$clade_name), sample_id = sample_id,
+                   abundance = tab$relative_abundance)
   })
-  prof_df <- bind_rows(prof_list) %>% dplyr::filter(!is.na(feature), !is.na(abundance))
+  prof_list <- Filter(Negate(is.null), prof_list)
+  if (length(prof_list) == 0) stop("No fungi taxa found in any profile (all UNCLASSIFIED)")
+  prof_df <- dplyr::bind_rows(prof_list) %>% dplyr::filter(!is.na(feature), !is.na(abundance))
   if (nrow(prof_df) == 0) stop("No usable fungi abundances parsed")
   mat <- prof_df %>%
     dplyr::group_by(feature, sample_id) %>%
@@ -311,7 +320,10 @@ run_step("bacteria_import", {
   datasets$bacteria <- read_abundance_table(bact_table, "bacteria")
 })
 run_step("virus_import", {
-  datasets$virus <- read_abundance_table(vir_table, "virus")
+  vir_mat <- read_abundance_table(vir_table, "virus")
+  # vOTU table uses "S01_tpm" column names — strip "_tpm" suffix to match metadata sample IDs
+  colnames(vir_mat) <- sub("_tpm$", "", colnames(vir_mat))
+  datasets$virus <- vir_mat
 })
 run_step("fungi_import", {
   datasets$fungi <- read_fungi_profiles(fungi_dir)
@@ -337,7 +349,10 @@ for (dimension in names(datasets)) {
       sample_id = common_samples,
       dimension = dimension,
       Shannon = vegan::diversity(t(mat), index = "shannon"),
-      Chao1 = apply(mat, 2, function(x) vegan::estimateR(x)[2]),
+      Chao1 = apply(mat, 2, function(x) {
+        xi <- round(x)
+        tryCatch(vegan::estimateR(xi)[2], error = function(e) NA_real_)
+      }),
       Simpson = vegan::diversity(t(mat), index = "simpson"),
       Observed = vegan::specnumber(t(mat))
     ) %>%
