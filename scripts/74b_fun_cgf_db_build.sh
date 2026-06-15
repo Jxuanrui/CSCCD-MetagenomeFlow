@@ -125,12 +125,12 @@ else
     find "${GENOME_DIR}" -maxdepth 1 -type f -name 'GCA_*.fna' -print0 | \
         xargs -0 -n 1 -P "${META_JOBS}" bash -c '
             set -euo pipefail
-            genome="$1"
-            pred_dir="$2"
-            tmp_root="$3"
-            funomic_db="$4"
-            repo="$5"
-            threads="$6"
+            pred_dir="$1"
+            tmp_root="$2"
+            funomic_db="$3"
+            repo="$4"
+            threads="$5"
+            genome="$6"
 
             base="$(basename "${genome}" .fna)"
             out_prefix="${pred_dir}/${base}"
@@ -166,7 +166,7 @@ else
             rm -rf "${tmp_dir}"
             n_seq=$(grep -c "^>" "${out_fas}" 2>/dev/null || true)
             echo "[INFO] MetaEuk done: ${base} | proteins: ${n_seq:-0}"
-        ' _ {} "${PRED_DIR}" "${METAEUK_TMP_DIR}" "${FUNOMIC_DB}" "${REPO}" "${META_THREADS}"
+        ' _ "${PRED_DIR}" "${METAEUK_TMP_DIR}" "${FUNOMIC_DB}" "${REPO}" "${META_THREADS}"
 
     N_PRED_DONE=$(find "${PRED_DIR}" -maxdepth 1 -type f -name 'GCA_*.fas' -size +0c | wc -l | tr -d ' ')
     if [ "${N_PRED_DONE}" -lt "${N_GENOMES}" ]; then
