@@ -45,9 +45,10 @@ rule all:
                workdir=WORKDIR, sample=SAMPLES),
         expand("{workdir}/result/fungi/funomic/{sample}/{sample}_classification.tsv",
                workdir=WORKDIR, sample=SAMPLES),
-        expand("{workdir}/result/fungi/cgf_profiler/{sample}/{sample}_cgf_abundance.tsv",
+        expand("{workdir}/result/fungi/phf_profiler/{sample}/{sample}.rc",
                workdir=WORKDIR, sample=SAMPLES),
-        WORKDIR + "/result/integration/fungi/cgf_species_norm.tsv",
+        WORKDIR + "/result/fungi/phf_profiler/merged_abundance.tsv",
+        WORKDIR + "/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv",
         # CCMetagen/KMA removed — KMA nt index not deployed (not needed)
         expand("{workdir}/result/fungi/microfisher/{sample}/{sample}_fungal_profile.tsv",
                workdir=WORKDIR, sample=SAMPLES),

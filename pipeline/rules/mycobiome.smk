@@ -263,39 +263,33 @@ rule fun_merops:
         "> {log} 2>&1"
 
 
-# ── CGF Singular+Escrow profiler (Yan et al. 2024 Cell 187) ──────────────────
-
-rule fun_cgf_profiler:
-    """Per-sample CGF fungal profiling: DIAMOND blastx + Singular/Escrow assignment."""
+rule fun_phf_profiler:
     input:
-        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
-        db = REPO + "/db/cgf/cgf_proteins.dmnd",
-        smap = REPO + "/db/cgf/cgf_species_map.tsv",
+        r1=WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        idx_sentinel=REPO + "/db/gut_fungi_db/bwt.index.gut_fungi_geneset.1.bt2l",
     output:
-        out = WORKDIR + "/result/fungi/cgf_profiler/{sample}/{sample}_cgf_abundance.tsv",
+        rc=WORKDIR + "/result/fungi/phf_profiler/{sample}/{sample}.rc",
     log:
-        WORKDIR + "/logs/fungi/cgf_profiler/{sample}.log",
-    threads: CPUS
+        WORKDIR + "/logs/fungi/phf_profiler/{sample}.log",
+    threads: config.get("cpus", 8)
     shell:
-        "bash {REPO}/scripts/74c_fun_cgf_profiler.sh "
-        "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "bash {REPO}/scripts/74e_fun_phf_profiler.sh "
+        "-s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
 
-rule fun_cgf_aggregate:
-    """Aggregate per-sample CGF abundance tables into a species x sample matrix."""
+rule fun_phf_aggregate:
     input:
-        per_sample = expand(
-            WORKDIR + "/result/fungi/cgf_profiler/{sample}/{sample}_cgf_abundance.tsv",
+        expand(
+            WORKDIR + "/result/fungi/phf_profiler/{sample}/{sample}.rc",
             sample=SAMPLES,
         ),
     output:
-        norm = WORKDIR + "/result/integration/fungi/cgf_species_norm.tsv",
+        merged=WORKDIR + "/result/fungi/phf_profiler/merged_abundance.tsv",
+        merged_tax=WORKDIR + "/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv",
     log:
-        WORKDIR + "/logs/fungi/cgf_aggregate/cgf_aggregate.log",
+        WORKDIR + "/logs/fungi/phf_aggregate/aggregate.log",
     shell:
-        "bash {REPO}/scripts/74d_fun_cgf_aggregate.sh "
+        "bash {REPO}/scripts/74f_fun_phf_aggregate.sh "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
