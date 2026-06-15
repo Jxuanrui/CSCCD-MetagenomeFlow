@@ -4,6 +4,7 @@ samples:
   - "S03"
   - "S04"
   - "S05"
+  - "S06"
 
 workdir: "/home/labuser/Course/Maxmetagenome/Project/Project_example"
 repo: "/home/labuser/Course/Maxmetagenome"

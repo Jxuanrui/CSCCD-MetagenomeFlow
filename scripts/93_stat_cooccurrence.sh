@@ -81,7 +81,7 @@ echo "[INFO] Network type: ${NET_TYPE}"
 
 export WORKDIR REPO THREADS METADATA_CSV GROUP_COL NET_TYPE BACT_TABLE VIR_TABLE FUNGI_DIR RESULT_DIR
 
-conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
+R_LIBS_USER="" conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
 options(warn = 1)
 
@@ -165,6 +165,8 @@ read_abundance_table <- function(path) {
   mat <- as.matrix(tab[, sample_cols, drop = FALSE])
   rownames(mat) <- tab$feature
   mat[is.na(mat)] <- 0
+  # Strip _tpm suffix from vOTU column names to match metadata sample_id
+  colnames(mat) <- sub("_tpm$", "", colnames(mat))
   mat[rowSums(mat) > 0, , drop = FALSE]
 }
 
@@ -172,11 +174,19 @@ read_fungi_profiles <- function(dir_path) {
   files <- Sys.glob(file.path(dir_path, "*", "*_profile.txt"))
   if (length(files) == 0) stop("No fungi profile files found in ", dir_path)
   prof <- lapply(files, function(fp) {
-    tab <- readr::read_tsv(fp, show_col_types = FALSE, comment = "#")
-    feature_col <- c("clade_name", "taxonomy", names(tab)[1])[c("clade_name", "taxonomy", names(tab)[1]) %in% names(tab)][1]
-    abundance_col <- c("relative_abundance", "abundance", "fraction_total_reads", names(tab)[ncol(tab)])[c("relative_abundance", "abundance", "fraction_total_reads", names(tab)[ncol(tab)]) %in% names(tab)][1]
-    tibble(feature = tab[[feature_col]], sample_id = basename(dirname(fp)), abundance = suppressWarnings(as.numeric(tab[[abundance_col]])))
+    raw_lines <- readLines(fp)
+    data_lines <- raw_lines[!startsWith(raw_lines, "#")]
+    if (length(data_lines) == 0) return(NULL)
+    tab <- readr::read_tsv(I(paste(data_lines, collapse = "\n")), show_col_types = FALSE,
+                           col_names = c("clade_name", "ncbi_tax_id", "relative_abundance", "additional_species"),
+                           col_types = "ccdc")
+    tab <- tab[tab$clade_name != "UNCLASSIFIED" & !is.na(tab$relative_abundance), ]
+    if (nrow(tab) == 0) return(NULL)
+    tibble(feature = as.character(tab$clade_name), sample_id = basename(dirname(fp)),
+           abundance = tab$relative_abundance)
   })
+  prof <- Filter(Negate(is.null), prof)
+  if (length(prof) == 0) stop("No fungi taxa found in any profile (all UNCLASSIFIED)")
   merged <- bind_rows(prof) %>%
     dplyr::filter(!is.na(feature), !is.na(abundance)) %>%
     dplyr::group_by(feature, sample_id) %>%
@@ -222,7 +232,8 @@ infer_network <- function(mat, label, repo, threads) {
     in_file <- file.path(tmp_dir, "otu.tsv")
     cor_file <- file.path(tmp_dir, "cor.tsv")
     cov_file <- file.path(tmp_dir, "cov.tsv")
-    readr::write_tsv(tibble::rownames_to_column(as.data.frame(t(round(mat))), "sample_id"), in_file)
+    # FastSpar OTU table: features as rows, samples as cols, first col must be "#OTU ID"
+    readr::write_tsv(tibble::rownames_to_column(as.data.frame(round(mat)), "#OTU ID"), in_file)
     system2(fastspar_bin, c("--otu_table", in_file, "--correlation", cor_file, "--covariance", cov_file, "--threads", as.character(threads)))
     cor_df <- readr::read_tsv(cor_file, show_col_types = FALSE)
     cor_mat <- as.matrix(cor_df[, -1, drop = FALSE])
@@ -245,7 +256,9 @@ infer_network <- function(mat, label, repo, threads) {
   V(graph)$mean_abundance <- rowMeans(mat)[V(graph)$name]
   V(graph)$phylum <- parse_phylum(V(graph)$name)
   if (igraph::ecount(graph) > 0) {
-    community <- igraph::cluster_louvain(graph)
+    # Louvain requires non-negative weights; use absolute correlation for community detection
+    E(graph)$weight_abs <- abs(E(graph)$weight)
+    community <- igraph::cluster_louvain(graph, weights = E(graph)$weight_abs)
     V(graph)$module <- membership(community)
     modularity_value <- modularity(community)
   } else {
@@ -277,8 +290,9 @@ save_network_outputs <- function(net, label, out_dir) {
   readr::write_tsv(nodes, file.path(out_dir, paste0(label, "_nodes.tsv")))
   readr::write_tsv(edges, file.path(out_dir, paste0(label, "_edges.tsv")))
   pdf(file.path(out_dir, paste0(label, "_network.pdf")), width = 11, height = 8)
-  p <- ggraph::ggraph(graph, layout = "fr") +
-    ggraph::geom_edge_link(aes(alpha = abs(weight)), show.legend = FALSE, color = "grey60") +
+  # Use circle layout — weight-free, always valid for signed correlation networks
+  p <- ggraph::ggraph(graph, layout = "circle") +
+    ggraph::geom_edge_link(aes(alpha = abs(weight), color = weight > 0), show.legend = FALSE) +
     ggraph::geom_node_point(aes(size = mean_abundance, color = phylum)) +
     ggraph::geom_node_text(aes(label = ifelse(degree(graph) >= quantile(degree(graph), 0.9, na.rm = TRUE), name, "")), repel = TRUE, size = 2.8) +
     theme_void() +

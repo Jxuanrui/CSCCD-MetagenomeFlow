@@ -1,0 +1,7 @@
+sample_id,group,host_type
+S01,control,human
+S02,control,human
+S03,control,human
+S04,treat,human
+S05,treat,human
+S06,treat,human

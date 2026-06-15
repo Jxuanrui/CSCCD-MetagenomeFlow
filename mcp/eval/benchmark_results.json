@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-14T03:23:53.879553+00:00",
-  "n_questions": 15,
+  "timestamp": "2026-06-14T03:47:52.370506+00:00",
+  "n_questions": 18,
   "modes": {
     "hybrid": {
-      "recall_at_1": 0.8,
+      "recall_at_1": 0.7222222222222222,
       "recall_at_3": 1.0,
       "recall_at_5": 1.0,
-      "mrr_at_5": 0.9,
-      "mean_latency_ms": 23.629666666666665,
+      "mrr_at_5": 0.8611111111111112,
+      "mean_latency_ms": 36.59005555555555,
       "per_query": [
         {
           "id": "metaphlan4_params",
@@ -21,7 +21,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 101.123,
+          "latency_ms": 179.126,
           "top_results": [
             {
               "rank": 1,
@@ -73,7 +73,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 16.239,
+          "latency_ms": 17.402,
           "top_results": [
             {
               "rank": 1,
@@ -124,7 +124,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 17.56,
+          "latency_ms": 20.432,
           "top_results": [
             {
               "rank": 1,
@@ -175,7 +175,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 15.985,
+          "latency_ms": 15.846,
           "top_results": [
             {
               "rank": 1,
@@ -226,7 +226,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 16.347,
+          "latency_ms": 25.923,
           "top_results": [
             {
               "rank": 1,
@@ -278,7 +278,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 22.149,
+          "latency_ms": 18.246,
           "top_results": [
             {
               "rank": 1,
@@ -329,7 +329,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 20.823,
+          "latency_ms": 17.022,
           "top_results": [
             {
               "rank": 1,
@@ -381,7 +381,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 24.72,
+          "latency_ms": 20.068,
           "top_results": [
             {
               "rank": 1,
@@ -433,7 +433,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 16.134,
+          "latency_ms": 23.006,
           "top_results": [
             {
               "rank": 1,
@@ -485,7 +485,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 15.679,
+          "latency_ms": 16.862,
           "top_results": [
             {
               "rank": 1,
@@ -537,7 +537,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 15.281,
+          "latency_ms": 36.839,
           "top_results": [
             {
               "rank": 1,
@@ -588,7 +588,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 0.5,
-          "latency_ms": 17.072,
+          "latency_ms": 54.09,
           "top_results": [
             {
               "rank": 1,
@@ -639,7 +639,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 20.003,
+          "latency_ms": 33.882,
           "top_results": [
             {
               "rank": 1,
@@ -691,7 +691,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 16.687,
+          "latency_ms": 46.668,
           "top_results": [
             {
               "rank": 1,
@@ -743,7 +743,7 @@
           "recall_at_3": 1.0,
           "recall_at_5": 1.0,
           "mrr_at_5": 1.0,
-          "latency_ms": 18.643,
+          "latency_ms": 51.607,
           "top_results": [
             {
               "rank": 1,
@@ -779,6 +779,161 @@
               "source": "/home/labuser/Course/Maxmetagenome/docs/05_stats/siamcat.md",
               "distance": 0.39550042152404785,
               "snippet": "# SIAMCAT — 机器学习生物标志物发现\n## 功能\n\n使用 SIAMCAT 框架对微生物组特征（物种分类丰度）进行机器学习建模，支持 Lasso / Ridge / Elastic Net / Random Forest 四种算法，输出 10 折交叉验证 AUC、模型评估图和 Top 特征重要性排序，用于识别最具判别力的生物标志物。"
+            }
+          ]
+        },
+        {
+          "id": "virsorter2_threshold",
+          "query": "VirSorter2 --min-score 阈值 与 geNomad 交集策略 高可信病毒序列",
+          "dimension": "virome",
+          "expected_doc_prefixes": [
+            "virsorter2-virus-prediction",
+            "genomad-virsorter2-consensus"
+          ],
+          "effective_mode": "hybrid",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 38.101,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_754",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/virsorter2.md",
+              "distance": 0.20987612009048462,
+              "snippet": "# VirSorter2 — 病毒序列预测\n## 与 geNomad 互补性\n\n| 场景 | 建议 |\n|------|------|\n| 仅需保守预测 | geNomad 单独（特异度更高） |\n| 最大化召回率 | geNomad + VirSorter2 取并集 |\n| 高质量病毒集 | geNomad + VirSorter2 **取交集** → CheckV（本流程默认策略） |\n| 捕获 RNA 病毒 | 必须用 VirSorter2（geNomad 不支持） |"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_393",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/virsorter2-virus-prediction.md",
+              "distance": 0.2316151261329651,
+              "snippet": "# VirSorter2 病毒候选识别与 geNomad 共识建议\n## Scenario\n\n> 适用于 `51_vir_megahit` 产生的每样本 assembly contigs，需要用 `53_vir_virsorter2.sh` 补充病毒候选；关键参数：`--min-score 0.9` 严格或 `0.5` 敏感，`--include-groups dsDNAphage,ssDNA,NCLDV,RNA,lavidaviridae`；输出 `final-viral-"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_203",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/genomad-virsorter2-consensus.md",
+              "distance": 0.24848049879074097,
+              "snippet": "# geNomad 与 VirSorter2 交叉确认的病毒候选策略\n## Recommendation\n\n推荐保持 geNomad 与 VirSorter2 双跑，并在进入 CheckV 前做交集或至少高置信并集复核。\n\n脚本中的主参数建议如下：\n\n```bash\ngenomad end-to-end --sensitivity 7.5 --splits 4 --cleanup\nvirsorter run --min-length 1000 \\\n  --include-gr"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_394",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/virsorter2-virus-prediction.md",
+              "distance": 0.23761439323425293,
+              "snippet": "# VirSorter2 病毒候选识别与 geNomad 共识建议\n## Recommendation\n\n推荐通过项目脚本按样本运行 VirSorter2，并与 geNomad 结果做交叉确认：\n\n```bash\n# Run VirSorter2 for one sample through the project wrapper.\nbash scripts/53_vir_virsorter2.sh \\\n  -s SAMPLE \\\n  -t 16 \\\n  -w /path/t"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_695",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/05_virus/genomad.md",
+              "distance": 0.2603367567062378,
+              "snippet": "# geNomad — 病毒/质粒鉴定与生活方式预测\n## geNomad vs VirSorter2 互补策略\n\n| 特性 | geNomad | VirSorter2 |\n|------|---------|------------|\n| 算法 | 神经网络（nn-classification） | 多重分类器 + 标记基因 |\n| 灵敏度 | 高（~7.5） | 高（5 组病毒群） |\n| 特异度 | 极高 | 高 |\n| 质粒预测 | **支持** | 不支持 |\n|"
+            }
+          ]
+        },
+        {
+          "id": "dbcan_fungi_consensus",
+          "query": "真菌 CAZyme dbCAN 三方法共识 overview.txt HMMER DIAMOND eCAMI",
+          "dimension": "mycobiome",
+          "expected_doc_prefixes": [
+            "fungi-dbcan-cazyme"
+          ],
+          "effective_mode": "hybrid",
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "latency_ms": 21.904,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_164",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/fungi-dbcan-cazyme.md",
+              "distance": 0.20805668830871582,
+              "snippet": "# 真菌 dbCAN CAZyme 注释建议\n## Scenario\n\n> 关键参数速查：`83_fun_dbcan.sh` 依赖 step 80，聚合合并真菌 FAA；Tool = run_dbcan 4.x；方法 = HMMER + DIAMOND + eCAMI；输入 `combined_fungi.faa`；输出 `result/fungi/dbcan/overview.txt`，建议以 ≥2/3 方法一致作为高可信 CAZyme 注释。\n\n真菌是肠道环境中重要的 c"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_1127",
+              "source": "/home/labuser/Course/Maxmetagenome/scripts/83_fun_dbcan.sh",
+              "distance": 0.3158837556838989,
+              "snippet": "Script: 83_fun_dbcan\nTool: run_dbcan 4.x\nFunction: 真菌 CAZyme 注释（run_dbcan, HMMER+DIAMOND+eCAMI 三方法）\n工具版本：run_dbcan 4.x（conda env: dbcan）\nInputs: ${WORKDIR}/result/fungi/prodigal/*/*.faa（自动搜索合并）\nOutputs: ${WORKDIR}/result/fungi/dbcan/overvie"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_166",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/fungi-dbcan-cazyme.md",
+              "distance": 0.24079489707946777,
+              "snippet": "# 真菌 dbCAN CAZyme 注释建议\n## Rationale\n\n- **为什么用 dbCAN**：dbCAN 是 CAZyme 注释的标准工具，细菌和真菌蛋白都可用，便于跨维度比较。\n- **为什么需要三方法证据**：HMMER、DIAMOND 和 eCAMI 分别代表 profile、序列相似性和 signature 证据，三路一致性更适合降低假阳性。\n- **为什么推荐 ≥2/3 一致**：至少两种方法支持的 CAZyme 调用更保守，适合作为下游统计和论文报告"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_109",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/dbcan-cazyme-annotation.md",
+              "distance": 0.31046807765960693,
+              "snippet": "# dbCAN3 CAZyme 注释参数建议\n## Recommendation\n\n```bash\n# Run dbCAN3 CAZyme annotation on the non-redundant protein catalog.\nbash scripts/25_bac_dbcan.sh \\\n  -t 16 \\\n  -w /path/to/project \\\n  -r /path/to/Maxmetagenome\n```\n\n如需直接运行并显式启用三工具投票，建议写出完整"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_108",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/dbcan-cazyme-annotation.md",
+              "distance": 0.31783831119537354,
+              "snippet": "# dbCAN3 CAZyme 注释参数建议\n## Scenario\n\n> 适用于完成基因预测和蛋白去冗余后，需要对 assembled gene catalog 做 CAZyme 注释，并评估肠道微生物群的碳水化合物降解与合成潜力。\n\nCAZyme 注释不应只依赖单一搜索工具，因为 HMM profile、序列相似性和 signature rule 对不同家族的敏感性与特异性不同。dbCAN3 的核心价值是把 HMMER、DIAMOND 和 eCAMI 三路证据合并，用三工"
+            }
+          ]
+        },
+        {
+          "id": "snippy_core_snp",
+          "query": "Snippy 核心 SNP core.full.aln 泛基因组 Roary --core-definition 系统发育",
+          "dimension": "bacteria",
+          "expected_doc_prefixes": [
+            "snippy-snp-detection",
+            "pangenome-roary"
+          ],
+          "effective_mode": "hybrid",
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.5,
+          "latency_ms": 21.597,
+          "top_results": [
+            {
+              "rank": 1,
+              "doc_id": "exp_988",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/snippy.md",
+              "distance": 0.28888416290283203,
+              "snippet": "# Snippy — SNP/InDel 变异检测\n## 下游分析\n\n```bash\n# 用 FastTree 快速建系统发育树\nconda run --prefix envs/prokaWGS FastTree -nt -gtr core.clean.aln > core.tree\n\n# 用 snp-dists 计算 SNP 距离矩阵\nconda run --prefix envs/snippy snp-dists core.clean.aln > snp_distance"
+            },
+            {
+              "rank": 2,
+              "doc_id": "exp_368",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/snippy-snp-detection.md",
+              "distance": 0.28550344705581665,
+              "snippet": "# Snippy MAG SNP/InDel 检测建议\n## Recommendation\n\n未提供参考基因组时，项目脚本会自动选择最大的 dereplicated MAG 作为参考：\n\n```bash\n# Run Snippy on dereplicated MAGs with auto-selected reference.\nbash scripts/41d_bac_snippy.sh \\\n  -w /path/to/project \\\n  -r /path/to/Max"
+            },
+            {
+              "rank": 3,
+              "doc_id": "exp_983",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/snippy.md",
+              "distance": 0.2983320951461792,
+              "snippet": "# Snippy — SNP/InDel 变异检测\n## 输入 / 输出\n\n| 项目 | 路径 |\n|------|------|\n| 输入 MAGs | `result/binning/drep/dereplicated_genomes/*.fa` |\n| 参考基因组 | 自动选最大 MAG 或 `-R` 指定 |\n| 核心 SNP 表 | `result/wgs/snippy/core.tsv` |\n| 核心比对 | `result/wgs/snippy/core.cle"
+            },
+            {
+              "rank": 4,
+              "doc_id": "exp_367",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/experience/snippy-snp-detection.md",
+              "distance": 0.3049520254135132,
+              "snippet": "# Snippy MAG SNP/InDel 检测建议\n## Scenario\n\n> 适用于 dRep 去冗余 MAG 的同种内 SNP/InDel 分析；工具 Snippy 4.0.2，脚本 `41d_bac_snippy.sh`，环境 `snippy` 或 `prokaWGS`，输入 `result/binning/drep/dereplicated_genomes/*.fa`，参考基因组 `-R` 可选且默认最大 MAG，先逐 MAG 运行再 `snippy-core`"
+            },
+            {
+              "rank": 5,
+              "doc_id": "exp_835",
+              "source": "/home/labuser/Course/Maxmetagenome/docs/tools_ref/WGS_integration.md",
+              "distance": 0.2966007590293884,
+              "snippet": "# WGS 模块融入 MaxMetagenome 说明\n## 模块详解\n\n**输出**：\n- `pan_genome_reference.fa`：泛基因组参考序列\n- `gene_presence_absence.csv`：各 MAG 基因有无矩阵\n- `summary_statistics.txt`：核心/软核/壳/云基因统计\n- `core_gene_alignment.aln`：核心基因 MSA（可用于建树）\n\n---\n\n### 41d：SNP/InDel 变异检测\n\n"
             }
           ]
         }

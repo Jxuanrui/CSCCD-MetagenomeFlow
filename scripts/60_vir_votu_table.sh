@@ -49,26 +49,53 @@ mkdir -p "${OUTDIR}"
 
 echo "[votu_table] 生成 vOTU 丰度矩阵 ..."
 
-# 收集所有样本的 Salmon report
-FIRST=true
-> "${OUTDIR}/vOTU_table.txt"
-while IFS= read -r sid; do
-    [ -z "$sid" ] && continue
-    REPORT="${REPORT_DIR}/${sid}/report.tsv"
-    [ ! -f "$REPORT" ] && { echo "[WARN] 跳过 ${sid}: 无报告"; continue; }
-    if [ "$FIRST" = true ]; then
-        echo -e "gene\tlength\t${sid}_tpm\t${sid}_count" > "${OUTDIR}/vOTU_table.txt"
-        tail -n +2 "$REPORT" | awk -v s="$sid" '{print $1"\t"$2"\t"$3"\t"$4}' >> "${OUTDIR}/vOTU_table.txt"
-        FIRST=false
-    else
-        # 对齐 TPM 和 count
-        # 简化：对每个报告输出 2 列
-        awk -v s="$sid" 'NR==1{next} {
-            if(NR==2) printf "gene\tlength\t%s_tpm\t%s_count\n", s, s
-            else printf "%s\t%s\t%s\t%s\n", $1, $2, $3, $4
-        }' "$REPORT" > "${OUTDIR}/_${sid}.tmp"
-    fi
-done < "${SAMPLES_TSV}"
+# Read all per-sample Salmon report.tsv files and merge by gene into one matrix
+python3 - "${SAMPLES_TSV}" "${REPORT_DIR}" "${OUTDIR}/vOTU_table.txt" <<'PYEOF'
+import sys, os
+
+samples_tsv, report_dir, out_file = sys.argv[1], sys.argv[2], sys.argv[3]
+samples = [l.strip() for l in open(samples_tsv) if l.strip()]
+
+# gene -> {length, S01_tpm, S01_count, ...}
+tables = {}
+gene_order = []
+
+for sid in samples:
+    report = os.path.join(report_dir, sid, "report.tsv")
+    if not os.path.exists(report):
+        print(f"[WARN] 跳过 {sid}: 无报告文件", file=sys.stderr)
+        continue
+    with open(report) as f:
+        for i, line in enumerate(f):
+            if i == 0:
+                continue  # skip header
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 4:
+                continue
+            gene, length, tpm, count = parts[0], parts[1], parts[2], parts[3]
+            if gene not in tables:
+                tables[gene] = {"length": length}
+                gene_order.append(gene)
+            tables[gene][f"{sid}_tpm"] = tpm
+            tables[gene][f"{sid}_count"] = count
+
+# Write merged matrix: gene length S01_tpm S01_count S02_tpm S02_count ...
+cols = []
+for sid in samples:
+    cols += [f"{sid}_tpm", f"{sid}_count"]
+
+with open(out_file, "w") as f:
+    f.write("gene\tlength\t" + "\t".join(cols) + "\n")
+    for gene in gene_order:
+        vals = tables[gene]
+        row = [gene, vals.get("length", "0")] + [vals.get(c, "0") for c in cols]
+        f.write("\t".join(row) + "\n")
+
+print(f"[votu_table] 写入 {len(gene_order)} 个 vOTU，{len(samples)} 个样本")
+PYEOF
+
+# Clean up any leftover tmp files from previous partial runs
+rm -f "${OUTDIR}"/_*.tmp
 
 # 加入分类注释
 if [ -f "${TAXONOMY}" ] && [ -f "${OUTDIR}/vOTU_table.txt" ]; then
