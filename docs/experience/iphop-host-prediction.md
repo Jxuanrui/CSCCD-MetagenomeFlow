@@ -2,7 +2,7 @@
 tool: "iphop-host"
 dimension: "virome"
 category: "annotation"
-author: ""
+author: "labuser"
 date: "2026-06-11"
 tags: [host-prediction, virus-host, database-size]
 scenario: [gut-microbiome, high-depth, cross-cohort]
@@ -54,7 +54,8 @@ iphop predict \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: all, Params: n_host_predictions=31, Exit: 0, Duration: 7200s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

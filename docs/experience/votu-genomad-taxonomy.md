@@ -2,7 +2,7 @@
 tool: "geNomad taxonomy mode"
 dimension: "virome"
 category: "taxonomy"
-author: ""
+author: "labuser"
 date: "2026-06-14"
 tags: [genomad, votu, taxonomy, representative-sequences, aggregate]
 scenario: [virome, votu-representatives, taxonomy-annotation]
@@ -50,7 +50,8 @@ bash scripts/57_vir_votu_genomad.sh \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: all, Params: none, Exit: 0, Duration: 114s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

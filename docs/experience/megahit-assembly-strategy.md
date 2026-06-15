@@ -2,7 +2,7 @@
 tool: "megahit-assembly"
 dimension: "bacteria"
 category: "assembly"
-author: ""
+author: "labuser"
 date: "2026-06-11"
 tags: [assembly-strategy, min-contig, mag-recovery]
 scenario: [gut-microbiome, high-depth, paired-end]
@@ -58,7 +58,8 @@ megahit \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-14 — User: labuser, Sample: S01-S06 ×6, Params: none, Durations: S01=102s S02=93s S03=106s S04=105s S05=100s S06=95s, Exit: 0, Duration: 102s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

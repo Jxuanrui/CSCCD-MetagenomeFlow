@@ -2,7 +2,7 @@
 tool: "VOGDB + HMMER 3.3+"
 dimension: "virome"
 category: "annotation"
-author: ""
+author: "labuser"
 date: "2026-06-14"
 tags: [vogdb, hmmer, hmmsearch, viral-proteins, annotation]
 scenario: [virome, pharokka-proteins, hmm-annotation]
@@ -59,7 +59,8 @@ hmmsearch \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: all, Params: n_hits=557, Exit: 0, Duration: 300s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

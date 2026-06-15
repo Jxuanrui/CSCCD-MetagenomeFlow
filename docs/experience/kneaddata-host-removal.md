@@ -2,7 +2,7 @@
 tool: "kneaddata"
 dimension: "bacteria"
 category: "quality-control"
-author: ""
+author: "labuser"
 date: "2026-06-12"
 tags: [parameter-tuning, host-removal, quality-control, bowtie2]
 scenario: [gut-microbiome, human-host-removal, paired-end]
@@ -71,7 +71,8 @@ gzip -c result/kneaddata/S01/S01_unmatched_2.fastq > result/kneaddata/S01/S01_or
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-12 — User: labuser, Sample: S01, Params: threads=16, reference_db=db/kneaddata/human/hg37dec_v0.1, bowtie2_options=--very-sensitive-local --phred33, mode=strict, Exit: 0, Duration: 21s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

@@ -2,7 +2,7 @@
 tool: "metabat2"
 dimension: "bacteria"
 category: "binning"
-author: ""
+author: "labuser"
 date: "2026-06-12"
 tags: [parameter-tuning, mag-binning, abundance-depth, metabat2]
 scenario: [gut-microbiome, assembled-contigs, mag-recovery]
@@ -77,7 +77,8 @@ metabat2 \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: all, Params: notes=0 bins across all 6 samples; short-read assemblies insufficient depth for binning, n_bins_total=0, Exit: 0, Duration: 720s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

@@ -2,7 +2,7 @@
 tool: "VirSorter2 2.2+"
 dimension: "virome"
 category: "virus-identification"
-author: ""
+author: "labuser"
 date: "2026-06-14"
 tags: [virus-identification, virsorter2, genomad, consensus, contigs]
 scenario: [virome, per-sample-assembly, consensus-virus-discovery]
@@ -53,7 +53,8 @@ bash scripts/53_vir_virsorter2.sh \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: S01-S06 ×6, Params: none, Durations: S01=225s S02=277s S03=323s S04=249s S05=229s S06=283s, Exit: 0, Duration: 225s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

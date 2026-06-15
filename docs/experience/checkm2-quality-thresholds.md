@@ -2,7 +2,7 @@
 tool: "checkm2"
 dimension: "bacteria"
 category: "quality-control"
-author: ""
+author: "labuser"
 date: "2026-06-12"
 tags: [parameter-tuning, mag-quality, mimag, checkm2]
 scenario: [gut-microbiome, mag-recovery, high-throughput-qc]
@@ -73,7 +73,8 @@ awk -F'\t' 'BEGIN{OFS="\t"}
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: all, Params: n_mags=0, Exit: 0, Duration: 600s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

@@ -2,7 +2,7 @@
 tool: "checkv"
 dimension: "virome"
 category: "quality-control"
-author: ""
+author: "labuser"
 date: "2026-06-12"
 tags: [parameter-tuning, virus-qc, completeness, contamination-trimming]
 scenario: [gut-microbiome, assembled-contigs, vOTU-generation]
@@ -77,7 +77,8 @@ cp result/virus/checkv/sample/proviruses.fna \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: S01-S06 ×6, Params: none, Durations: S01=17s S02=19s S03=18s S04=18s S05=31s S06=19s, Exit: 0, Duration: 17s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

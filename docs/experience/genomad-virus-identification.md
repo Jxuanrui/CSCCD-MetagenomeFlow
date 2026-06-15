@@ -2,7 +2,7 @@
 tool: "genomad"
 dimension: "virome"
 category: "virus-identification"
-author: ""
+author: "labuser"
 date: "2026-06-12"
 tags: [parameter-tuning, virus-discovery, plasmid-detection, virsorter2-consensus]
 scenario: [gut-microbiome, assembled-contigs, paired-end]
@@ -83,7 +83,8 @@ geNomad score 建议主结果使用 `>=0.70`；`0.50-0.70` 的候选可以保留
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: S01-S06 ×6, Params: none, Durations: S01=708s S02=716s S03=713s S04=701s S05=708s S06=710s, Exit: 0, Duration: 708s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

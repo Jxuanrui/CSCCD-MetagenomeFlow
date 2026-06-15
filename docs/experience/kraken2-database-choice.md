@@ -2,7 +2,7 @@
 tool: "kraken2"
 dimension: "bacteria"
 category: "taxonomy"
-author: ""
+author: "labuser"
 date: "2026-06-11"
 tags: [database-choice, confidence-threshold, bracken]
 scenario: [gut-microbiome, paired-end, low-biomass]
@@ -59,7 +59,8 @@ Bracken 保留脚本默认 `-t 10`，不要轻易降到 `0`；否则很多仅由
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-14 — User: labuser, Sample: S01-S06 ×6, Params: none, Durations: S01=57s S02=65s S03=57s S04=61s S05=60s S06=61s, Exit: 0, Duration: 57s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

@@ -2,7 +2,7 @@
 tool: "vclust v1.3+"
 dimension: "virome"
 category: "clustering"
-author: ""
+author: "labuser"
 date: "2026-06-13"
 tags: [votu, virus, ani, leiden, clustering]
 scenario: [virome, checkv-filtered-contigs, cross-sample-clustering]
@@ -57,7 +57,8 @@ bash scripts/56_vir_votu_gen.sh -t "$THREADS" -w "$WORKDIR" -r "$REPO"
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: all, Params: n_votu=48, Exit: 0, Duration: 9s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 

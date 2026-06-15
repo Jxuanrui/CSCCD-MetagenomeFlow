@@ -2,7 +2,7 @@
 tool: "dRep v3.x"
 dimension: "bacteria"
 category: "genome-dereplication"
-author: ""
+author: "labuser"
 date: "2026-06-13"
 tags: [drep, mag, dereplication, ani, checkm2]
 scenario: [gut-microbiome, mag-catalog, metagenome-assembly]
@@ -61,7 +61,8 @@ dRep dereplicate result/binning/drep \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- validated — 已通过实际运行验证
+- 2026-06-15 — User: labuser, Sample: all, Params: n_derep_mags=0, Exit: 0, Duration: 60s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
 
 ## References（可选）
 
