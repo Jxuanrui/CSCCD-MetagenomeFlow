@@ -14,9 +14,14 @@
 #   类型 B (1 张): 基因级宽表
 #     7. gene_annotation_matrix.tsv      gene × (样本存在性 + 多类注释)
 #
+#   类型 C (1 张): FunOMIC 物种丰度整合摘要
+#     8. funomic_integrated_summary.tsv  species × (样本读数 + 相对丰度 + top_pathway)
+#
 #   衍生标准化输出:
 #     - normalized/*_relab.tsv           类型 A 表的相对丰度
 #     - normalized/*_clr.tsv             类型 A 表的 CLR (epsilon=0.01)
+#     - normalized/funomic_species_relab.tsv
+#     - funomic_species_clr.tsv
 #
 # 依  赖:
 #   - result/fungi/prodigal/{sample}/{sample}.faa
@@ -25,6 +30,8 @@
 #   - result/fungi/vfdb/vfdb_hits.tsv
 #   - result/fungi/amr/amrfinder_results.tsv
 #   - result/fungi/merops/merops_hits.tsv
+#   - result/integration/fungi/funomic_species_count.tsv
+#   - result/fungi/humann4/{sample}/{sample}_fungi_funomic_pathway.tsv
 #   - db/merops/misc/prot2family.txt
 #
 # 输  出: ${WORKDIR}/result/integration/fungi/
@@ -71,10 +78,14 @@ PRODIGAL_DIR="${FUNGI_DIR}/prodigal"
 OUT_DIR="${WORKDIR}/result/integration/fungi"
 NORM_DIR="${OUT_DIR}/normalized"
 MEROPS_MAP="${REPO}/db/merops/misc/prot2family.txt"
+MAIN_MATRIX="${OUT_DIR}/gene_annotation_matrix.tsv"
+FUNOMIC_SUMMARY="${OUT_DIR}/funomic_integrated_summary.tsv"
+FUNOMIC_RELAB="${NORM_DIR}/funomic_species_relab.tsv"
+FUNOMIC_CLR="${OUT_DIR}/funomic_species_clr.tsv"
 
 # 幂等检查
-if [ -f "${OUT_DIR}/gene_annotation_matrix.tsv" ]; then
-    echo "[INFO] 整合表已存在，跳过。如需重建请先删除 ${OUT_DIR}"
+if [ -f "${MAIN_MATRIX}" ] && [ -f "${FUNOMIC_SUMMARY}" ] && [ -f "${FUNOMIC_RELAB}" ] && [ -f "${FUNOMIC_CLR}" ]; then
+    echo "[INFO] 整合表和 FunOMIC 摘要已存在，跳过。如需重建请先删除 ${OUT_DIR}"
     exit 0
 fi
 
@@ -82,14 +93,18 @@ mkdir -p "${OUT_DIR}" "${NORM_DIR}"
 
 # --- 检查至少有一个 FAA 文件 ---
 FAA_FOUND=$(find "${PRODIGAL_DIR}" -mindepth 2 -maxdepth 2 -name "*.faa" 2>/dev/null | wc -l)
-if [ "${FAA_FOUND}" -eq 0 ]; then
+if [ ! -f "${MAIN_MATRIX}" ] && [ "${FAA_FOUND}" -eq 0 ]; then
     echo "[ERROR] 未找到真菌 Prodigal FAA 文件: ${PRODIGAL_DIR}"
     exit 1
 fi
 
 echo "[integration] 开始真菌维度功能整合"
 echo "[integration] 输出目录: ${OUT_DIR}"
-echo "[integration] 找到 ${FAA_FOUND} 个 FAA 文件"
+if [ -f "${MAIN_MATRIX}" ]; then
+    echo "[integration] 主整合表已存在，将仅补齐缺失的 FunOMIC 输出"
+else
+    echo "[integration] 找到 ${FAA_FOUND} 个 FAA 文件"
+fi
 
 # ==============================================================================
 # Python 整合主逻辑
@@ -125,6 +140,11 @@ DBCAN_FILE = os.path.join(FUNGI_DIR, "dbcan", "overview.txt")
 VFDB_FILE = os.path.join(FUNGI_DIR, "vfdb", "vfdb_hits.tsv")
 AMR_FILE = os.path.join(FUNGI_DIR, "amr", "amrfinder_results.tsv")
 MEROPS_FILE = os.path.join(FUNGI_DIR, "merops", "merops_hits.tsv")
+MAIN_MATRIX = os.path.join(OUT_DIR, "gene_annotation_matrix.tsv")
+FUNOMIC_COUNT_FILE = os.path.join(OUT_DIR, "funomic_species_count.tsv")
+FUNOMIC_RELAB_FILE = os.path.join(NORM_DIR, "funomic_species_relab.tsv")
+FUNOMIC_CLR_FILE = os.path.join(OUT_DIR, "funomic_species_clr.tsv")
+FUNOMIC_SUMMARY_FILE = os.path.join(OUT_DIR, "funomic_integrated_summary.tsv")
 
 
 def warn(msg):
@@ -204,6 +224,45 @@ def normalize_table(infile, relab_out, clr_out):
     print(f"  → {os.path.basename(clr_out)}: {clr_rows} 行 × {clr_cols} 列")
 
 
+def read_numeric_matrix(infile):
+    row_names = []
+    raw = defaultdict(dict)
+    with open(infile) as fh:
+        reader = csv.reader(fh, delimiter="\t")
+        header = next(reader, None)
+        if not header:
+            return [], [], raw
+        local_samples = header[1:]
+        for row in reader:
+            if not row:
+                continue
+            feature = row[0].strip()
+            if not feature:
+                continue
+            row_names.append(feature)
+            for sample, value in zip(local_samples, row[1:]):
+                try:
+                    raw[feature][sample] = float(value)
+                except ValueError:
+                    raw[feature][sample] = 0.0
+            for sample in local_samples[len(row) - 1:]:
+                raw[feature][sample] = 0.0
+    return row_names, local_samples, raw
+
+
+def fmt_count(val):
+    return str(int(val)) if float(val).is_integer() else fmt_float(val)
+
+
+def compute_clr_from_count_table(infile, clr_out):
+    row_names, local_samples, raw = read_numeric_matrix(infile)
+    relab = normalize_to_relab(raw, row_names, local_samples)
+    clr = relab_to_clr(relab, row_names, local_samples, eps=0.01)
+    write_matrix(clr_out, ["species"] + local_samples, row_names, clr, local_samples)
+    clr_rows, clr_cols = table_shape(clr_out)
+    print(f"  → {os.path.basename(clr_out)}: {clr_rows} 行 × {clr_cols} 列")
+
+
 def add_label(mapping, gene, label):
     if not gene or not label or label == "-":
         return
@@ -256,6 +315,140 @@ def make_count_table(func_map, sample_genes, samples, outpath, func_col_name):
     n = len(func_count)
     print(f"  → {os.path.basename(outpath)}: {n} 行 × {len(samples)+1} 列")
     return func_count
+
+
+def load_sample_top_pathways(samples):
+    sample_top = {}
+    global_counts = defaultdict(float)
+    for sample in samples:
+        path = os.path.join(FUNGI_DIR, "humann4", sample, f"{sample}_fungi_funomic_pathway.tsv")
+        if not os.path.isfile(path):
+            warn(f"缺少 FunOMIC pathway 文件，样本 {sample} 将无 top_pathway: {path}")
+            continue
+
+        pathway_counts = defaultdict(float)
+        with open(path) as fh:
+            reader = csv.reader(fh, delimiter="\t")
+            for row in reader:
+                if len(row) < 2:
+                    continue
+                pathway = row[0].strip()
+                try:
+                    count = float(row[1])
+                except ValueError:
+                    continue
+                if not pathway:
+                    continue
+                pathway_counts[pathway] += count
+                global_counts[pathway] += count
+
+        if pathway_counts:
+            sample_top[sample] = max(pathway_counts.items(), key=lambda item: (item[1], item[0]))[0]
+            print(f"  {sample}: top_pathway={sample_top[sample]}")
+        else:
+            warn(f"FunOMIC pathway 文件无有效计数，样本 {sample}: {path}")
+
+    global_top = max(global_counts.items(), key=lambda item: (item[1], item[0]))[0] if global_counts else "-"
+    return sample_top, global_top
+
+
+def build_funomic_summary():
+    row_names, local_samples, raw = read_numeric_matrix(FUNOMIC_COUNT_FILE)
+    if not local_samples:
+        warn(f"FunOMIC 物种计数矩阵为空，跳过摘要: {FUNOMIC_COUNT_FILE}")
+        return
+
+    sample_totals = {
+        sample: sum(raw[row].get(sample, 0.0) for row in row_names)
+        for sample in local_samples
+    }
+    sample_top_pathways, global_top_pathway = load_sample_top_pathways(local_samples)
+
+    header = (
+        ["species", "total_reads"]
+        + [f"{sample}_count" for sample in local_samples]
+        + [f"{sample}_relab_percent" for sample in local_samples]
+        + ["top_pathway"]
+    )
+
+    with open(FUNOMIC_SUMMARY_FILE, "w", newline="") as fh:
+        writer = csv.writer(fh, delimiter="\t", lineterminator="\n")
+        writer.writerow(header)
+        for species in row_names:
+            counts = [raw[species].get(sample, 0.0) for sample in local_samples]
+            total_reads = sum(counts)
+            relab_percent = [
+                (raw[species].get(sample, 0.0) / sample_totals[sample] * 100.0)
+                if sample_totals[sample] > 0 else 0.0
+                for sample in local_samples
+            ]
+            best_sample = local_samples[counts.index(max(counts))] if counts else ""
+            top_pathway = sample_top_pathways.get(best_sample, global_top_pathway)
+            writer.writerow(
+                [species, fmt_count(total_reads)]
+                + [fmt_count(value) for value in counts]
+                + [fmt_float(value) for value in relab_percent]
+                + [top_pathway]
+            )
+
+    nrows, ncols = table_shape(FUNOMIC_SUMMARY_FILE)
+    print(f"  → {os.path.basename(FUNOMIC_SUMMARY_FILE)}: {nrows} 行 × {ncols} 列")
+
+
+def run_funomic_step():
+    print("\n[Step6] FunOMIC 物种丰度标准化验证与整合摘要")
+
+    if not os.path.isfile(FUNOMIC_COUNT_FILE):
+        warn(f"缺少 FunOMIC 物种计数矩阵，跳过 Step6: {FUNOMIC_COUNT_FILE}")
+        return
+
+    count_rows, count_cols = table_shape(FUNOMIC_COUNT_FILE)
+    print(f"  → funomic_species_count.tsv: {count_rows} 行 × {count_cols} 列")
+
+    if os.path.isfile(FUNOMIC_RELAB_FILE):
+        relab_rows, relab_cols = table_shape(FUNOMIC_RELAB_FILE)
+        print(f"  → normalized/funomic_species_relab.tsv 已存在: {relab_rows} 行 × {relab_cols} 列")
+    else:
+        print("  normalized/funomic_species_relab.tsv 不存在，从计数矩阵计算 relab/CLR")
+        normalize_table(FUNOMIC_COUNT_FILE, FUNOMIC_RELAB_FILE, FUNOMIC_CLR_FILE)
+
+    if os.path.isfile(FUNOMIC_CLR_FILE):
+        clr_rows, clr_cols = table_shape(FUNOMIC_CLR_FILE)
+        print(f"  → funomic_species_clr.tsv 已存在: {clr_rows} 行 × {clr_cols} 列")
+    else:
+        print("  funomic_species_clr.tsv 不存在，从计数矩阵计算 CLR")
+        compute_clr_from_count_table(FUNOMIC_COUNT_FILE, FUNOMIC_CLR_FILE)
+
+    if os.path.isfile(FUNOMIC_SUMMARY_FILE):
+        summary_rows, summary_cols = table_shape(FUNOMIC_SUMMARY_FILE)
+        print(f"  → funomic_integrated_summary.tsv 已存在: {summary_rows} 行 × {summary_cols} 列，跳过重建")
+        return
+
+    build_funomic_summary()
+
+
+def print_summary_report():
+    print("\n" + "="*70)
+    print("[integration] 完成！输出目录:", OUT_DIR)
+    print("="*70)
+    for root, dirs, files in os.walk(OUT_DIR):
+        dirs.sort()
+        for fname in sorted(files):
+            fpath = os.path.join(root, fname)
+            relpath = os.path.relpath(fpath, OUT_DIR)
+            try:
+                nrows, ncols = table_shape(fpath)
+            except OSError:
+                continue
+            size_kb = os.path.getsize(fpath) / 1024.0
+            print(f"  {relpath:<55s}  {nrows:>6} 行 × {ncols:>3} 列  ({size_kb:.1f} KB)")
+
+
+if os.path.isfile(MAIN_MATRIX):
+    print("[INFO] gene_annotation_matrix.tsv 已存在，跳过 Step1-Step5")
+    run_funomic_step()
+    print_summary_report()
+    sys.exit(0)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -457,22 +650,15 @@ for path in generated_type_a:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Step 6: FunOMIC 物种丰度标准化验证与整合摘要
+# ──────────────────────────────────────────────────────────────────────────────
+run_funomic_step()
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 汇总报告
 # ──────────────────────────────────────────────────────────────────────────────
-print("\n" + "="*70)
-print("[integration] 完成！输出目录:", OUT_DIR)
-print("="*70)
-for root, dirs, files in os.walk(OUT_DIR):
-    dirs.sort()
-    for fname in sorted(files):
-        fpath = os.path.join(root, fname)
-        relpath = os.path.relpath(fpath, OUT_DIR)
-        try:
-            nrows, ncols = table_shape(fpath)
-        except OSError:
-            continue
-        size_kb = os.path.getsize(fpath) / 1024.0
-        print(f"  {relpath:<55s}  {nrows:>6} 行 × {ncols:>3} 列  ({size_kb:.1f} KB)")
+print_summary_report()
 
 PYEOF
 
