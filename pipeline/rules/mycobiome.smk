@@ -261,3 +261,41 @@ rule fun_merops:
         "bash {REPO}/scripts/86_fun_merops.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
+
+
+# ── CGF Singular+Escrow profiler (Yan et al. 2024 Cell 187) ──────────────────
+
+rule fun_cgf_profiler:
+    """Per-sample CGF fungal profiling: DIAMOND blastx + Singular/Escrow assignment."""
+    input:
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        db = REPO + "/db/cgf/cgf_proteins.dmnd",
+        smap = REPO + "/db/cgf/cgf_species_map.tsv",
+    output:
+        out = WORKDIR + "/result/fungi/cgf_profiler/{sample}/{sample}_cgf_abundance.tsv",
+    log:
+        WORKDIR + "/logs/fungi/cgf_profiler/{sample}.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/74c_fun_cgf_profiler.sh "
+        "-s {wildcards.sample} -t {threads} "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule fun_cgf_aggregate:
+    """Aggregate per-sample CGF abundance tables into a species x sample matrix."""
+    input:
+        per_sample = expand(
+            WORKDIR + "/result/fungi/cgf_profiler/{sample}/{sample}_cgf_abundance.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        norm = WORKDIR + "/result/integration/fungi/cgf_species_norm.tsv",
+    log:
+        WORKDIR + "/logs/fungi/cgf_aggregate/cgf_aggregate.log",
+    shell:
+        "bash {REPO}/scripts/74d_fun_cgf_aggregate.sh "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"

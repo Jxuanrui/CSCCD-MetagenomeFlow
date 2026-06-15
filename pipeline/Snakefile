@@ -45,6 +45,9 @@ rule all:
                workdir=WORKDIR, sample=SAMPLES),
         expand("{workdir}/result/fungi/funomic/{sample}/{sample}_classification.tsv",
                workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/fungi/cgf_profiler/{sample}/{sample}_cgf_abundance.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
+        WORKDIR + "/result/integration/fungi/cgf_species_norm.tsv",
         # CCMetagen/KMA removed — KMA nt index not deployed (not needed)
         expand("{workdir}/result/fungi/microfisher/{sample}/{sample}_fungal_profile.tsv",
                workdir=WORKDIR, sample=SAMPLES),
