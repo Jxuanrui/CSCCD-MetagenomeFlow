@@ -68,7 +68,7 @@ IDX_FUNGI="${IDX_DIR}/bwt.index.gut_fungi_geneset"
 IDX_HUMAN="${IDX_DIR}/bwt.index.human_chm13v2"
 IDX_UHGG="${IDX_DIR}/bwt.index.uhgg"
 IDX_RRNA="${IDX_DIR}/bwt.index.fungi_target"
-GPA_PY="${REPO}/Gut_Fungi_DB/GPA.py"
+GPA_PY="${REPO}/db/gut_fungi_db/GPA.py"
 
 RESULT="${OUT_PREFIX}.rc"
 

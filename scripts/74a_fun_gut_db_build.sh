@@ -3,12 +3,12 @@
 # 脚本名: 74a_fun_gut_db_build.sh
 # 功  能: 构建肠道真菌数据库 Bowtie2 索引（一次性构建，Yan et al. 2024 Cell 187）
 #
-# 数据库来源: Gut_Fungi_DB/ (760 真菌基因组基因集 + 过滤库)
+# 数据库来源: db/gut_fungi_db/ (760 真菌基因组基因集 + 过滤库，Yan et al. 2024 Cell 187)
 # 输  入:
-#   ${REPO}/Gut_Fungi_DB/db.fungi.fa.gz        — 真菌基因集（核酸，760基因组）
-#   ${REPO}/Gut_Fungi_DB/db.uhgg.fa.gz         — 细菌过滤库（UHGG）
-#   ${REPO}/Gut_Fungi_DB/db.fungi_target.fa.gz — rRNA 过滤库
-#   ${REPO}/Gut_Fungi_DB/db.human_chm13v2.fa.gz — 人类宿主过滤库
+#   ${REPO}/db/gut_fungi_db/db.fungi.fa.gz        — 真菌基因集（核酸，760基因组）
+#   ${REPO}/db/gut_fungi_db/db.uhgg.fa.gz         — 细菌过滤库（UHGG）
+#   ${REPO}/db/gut_fungi_db/db.fungi_target.fa.gz — rRNA 过滤库
+#   ${REPO}/db/gut_fungi_db/db.human_chm13v2.fa.gz — 人类宿主过滤库
 # 输  出:
 #   ${REPO}/db/gut_fungi_db/bwt.index.gut_fungi_geneset.*
 #   ${REPO}/db/gut_fungi_db/bwt.index.uhgg.*
@@ -54,11 +54,11 @@ if ! [[ "${CPUS}" =~ ^[1-9][0-9]*$ ]]; then echo "[ERROR] -t 必须是正整数:
 if [ ! -d "${REPO}" ]; then echo "[ERROR] REPO 不存在: ${REPO}"; exit 1; fi
 REPO="$(cd "${REPO}" && pwd)"
 
-SRC_DIR="${REPO}/Gut_Fungi_DB"
+SRC_DIR="${REPO}/db/gut_fungi_db"
 IDX_DIR="${REPO}/db/gut_fungi_db"
 LOG_DIR="${REPO}/logs/gut_fungi_db_build"
 
-if [ ! -d "${SRC_DIR}" ]; then echo "[ERROR] Gut_Fungi_DB 不存在: ${SRC_DIR}"; exit 1; fi
+if [ ! -d "${SRC_DIR}" ]; then echo "[ERROR] db/gut_fungi_db 不存在: ${SRC_DIR}"; exit 1; fi
 mkdir -p "${IDX_DIR}" "${LOG_DIR}"
 
 SECONDS=0

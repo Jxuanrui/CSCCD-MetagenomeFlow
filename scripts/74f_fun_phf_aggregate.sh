@@ -4,7 +4,7 @@
 # 功  能: 聚合所有样本的 PHF 真菌丰度表（.rc → merged matrix + taxonomy join）
 # 依  赖: 74e_fun_phf_profiler.sh 的输出（*.rc 文件）
 # 输  入: ${WORKDIR}/result/fungi/phf_profiler/*/*.rc
-#         ${REPO}/Gut_Fungi_DB/db.fungi.taxonomy.tsv
+#         ${REPO}/db/gut_fungi_db/db.fungi.taxonomy.tsv
 # 输  出: ${WORKDIR}/result/fungi/phf_profiler/merged_abundance.tsv
 #         ${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv
 # 用  法: bash 74f_fun_phf_aggregate.sh -w WORKDIR -r REPO
@@ -40,7 +40,7 @@ REPO="$(cd "${REPO}" && pwd)"
 
 SECONDS=0
 PROFILER_DIR="${WORKDIR}/result/fungi/phf_profiler"
-TAXONOMY="${REPO}/Gut_Fungi_DB/db.fungi.taxonomy.tsv"
+TAXONOMY="${REPO}/db/gut_fungi_db/db.fungi.taxonomy.tsv"
 MERGED="${PROFILER_DIR}/merged_abundance.tsv"
 MERGED_TAX="${PROFILER_DIR}/merged_abundance_with_taxonomy.tsv"
 
