@@ -87,6 +87,27 @@ rule fun_funomic:
         "> {log} 2>&1"
 
 
+rule funomics_aggregate:
+    """Aggregate per-sample FunOMIC classifications into project-level matrices."""
+    input:
+        classifications = expand(
+            WORKDIR + "/result/fungi/funomic/{sample}/{sample}_classification.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        count_tsv = WORKDIR + "/result/integration/fungi/funomic_species_count.tsv",
+    params:
+        samples = config["samples"],
+        workdir = config["workdir"],
+    log:
+        WORKDIR + "/logs/fungi/funomics_aggregate/aggregate.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/75b_fun_funomics_aggregate.sh "
+        "-t {threads} -w {params.workdir} -r {REPO} "
+        "> {log} 2>&1"
+
+
 rule fun_microfisher:
     """MicroFisher-style fungal profile derived from Kraken2 classifications."""
     input:
@@ -118,6 +139,25 @@ rule fun_megahit:
         "bash {REPO}/scripts/78_fun_megahit.sh "
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule fun_metaeuk:
+    """Predict fungal coding sequences using the MetaEuk/Prodigal wrapper."""
+    input:
+        contigs = WORKDIR + "/result/fungi/assembly/{sample}/{sample}.contigs.fa",
+    output:
+        fas = WORKDIR + "/result/fungi/metaeuk/{sample}/{sample}.fas",
+    params:
+        samples = config["samples"],
+        workdir = config["workdir"],
+    log:
+        WORKDIR + "/logs/fungi/metaeuk/{sample}.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/80b_fun_metaeuk.sh "
+        "-s {wildcards.sample} -t {threads} "
+        "-w {params.workdir} -r {REPO} "
         "> {log} 2>&1"
 
 

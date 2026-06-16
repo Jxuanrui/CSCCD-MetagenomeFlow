@@ -150,3 +150,67 @@ rule stat_report:
     threads: 1
     shell:
         "bash {REPO}/scripts/98_stat_report.sh -w {WORKDIR} -r {REPO}"
+
+
+rule bac_integration_tables:
+    """Integrate bacterial quantification and annotation outputs into summary tables."""
+    input:
+        eggnog = WORKDIR + "/result/annotation/eggnog/eggnog.emapper.annotations",
+        kegg = WORKDIR + "/result/annotation/kegg/kegg_diamond.tsv",
+        salmon = expand(
+            WORKDIR + "/result/assembly/salmon/{sample}/quant.sf",
+            sample=SAMPLES,
+        ),
+    output:
+        done = touch(WORKDIR + "/result/integration/bacteria/.done")
+    params:
+        samples = config["samples"],
+        workdir = config["workdir"],
+    log:
+        WORKDIR + "/logs/integration/bacteria_tables.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/98b_bac_integration_tables.sh "
+        "-t {threads} -w {params.workdir} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule vir_integration_tables:
+    """Integrate viral abundance and annotation outputs into summary tables."""
+    input:
+        votu_table = WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
+        pharokka = WORKDIR + "/result/virus/pharokka/pharokka.gff",
+    output:
+        done = touch(WORKDIR + "/result/integration/virus/.done")
+    params:
+        samples = config["samples"],
+        workdir = config["workdir"],
+    log:
+        WORKDIR + "/logs/integration/virus_tables.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/98c_vir_integration_tables.sh "
+        "-t {threads} -w {params.workdir} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule fun_integration_tables:
+    """Integrate fungal annotation and abundance outputs into summary tables."""
+    input:
+        metaeuk = expand(
+            WORKDIR + "/result/fungi/metaeuk/{sample}/{sample}.fas",
+            sample=SAMPLES,
+        ),
+        eggnog = WORKDIR + "/result/fungi/eggnog/eggnog.emapper.annotations",
+    output:
+        done = touch(WORKDIR + "/result/integration/fungi/.done")
+    params:
+        samples = config["samples"],
+        workdir = config["workdir"],
+    log:
+        WORKDIR + "/logs/integration/fungi_tables.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/98d_fun_integration_tables.sh "
+        "-t {threads} -w {params.workdir} -r {REPO} "
+        "> {log} 2>&1"

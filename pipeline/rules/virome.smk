@@ -73,6 +73,22 @@ rule vir_checkv_contig:
         "> {log} 2>&1"
 
 
+rule checkv_filter:
+    """Filter CheckV viral contigs for downstream use."""
+    input:
+        quality_summary = WORKDIR + "/result/virus/checkv/{sample}/quality_summary.tsv",
+    output:
+        filtered_fna = WORKDIR + "/result/virus/checkv/{sample}/viruses_filtered.fna",
+    log:
+        WORKDIR + "/logs/virus/checkv_filter/{sample}.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/54b_vir_checkv_filter.sh "
+        "-s {wildcards.sample} -t {threads} "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
 rule vir_prodigal_gv:
     """Viral gene prediction (Prodigal-gv with genetic code 15)."""
     input:
