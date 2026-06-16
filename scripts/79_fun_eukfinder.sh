@@ -72,6 +72,16 @@ EOF
     exit 0
 fi
 
+PLAST_DB="${REPO}/db/eukfinder_db/PlastDB.fasta"
+PLAST_MAP="${REPO}/db/eukfinder_db/PlastDB_map.txt"
+PLAST_FLAGS=""
+if [ -f "${PLAST_DB}" ] && [ -f "${PLAST_MAP}" ]; then
+    PLAST_FLAGS="-p ${PLAST_DB} -m ${PLAST_MAP}"
+    echo "[fun_eukfinder] PlastDB found, enabling protein-level classification"
+else
+    echo "[WARN] PlastDB not found at ${PLAST_DB}, running without protein classification"
+fi
+
 # Eukfinder long_seqs 子命令
 # CLI: eukfinder long_seqs -l INPUT -o OUT_NAME -n THREADS --mhlen MIN_HIT_LEN
 # --cdb (centrifuge DB) 为可选，跳过使用 NCBI nt 模式
@@ -83,7 +93,8 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
             -l "$1" \
             -o "$2" \
             -n "$3" \
-            --mhlen 200
+            --mhlen 200 \
+            '"${PLAST_FLAGS}"'
     ' _ "${INPUT_CONTIGS}" "${OUTDIR}/results" "${CPUS}"
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
