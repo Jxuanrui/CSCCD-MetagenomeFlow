@@ -126,6 +126,28 @@ def collect_chunks(
     else:
         warn(f"missing registry: {registry_path}")
 
+    # Index literature skill packages: README.md and params.yaml per replication
+    replications_dir = repo / "skills" / "replications"
+    if replications_dir.is_dir():
+        for filepath in sorted(replications_dir.rglob("README.md")):
+            all_chunks.extend(parse_tool_doc(filepath))
+        for filepath in sorted(replications_dir.rglob("params.yaml")):
+            try:
+                import yaml as _yaml
+                data = _yaml.safe_load(filepath.read_text(encoding="utf-8")) or {}
+                text = filepath.read_text(encoding="utf-8").strip()
+                if text:
+                    all_chunks.append((
+                        text,
+                        {
+                            "doc_type": "replication_params",
+                            "source_path": str(filepath),
+                            "replication_id": filepath.parent.name,
+                        },
+                    ))
+            except Exception as exc:
+                warn(f"failed to read params {filepath}: {exc}")
+
     normalized_chunks = []
     for index, chunk in enumerate(all_chunks):
         if not isinstance(chunk, tuple) or len(chunk) != 2:
