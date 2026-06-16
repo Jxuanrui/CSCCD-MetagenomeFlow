@@ -41,6 +41,12 @@ Project/*/localDB/
 # Project 内本地数据库副本（二进制，体积大）
 skills/discovery/report/
 # Agent discovery 自动生成报告（非手工内容）
+skills/replications/**/code/original/
+# 原始论文代码 git clone 副本（只追踪适配版本）
+skills/replications/**/code/adapted/**/*.bz2
+skills/replications/**/code/adapted/**/*.tar.gz
+skills/replications/**/code/adapted/**/*.zip
+# 文献复现目录下的二进制数据文件（bz2/tar.gz/zip）
 *.md~
 # 编辑器临时 md 文件
 九种 RAG 架构详解.md
