@@ -1675,9 +1675,10 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 #
 # 安装状态：
 #   [✓ 完成 2026-06-16] PLAST DB  — PlastDB.fasta 6.7G + PlastDB_map.txt 10M
-#   [↓ 下载中 2026-06-16] 本地 Centrifuge DB — 667个真菌基因组 HTTPS 下载中
-#     PID: 3918944  日志: ${db}/eukfinder_db/centrifuge_db/download_fungi_ftp.log
-#     下载完成后执行: bash ${db}/eukfinder_db/centrifuge_db/build_centrifuge_db.sh
+#   [✓ 完成 2026-06-16] 本地 Centrifuge DB — 628个真菌基因组（553成功+75跳过，39失败为含空格路径）
+#     下载完成: db/eukfinder_db/centrifuge_db/raw_genomes/fungi_ftp/ (628 .gz)
+#     构建中: centrifuge-build PID 759441，EukDB.{1,2,3,4}.cf 写入中（预计完成 2026-06-16）
+#     完成后验证: ls -lh ${db}/eukfinder_db/centrifuge_db/EukDB.*.cf
 
 # --- §13.1 PLAST 数据库（已完成）---
 # 验证：

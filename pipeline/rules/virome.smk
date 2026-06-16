@@ -350,3 +350,48 @@ rule vir_vcontact3:
         "bash {REPO}/scripts/69_vir_vcontact3.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
+
+
+rule phabox2:
+    """End-to-end viral analysis and taxonomy prediction (PhaBox2)."""
+    input:
+        votu_fasta = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
+    output:
+        phabox2_summary = WORKDIR + "/result/virus/phabox2/phabox2_summary.tsv",
+    log:
+        WORKDIR + "/logs/virus/phabox2/phabox2.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/70_vir_phabox2.sh "
+        "-t {threads} -w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule dram_v:
+    """Viral functional annotation and AMG distillation (DRAM-v)."""
+    input:
+        votu_fasta = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
+    output:
+        dram_annotations = WORKDIR + "/result/virus/dram/DRAM_annotations.tsv",
+    log:
+        WORKDIR + "/logs/virus/dram/dram.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/71_vir_dram.sh "
+        "-t {threads} -w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule phagcn3:
+    """Bacteriophage taxonomy prediction (PhaGCN3)."""
+    input:
+        votu_fasta = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
+    output:
+        phagcn3_prediction = WORKDIR + "/result/virus/phagcn3/phagcn3_prediction.tsv",
+    log:
+        WORKDIR + "/logs/virus/phagcn3/phagcn3.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/72_vir_phagcn3.sh "
+        "-t {threads} -w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"

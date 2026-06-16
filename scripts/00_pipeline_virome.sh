@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 00_pipeline_virome.sh
-# 功  能: 病毒维度一站式流程（Pipeline 模式，脚本 01-02 + 51-69）
+# 功  能: 病毒维度一站式流程（Pipeline 模式，脚本 01-02 + 51-72）
 #
 # samplesheet.csv 格式（CSV，逗号分隔，有表头）：
 #   sample_id,r1,r2,host_type,project_dir
@@ -217,6 +217,10 @@ if should_run "annotate"; then
     bash "${SCRIPTS}/67_vir_bacphlip.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
     bash "${SCRIPTS}/68_vir_iphop.sh"      -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
     bash "${SCRIPTS}/69_vir_vcontact3.sh"  -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    echo "[pipeline_virome] Step 70-72: 扩展工具（PhaBox2/DRAM-v/PhaGCN3）..."
+    bash "${SCRIPTS}/70_vir_phabox2.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/71_vir_dram.sh"       -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/72_vir_phagcn3.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
 fi
 
 echo ""
