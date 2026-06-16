@@ -63,6 +63,9 @@
 #   [✓] §10.8 vConTACT3 3.1.6（独立环境 + 数据库 v230）                          2026-06-08  已安装
 #   [✓] §10.9 CheckV 1.1.1（数据库 genome_db + hmm_db 就绪）                     2026-06-08  已安装
 #   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv）  2026-06-08  已安装
+#   [✓] §14.1 PhaBox2 2.1.12（envs/phabox2，db/phabox2_db/ 1.7G）                2026-06-16  已安装测试通过（70_vir_phabox2.sh）
+#   [✓] §14.2 PhaGCN3 3.1（envs/phagcn3，db/phagcn3_db/ 275M）                  2026-06-16  已安装测试通过（72_vir_phagcn3.sh）
+#   [✓] §14.3 DRAM 1.5.0（envs/dram，db/dram_db/ rsync 完成，180G）             2026-06-16  安装完成，测试通过（71_vir_dram.sh）
 #   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建）        2026-06-11  已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
 #   [✓] §11.6 WGS 融入模块（mlst 2.11 + roary 3.12.0 in envs/prokaWGS；snippy 4.0.2 in envs/snippy）  2026-06-11  已安装
 #   [✓] §12.1 CGF catalog 760 真菌基因组（db/cgf/genomes/）              2026-06-15  已下载（709条，51条NCBI已撤回）
@@ -1660,44 +1663,56 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # §13. Eukfinder 数据库（79_fun_eukfinder.sh 依赖）
 # ==============================================================================
 # 说明：Eukfinder v1.2.4 long_seqs 工作流程：
-#       1. Centrifuge 初步分类（【必须】--cdb，70 GB，4 个 .cf 文件）
+#       1. Centrifuge 初步分类（【必须】--cdb，4 个 .cf 文件）
 #       2. PLAST 蛋白精确比对（【推荐】-p/-m，2.1 GB，提高注释精度）
-#       两个数据库均配置后，79_fun_eukfinder.sh 才能产生真实 .out 结果文件。
-#       工具已安装于 envs/assembly（eukfinder v1.2.4）。
-#       数据库来源：https://perun.biochem.dal.ca/Eukfinder/
+#
+# 数据库策略（本地构建，替代下载官方 70 GB）：
+#   官方 Centrifuge DB 70 GB，国内下载需 5 天（~150 KB/s）
+#   → 改为本地构建专用轻量 DB：NCBI RefSeq 真菌代表基因组 + 人类基因组
+#     序列来源：datasets download（NCBI，速度正常）+ 已有 CHM13v2
+#     构建时间：~2-4 小时（centrifuge-build -t 16）
+#     最终 DB 体积：~15-20 GB
 #
 # 安装状态：
 #   [✓ 完成 2026-06-16] PLAST DB  — PlastDB.fasta 6.7G + PlastDB_map.txt 10M
-#   [↓ 下载中 2026-06-16] Centrifuge DB — 70 GB，约需 5 天（PID 3870773）
-#     日志：${db}/eukfinder_db/centrifuge_db/download.log
-#     断点续传：意外中断后重新执行 §13.2 下方命令即可
+#   [↓ 下载中 2026-06-16] 本地 Centrifuge DB — 667个真菌基因组 HTTPS 下载中
+#     PID: 3918944  日志: ${db}/eukfinder_db/centrifuge_db/download_fungi_ftp.log
+#     下载完成后执行: bash ${db}/eukfinder_db/centrifuge_db/build_centrifuge_db.sh
 
 # --- §13.1 PLAST 数据库（已完成）---
 # 验证：
     # ls -lh ${db}/eukfinder_db/PlastDB.fasta      # 6.7G ✓
     # ls -lh ${db}/eukfinder_db/PlastDB_map.txt    # 10M  ✓
 
-# --- §13.2 Centrifuge 数据库（【必须】，70 GB）[↓ 下载中] ---
-# 后台下载（断点续传，意外中断后重新运行）：
-    # mkdir -p ${db}/eukfinder_db/centrifuge_db
-    # nohup wget -c \
-    #   --progress=dot:giga --tries=0 --timeout=60 --waitretry=30 \
+# --- §13.2 本地构建 Centrifuge DB（当前使用方案）---
+# 方法：从 NCBI HTTPS 逐个下载 667 个 RefSeq 真菌参考基因组 + 人类 CHM13v2
+#       URL 格式: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/{d1}/{d2}/{d3}/{acc}_{asm}/{acc}_{asm}_genomic.fna.gz
+#       速度: ~1 MB/s，总下载量 ~6-7 GB，预计 ~1.5 小时
+
+# 第一步：下载真菌基因组（后台运行，PID 3918944）
+    # nohup bash ${db}/eukfinder_db/centrifuge_db/download_fungi_ftp.sh \
+    #   > ${db}/eukfinder_db/centrifuge_db/download_fungi_ftp.log 2>&1 &
+    # tail -f ${db}/eukfinder_db/centrifuge_db/download_fungi_ftp.log  # 监控进度
+
+# 第二步：下载完成后一键构建索引（自动合并 fna.gz → 构建 centrifuge DB）
+    # bash ${db}/eukfinder_db/centrifuge_db/build_centrifuge_db.sh
+    # tail -f ${db}/eukfinder_db/centrifuge_db/build.log
+    # # 构建完成后生成：EukDB.{1,2,3,4}.cf
+    # ls -lh ${db}/eukfinder_db/centrifuge_db/EukDB*.cf
+
+# --- §13.3 备用方案：官方 Centrifuge DB 下载（70 GB，~5 天）---
+# 仅在无法正常访问 NCBI 时使用：
+    # nohup wget -c --progress=dot:giga --tries=0 --timeout=60 --waitretry=30 \
     #   -O "${db}/eukfinder_db/centrifuge_db/centrifuge_db.tar.gz" \
     #   "https://perun.biochem.dal.ca/Eukfinder/compressed_db/centrifuge_db.tar.gz" \
-    #   > "${db}/eukfinder_db/centrifuge_db/download.log" 2>&1 &
-
-# 下载完成后解压（解压后应有 4 个 .cf 文件）：
+    #   > "${db}/eukfinder_db/centrifuge_db/download_official.log" 2>&1 &
+    # # 下载完成后解压：
     # tar -xzf "${db}/eukfinder_db/centrifuge_db/centrifuge_db.tar.gz" \
     #     -C "${db}/eukfinder_db/centrifuge_db/"
-    # ls ${db}/eukfinder_db/centrifuge_db/Centrifuge_DB/Centrifuge_NewDB_Sept2020*.cf
 
-# 检查下载进度：
-    # tail -3 ${db}/eukfinder_db/centrifuge_db/download.log
-    # ls -lh ${db}/eukfinder_db/centrifuge_db/centrifuge_db.tar.gz
-
-# --- §13.3 配置路径并运行 79_fun_eukfinder.sh ---
-# 解压完成后更新 79 脚本中的 CDB 路径变量，或直接传参运行：
-    # CDB="${PROJ_DIR}/db/eukfinder_db/centrifuge_db/Centrifuge_DB/Centrifuge_NewDB_Sept2020"
+# --- §13.4 运行 79_fun_eukfinder.sh ---
+# 本地构建 DB 完成后，--cdb 指向 EukDB 前缀：
+    # CDB="${PROJ_DIR}/db/eukfinder_db/centrifuge_db/EukDB"
     # for s in S01 S02 S03 S04 S05 S06; do
     #   bash ${PROJ_DIR}/scripts/79_fun_eukfinder.sh \
     #     -s ${s} -t 16 \
@@ -1707,6 +1722,45 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # done
 
 # ==============================================================================
-# §13 状态：PLAST [✓ 完成] | Centrifuge [↓ 下载中 2026-06-16，~5 天]
+# §13 状态：PLAST [✓] | 本地CentrifugeDB [↓ HTTPS下载中 2026-06-16, PID 3918944]
 # ==============================================================================
 
+
+# ==============================================================================
+# §14. 病毒维度扩展工具（70_vir_phabox2 / 71_vir_dram / 72_vir_phagcn3）
+# ==============================================================================
+# 说明：对比 Virus_Apptainer_pipline + ViOTUcluster 参考项目，补充三类缺口分析：
+#   70 PhaBox2   — 端到端病毒/质粒分类 + 完整宿主+生活方式（比BACPHLIP更全）
+#   71 DRAM-v    — 病毒功能注释 + AMG（辅助代谢基因）预测（ViOTUcluster DRAM移植）
+#   72 PhaGCN3   — 深度学习图卷积病毒分类（补充vConTACT3）
+#
+# DB 来源：
+#   PhaBox2 DB ← /home/labuser/Course/Virus_Apptainer_pipline/db/phabox2-db/ (已复制)
+#   PhaGCN3 DB ← /home/labuser/Course/Virus_Apptainer_pipline/db/phagcn3-db/ (已复制)
+#   DRAM DB    ← /home/labuser/Course/ViOTUcluster/db/DRAM/ (rsync 中，180G)
+
+# --- §14.1 PhaBox2 [✓ 已完成 2026-06-16] ---
+# 安装：conda install -c bioconda phabox=2.1.12 (Python 3.10)
+# 验证：conda run --prefix ${envs}/phabox2 phabox2 --version
+    # conda create --prefix ${envs}/phabox2 python=3.10 -y
+    # conda install --prefix ${envs}/phabox2 -c conda-forge -c bioconda phabox=2.1.12 -y
+    # cp -r /home/labuser/Course/Virus_Apptainer_pipline/db/phabox2-db ${db}/phabox2_db
+    # bash scripts/70_vir_phabox2.sh -t 8 -w Project/Project_example -r ${PROJ_DIR}
+
+# --- §14.2 PhaGCN3 [✓ 已完成 2026-06-16] ---
+# 安装：conda + pytorch (CPU) + diamond + MCL + 上游源码适配
+# 验证：conda run --prefix ${envs}/phagcn3 python -c "import phagcn3; print('ok')"
+    # conda create --prefix ${envs}/phagcn3 python=3.10 pytorch cpuonly diamond mcl seqkit blast -y
+    # cp -r /home/labuser/Course/Virus_Apptainer_pipline/db/phagcn3-db ${db}/phagcn3_db
+    # bash scripts/72_vir_phagcn3.sh -t 8 -w Project/Project_example -r ${PROJ_DIR}
+
+# --- §14.3 DRAM 1.5.0 [✓ 完成 2026-06-16] ---
+# 安装：conda-forge dram=1.5.0 + setuptools<81（pinned，规避 pkg_resources 移除）
+# DB: db/dram_db/（180G，refseq_viral + peptidases + kofam + genome_summary_form 等）
+# 测试验证：
+    # bash scripts/71_vir_dram.sh -t 8 -w Project/Project_example -r ${PROJ_DIR}
+# 输出：result/virus/dram/DRAM_annotations.tsv + DRAM_amg_summary.tsv ✓
+
+# ==============================================================================
+# §14 状态：PhaBox2 [✓] | PhaGCN3 [✓] | DRAM [✓ 2026-06-16]
+# ==============================================================================

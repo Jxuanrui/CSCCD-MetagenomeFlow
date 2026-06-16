@@ -229,6 +229,12 @@ Raw reads (*.fastq.gz)
             │                   (lytic / lysogenic)             │
             │  68  iPHoP         Virus-host range prediction    │
             │  69  vConTACT3     Taxonomic gene-sharing network │
+            │  70  PhaBox2       End-to-end classification      │
+            │                   (virus/plasmid + lineage + host)│
+            │  71  DRAM-v        Viral functional annotation    │
+            │                   + AMG (auxiliary metabolic gene)│
+            │  72  PhaGCN3       Deep-learning phage taxonomy   │
+            │                   (graph convolutional network)   │
             └───────────────────────────────────────────────────┘
                         │
                         ▼
@@ -263,6 +269,10 @@ Raw reads (*.fastq.gz)
 | `bacphlip/bacphlip_results.tsv` | Lifestyle probability per vOTU (lytic vs lysogenic) |
 | `iphop/Host_prediction_to_genus_m90.csv` | Host genus-level predictions (≥90% confidence) |
 | `vcontact3/exports/final_assignments.csv` | Taxonomic cluster assignments from gene-sharing network |
+| `phabox2/phabox2_summary.tsv` | PhaBox2 end-to-end classification (virus/non-virus + full lineage + host + lifestyle per vOTU) |
+| `dram/DRAM_annotations.tsv` | DRAM-v functional annotation table (per-gene: KO / PFAM / VOGDB / AMG flags) |
+| `dram/DRAM_amg_summary.tsv` | AMG summary: auxiliary metabolic genes with pathway and AMG type per vOTU |
+| `phagcn3/phagcn3_prediction.tsv` | PhaGCN3 deep-learning family-level classification with confidence score |
 
 > vMAG reconstruction (steps 61–63) requires sufficient assembly depth. For low-biomass or shallow-sequencing samples, these steps soft-fail gracefully and the vOTU-level outputs (steps 54b–60, 64–69) remain fully valid.
 

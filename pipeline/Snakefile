@@ -76,7 +76,7 @@ rule all:
         WORKDIR + "/result/annotation/defense_finder/defense_finder_systems.tsv",
         WORKDIR + "/result/annotation/ncyc/ncyc_hits.tsv",
         WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
-        expand("{workdir}/result/annotation/antismash/{sample}/index.html",
+        expand("{workdir}/result/annotation/antismash/{sample}/.done",
                workdir=WORKDIR, sample=SAMPLES),
         # Binning
         expand("{workdir}/result/binning/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
