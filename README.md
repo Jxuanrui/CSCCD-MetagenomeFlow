@@ -202,16 +202,20 @@ Raw reads (*.fastq.gz)
                     54  CheckV      Contig quality assessment (completeness / contamination)
                         │
                         ▼
+                   54b  Quality filter  MIUVIG standard: keep Complete/HQ/MQ/LQ +
+                        │              Not-determined with viral genes ≥1; length ≥2000 bp
+                        ▼
                     55  Prodigal-gv Viral protein prediction (viral genetic code)
                         │
             ┌───────────┴────────────────────────────────────────┐
             │  Read-based vOTU pipeline                          │  vMAG reconstruction
             │                                                    │
-            │  56  vclust       vOTU clustering (95% ANI)        │  61  vRhyme       vMAG generation
-            │  57  geNomad      vOTU taxonomy annotation         │  62  CheckV       vMAG QC & filtering
-            │  58  Salmon build vOTU quantification index        │  63  CoverM       vMAG abundance
+            │  56  vclust       vOTU clustering (95% ANI, 0.85   │  61  vRhyme       vMAG generation
+            │                   qcov) → 20 cluster reps          │  62  CheckV       vMAG QC & filtering
+            │  57  geNomad      vOTU taxonomy annotation         │  63  CoverM       vMAG abundance
+            │  58  Salmon build vOTU quantification index        │
             │  59  Salmon quant TPM per sample                   │
-            │  60  biostack     vOTU abundance matrix            │
+            │  60  vOTU abundance matrix (contig-level TPM agg.) │
             └───────────┬────────────────────────────────────────┘
                         │
                         ▼
@@ -234,7 +238,7 @@ Raw reads (*.fastq.gz)
         ▼               ▼                               ▼
   Raw tables      Normalized tables           vOTU annotation matrix
   result/         .../normalized/             votu_annotation_matrix.tsv
-  integration/    *_relab + *_clr             (77 vOTUs × 14 cols)
+  integration/    *_relab + *_clr             (77 contig rows × 17 cols)
   virus/
 ```
 
@@ -242,37 +246,42 @@ Raw reads (*.fastq.gz)
 
 | Path | Content |
 |------|---------|
-| `assembly/virome_contigs.fa` | Viral-enriched contigs (≥1.5 kb, MEGAHIT) |
-| `genomad/virus_summary.tsv` | geNomad viral prediction scores + lifestyle |
-| `virsorter2/final-viral-score.tsv` | VirSorter2 confidence scores per contig |
-| `checkv/quality_summary.tsv` | Contig quality (completeness, contamination, genome type) |
-| `votu/vOTU_sequences.fa` | Representative vOTU sequences (95% ANI clusters) |
-| `votu/votu_table.tsv` | vOTU × sample abundance matrix (TPM + counts) |
-| `votu/genomad_taxonomy.tsv` | Taxonomic annotation of representative vOTUs |
-| `vmag/bins/.done` | vMAG sentinel (vRhyme; soft-fail on small data) |
-| `pharokka/pharokka_cds_final_merged_output.tsv` | Per-CDS function annotation (PHROG database) |
+| `assembly/${SAMPLE}/${SAMPLE}.contigs.fa` | All assembled contigs (≥1.5 kb, MEGAHIT) |
+| `genomad/${SAMPLE}/*_virus_summary.tsv` | geNomad viral prediction scores + lifestyle |
+| `virsorter2/${SAMPLE}/final-viral-score.tsv` | VirSorter2 confidence scores per contig |
+| `checkv/${SAMPLE}/quality_summary.tsv` | Contig quality (completeness, contamination, genome type) |
+| `checkv/${SAMPLE}/viruses_filtered.fna` | **Step 54b**: MIUVIG-standard quality-filtered contigs (42 total across 6 samples) |
+| `checkv/${SAMPLE}/filter_summary.tsv` | Per-sample filter stats (pass/fail count per quality tier) |
+| `votu/contigs/virus.fasta` | 42 quality-filtered contigs pooled for vOTU clustering |
+| `votu/votu_representatives.tsv` | 20 vOTU cluster representatives (95% ANI, 0.85 qcov) |
+| `votu/votu_table.tsv` | CDS × sample abundance (Salmon TPM; aggregated to contig level by 98c) |
+| `votu/taxonomy/genomad_taxonomy.tsv` | Taxonomic annotation of representative vOTUs |
+| `vmag/bins/.done` | vMAG sentinel (soft-fail on small datasets) |
+| `pharokka/${SAMPLE}/pharokka_cds_final_merged_output.tsv` | Per-CDS function annotation (PHROG database) |
 | `phold/vOTU_per_cds_predictions.tsv` | Structural annotation of dark-matter ORFs |
 | `vog/vog_hits.tsv` | VOG HMM scan hits across kingdoms |
 | `bacphlip/bacphlip_results.tsv` | Lifestyle probability per vOTU (lytic vs lysogenic) |
 | `iphop/Host_prediction_to_genus_m90.csv` | Host genus-level predictions (≥90% confidence) |
 | `vcontact3/exports/final_assignments.csv` | Taxonomic cluster assignments from gene-sharing network |
 
-> vMAG reconstruction (steps 61–63) requires sufficient assembly depth. For low-biomass or shallow-sequencing samples, these steps soft-fail gracefully and the vOTU-level outputs (steps 56–60, 64–69) remain fully valid.
+> vMAG reconstruction (steps 61–63) requires sufficient assembly depth. For low-biomass or shallow-sequencing samples, these steps soft-fail gracefully and the vOTU-level outputs (steps 54b–60, 64–69) remain fully valid.
+
+> **vOTU counting note**: The 77-row `votu_annotation_matrix.tsv` represents all unique contigs with Prodigal-gv CDS predictions across all 6 samples. Of these, 42 passed the MIUVIG quality filter (step 54b) and were clustered into **20 vOTU representatives**. The annotation matrix retains all 77 contigs to preserve full quantitative information; downstream statistics should use the quality-filtered set (42) or representative set (20) as appropriate.
 
 ### Integration Outputs (`result/integration/virus/`)
 
-Generated by `scripts/98c_vir_integration_tables.sh`. Quantification unit is **vOTU** (Σ CDS TPM per vOTU). All tables: rows = functional features, columns = samples.
+Generated by `scripts/98c_vir_integration_tables.sh`. Quantification unit is **contig-level TPM** (Σ CDS TPM per contig, aggregated from Salmon CDS-level quantification). All tables: rows = functional features, columns = samples.
 
-#### Raw tables (Σ vOTU TPM per feature per sample)
+#### Raw tables (Σ contig TPM per feature per sample)
 
-| File | Feature axis | Annotation source |
-|------|-------------|-------------------|
-| `phrog_category_abundance.tsv` | PHROG functional categories (9 classes) | PHAROKKA (majority vote per vOTU) |
-| `vog_abundance.tsv` | VOG identifiers (cross-kingdom viral markers) | VOGDB HMM scan |
-| `lifestyle_abundance.tsv` | Virulent / Temperate / Unclassified | BACPHLIP (threshold 0.5) |
-| `host_genus_abundance.tsv` | Predicted bacterial host genera | iPHoP (≥90% confidence) |
-| `viral_family_abundance.tsv` | Viral family assignments | vConTACT3 gene-sharing network |
-| `votu_annotation_matrix.tsv` | All 77 vOTUs × (TPM × 6 samples + 7 annotation columns) | All sources merged |
+| File | Feature axis | Rows | Annotation source |
+|------|-------------|------|-------------------|
+| `phrog_category_abundance.tsv` | PHROG functional categories | 12 | PHAROKKA (majority vote per contig) |
+| `vog_abundance.tsv` | VOG identifiers (cross-kingdom viral markers) | 208 | VOGDB HMM scan |
+| `lifestyle_abundance.tsv` | Virulent / Temperate / Unclassified | 2 | BACPHLIP (threshold 0.5) |
+| `host_genus_abundance.tsv` | Predicted bacterial host genera | 8 | iPHoP (≥90% confidence) |
+| `viral_family_abundance.tsv` | Viral family assignments | 17 | vConTACT3 gene-sharing network |
+| `votu_annotation_matrix.tsv` | 77 contigs × (TPM × 6 samples + 8 annotation cols) | 77 | All sources merged + CheckV quality |
 
 #### Normalized tables (`normalized/`, 10 files — use these for statistics)
 
@@ -280,7 +289,7 @@ Generated by `scripts/98c_vir_integration_tables.sh`. Quantification unit is **v
 |--------|--------|---------|
 | `*_relab.tsv` | Relative abundance (column sum = 1) | LEfSe · MaAsLin2 · heatmaps |
 | `*_clr.tsv` | Centered Log-Ratio (ε = 0.01) | PCoA (Aitchison) · PERMANOVA · ANCOM-BC2 · SIAMCAT |
-| `votu_annotation_matrix_relab.tsv` | Wide matrix + `vOTU_RELAB_S01..S06` columns | vOTU-level association analyses |
+| `votu_annotation_matrix_relab.tsv` | Wide matrix + `vOTU_RELAB_S01..S06` columns | contig-level association analyses |
 
 ---
 

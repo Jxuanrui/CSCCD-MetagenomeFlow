@@ -5,7 +5,7 @@
 #         工具版本：vclust 1.3+（conda env: vclust）
 #         流  程: prefilter → align → cluster (Leiden, ANI 0.95, qcov 0.85)
 # 依  赖: 54_vir_checkv_contig.sh 的病毒 contigs（跨样本合并）
-# 输  入: ${WORKDIR}/result/virus/checkv/*/viruses.fna
+# 输  入: ${WORKDIR}/result/virus/checkv/*/viruses_filtered.fna
 # 输  出: ${WORKDIR}/result/virus/votu/
 #           contigs/virus.fasta  — 全样本病毒 contigs 合并
 #           vclust/clusters.tsv  — vclust 聚类结果
@@ -50,10 +50,16 @@ if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[votu_gen] vOTU 结�
 echo "[votu_gen] 步骤 1/4: 合并全样本病毒 contigs ..."
 mkdir -p "${CONTIGS_DIR}"
 > "${ALL_VIRUS}"  # 清空
-for f in "${WORKDIR}"/result/virus/checkv/*/viruses.fna; do
+for f in "${WORKDIR}"/result/virus/checkv/*/viruses_filtered.fna; do
     [ -f "$f" ] && cat "$f" >> "${ALL_VIRUS}"
 done
-# fallback: 用 virus_contigs.fasta
+# fallback: 用 viruses.fna
+if [ ! -s "${ALL_VIRUS}" ]; then
+    for f in "${WORKDIR}"/result/virus/checkv/*/viruses.fna; do
+        [ -f "$f" ] && cat "$f" >> "${ALL_VIRUS}"
+    done
+fi
+# second fallback: 用 virus_contigs.fasta
 if [ ! -s "${ALL_VIRUS}" ]; then
     for f in "${WORKDIR}"/result/virus/checkv/*/virus_contigs.fasta; do
         [ -f "$f" ] && cat "$f" >> "${ALL_VIRUS}"
