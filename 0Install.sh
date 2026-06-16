@@ -1659,40 +1659,54 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # ==============================================================================
 # §13. Eukfinder 数据库（79_fun_eukfinder.sh 依赖）
 # ==============================================================================
-# 说明：Eukfinder v1.2.4 的 long_seqs 子命令需要 PLAST 蛋白数据库用于真核序列鉴定。
-#       工具已安装于 envs/assembly（pip install eukfinder==1.2.4）。
-#       数据库来源：达尔豪斯大学服务器（https://perun.biochem.dal.ca/Eukfinder/）
-#
-# 数据库说明：
-#   PLAST DB    2.1 GB  蛋白参考库（真核/原核序列比对，plast 工具专用格式）
-#   Centrifuge  70 GB   可选，用于更精确的分类学辅助（默认不需要）
+# 说明：Eukfinder v1.2.4 long_seqs 工作流程：
+#       1. Centrifuge 初步分类（【必须】--cdb，70 GB，4 个 .cf 文件）
+#       2. PLAST 蛋白精确比对（【推荐】-p/-m，2.1 GB，提高注释精度）
+#       两个数据库均配置后，79_fun_eukfinder.sh 才能产生真实 .out 结果文件。
+#       工具已安装于 envs/assembly（eukfinder v1.2.4）。
+#       数据库来源：https://perun.biochem.dal.ca/Eukfinder/
 #
 # 安装状态：
-#   [↓ 下载中 2026-06-16] PLAST DB 下载进行中，预计约 4 小时
+#   [✓ 完成 2026-06-16] PLAST DB  — PlastDB.fasta 6.7G + PlastDB_map.txt 10M
+#   [↓ 下载中 2026-06-16] Centrifuge DB — 70 GB，约需 5 天（PID 3870773）
+#     日志：${db}/eukfinder_db/centrifuge_db/download.log
+#     断点续传：意外中断后重新执行 §13.2 下方命令即可
 
-# --- §13.1 PLAST 数据库（必须，2.1 GB）---
-# 下载命令（已在后台执行，勿重复运行）：
-    # mkdir -p ${db}/eukfinder_db
-    # wget -c "https://perun.biochem.dal.ca/Eukfinder/compressed_db/PlastDB_db.tar.gz" \
-    #      -O "${db}/eukfinder_db/PlastDB_db.tar.gz"
-    # tar -xzf "${db}/eukfinder_db/PlastDB_db.tar.gz" -C "${db}/eukfinder_db/"
+# --- §13.1 PLAST 数据库（已完成）---
+# 验证：
+    # ls -lh ${db}/eukfinder_db/PlastDB.fasta      # 6.7G ✓
+    # ls -lh ${db}/eukfinder_db/PlastDB_map.txt    # 10M  ✓
 
-# 验证（解压完成后运行）：
-    # ls ${db}/eukfinder_db/PlastDB_db/   # 应包含 *.pal 或 *.psi 等 plast 索引文件
+# --- §13.2 Centrifuge 数据库（【必须】，70 GB）[↓ 下载中] ---
+# 后台下载（断点续传，意外中断后重新运行）：
+    # mkdir -p ${db}/eukfinder_db/centrifuge_db
+    # nohup wget -c \
+    #   --progress=dot:giga --tries=0 --timeout=60 --waitretry=30 \
+    #   -O "${db}/eukfinder_db/centrifuge_db/centrifuge_db.tar.gz" \
+    #   "https://perun.biochem.dal.ca/Eukfinder/compressed_db/centrifuge_db.tar.gz" \
+    #   > "${db}/eukfinder_db/centrifuge_db/download.log" 2>&1 &
 
-# --- §13.2 更新 79_fun_eukfinder.sh 数据库路径 ---
-# 解压后需将 -p 参数指向实际 plast DB 前缀：
-    # PLAST_DB="${PROJ_DIR}/db/eukfinder_db/PlastDB_db/<前缀>"
-    # eukfinder long_seqs -l contigs.fa -o outdir/results -n 16 --mhlen 200 \
-    #     -p "${PLAST_DB}"
+# 下载完成后解压（解压后应有 4 个 .cf 文件）：
+    # tar -xzf "${db}/eukfinder_db/centrifuge_db/centrifuge_db.tar.gz" \
+    #     -C "${db}/eukfinder_db/centrifuge_db/"
+    # ls ${db}/eukfinder_db/centrifuge_db/Centrifuge_DB/Centrifuge_NewDB_Sept2020*.cf
 
-# --- §13.3 Centrifuge 数据库（可选，70 GB，分类精度更高）---
-# 如需更高分类精度，另行下载（耗时较长）：
-    # wget -c "https://perun.biochem.dal.ca/Eukfinder/compressed_db/centrifuge_db.tar.gz" \
-    #      -O "${db}/eukfinder_db/centrifuge_db.tar.gz"
-    # tar -xzf "${db}/eukfinder_db/centrifuge_db.tar.gz" -C "${db}/eukfinder_db/"
+# 检查下载进度：
+    # tail -3 ${db}/eukfinder_db/centrifuge_db/download.log
+    # ls -lh ${db}/eukfinder_db/centrifuge_db/centrifuge_db.tar.gz
+
+# --- §13.3 配置路径并运行 79_fun_eukfinder.sh ---
+# 解压完成后更新 79 脚本中的 CDB 路径变量，或直接传参运行：
+    # CDB="${PROJ_DIR}/db/eukfinder_db/centrifuge_db/Centrifuge_DB/Centrifuge_NewDB_Sept2020"
+    # for s in S01 S02 S03 S04 S05 S06; do
+    #   bash ${PROJ_DIR}/scripts/79_fun_eukfinder.sh \
+    #     -s ${s} -t 16 \
+    #     -w ${PROJ_DIR}/Project/Project_example \
+    #     -r ${PROJ_DIR} \
+    #     --cdb "${CDB}"
+    # done
 
 # ==============================================================================
-# ← §13 进行中（PLAST DB 下载中 2026-06-16）
+# §13 状态：PLAST [✓ 完成] | Centrifuge [↓ 下载中 2026-06-16，~5 天]
 # ==============================================================================
 

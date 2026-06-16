@@ -2,45 +2,50 @@
 # ==============================================================================
 # 脚本名: 79_fun_eukfinder.sh
 # 功  能: Eukfinder 组装后真核 contig 识别包装器
-#         工具版本：Eukfinder（conda env: assembly）
-#     注: eukfinder CLI 使用子命令模式（long_seqs）
-#           eukfinder long_seqs -l contigs.fa -o outdir/results -n 16 --mhlen 200
+#         工具版本：Eukfinder v1.2.4（conda env: assembly）
+#     注: eukfinder long_seqs 需要两个数据库：
+#           必须：Centrifuge DB（--cdb，70 GB，4 个 .cf 文件）
+#           推荐：PLAST DB（-p/-m，2.1 GB，提高注释精度）
 # 依  赖: 78_fun_megahit.sh 的输出（真菌组装 contigs）
 # 输  入: ${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}.contigs.fa
-# 输  出: ${WORKDIR}/result/fungi/eukfinder/${SAMPLE}/results.*
-# 用  法: bash 79_fun_eukfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
+# 输  出: ${WORKDIR}/result/fungi/eukfinder/${SAMPLE}/*.out（真核/原核/未知分组）
+# 用  法: bash 79_fun_eukfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--cdb CDB_PREFIX]
 # ==============================================================================
 
 show_help() {
 cat << EOF
-用法: bash 79_fun_eukfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
+用法: bash 79_fun_eukfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--cdb CDB_PREFIX]
 
 必需参数:
   -s  样本名
   -t  线程数
   -w  工作目录
   -r  MaxMetagenome 项目根目录
+
+可选参数:
+  --cdb  Centrifuge DB 路径前缀（若不传，脚本自动检测默认路径）
+         默认：\${REPO}/db/eukfinder_db/centrifuge_db/Centrifuge_DB/Centrifuge_NewDB_Sept2020
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
+SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""; CDB_OVERRIDE=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
+        -s) SAMPLE="$2";       shift 2 ;;
+        -t) CPUS="$2";         shift 2 ;;
+        -w) WORKDIR="$2";      shift 2 ;;
+        -r) REPO="$2";         shift 2 ;;
+        --cdb) CDB_OVERRIDE="$2"; shift 2 ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
 done
-for v in SAMPLE CPUS WORKDIR REPO; do if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; exit 1; fi; done
+for v in SAMPLE CPUS WORKDIR REPO; do if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数 -${v:0:1}"; exit 1; fi; done
 
 SECONDS=0
 
 INPUT_CONTIGS="${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/fungi/eukfinder/${SAMPLE}"
-RESULTS_DIR="${OUTDIR}"
 
 if [ ! -f "${INPUT_CONTIGS}" ]; then
     echo "[ERROR] 输入文件不存在: ${INPUT_CONTIGS}"
@@ -48,65 +53,96 @@ if [ ! -f "${INPUT_CONTIGS}" ]; then
     exit 1
 fi
 
-# Eukfinder 输出解析：long_seqs 子命令输出多个结果文件，检查是否已有结果
+# 检查是否已有真实结果（.out 文件，非占位符）
 if [ -d "${OUTDIR}" ] && ls "${OUTDIR}/"*.out 1>/dev/null 2>&1; then
-    echo "[INFO] 结果已存在，跳过: ${OUTDIR}/"
+    echo "[INFO] 真实结果已存在，跳过: ${OUTDIR}/"
     exit 0
 fi
 
 mkdir -p "${OUTDIR}"
 
 # 检查 eukfinder 是否可用
-EUKFINDER_CMD=$(conda run --prefix "${REPO}/envs/assembly" --no-capture-output bash -lc 'command -v Eukfinder_long || command -v eukfinder || true' 2>/dev/null | tail -n 1)
+EUKFINDER_CMD=$(conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    bash -lc 'command -v eukfinder || true' 2>/dev/null | tail -n 1)
 if [ -z "${EUKFINDER_CMD}" ]; then
-    cat > "${OUTDIR}/results.txt" << EOF
-Eukfinder is not installed in the current environment.
-Install options:
-1. pip install eukfinder
-2. pip install git+https://github.com/RogerLab/Eukfinder.git
-Then rerun:
-eukfinder long_seqs -l ${INPUT_CONTIGS} -o ${OUTDIR}/results -n ${CPUS} --mhlen 200
-EOF
-    echo "[fun_eukfinder] 未安装 Eukfinder，已生成占位说明文件"
-    echo "[fun_eukfinder] 完成，耗时 ${SECONDS}s"
-    exit 0
+    echo "[ERROR] Eukfinder 未安装于 ${REPO}/envs/assembly"
+    echo "        安装: conda install -p ${REPO}/envs/assembly -y eukfinder -c bioconda -c conda-forge"
+    exit 1
 fi
 
+# ── Centrifuge DB（必须）──────────────────────────────────────────────────────
+# 默认路径（来自 Eukfinder download_db 解压结构）
+DEFAULT_CDB="${REPO}/db/eukfinder_db/centrifuge_db/Centrifuge_DB/Centrifuge_NewDB_Sept2020"
+CDB="${CDB_OVERRIDE:-${DEFAULT_CDB}}"
+
+# 检测 4 个 .cf 文件
+CDB_OK=false
+if ls "${CDB}".*.cf 1>/dev/null 2>&1 && [ "$(ls "${CDB}".*.cf 2>/dev/null | wc -l)" -ge 4 ]; then
+    CDB_OK=true
+fi
+
+if [ "${CDB_OK}" = false ]; then
+    cat > "${OUTDIR}/results.txt" << EOF
+[PENDING] Centrifuge DB not ready: ${CDB}.*.cf (need 4 .cf files)
+
+Eukfinder requires the Centrifuge DB (~70 GB) to classify sequences.
+Download in progress: ${REPO}/db/eukfinder_db/centrifuge_db/download.log
+
+Once the download + extraction completes, re-run:
+  bash 79_fun_eukfinder.sh -s ${SAMPLE} -t ${CPUS} -w ${WORKDIR} -r ${REPO}
+
+Or pass the DB path explicitly:
+  bash 79_fun_eukfinder.sh -s ${SAMPLE} -t ${CPUS} -w ${WORKDIR} -r ${REPO} \\
+    --cdb /path/to/Centrifuge_NewDB_Sept2020
+EOF
+    echo "[fun_eukfinder] Centrifuge DB 尚未就绪，已生成等待说明文件"
+    echo "[fun_eukfinder] DB 路径: ${CDB}.*.cf"
+    echo "[fun_eukfinder] 下载进度: ${REPO}/db/eukfinder_db/centrifuge_db/download.log"
+    exit 0
+fi
+echo "[fun_eukfinder] Centrifuge DB 已就绪: ${CDB}"
+
+# ── PLAST DB（可选，推荐）────────────────────────────────────────────────────
 PLAST_DB="${REPO}/db/eukfinder_db/PlastDB.fasta"
 PLAST_MAP="${REPO}/db/eukfinder_db/PlastDB_map.txt"
 PLAST_FLAGS=""
 if [ -f "${PLAST_DB}" ] && [ -f "${PLAST_MAP}" ]; then
     PLAST_FLAGS="-p ${PLAST_DB} -m ${PLAST_MAP}"
-    echo "[fun_eukfinder] PlastDB found, enabling protein-level classification"
+    echo "[fun_eukfinder] PLAST DB 已就绪，启用蛋白级分类"
 else
-    echo "[WARN] PlastDB not found at ${PLAST_DB}, running without protein classification"
+    echo "[WARN] PLAST DB 未找到，将仅使用 Centrifuge 分类（精度略低）"
 fi
 
-# Eukfinder long_seqs 子命令
-# CLI: eukfinder long_seqs -l INPUT -o OUT_NAME -n THREADS --mhlen MIN_HIT_LEN
-# --cdb (centrifuge DB) 为可选，跳过使用 NCBI nt 模式
+# ── 运行 Eukfinder long_seqs ─────────────────────────────────────────────────
+# 注意：eukfinder 将日志写入运行时工作目录，需 cd 到 OUTDIR
+cd "${OUTDIR}"
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    bash -lc '
+    bash -lc "
         set -e
-        CMD=$(command -v Eukfinder_long || command -v eukfinder)
-        "${CMD}" long_seqs \
-            -l "$1" \
-            -o "$2" \
-            -n "$3" \
+        eukfinder long_seqs \
+            -l '${INPUT_CONTIGS}' \
+            -o '${SAMPLE}' \
+            -n '${CPUS}' \
             --mhlen 200 \
-            '"${PLAST_FLAGS}"'
-    ' _ "${INPUT_CONTIGS}" "${OUTDIR}/results" "${CPUS}"
+            --cdb '${CDB}' \
+            ${PLAST_FLAGS}
+    "
 EXIT_CODE=$?
+cd - > /dev/null
+
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] Eukfinder 运行失败（exit: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
 
-# Eukfinder 输出多个结果文件（.out, .tsv 等），生成摘要
+# 汇总结果
 {
     echo "Eukfinder completed for ${SAMPLE}"
     echo "Output directory: ${OUTDIR}"
-    find "${OUTDIR}" -maxdepth 2 -type f | sort
+    echo "Output files:"
+    find "${OUTDIR}" -maxdepth 3 -type f | sort
 } > "${OUTDIR}/results.txt"
 
-echo "[fun_eukfinder] 完成，耗时 ${SECONDS}s"
+echo "[fun_eukfinder] ${SAMPLE} 完成，耗时 ${SECONDS}s"
+echo "[fun_eukfinder] 输出目录: ${OUTDIR}"
+
