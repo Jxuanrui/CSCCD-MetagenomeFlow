@@ -1,10 +1,4 @@
-samples:
-  - "S01"
-  - "S02"
-  - "S03"
-  - "S04"
-  - "S05"
-  - "S06"
+samplesheet: "/home/labuser/Course/Maxmetagenome/Project/Project_example/samplesheet.csv"
 
 workdir: "/home/labuser/Course/Maxmetagenome/Project/Project_example"
 repo: "/home/labuser/Course/Maxmetagenome"

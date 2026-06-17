@@ -4,7 +4,16 @@
 
 configfile: "pipeline/config/config.yaml"
 
-SAMPLES  = config["samples"]
+import csv, os
+
+def _load_samples(cfg):
+    sheet = cfg.get("samplesheet", "")
+    if sheet and os.path.exists(sheet):
+        with open(sheet) as fh:
+            return [row["sample_id"] for row in csv.DictReader(fh)]
+    return cfg["samples"]
+
+SAMPLES  = _load_samples(config)
 WORKDIR  = config["workdir"]
 REPO     = config["repo"]
 CPUS     = config["cpus"]

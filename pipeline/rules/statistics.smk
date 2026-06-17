@@ -180,7 +180,7 @@ rule bac_integration_tables:
     output:
         done = touch(WORKDIR + "/result/integration/bacteria/.done")
     params:
-        samples = config["samples"],
+        samples = SAMPLES,
         workdir = config["workdir"],
     log:
         WORKDIR + "/logs/integration/bacteria_tables.log",
@@ -199,7 +199,7 @@ rule vir_integration_tables:
     output:
         done = touch(WORKDIR + "/result/integration/virus/.done")
     params:
-        samples = config["samples"],
+        samples = SAMPLES,
         workdir = config["workdir"],
     log:
         WORKDIR + "/logs/integration/virus_tables.log",
@@ -221,7 +221,7 @@ rule fun_integration_tables:
     output:
         done = touch(WORKDIR + "/result/integration/fungi/.done")
     params:
-        samples = config["samples"],
+        samples = SAMPLES,
         workdir = config["workdir"],
     log:
         WORKDIR + "/logs/integration/fungi_tables.log",

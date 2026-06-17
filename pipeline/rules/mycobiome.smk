@@ -101,7 +101,7 @@ rule funomics_aggregate:
     output:
         count_tsv = WORKDIR + "/result/integration/fungi/funomic_species_count.tsv",
     params:
-        samples = config["samples"],
+        samples = SAMPLES,
         workdir = config["workdir"],
     log:
         WORKDIR + "/logs/fungi/funomics_aggregate/aggregate.log",
@@ -153,7 +153,7 @@ rule fun_metaeuk:
     output:
         fas = WORKDIR + "/result/fungi/metaeuk/{sample}/{sample}.fas",
     params:
-        samples = config["samples"],
+        samples = SAMPLES,
         workdir = config["workdir"],
     log:
         WORKDIR + "/logs/fungi/metaeuk/{sample}.log",
