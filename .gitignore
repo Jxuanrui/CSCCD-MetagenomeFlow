@@ -51,3 +51,27 @@ skills/replications/**/code/adapted/**/*.zip
 # 编辑器临时 md 文件
 九种 RAG 架构详解.md
 .tmp/
+
+# ==============================================================================
+# 防止工具在项目根目录创建临时文件/目录（2026-06-17 路径清理后添加）
+# ==============================================================================
+
+# PhyloPhlAn/StrainPhlAn4 默认数据库目录（已在脚本中修复，但仍防御）
+/phylophlan_databases/
+
+# Eukfinder 日志（应在 Project/*/logs/fungi/ 下，但 Eukfinder 会在调用目录写日志）
+/Long_seqs_*.log
+
+# 统计脚本测试数据（应在 temp/ 下，但历史遗留问题）
+/Project/*/test_data/
+
+# 其他可能的临时数据库目录
+/*_database/
+/*_databases/
+/*_db/
+!db/
+
+# 临时文件模式
+/*.tmp
+/*.temp
+/*.cache

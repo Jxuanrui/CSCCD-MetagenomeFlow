@@ -198,6 +198,7 @@ if [ ! -f "${CLADES_FILE}" ] || [ ! -s "${CLADES_FILE}" ]; then
             -s "${CONSENSUS_DIR}"/*.json.bz2 \
             -d "${DB_PKL}" \
             -o "${TREES_DIR}" \
+            --database_folder "${TEMP_DIR}/phylophlan_db" \
             --print_clades_only \
             --non_interactive \
             -n "${CPUS}" \
@@ -244,6 +245,7 @@ if [ -f "${TREE_FILE}" ]; then
 fi
 
 mkdir -p "${CLADE_OUT_DIR}" "${CLADE_MARKER_DIR}"
+mkdir -p "${TEMP_DIR}/${CLADE}"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -286,6 +288,7 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         -c "${CLADE}" \
         -n "${CPUS}" \
         --tmp "${TEMP_DIR}/${CLADE}" \
+        --database_folder "${TEMP_DIR}/phylophlan_db" \
         --sample_with_n_markers 20 \
         --sample_with_n_markers_perc 25 \
         --marker_in_n_samples_perc 50 \
