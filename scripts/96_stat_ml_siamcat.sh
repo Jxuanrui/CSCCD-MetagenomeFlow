@@ -62,12 +62,20 @@ BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 RESULT_DIR="${WORKDIR}/result/stat/ml"
+VIZ_ML_DIR="${WORKDIR}/result/viz_ml"
 LOG_DIR="${WORKDIR}/logs/stat/ml"
 SENTINEL="${RESULT_DIR}/siamcat_done.txt"
 
-mkdir -p "${RESULT_DIR}" "${LOG_DIR}"
+mkdir -p "${RESULT_DIR}" "${VIZ_ML_DIR}" "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/96_stat_ml_siamcat.log"
 exec > >(tee -a "${LOG_FILE}") 2>&1
+
+run_ml_visualization() {
+    export RESULT_DIR VIZ_ML_DIR
+    export VIZ_ML_DIR="${WORKDIR}/result/viz_ml"
+    export FORCE
+    conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_ml_visualization.R"
+}
 
 if [ ! -f "${METADATA_CSV}" ]; then
     echo "[ERROR] Metadata CSV not found: ${METADATA_CSV}"
@@ -76,6 +84,12 @@ fi
 
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] Sentinel exists, skipping: ${SENTINEL}"
+    run_ml_visualization
+    EXIT_CODE=$?
+    if [ ${EXIT_CODE} -ne 0 ]; then
+        echo "[ERROR] 96_ml_visualization.R failed with exit code ${EXIT_CODE}"
+        exit ${EXIT_CODE}
+    fi
     exit 0
 fi
 
@@ -285,5 +299,13 @@ if [ ! -s "${SENTINEL}" ]; then
     exit 1
 fi
 
+run_ml_visualization
+EXIT_CODE=$?
+if [ ${EXIT_CODE} -ne 0 ]; then
+    echo "[ERROR] 96_ml_visualization.R failed with exit code ${EXIT_CODE}"
+    exit ${EXIT_CODE}
+fi
+
 echo "[INFO] SIAMCAT analysis completed in ${SECONDS}s"
 echo "[INFO] Sentinel: ${SENTINEL}"
+echo "[INFO] Visualizations: ${VIZ_ML_DIR}"
