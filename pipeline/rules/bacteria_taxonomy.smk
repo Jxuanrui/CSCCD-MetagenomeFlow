@@ -53,12 +53,15 @@ rule strainphlan4:
 
 
 rule humann3:
-    """Functional pathway quantification (HUMAnN3)."""
+    """Functional pathway quantification (HUMAnN3).
+    euk_profile is optional (used for taxon-directed alignment when available;
+    HUMAnN3 falls back to its own DB when absent). The ancient() wrapper
+    was removed to decouple this rule from the fungi MetaPhlAn4 dimension.
+    """
     input:
         r1      = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
         r2      = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
         profile = WORKDIR + "/result/metaphlan4/{sample}/{sample}_profile.txt",
-        euk_profile = ancient(WORKDIR + "/result/fungi/metaphlan4/{sample}/{sample}_profile.txt"),
     output:
         pathabundance = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance.tsv",
         pathabundance_relab = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance_relab.tsv",
