@@ -16,7 +16,9 @@ def _load_samples(cfg):
 SAMPLES  = _load_samples(config)
 WORKDIR  = config["workdir"]
 REPO     = config["repo"]
-CPUS     = config["cpus"]
+# threads_per_job: threads each tool uses internally (passed to -t / --nproc)
+# Align with Mode 2 Bash pipeline -t parameter
+CPUS     = config.get("threads_per_job", config.get("cpus", 8))
 
 include: "rules/preprocessing.smk"
 include: "rules/bacteria_taxonomy.smk"

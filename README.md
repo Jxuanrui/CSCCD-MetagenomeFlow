@@ -4,8 +4,8 @@
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
-[![Conda](https://img.shields.io/badge/conda%20envs-38-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-94-blue)]()
+[![Conda](https://img.shields.io/badge/conda%20envs-42-orange)](https://github.com/conda-forge/miniforge)
+[![Scripts](https://img.shields.io/badge/scripts-105-blue)]()
 [![RAG](https://img.shields.io/badge/RAG-6769%20chunks-purple)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
@@ -18,7 +18,7 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 **Why MaxMetagenome?**
 
 - **Three kingdoms, one platform.** Bacteria (scripts 11–41), Virome (51–72), and Mycobiome (71–86) share the same preprocessing steps, project directory layout, and Snakemake configuration — no glue scripts, no format conversion between steps.
-- **Portable and reproducible.** All 38 conda environments and ~700 GB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
+- **Portable and reproducible.** All 42 conda environments and ~700 GB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
 - **Three run modes.** Step-by-step (fine-grained debugging), Bash pipeline (lightweight, no extra deps, `--from`/`--skip` checkpointing), or Snakemake DAG (production, HPC-ready, native resume). All three modes call the identical underlying scripts.
 - **Functional integration built-in.** Script `98b` generates 11 integration tables per dimension at the end of each analysis — raw (Σ TPM), relative abundance, and CLR-normalized versions — ready for LEfSe, ANCOM-BC2, MaAsLin2, SIAMCAT, and Aitchison-distance ordination without any manual post-processing.
 - **AI-assisted.** 15 Claude Code slash commands (`/mgx-*`) cover pipeline planning, execution, visualization, and new-script integration, backed by a dual-source RAG knowledge base: 1,377 chunks of team experience docs + 5,392 chunks of literature Methods sections, indexed with `BAAI/bge-small-zh-v1.5`.
@@ -32,9 +32,9 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | OS | Linux x86_64 · Ubuntu 22.04 |
 | Environment manager | Miniforge3 (self-contained, under project root) |
 | Workflow engine | Snakemake 9.22.0 |
-| Analysis scripts | 94 (numbered 00–98b, incl. 54b/70/71/72) |
-| Snakemake rules | 85 across 9 rule files |
-| Conda environments | 38 isolated tool environments |
+| Analysis scripts | 105 (numbered 00–98b, incl. 54b/70/71/72) |
+| Snakemake rules | 98 across 9 rule files |
+| Conda environments | 42 isolated tool environments |
 | Databases | ~700 GB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, etc.) |
 | RAG knowledge base | 6,769 chunks (ChromaDB + bge-small-zh-v1.5) |
 
@@ -76,14 +76,25 @@ bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenom
 **Mode 3 — Snakemake** (production, HPC, recommended for large cohorts)
 
 ```bash
-# Edit per-run parameters: samples list, workdir, threads
+# Edit per-run parameters in pipeline/config/config.yaml:
+#   samplesheet: path to your project samplesheet.csv
+#   workdir:     path to your project directory
+#   threads_per_job: threads each tool uses internally (default 16, same as -t in Mode 2)
+#   max_jobs:    concurrent jobs (default 1; set to 4 on a 64-core server → 4×16=64 threads)
 vim pipeline/config/config.yaml
 
 # Dry run — inspect the DAG without executing
 snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml --dry-run
 
-# Run (auto-resume incomplete jobs)
-snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 16 --rerun-incomplete
+# Run — set -j to match max_jobs in config.yaml
+# Single server (64 cores): -j 4 (4 jobs × 16 threads = 64 threads)
+# Large HPC:                -j 8 (8 jobs × 16 threads = 128 threads)
+snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml \
+  -j $(python3 -c "import yaml; print(yaml.safe_load(open('pipeline/config/config.yaml'))['max_jobs'])") \
+  --rerun-incomplete
+
+# Or simply specify -j directly:
+snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 4 --rerun-incomplete
 ```
 
 ---
