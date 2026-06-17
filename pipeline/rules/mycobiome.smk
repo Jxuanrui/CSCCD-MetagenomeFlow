@@ -162,7 +162,10 @@ rule fun_metaeuk:
 
 
 rule fun_eukfinder:
-    """Assembly-based eukaryotic contig refinement via Eukfinder."""
+    """Classify fungal assembly contigs: eukaryote / bacteria / unknown (Eukfinder v1.2.4).
+    Prerequisites: ETE3 taxa.sqlite initialized (~/.etetoolkit/taxa.sqlite),
+    EukDB at {REPO}/db/eukfinder_db/centrifuge_db/EukDB.{{1-4}}.cf (12.8 GB).
+    """
     input:
         contigs = WORKDIR + "/result/fungi/assembly/{sample}/{sample}.contigs.fa",
     output:

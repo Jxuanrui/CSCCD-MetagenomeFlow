@@ -72,7 +72,7 @@ fi
 
 # ── Centrifuge DB（必须）──────────────────────────────────────────────────────
 # 默认路径（来自 Eukfinder download_db 解压结构）
-DEFAULT_CDB="${REPO}/db/eukfinder_db/centrifuge_db/Centrifuge_DB/Centrifuge_NewDB_Sept2020"
+DEFAULT_CDB="${REPO}/db/eukfinder_db/centrifuge_db/EukDB"
 CDB="${CDB_OVERRIDE:-${DEFAULT_CDB}}"
 
 # 检测 4 个 .cf 文件
@@ -142,6 +142,14 @@ fi
     echo "Output files:"
     find "${OUTDIR}" -maxdepth 3 -type f | sort
 } > "${OUTDIR}/results.txt"
+
+# 将 Eukfinder 自动生成的 Long_seqs_*.log 移至项目 logs 目录（避免污染结果目录）
+LOG_DEST="${WORKDIR}/logs/fungi"
+mkdir -p "${LOG_DEST}"
+for stray_log in "${OUTDIR}"/Long_seqs_*.log; do
+    [ -f "${stray_log}" ] && mv "${stray_log}" "${LOG_DEST}/" && \
+        echo "[fun_eukfinder] 日志已移至 ${LOG_DEST}/$(basename ${stray_log})"
+done
 
 echo "[fun_eukfinder] ${SAMPLE} 完成，耗时 ${SECONDS}s"
 echo "[fun_eukfinder] 输出目录: ${OUTDIR}"
