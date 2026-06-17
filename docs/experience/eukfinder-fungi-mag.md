@@ -96,7 +96,13 @@ checkm-euk \
 
 ## Verified
 
-- pending — 基于工具文档与脚本分析推导，待实际运行验证
+- **validated — 已通过实际运行验证**
+- Project_example / S01 / 2026-06-17 / exit=0 / 耗时 148s
+  - 输入：`result/fungi/assembly/S01/S01.contigs.fa`
+  - 输出：`Eukfinder_results/` — Bact=62 contigs, Unk=4, EUnk=4, Euk=0
+  - 0 个真核 contig 为预期行为（Project_example 测序深度不足）
+  - 前置条件：ETE3 taxa.sqlite（~700MB）已初始化；EukDB（628/667 基因组，12.8GB）已就绪
+  - Provenance: `agents/provenance/20260617_79_fun_eukfinder_S01.json`
 
 ## References（可选）
 
