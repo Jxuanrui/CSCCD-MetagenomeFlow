@@ -58,6 +58,9 @@ SECONDS=0
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
+# PHF (Yan2024 Cell187 method) is the preferred fungi abundance source.
+# Falls back to metaphlan4 per-sample profiles when PHF table is absent.
+FUNGI_PHF_TABLE="${WORKDIR}/result/integration/fungi/funomic_species_count.tsv"
 RESULT_DIR="${WORKDIR}/result/stat/network"
 LOG_DIR="${WORKDIR}/logs/stat/network"
 SENTINEL="${RESULT_DIR}/network_summary.txt"
@@ -79,7 +82,7 @@ fi
 echo "[INFO] Running co-occurrence network analysis"
 echo "[INFO] Network type: ${NET_TYPE}"
 
-export WORKDIR REPO THREADS METADATA_CSV GROUP_COL NET_TYPE BACT_TABLE VIR_TABLE FUNGI_DIR RESULT_DIR
+export WORKDIR REPO THREADS METADATA_CSV GROUP_COL NET_TYPE BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_PHF_TABLE RESULT_DIR
 
 R_LIBS_USER="" conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
@@ -108,6 +111,7 @@ net_type <- Sys.getenv("NET_TYPE")
 bact_table <- Sys.getenv("BACT_TABLE")
 vir_table <- Sys.getenv("VIR_TABLE")
 fungi_dir <- Sys.getenv("FUNGI_DIR")
+fungi_phf_table <- Sys.getenv("FUNGI_PHF_TABLE")
 result_dir <- Sys.getenv("RESULT_DIR")
 threads <- as.integer(Sys.getenv("THREADS", "1"))
 repo <- Sys.getenv("REPO")
@@ -196,6 +200,40 @@ read_fungi_profiles <- function(dir_path) {
   merged <- as.matrix(merged[, -1, drop = FALSE])
   rownames(merged) <- rn
   merged[rowSums(merged) > 0, , drop = FALSE]
+}
+
+# PHF (Yan2024 Cell187) abundance table: rows=taxa, cols=samples, tab-separated.
+# First column is "cluster_id" or a taxonomy label column — detect automatically.
+read_phf_table <- function(path) {
+  raw <- readr::read_tsv(path, show_col_types = FALSE)
+  # Drop non-numeric columns that are clearly taxonomy/annotation
+  numeric_cols <- names(raw)[vapply(raw, is.numeric, logical(1))]
+  label_col <- names(raw)[1]
+  if (length(numeric_cols) == 0) stop("PHF table has no numeric columns: ", path)
+  mat <- as.matrix(raw[, numeric_cols, drop = FALSE])
+  rownames(mat) <- as.character(raw[[label_col]])
+  mat[rowSums(mat, na.rm = TRUE) > 0, , drop = FALSE]
+}
+
+load_fungi_data <- function(phf_table_path, metaphlan4_dir) {
+  # Priority 1: PHF abundance table (Yan2024 Cell187 method, gut-optimised)
+  if (nzchar(phf_table_path) && file.exists(phf_table_path)) {
+    mat <- tryCatch(read_phf_table(phf_table_path), error = function(e) NULL)
+    if (!is.null(mat) && nrow(mat) > 0) {
+      message("[fungi] Using PHF abundance table: ", phf_table_path,
+              " (", nrow(mat), " taxa)")
+      return(mat)
+    }
+  }
+  # Priority 2: MetaPhlAn4 per-sample profiles (fallback)
+  mat <- tryCatch(read_fungi_profiles(metaphlan4_dir), error = function(e) NULL)
+  if (!is.null(mat) && nrow(mat) > 0) {
+    message("[fungi] Using MetaPhlAn4-euk profiles: ", metaphlan4_dir,
+            " (", nrow(mat), " taxa)")
+    return(mat)
+  }
+  stop("No usable fungi abundance data found. Checked: '", phf_table_path,
+       "' and '", metaphlan4_dir, "'")
 }
 
 parse_phylum <- function(features) {
@@ -328,7 +366,7 @@ meta <- read_metadata(metadata_csv)
 datasets <- list(
   bacteria = tryCatch(read_abundance_table(bact_table), error = function(e) NULL),
   virus = tryCatch(read_abundance_table(vir_table), error = function(e) NULL),
-  fungi = tryCatch(read_fungi_profiles(fungi_dir), error = function(e) NULL)
+  fungi = tryCatch(load_fungi_data(fungi_phf_table, fungi_dir), error = function(e) NULL)
 )
 
 network_jobs <- list(
