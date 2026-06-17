@@ -38,9 +38,13 @@ rule fun_metaphlan4:
 
 
 rule fun_humann4:
-    """Extract k__Eukaryota pathway contributions from HUMAnN3 stratified output."""
+    """Extract k__Eukaryota pathway contributions from HUMAnN3 per-sample output.
+    Depends on humann3 per-sample pathabundance (not the stratified merge output)
+    so that bacteria and fungi dimensions remain independently schedulable.
+    73_fun_humann4_fungi.sh generates the stratified file internally if absent.
+    """
     input:
-        stratified = WORKDIR + "/result/humann3/{sample}/stratified/{sample}_pathabundance_relab_stratified.tsv",
+        pathabundance = WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance.tsv",
     output:
         out = WORKDIR + "/result/fungi/humann4/{sample}/{sample}_fungi_pathabundance.tsv",
     log:
