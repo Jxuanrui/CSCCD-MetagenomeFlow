@@ -74,7 +74,7 @@ run_ml_visualization() {
     export RESULT_DIR VIZ_ML_DIR
     export VIZ_ML_DIR="${WORKDIR}/result/viz_ml"
     export FORCE
-    conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_ml_visualization.R"
+    (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_ml_visualization.R")
 }
 
 if [ ! -f "${METADATA_CSV}" ]; then
@@ -97,7 +97,7 @@ echo "[INFO] Running SIAMCAT ML analysis"
 
 export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VIR_TABLE FUNGI_DIR RESULT_DIR
 
-conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
+(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
 options(warn = 1)
 
@@ -287,6 +287,7 @@ readr::write_tsv(auc_df, file.path(result_dir, "siamcat_auc_summary.tsv"))
 readr::write_tsv(bind_rows(status_log), file.path(result_dir, "siamcat_status.tsv"))
 writeLines(c("SIAMCAT AUC summary", capture.output(print(auc_df))), file.path(result_dir, "siamcat_done.txt"))
 RSCRIPT
+)
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

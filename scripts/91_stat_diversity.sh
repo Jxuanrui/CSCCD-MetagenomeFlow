@@ -97,7 +97,7 @@ export WORKDIR REPO THREADS METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DI
 
 echo "[INFO] Running R script for diversity analysis..."
 
-conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/91_diversity.R"
+(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/91_diversity.R")
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

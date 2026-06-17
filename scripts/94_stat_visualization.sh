@@ -82,7 +82,7 @@ echo "[INFO] Visualization dir: ${VIZ_DIR}"
 
 export WORKDIR REPO METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DIR DIVERSITY_DIR RESULT_DIR VIZ_DIR FORCE SENTINEL BARPLOT_PDF HEATMAP_PDF
 
-conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/94_visualization.R"
+(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/94_visualization.R")
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

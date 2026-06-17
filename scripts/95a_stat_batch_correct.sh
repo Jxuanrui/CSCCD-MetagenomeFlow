@@ -78,7 +78,7 @@ echo "[INFO] Running batch correction methods"
 
 export WORKDIR REPO THREADS METADATA_CSV BATCH_COL GROUP_COL BACT_TABLE RESULT_DIR
 
-conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
+(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
 options(warn = 1)
 
@@ -263,6 +263,7 @@ readr::write_tsv(bind_rows(summary_rows), file.path(result_dir, "batch_correctio
 readr::write_tsv(bind_rows(status_log), file.path(result_dir, "batch_correction_status.tsv"))
 writeLines("done", file.path(result_dir, "corrected_matrices.done"))
 RSCRIPT
+)
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

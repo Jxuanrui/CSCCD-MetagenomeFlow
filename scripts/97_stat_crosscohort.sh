@@ -152,7 +152,7 @@ export WORKDIR REPO METADATA_CSV GROUP_COL SOURCE COHORTS TRAIN_COHORT TEST_COHO
 
 echo "[INFO] Running R script for cross-cohort analysis..."
 
-conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/97_crosscohort.R"
+(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/97_crosscohort.R")
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

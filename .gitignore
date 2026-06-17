@@ -56,6 +56,9 @@ skills/replications/**/code/adapted/**/*.zip
 # 防止工具在项目根目录创建临时文件/目录（2026-06-17 路径清理后添加）
 # ==============================================================================
 
+# R 默认图形设备：未指定输出设备时在 cwd 生成空 Rplots.pdf（已在脚本中修复 cwd）
+/Rplots.pdf
+
 # PhyloPhlAn/StrainPhlAn4 默认数据库目录（已在脚本中修复，但仍防御）
 /phylophlan_databases/
 

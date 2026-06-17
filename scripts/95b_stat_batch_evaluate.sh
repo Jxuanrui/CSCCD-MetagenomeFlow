@@ -76,7 +76,7 @@ echo "[INFO] Running batch correction evaluation"
 
 export WORKDIR REPO METADATA_CSV BATCH_COL GROUP_COL BACT_TABLE BATCH_DIR RESULT_DIR
 
-conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
+(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
 options(warn = 1)
 
@@ -204,6 +204,7 @@ if (length(before_after_plots) > 0) {
 
 cat(scores$method[1], "\n")
 RSCRIPT
+)
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then

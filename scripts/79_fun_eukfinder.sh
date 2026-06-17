@@ -61,6 +61,26 @@ fi
 
 mkdir -p "${OUTDIR}"
 
+# ── ETE3 NCBI taxonomy DB 检查 ──────────────────────────────────────────────
+# ete3.NCBITaxa() 会在首次调用时下载 taxdump.tar.gz 到 cwd，然后解压到 ~/.etetoolkit/
+# 为避免下载文件污染任意目录，强制在 /tmp 下执行初始化；清理遗留的 taxdump 文件
+ETE3_DB="${HOME}/.etetoolkit/taxa.sqlite"
+if [ ! -f "${ETE3_DB}" ]; then
+    echo "[fun_eukfinder] ETE3 taxa.sqlite 未初始化，在 /tmp 下执行一次性初始化..."
+    (cd /tmp && conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+        python -c "import ete3; ete3.NCBITaxa()" 2>&1)
+    if [ ! -f "${ETE3_DB}" ]; then
+        echo "[ERROR] ETE3 初始化失败，请检查网络或手动运行："
+        echo "        (cd /tmp && conda run --prefix ${REPO}/envs/assembly python -c \"import ete3; ete3.NCBITaxa()\")"
+        exit 1
+    fi
+    # ete3 的 bug：删除条件判断有误，taxdump.tar.gz 不会被自动删除
+    rm -f /tmp/taxdump.tar.gz /tmp/taxdump.tar.gz.md5 /tmp/syn.tab /tmp/merged.tab /tmp/taxa.tab 2>/dev/null
+    echo "[fun_eukfinder] ETE3 初始化完成：${ETE3_DB}"
+fi
+# 清理当前目录下可能残留的 taxdump（历史遗留或调用者 cwd 问题）
+rm -f "${PWD}/taxdump.tar.gz" "${PWD}/taxdump.tar.gz.md5" 2>/dev/null
+
 # 检查 eukfinder 是否可用
 EUKFINDER_CMD=$(conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     bash -lc 'command -v eukfinder || true' 2>/dev/null | tail -n 1)
