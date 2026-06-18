@@ -6,6 +6,17 @@
 
 options(stringsAsFactors = FALSE, warn = 1)
 
+conda_r_lib <- file.path(R.home("home"), "library")
+project_r_lib <- Sys.getenv("R_LIBS_USER", unset = "")
+lib_paths <- .libPaths()
+if (nzchar(project_r_lib)) {
+  lib_paths <- lib_paths[normalizePath(lib_paths, winslash = "/", mustWork = FALSE) !=
+    normalizePath(project_r_lib, winslash = "/", mustWork = FALSE)]
+}
+if (dir.exists(conda_r_lib)) {
+  .libPaths(unique(c(conda_r_lib, lib_paths)))
+}
+
 required_pkgs <- c("ComplexHeatmap", "circlize", "ggplot2", "tidyverse")
 missing_pkgs <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing_pkgs) > 0) {

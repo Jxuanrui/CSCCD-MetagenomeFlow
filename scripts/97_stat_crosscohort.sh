@@ -80,6 +80,10 @@ if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ] || [ -z "${METADATA_CSV}" ] || [ -z "
     exit 1
 fi
 
+# Ensure absolute paths so R sub-processes receive them correctly
+WORKDIR="$(cd "${WORKDIR}" && pwd)"
+[ -n "${METADATA_CSV}" ] && METADATA_CSV="$(cd "$(dirname "${METADATA_CSV}")" && pwd)/$(basename "${METADATA_CSV}")"
+
 SECONDS=0
 
 ML_DIR="${WORKDIR}/result/stat/ml"

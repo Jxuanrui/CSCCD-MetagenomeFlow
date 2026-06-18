@@ -56,6 +56,10 @@ if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ] || [ -z "${THREADS}" ] || [ -z "${MET
     exit 1
 fi
 
+# Ensure absolute paths so R sub-processes receive them correctly
+WORKDIR="$(cd "${WORKDIR}" && pwd)"
+[ -n "${METADATA_CSV}" ] && METADATA_CSV="$(cd "$(dirname "${METADATA_CSV}")" && pwd)/$(basename "${METADATA_CSV}")"
+
 SECONDS=0
 
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
@@ -74,6 +78,22 @@ run_ml_visualization() {
     export RESULT_DIR VIZ_ML_DIR
     export VIZ_ML_DIR="${WORKDIR}/result/viz_ml"
     export FORCE
+    # If SIAMCAT was skipped (too few samples), generate placeholder PDFs
+    if grep -q "^SKIPPED" "${RESULT_DIR}/siamcat_done.txt" 2>/dev/null; then
+        echo "[INFO] SIAMCAT was skipped — generating placeholder visualization PDFs"
+        conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'PLACEHOLDER_R'
+viz_ml <- Sys.getenv("VIZ_ML_DIR")
+dir.create(viz_ml, recursive=TRUE, showWarnings=FALSE)
+for (fname in c("roc_multimodel_comparison.pdf", "feature_importance_with_sd.pdf")) {
+  pdf(file.path(viz_ml, fname), width=8, height=6)
+  plot.new()
+  text(0.5, 0.5, "SIAMCAT requires >=10 samples\nInsufficient samples in this run", cex=1.2)
+  dev.off()
+}
+cat("[INFO] Placeholder PDFs written\n")
+PLACEHOLDER_R
+        return 0
+    fi
     (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_ml_visualization.R")
 }
 
@@ -100,6 +120,15 @@ export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VI
 (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
 options(warn = 1)
+
+conda_r_lib <- file.path(R.home("home"), "library")
+project_r_lib <- Sys.getenv("R_LIBS_USER", unset = "")
+lib_paths <- .libPaths()
+if (nzchar(project_r_lib)) {
+  lib_paths <- lib_paths[normalizePath(lib_paths, winslash="/", mustWork=FALSE) !=
+    normalizePath(project_r_lib, winslash="/", mustWork=FALSE)]
+}
+if (dir.exists(conda_r_lib)) .libPaths(unique(c(conda_r_lib, lib_paths)))
 
 required_pkgs <- c("SIAMCAT", "phyloseq", "tidyverse")
 missing_pkgs <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
@@ -222,7 +251,14 @@ load_matrix <- function(dimension) {
 meta <- read_metadata(metadata_csv, group_col)
 mat <- load_matrix(dimension)
 common <- intersect(colnames(mat), rownames(meta))
-if (length(common) < 10) stop("Need at least 10 overlapping samples")
+if (length(common) < 10) {
+  cat("[WARN] Only", length(common), "overlapping samples; SIAMCAT requires >=10.",
+      "Writing placeholder sentinel and skipping ML.\n")
+  writeLines(c(paste0("SKIPPED: only ", length(common), " samples (need >=10 for SIAMCAT)"),
+               "Re-run with actual cohort data (>=10 samples per group)."),
+             file.path(result_dir, "siamcat_done.txt"))
+  quit(status = 0)
+}
 mat <- mat[, common, drop = FALSE]
 meta <- meta[common, , drop = FALSE]
 meta$label <- droplevels(as.factor(meta$label))

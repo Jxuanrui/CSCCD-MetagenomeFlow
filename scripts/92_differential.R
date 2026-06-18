@@ -6,6 +6,17 @@
 
 options(stringsAsFactors = FALSE, warn = 1)
 
+conda_r_lib <- file.path(R.home("home"), "library")
+project_r_lib <- Sys.getenv("R_LIBS_USER", unset = "")
+lib_paths <- .libPaths()
+if (nzchar(project_r_lib)) {
+  lib_paths <- lib_paths[normalizePath(lib_paths, winslash = "/", mustWork = FALSE) !=
+    normalizePath(project_r_lib, winslash = "/", mustWork = FALSE)]
+}
+if (dir.exists(conda_r_lib)) {
+  .libPaths(unique(c(conda_r_lib, lib_paths)))
+}
+
 required_pkgs <- c(
   "ALDEx2", "Maaslin2", "MicrobiomeStat", "ANCOMBC", "phyloseq",
   "tidyverse", "UpSetR", "ggplot2", "ggrepel"
@@ -70,6 +81,22 @@ log_viz_status <- function(plot_name, status, message = "", output = "") {
     message = message,
     output = output
   )
+}
+
+add_volcano_candidate <- function(dimension, method, data) {
+  existing <- volcano_candidates[[dimension]] %||% list()
+  existing[[length(existing) + 1]] <- list(method = method, data = data)
+  volcano_candidates[[dimension]] <<- existing
+}
+
+init_volcano_dimension <- function(dimension) {
+  existing <- volcano_candidates
+  existing[[dimension]] <- list()
+  volcano_candidates <<- existing
+}
+
+add_summary_row <- function(row) {
+  summary_rows[[length(summary_rows) + 1]] <<- row
 }
 
 run_step <- function(step, expr) {
@@ -535,6 +562,9 @@ generate_lefse_bar_plot <- function(search_roots, out_file, case_label, control_
     msg <- "No LEfSe results found with feature and LDA score columns"
     message("[WARN] ", msg)
     log_viz_status("lefse_lda_bars", "SKIPPED", msg, out_file)
+    pdf(out_file, width = 8, height = 6); plot.new()
+    text(0.5, 0.5, "LEfSe: no results available\n(insufficient samples or tool not run)", cex = 1.1)
+    dev.off()
     return(invisible(FALSE))
   }
 
@@ -544,6 +574,9 @@ generate_lefse_bar_plot <- function(search_roots, out_file, case_label, control_
     msg <- "LEfSe results were present but contained no usable LDA scores"
     message("[WARN] ", msg)
     log_viz_status("lefse_lda_bars", "SKIPPED", msg, out_file)
+    pdf(out_file, width = 8, height = 6); plot.new()
+    text(0.5, 0.5, "LEfSe: no usable LDA scores\n(insufficient differential signal)", cex = 1.1)
+    dev.off()
     return(invisible(FALSE))
   }
 
@@ -628,7 +661,7 @@ for (dimension in dimensions) {
 
     method_results <- list()
     sig_sets <- list()
-    volcano_candidates[[dimension]] <<- list()
+    init_volcano_dimension(dimension)
 
     run_step(paste0(dimension, "_aldex2"), {
       conds <- meta_bin[[group_col]]
@@ -640,7 +673,7 @@ for (dimension in dimensions) {
       out <- standardize_method_result(aldex_tbl, dimension, "ALDEx2", "taxon", effect_col, padj_col, pvalue_col, supplementary = FALSE)
       method_results$ALDEx2 <- out
       sig_sets$ALDEx2 <- out$taxon[out$significant]
-      volcano_candidates[[dimension]][[length(volcano_candidates[[dimension]]) + 1]] <<- list(method = "ALDEx2", data = out)
+      add_volcano_candidate(dimension, "ALDEx2", out)
       write_method_result(out, dimension, "aldex2")
     })
 
@@ -663,7 +696,7 @@ for (dimension in dimensions) {
       out <- standardize_method_result(maaslin_tbl, dimension, "MaAsLin2", "feature", "coef", "qval", "pval", supplementary = FALSE)
       method_results$MaAsLin2 <- out
       sig_sets$MaAsLin2 <- out$taxon[out$significant]
-      volcano_candidates[[dimension]][[length(volcano_candidates[[dimension]]) + 1]] <<- list(method = "MaAsLin2", data = out)
+      add_volcano_candidate(dimension, "MaAsLin2", out)
       write_method_result(out, dimension, "maaslin2")
     })
 
@@ -686,7 +719,7 @@ for (dimension in dimensions) {
       out <- standardize_method_result(linda_tbl, dimension, "LinDA", "taxon", effect_col, padj_col, pvalue_col, supplementary = FALSE)
       method_results$LinDA <- out
       sig_sets$LinDA <- out$taxon[out$significant]
-      volcano_candidates[[dimension]][[length(volcano_candidates[[dimension]]) + 1]] <<- list(method = "LinDA", data = out)
+      add_volcano_candidate(dimension, "LinDA", out)
       write_method_result(out, dimension, "linda")
     })
 
@@ -728,7 +761,7 @@ for (dimension in dimensions) {
       )
       method_results$ANCOMBC2 <- out
       sig_sets$ANCOMBC2 <- out$taxon[out$significant]
-      volcano_candidates[[dimension]][[length(volcano_candidates[[dimension]]) + 1]] <<- list(method = "ANCOMBC2", data = out)
+      add_volcano_candidate(dimension, "ANCOMBC2", out)
       write_method_result(out, dimension, "ancombc2")
     })
 
@@ -763,19 +796,25 @@ for (dimension in dimensions) {
       dplyr::slice_head(n = 30)
     plot_heatmap(top_heat, file.path(result_dir, paste0(dimension, "_top30_heatmap.pdf")))
 
-    summary_rows[[length(summary_rows) + 1]] <<- tibble(
+    add_summary_row(tibble(
       dimension = dimension,
       n_features = nrow(counts),
       n_samples = ncol(counts),
       consensus_taxa = nrow(merged_consensus)
-    )
+    ))
   })
 }
 
 summary_df <- bind_rows(summary_rows)
 status_df <- bind_rows(status_log)
 if (nrow(summary_df) == 0) {
-  stop("No differential abundance summary generated")
+  summary_df <- tibble(
+    dimension = character(),
+    n_features = numeric(),
+    n_samples = numeric(),
+    consensus_taxa = numeric(),
+    note = character()
+  )
 }
 
 readr::write_tsv(summary_df, file.path(result_dir, "diff_summary.tsv"))

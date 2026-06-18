@@ -121,6 +121,18 @@ rule all:
         WORKDIR + "/result/wgs/mlst/mlst.tsv",
         WORKDIR + "/result/wgs/pangenome/summary_statistics.txt",
         WORKDIR + "/result/wgs/snippy/core.tsv",
-        # Statistics (91-98) excluded from rule all:
-        # R env missing phyloseq/vegan/microbiome/ggplot2/tidyverse etc.
-        # Run scripts/91_stat_diversity.sh etc. manually after: conda run --prefix envs/r_stats Rscript -e "BiocManager::install(c('phyloseq','microbiome'))"
+        # Statistics & Visualization (91-98)
+        WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
+        WORKDIR + "/result/viz_diversity/pcoa_ellipses_permanova.pdf",
+        WORKDIR + "/result/viz_diversity/rarefaction_curves.pdf",
+        WORKDIR + "/result/stat/diff/diff_summary.tsv",
+        WORKDIR + "/result/viz_differential/volcano_plot.pdf",
+        WORKDIR + "/result/viz_differential/lefse_lda_bars.pdf",
+        WORKDIR + "/result/stat/network/network_summary.txt",
+        WORKDIR + "/result/stat/visualization/plots.done",
+        WORKDIR + "/result/viz_composition/barplot_composition_by_group.pdf",
+        WORKDIR + "/result/viz_composition/heatmap_genus_complexheatmap.pdf",
+        WORKDIR + "/result/stat/ml/siamcat_done.txt",
+        WORKDIR + "/result/viz_ml/roc_multimodel_comparison.pdf",
+        WORKDIR + "/result/viz_ml/feature_importance_with_sd.pdf",
+        WORKDIR + "/result/stat/report/report.done",
