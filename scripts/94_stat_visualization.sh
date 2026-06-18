@@ -54,11 +54,12 @@ VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 DIVERSITY_DIR="${WORKDIR}/result/stat/diversity"
 RESULT_DIR="${WORKDIR}/result/stat/visualization"
-VIZ_DIR="${WORKDIR}/result/viz_composition"
+VIZ_DIR="${WORKDIR}/result/stat/composition"
 LOG_DIR="${WORKDIR}/logs/stat/visualization"
 SENTINEL="${RESULT_DIR}/plots.done"
-BARPLOT_PDF="${VIZ_DIR}/barplot_composition_by_group.pdf"
-HEATMAP_PDF="${VIZ_DIR}/heatmap_genus_complexheatmap.pdf"
+# Per-dimension output (bacteria is the primary check; virus/fungi are bonus)
+BACT_BARPLOT="${VIZ_DIR}/bacteria/barplot_composition_by_group.pdf"
+BACT_HEATMAP="${VIZ_DIR}/bacteria/heatmap_genus.pdf"
 
 mkdir -p "${RESULT_DIR}" "${VIZ_DIR}" "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/94_stat_visualization.log"
@@ -69,11 +70,11 @@ if [ -n "${METADATA_CSV}" ] && [ ! -f "${METADATA_CSV}" ]; then
     exit 1
 fi
 
-if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ] && [ -s "${BARPLOT_PDF}" ] && [ -s "${HEATMAP_PDF}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ] && [ -s "${BACT_BARPLOT}" ] && [ -s "${BACT_HEATMAP}" ]; then
     echo "[INFO] Existing outputs detected, skipping rerun"
     echo "  Sentinel: ${SENTINEL}"
-    echo "  Barplot PDF: ${BARPLOT_PDF}"
-    echo "  Heatmap PDF: ${HEATMAP_PDF}"
+    echo "  Bacteria barplot: ${BACT_BARPLOT}"
+    echo "  Bacteria heatmap: ${BACT_HEATMAP}"
     echo "[INFO] Use --force to re-run"
     exit 0
 fi
@@ -84,7 +85,7 @@ echo "[INFO] Metadata: ${METADATA_CSV:-<none>}"
 echo "[INFO] Group column: ${GROUP_COL}"
 echo "[INFO] Visualization dir: ${VIZ_DIR}"
 
-export WORKDIR REPO METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DIR DIVERSITY_DIR RESULT_DIR VIZ_DIR FORCE SENTINEL BARPLOT_PDF HEATMAP_PDF
+export WORKDIR REPO METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DIR DIVERSITY_DIR RESULT_DIR VIZ_DIR FORCE SENTINEL
 
 (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/94_visualization.R")
 

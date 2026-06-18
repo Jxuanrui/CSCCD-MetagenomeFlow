@@ -14,7 +14,7 @@ if (dir.exists(conda_lib)) {
   )))
 }
 
-required_pkgs <- c("microeco", "magrittr", "ggplot2", "cowplot", "dplyr", "tidyr")
+required_pkgs <- c("microeco", "magrittr", "ggplot2", "cowplot", "dplyr", "tidyr", "ggrepel")
 missing_pkgs <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing_pkgs)) stop("Missing packages: ", paste(missing_pkgs, collapse = ", "))
 
@@ -25,6 +25,7 @@ suppressPackageStartupMessages({
   library(cowplot)
   library(dplyr)
   library(tidyr)
+  library(ggrepel)
 })
 
 theme_set(theme_bw())
@@ -144,62 +145,183 @@ choose_bacteria_level <- function(mt, dim_dir) {
 
 augment_wilcox_for_volcano <- function(obj) {
   res <- obj$res_diff
-  if (is.null(res) || !nrow(res) || any(c("Estimate", "log2FC", "lfc", "logFC", "log2FoldChange") %in% names(res))) return(obj)
-  alpha_df <- tryCatch(obj$res_abund_tmp$data_alpha, error = function(e) NULL)
-  grp_name <- tryCatch(obj$res_abund_tmp$group, error = function(e) NULL) %||% group_col
-  if (is.null(alpha_df)) return(obj)
-  if ("Measure" %in% names(alpha_df) && !"Taxa" %in% names(alpha_df)) names(alpha_df)[names(alpha_df) == "Measure"] <- "Taxa"
-  if (!all(c("Taxa", "Value", grp_name) %in% names(alpha_df)) || !"Comparison" %in% names(res)) return(obj)
-  means <- alpha_df %>%
-    group_by(Taxa, .data[[grp_name]]) %>%
-    summarise(mean_value = mean(Value, na.rm = TRUE), .groups = "drop") %>%
-    tidyr::pivot_wider(names_from = .data[[grp_name]], values_from = mean_value, values_fill = 0)
-  res$Estimate <- NA_real_
-  eps <- 1e-6
-  for (i in seq_len(nrow(res))) {
-    pair <- strsplit(as.character(res$Comparison[i]), " - ", fixed = TRUE)[[1]]
-    rowi <- means[means$Taxa == res$Taxa[i], , drop = FALSE]
-    if (length(pair) == 2 && nrow(rowi) == 1 && all(pair %in% names(rowi))) {
-      res$Estimate[i] <- log2((rowi[[pair[1]]] + eps) / (rowi[[pair[2]]] + eps))
-    }
+  if (is.null(res) || !nrow(res)) return(obj)
+  if (any(c("Estimate", "log2FC", "lfc", "logFC", "log2FoldChange") %in% names(res))) return(obj)
+
+  # res_abund: data.frame with columns group / Taxa / N / Mean / SD / SE
+  # group column contains factor levels (1, 2, ...) mapped to group names
+  abund <- tryCatch(obj$res_abund, error = function(e) NULL)
+  if (is.null(abund) || !all(c("Taxa", "Mean", "group") %in% names(abund))) return(obj)
+  if (!"Comparison" %in% names(res)) return(obj)
+
+  # Map factor levels in abund$group to the real group names used in Comparison
+  # Comparison example: "control - treat"
+  pair_example <- strsplit(as.character(res$Comparison[1]), " - ", fixed = TRUE)[[1]]
+  grp_levels <- sort(unique(as.character(abund$group)))  # e.g. "1","2"
+  if (length(pair_example) == 2 && length(grp_levels) == 2) {
+    grp_map <- setNames(pair_example, grp_levels)
+    abund$grp_name <- grp_map[as.character(abund$group)]
+  } else {
+    abund$grp_name <- as.character(abund$group)
   }
+
+  means_wide <- abund %>%
+    select(Taxa, grp_name, Mean) %>%
+    tidyr::pivot_wider(names_from = grp_name, values_from = Mean, values_fill = 0)
+
+  eps <- 1e-6
+  res$Estimate <- vapply(seq_len(nrow(res)), function(i) {
+    pair <- strsplit(as.character(res$Comparison[i]), " - ", fixed = TRUE)[[1]]
+    rowi <- means_wide[means_wide$Taxa == as.character(res$Taxa[i]), , drop = FALSE]
+    if (length(pair) == 2 && nrow(rowi) == 1 && all(pair %in% names(rowi))) {
+      log2((as.numeric(rowi[[pair[1]]]) + eps) / (as.numeric(rowi[[pair[2]]]) + eps))
+    } else NA_real_
+  }, numeric(1))
+
   obj$res_diff <- res
   obj
 }
 
 plot_diff_abund_fallback <- function(obj, use_number = 15, color_values = npg_base) {
-  res <- obj$res_diff
-  alpha_df <- obj$res_abund_tmp$data_alpha
-  grp_name <- obj$res_abund_tmp$group %||% group_col
-  if ("Measure" %in% names(alpha_df) && !"Taxa" %in% names(alpha_df)) names(alpha_df)[names(alpha_df) == "Measure"] <- "Taxa"
-  if (!all(c("Taxa", "Value", grp_name) %in% names(alpha_df))) stop("Fallback abundance plot requires Taxa/Value/group columns")
-  taxa_order <- unique(as.character(res$Taxa))
-  taxa_order <- taxa_order[seq_len(min(length(taxa_order), use_number))]
-  plot_df <- alpha_df[alpha_df$Taxa %in% taxa_order, , drop = FALSE]
-  if (!nrow(plot_df)) stop("No abundance data available for fallback plot")
-  sig_df <- res[match(taxa_order, res$Taxa), , drop = FALSE]
-  sig_df$Taxa <- factor(sig_df$Taxa, levels = rev(taxa_order))
-  plot_df$Taxa <- factor(plot_df$Taxa, levels = rev(taxa_order))
+  res  <- obj$res_diff
+  abund <- tryCatch(obj$res_abund, error = function(e) NULL)
+  if (is.null(abund) || !all(c("Taxa", "Mean", "group") %in% names(abund))) {
+    stop("res_abund not available or missing required columns")
+  }
+
+  # Select top N taxa by P.unadj (ascending); show all if < use_number
+  p_col <- intersect(c("P.unadj", "P.adj"), names(res))[1]
+  res_ord <- res[order(res[[p_col]]), , drop = FALSE]
+  taxa_order <- unique(as.character(res_ord$Taxa))[seq_len(min(use_number, nrow(res_ord)))]
+
+  # Map factor group levels → real group names from Comparison
+  pair_example <- strsplit(as.character(res$Comparison[1]), " - ", fixed = TRUE)[[1]]
+  grp_levels   <- sort(unique(as.character(abund$group)))
+  if (length(pair_example) == 2 && length(grp_levels) == 2) {
+    grp_map <- setNames(pair_example, grp_levels)
+    abund$grp_name <- grp_map[as.character(abund$group)]
+  } else {
+    abund$grp_name <- as.character(abund$group)
+  }
+
+  plot_df <- abund[abund$Taxa %in% taxa_order, , drop = FALSE]
+  if (!nrow(plot_df)) stop("No abundance data available for top taxa")
+
+  # Significance labels from res_diff
+  sig_df <- res_ord[match(taxa_order, res_ord$Taxa), c("Taxa", "Significance"), drop = FALSE]
+  # Short label: last segment after "|"
+  short_lab <- setNames(sub(".*\\|", "", taxa_order), taxa_order)
+
+  plot_df$Taxa    <- factor(plot_df$Taxa, levels = rev(taxa_order))
+  plot_df$grp_name <- factor(plot_df$grp_name, levels = pair_example)
+  sig_df$Taxa     <- factor(sig_df$Taxa, levels = rev(taxa_order))
+
   y_pos <- plot_df %>%
     group_by(Taxa) %>%
-    summarise(y = max(Value, na.rm = TRUE) * 1.08 + 1e-6, .groups = "drop")
+    summarise(y = max(Mean, na.rm = TRUE) * 1.10 + 1e-6, .groups = "drop")
   sig_df <- left_join(sig_df, y_pos, by = "Taxa")
-  simple_labs <- setNames(sub(".*\\|", "", taxa_order), taxa_order)
-  ggplot(plot_df, aes(x = .data[[grp_name]], y = Value, fill = .data[[grp_name]], color = .data[[grp_name]])) +
-    geom_boxplot(width = 0.65, outlier.shape = NA, alpha = 0.35) +
-    geom_point(position = position_jitter(width = 0.12, height = 0), size = 1.2, alpha = 0.85) +
-    geom_text(data = sig_df, aes(x = 1.5, y = y, label = Significance), inherit.aes = FALSE, size = 4.2) +
-    facet_wrap(~ Taxa, ncol = 1, scales = "free_y", labeller = labeller(Taxa = simple_labs)) +
-    scale_fill_manual(values = color_values) +
-    scale_color_manual(values = color_values) +
-    labs(x = NULL, y = "Relative abundance") +
-    theme_bw() +
-    theme(
-      panel.grid = element_blank(),
-      strip.text = element_text(face = "bold"),
-      legend.position = "none",
-      axis.text.x = element_text(angle = 0, hjust = 0.5)
-    )
+
+  ggplot(plot_df, aes(x = grp_name, y = Mean,
+                      fill = grp_name, color = grp_name)) +
+    geom_bar(stat = "identity", width = 0.65, alpha = 0.75) +
+    geom_text(data = sig_df,
+              aes(x = 1.5, y = y, label = Significance),
+              inherit.aes = FALSE, size = 4.2, color = "black") +
+    facet_wrap(~ Taxa, ncol = 1, scales = "free_y",
+               labeller = labeller(Taxa = short_lab)) +
+    scale_fill_manual(values  = color_values, guide = "none") +
+    scale_color_manual(values = color_values, guide = "none") +
+    labs(x = NULL, y = "Mean relative abundance",
+         title = sprintf("Top %d taxa by p-value (Wilcoxon)", length(taxa_order))) +
+    theme(panel.grid    = element_blank(),
+          strip.text    = element_text(face = "bold", size = 8),
+          axis.text.x   = element_text(angle = 0, hjust = 0.5))
+}
+
+# Standard SCI volcano plot: x = log2FC (from res_abund means), y = -log10(p.unadj)
+plot_volcano_manual <- function(obj, color_values = npg_base) {
+  res   <- obj$res_diff
+  abund <- tryCatch(obj$res_abund, error = function(e) NULL)
+  if (is.null(abund) || !all(c("Taxa", "Mean", "group") %in% names(abund))) {
+    stop("res_abund not available")
+  }
+  if (!"P.unadj" %in% names(res)) stop("P.unadj column not found in res_diff")
+
+  # Map factor group levels to real group names
+  pair_example <- strsplit(as.character(res$Comparison[1]), " - ", fixed = TRUE)[[1]]
+  grp_levels   <- sort(unique(as.character(abund$group)))
+  if (length(pair_example) == 2 && length(grp_levels) == 2) {
+    grp_map <- setNames(pair_example, grp_levels)
+    abund$grp_name <- grp_map[as.character(abund$group)]
+  } else {
+    abund$grp_name <- as.character(abund$group)
+  }
+
+  means_wide <- abund %>%
+    select(Taxa, grp_name, Mean) %>%
+    tidyr::pivot_wider(names_from = grp_name, values_from = Mean, values_fill = 0)
+
+  eps  <- 1e-6
+  p_thresh  <- 0.05
+  fc_thresh <- 1.0  # |log2FC| threshold for labelling
+
+  vdf <- res %>%
+    select(Taxa, P.unadj, P.adj) %>%
+    distinct(Taxa, .keep_all = TRUE) %>%
+    left_join(means_wide, by = "Taxa") %>%
+    mutate(
+      log2FC = {
+        if (length(pair_example) == 2 && all(pair_example %in% names(.))) {
+          log2((.data[[pair_example[1]]] + eps) / (.data[[pair_example[2]]] + eps))
+        } else rep(NA_real_, nrow(.))
+      },
+      neg_log10_p = -log10(pmax(P.unadj, 1e-300)),
+      category = case_when(
+        P.adj < p_thresh & log2FC >  fc_thresh ~ "Up",
+        P.adj < p_thresh & log2FC < -fc_thresh ~ "Down",
+        TRUE ~ "NS"
+      ),
+      short_name = sub(".*\\|", "", as.character(Taxa))
+    ) %>%
+    filter(!is.na(log2FC))
+
+  if (!nrow(vdf)) stop("No data for volcano plot after log2FC calculation")
+
+  # Label top 10 by -log10(p) among significant; if none significant label top 10 overall
+  sig_vdf <- vdf[vdf$category != "NS", ]
+  lab_vdf <- if (nrow(sig_vdf) > 0) {
+    sig_vdf[order(-sig_vdf$neg_log10_p)[seq_len(min(10, nrow(sig_vdf)))], ]
+  } else {
+    vdf[order(-vdf$neg_log10_p)[seq_len(min(10, nrow(vdf)))], ]
+  }
+
+  col_map <- c("Up" = color_values[1], "Down" = color_values[2], "NS" = "grey70")
+  n_up   <- sum(vdf$category == "Up",   na.rm = TRUE)
+  n_down <- sum(vdf$category == "Down", na.rm = TRUE)
+  subtitle <- sprintf("Up: %d | Down: %d | NS: %d  (p.adj < %.2f, |log2FC| > %.1f)",
+                      n_up, n_down, nrow(vdf) - n_up - n_down, p_thresh, fc_thresh)
+
+  ggplot(vdf, aes(x = log2FC, y = neg_log10_p, color = category)) +
+    geom_point(size = 1.8, alpha = 0.75) +
+    geom_hline(yintercept = -log10(p_thresh), linetype = "dashed",
+               color = "grey40", linewidth = 0.5) +
+    geom_vline(xintercept = c(-fc_thresh, fc_thresh), linetype = "dashed",
+               color = "grey40", linewidth = 0.5) +
+    ggrepel::geom_text_repel(data = lab_vdf,
+                              aes(label = short_name),
+                              size = 2.8, max.overlaps = 20,
+                              segment.size = 0.3, show.legend = FALSE) +
+    scale_color_manual(values = col_map,
+                       labels = c("Up" = paste0("Up (", n_up, ")"),
+                                  "Down" = paste0("Down (", n_down, ")"),
+                                  "NS"   = paste0("NS (", nrow(vdf) - n_up - n_down, ")"))) +
+    labs(x = paste0("log2FC (", paste(pair_example, collapse = " / "), ")"),
+         y = expression(-log[10](p)),
+         color = NULL,
+         subtitle = subtitle) +
+    theme(panel.grid   = element_blank(),
+          legend.position = c(0.85, 0.85),
+          plot.subtitle = element_text(size = 7, color = "grey40"))
 }
 
 save_plot_safe <- function(plot_expr, output_file, dimension, step, method, taxa_level, ratio, height) {
@@ -322,16 +444,25 @@ for (dim in selected_dims) {
 
   # Wilcox-based plots — always attempted when wilcox succeeded
   if (!is.null(wilcox_res)) {
-    # Differential abundance boxplot using wilcox result (top N by effect size)
+    # Differential abundance: top N by p.unadj (fallback function handles all-ns case)
     diff_abund_wil <- file.path(dim_dir, "diff_abund_wilcox.pdf")
     diff_abund_wil_ok <- save_plot_safe(
-      wilcox_res$obj$plot_diff_abund(add_sig = TRUE, use_number = 15, color_values = group_colors),
-      diff_abund_wil, dim, "plot", "wilcox_abund", taxa_level, 1.3, 7
+      plot_diff_abund_fallback(wilcox_res$obj, use_number = 15, color_values = group_colors),
+      diff_abund_wil, dim, "plot", "wilcox_abund", taxa_level, 1.3, max(7, min(15, 0.55 * 15))
     )
-    # Use wilcox result as primary diff_abund if LEfSe produced nothing
     if (!file.exists(diff_abund) && file.exists(diff_abund_wil)) file.copy(diff_abund_wil, diff_abund)
 
-    save_plot_safe(wilcox_res$obj$plot_volcano(color_values = c(npg_base[1], npg_base[2], "gray80")), volcano, dim, "plot", "wilcox_volcano", taxa_level, 1.2, 5.5)
+    # Volcano plot: manual ggplot2 (plot_volcano requires Estimate col, may fail)
+    save_plot_safe(
+      tryCatch(
+        plot_volcano_manual(wilcox_res$obj, group_colors),
+        error = function(e) {
+          message("[WARN] manual volcano: ", e$message)
+          stop(e)
+        }
+      ),
+      volcano, dim, "plot", "wilcox_volcano", taxa_level, 1.15, 5.5
+    )
   } else {
     add_status(dim, "plot", "wilcox_volcano", taxa_level, "SKIPPED", "wilcox unavailable", volcano)
   }

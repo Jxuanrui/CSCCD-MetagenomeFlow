@@ -1,4 +1,9 @@
 #!/usr/bin/env Rscript
+# 94_visualization.R — composition plots per dimension (bacteria / virus / fungi)
+# Outputs: result/stat/composition/{dim}/barplot_composition_by_group.pdf
+#                                        barplot_genus_groupmean.pdf
+#                                        heatmap_genus.pdf
+#                                        {dim}_viz_status.tsv
 
 options(stringsAsFactors = FALSE, warn = 1)
 options(device = function(...) grDevices::pdf(
@@ -7,19 +12,14 @@ options(device = function(...) grDevices::pdf(
 
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0 || !nzchar(x)) y else x
 
-workdir <- Sys.getenv("WORKDIR")
-repo <- Sys.getenv("REPO")
+workdir      <- Sys.getenv("WORKDIR")
+repo         <- Sys.getenv("REPO")
 metadata_csv <- Sys.getenv("METADATA_CSV")
-group_col <- Sys.getenv("GROUP_COL") %||% "group"
-out_dir <- Sys.getenv("VIZ_DIR") %||% file.path(workdir, "result", "stat", "composition")
-sentinel <- Sys.getenv("SENTINEL") %||% file.path(workdir, "result", "stat", "visualization", "plots.done")
-barplot_pdf <- Sys.getenv("BARPLOT_PDF") %||% file.path(out_dir, "barplot_composition_by_group.pdf")
-heatmap_pdf <- Sys.getenv("HEATMAP_PDF") %||% file.path(out_dir, "heatmap_genus_complexheatmap.pdf")
-status_tsv <- file.path(out_dir, "viz_status.tsv")
-groupmean_pdf <- file.path(out_dir, "barplot_genus_groupmean.pdf")
-microtable_rds <- file.path(workdir, "result", "stat", "diversity", "bacteria", "bacteria_microtable.rds")
+group_col    <- Sys.getenv("GROUP_COL") %||% "group"
+sentinel     <- Sys.getenv("SENTINEL") %||% file.path(workdir, "result", "stat", "visualization", "plots.done")
+comp_root    <- file.path(workdir, "result", "stat", "composition")
+div_root     <- file.path(workdir, "result", "stat", "diversity")
 
-dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(dirname(sentinel), recursive = TRUE, showWarnings = FALSE)
 
 conda_lib <- file.path(R.home("home"), "library")
@@ -31,30 +31,11 @@ if (dir.exists(conda_lib)) {
   )))
 }
 
-status_log <- list()
-log_status <- function(step, status, message = "") {
-  status_log[[length(status_log) + 1]] <<- data.frame(
-    step = step, status = status, message = as.character(message),
-    stringsAsFactors = FALSE
-  )
-}
-write_status <- function() {
-  status_df <- if (length(status_log)) do.call(rbind, status_log) else data.frame(
-    step = character(), status = character(), message = character(),
-    stringsAsFactors = FALSE
-  )
-  utils::write.table(status_df, status_tsv, sep = "\t", quote = FALSE,
-                     row.names = FALSE, col.names = TRUE)
-}
-write_sentinel <- function() writeLines(format(Sys.time()), sentinel)
-
 required_pkgs <- c("microeco", "magrittr", "ggplot2", "cowplot", "dplyr", "RColorBrewer")
 miss <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
 if (length(miss)) {
-  log_status("packages", "FAILED", paste("Missing packages:", paste(miss, collapse = ", ")))
-  write_status()
-  write_sentinel()
-  quit(save = "no", status = 0)
+  writeLines(format(Sys.time()), sentinel)
+  stop("Missing packages: ", paste(miss, collapse = ", "))
 }
 
 suppressPackageStartupMessages({
@@ -73,79 +54,118 @@ npg_pal <- function(n) {
   if (n <= length(npg_base)) npg_base[seq_len(n)] else grDevices::colorRampPalette(npg_base)(n)
 }
 
-run_step <- function(step, expr) {
+write_status <- function(status_log, path) {
+  df <- if (length(status_log)) do.call(rbind, status_log) else
+    data.frame(step = character(), status = character(), message = character(),
+               stringsAsFactors = FALSE)
+  utils::write.table(df, path, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+
+run_step <- function(step, status_log, expr) {
   tryCatch({
     force(expr)
-    log_status(step, "OK", "")
+    status_log[[length(status_log) + 1]] <<- data.frame(
+      step = step, status = "OK", message = "", stringsAsFactors = FALSE
+    )
     TRUE
   }, error = function(e) {
-    log_status(step, "FAILED", conditionMessage(e))
-    message("[WARN] ", step, ": ", conditionMessage(e))
+    msg <- conditionMessage(e)
+    status_log[[length(status_log) + 1]] <<- data.frame(
+      step = step, status = "FAILED", message = as.character(msg), stringsAsFactors = FALSE
+    )
+    message("[WARN] ", step, ": ", msg)
     FALSE
   })
 }
 
-cat("[INFO] Starting visualization analysis\n")
-cat("  Workdir:", workdir, "\n")
-cat("  Repo:", repo, "\n")
-cat("  Metadata:", if (nzchar(metadata_csv)) metadata_csv else "<none>", "\n")
-cat("  Group column:", group_col, "\n")
-cat("  Microtable:", microtable_rds, "\n")
+dims <- c("bacteria", "virus", "fungi")
+completed <- 0L
 
-mt <- NULL
-if (!file.exists(microtable_rds)) {
-  log_status("load_microtable", "SKIPPED", paste("Missing microtable:", microtable_rds))
-  write_status()
-  write_sentinel()
-  quit(save = "no", status = 0)
+cat("[INFO] Starting composition visualization\n")
+cat("  Workdir:", workdir, "\n")
+cat("  Group column:", group_col, "\n")
+cat("  Output root:", comp_root, "\n")
+
+for (dim in dims) {
+  cat(sprintf("\n[INFO] === Dimension: %s ===\n", dim))
+  rds_path   <- file.path(div_root, dim, paste0(dim, "_microtable.rds"))
+  out_dir    <- file.path(comp_root, dim)
+  status_tsv <- file.path(out_dir, paste0(dim, "_viz_status.tsv"))
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  status_log <- list()
+
+  if (!file.exists(rds_path)) {
+    msg <- paste("microtable RDS not found:", rds_path)
+    cat("[SKIP]", msg, "\n")
+    status_log[[1]] <- data.frame(step = "load_microtable", status = "SKIPPED",
+                                   message = msg, stringsAsFactors = FALSE)
+    write_status(status_log, status_tsv)
+    next
+  }
+
+  mt <- tryCatch(readRDS(rds_path), error = function(e) NULL)
+  if (is.null(mt)) {
+    status_log[[1]] <- data.frame(step = "load_microtable", status = "FAILED",
+                                   message = "readRDS returned NULL", stringsAsFactors = FALSE)
+    write_status(status_log, status_tsv)
+    next
+  }
+  status_log[[1]] <- data.frame(step = "load_microtable", status = "OK",
+                                 message = "", stringsAsFactors = FALSE)
+  cat(sprintf("  Loaded microtable: %d samples, %d taxa\n",
+              nrow(mt$sample_table), nrow(mt$otu_table)))
+
+  mt_clone <- NULL
+  run_step("prepare_abund", status_log, {
+    mt_clone <<- clone(mt)
+    mt_clone$cal_abund(rel = TRUE)
+  })
+  if (is.null(mt_clone)) { write_status(status_log, status_tsv); next }
+
+  grp <- if (group_col %in% colnames(mt_clone$sample_table)) group_col else NULL
+
+  run_step(paste0(dim, "_barplot_phylum_genus"), status_log, {
+    tmp_p <- trans_abund$new(dataset = mt_clone, taxrank = "Phylum")
+    g1 <- tmp_p$plot_bar(color_values = npg_pal(30), others_color = "grey70",
+                          xtext_keep = TRUE, barwidth = 0.6)
+    tmp_g <- trans_abund$new(dataset = mt_clone, taxrank = "Genus")
+    g2 <- tmp_g$plot_bar(color_values = npg_pal(30), others_color = "grey70",
+                          xtext_keep = TRUE, barwidth = 0.6)
+    p  <- cowplot::plot_grid(g1, g2, ncol = 1, align = "hv", labels = c("A", "B"))
+    cowplot::save_plot(file.path(out_dir, "barplot_composition_by_group.pdf"),
+                       p, base_aspect_ratio = 1.1, base_height = 10, dpi = 300)
+  })
+
+  run_step(paste0(dim, "_barplot_groupmean"), status_log, {
+    if (is.null(grp)) stop("group column missing in sample_table")
+    mt_g <- mt_clone$merge_samples(grp)
+    mt_g$cal_abund(rel = TRUE)
+    tmp  <- trans_abund$new(dataset = mt_g, taxrank = "Genus")
+    g3   <- tmp$plot_bar(color_values = npg_pal(30), others_color = "grey70",
+                          bar_full = FALSE, xtext_size = 13, xtext_angle = 30,
+                          barwidth = 0.618) +
+      theme(legend.text = element_text(size = 10))
+    cowplot::save_plot(file.path(out_dir, "barplot_genus_groupmean.pdf"),
+                       g3, base_aspect_ratio = 1.1, base_height = 5.5, dpi = 300)
+  })
+
+  run_step(paste0(dim, "_heatmap_genus"), status_log, {
+    tmp <- trans_abund$new(dataset = mt_clone, taxrank = "Genus", ntaxa = 30)
+    g4  <- tmp$plot_heatmap(
+      facet = grp, xtext_keep = TRUE, withmargin = FALSE,
+      color_values = rev(RColorBrewer::brewer.pal(11, "RdYlBu")),
+      plot_colorscale = "identity"
+    )
+    cowplot::save_plot(file.path(out_dir, "heatmap_genus.pdf"),
+                       g4, base_aspect_ratio = 1.3, base_height = 8, dpi = 300)
+  })
+
+  write_status(status_log, status_tsv)
+  ok_n <- sum(vapply(status_log, function(x) x$status == "OK", logical(1)))
+  if (ok_n > 0) completed <- completed + 1L
+  cat(sprintf("  [%s] %d/%d steps OK\n", dim, ok_n, length(status_log)))
 }
 
-run_step("load_microtable", {
-  mt <<- readRDS(microtable_rds)
-  if (is.null(mt$sample_table) || nrow(mt$sample_table) == 0) stop("sample_table is empty")
-})
-
-mt_clone <- NULL
-run_step("prepare_relative_abundance", {
-  mt_clone <<- clone(mt)
-  mt_clone$cal_abund(rel = TRUE)
-})
-
-group_facet <- if (!is.null(mt_clone) && group_col %in% colnames(mt_clone$sample_table)) group_col else NULL
-if (is.null(group_facet)) log_status("group_column", "SKIPPED", paste("Missing group column:", group_col))
-
-run_step("barplot_composition_by_group", {
-  tmp <- trans_abund$new(dataset = mt_clone, taxrank = "Phylum")
-  g1 <- tmp$plot_bar(color_values = npg_pal(30), others_color = "grey70",
-                     xtext_keep = TRUE, barwidth = 0.6)
-  tmp <- trans_abund$new(dataset = mt_clone, taxrank = "Genus")
-  g2 <- tmp$plot_bar(color_values = npg_pal(30), others_color = "grey70",
-                     xtext_keep = TRUE, barwidth = 0.6)
-  p <- cowplot::plot_grid(g1, g2, ncol = 1, align = "hv", labels = c("A", "B"))
-  cowplot::save_plot(barplot_pdf, p, base_aspect_ratio = 1.1, base_height = 10, dpi = 300)
-})
-
-run_step("barplot_genus_groupmean", {
-  if (is.null(group_facet)) stop("Cannot merge samples; group column missing in sample_table")
-  mt_group <- mt_clone$merge_samples(group_col)
-  mt_group$cal_abund(rel = TRUE)
-  tmp <- trans_abund$new(dataset = mt_group, taxrank = "Genus")
-  g3 <- tmp$plot_bar(color_values = npg_pal(30), others_color = "grey70", bar_full = FALSE,
-                     xtext_size = 13, xtext_angle = 30, barwidth = 0.618) +
-    theme(legend.text = element_text(size = 10))
-  cowplot::save_plot(groupmean_pdf, g3, base_aspect_ratio = 1.1, base_height = 5.5, dpi = 300)
-})
-
-run_step("heatmap_genus_complexheatmap", {
-  tmp <- trans_abund$new(dataset = mt_clone, taxrank = "Genus", ntaxa = 30)
-  g4 <- tmp$plot_heatmap(
-    facet = group_facet, xtext_keep = TRUE, withmargin = FALSE,
-    color_values = rev(RColorBrewer::brewer.pal(11, "RdYlBu")),
-    plot_colorscale = "identity"
-  )
-  cowplot::save_plot(heatmap_pdf, g4, base_aspect_ratio = 1.3, base_height = 8, dpi = 300)
-})
-
-write_status()
-write_sentinel()
+cat(sprintf("\n[INFO] Completed %d/%d dimensions\n", completed, length(dims)))
+writeLines(format(Sys.time()), sentinel)
 cat("[INFO] Visualization finished\n")
