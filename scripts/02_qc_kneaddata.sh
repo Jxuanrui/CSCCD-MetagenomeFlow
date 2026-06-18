@@ -1,13 +1,17 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# ==============================================================================
+# 脚本名: 02_qc_kneaddata.sh
+# 功  能: 宏基因组双端测序数据去宿主（人/鼠/大鼠参考基因组去污染）
+# 依  赖: 01_qc_fastp.sh 的输出（clean reads）
+# 输  入: ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}_1.fastq.gz
+#         ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}_2.fastq.gz
+# 输  出: ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
+#         ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
+#         ${WORKDIR}/result/kneaddata/${SAMPLE}/stats.txt
+# 用  法: bash 02_qc_kneaddata.sh -s SAMPLE -t THREADS -w WORKDIR -r REPO
+# ==============================================================================
 
-# 功能：使用 kneaddata 去除宿主污染序列
-# 依赖：01_qc_fastp.sh 的输出（clean reads）
-# 输入：${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}_1.fastq.gz
-#       ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}_2.fastq.gz
-# 输出：${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz
-#       ${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz
-#       ${WORKDIR}/result/kneaddata/${SAMPLE}/stats.txt
+set -e
 
 # ===== 参数解析 =====
 show_help() {

@@ -44,7 +44,10 @@ R1="${WORKDIR}/temp/qc/kneaddata/${SAMPLE}/${SAMPLE}_1_kneaddata.fastq.gz"
 R2="${WORKDIR}/temp/qc/kneaddata/${SAMPLE}/${SAMPLE}_2_kneaddata.fastq.gz"
 
 if [ ! -d "${VMAGS_DIR}" ] || [ -z "$(ls "${VMAGS_DIR}"/*.fasta 2>/dev/null)" ]; then
-    echo "[WARN] 无 vMAGs 可定量"; exit 0
+    echo "[WARN] 无 vMAGs 可定量，创建空输出文件"
+    mkdir -p "$(dirname "${OUTFILE}")"
+    printf "Genome\tRelative Abundance (%%)\tRPKM\tTPM\tRead Count\tCovered Bases\n" > "${OUTFILE}"
+    exit 0
 fi
 if [ -f "${OUTFILE}" ] && [ -s "${OUTFILE}" ]; then echo "[coverm_quant] 结果已存在，跳过"; exit 0; fi
 

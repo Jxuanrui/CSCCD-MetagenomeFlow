@@ -45,7 +45,10 @@ FILTERED_DIR="${WORKDIR}/result/virus/vmag/vmag_filtered"
 CHK_DB="${REPO}/db/checkv"
 
 if [ ! -d "${VMAGS_DIR}" ] || [ -z "$(ls "${VMAGS_DIR}"/*.fasta 2>/dev/null)" ]; then
-    echo "[WARN] 无 vMAGs"; exit 0
+    echo "[WARN] 无 vMAGs，创建空 quality_summary.tsv"
+    mkdir -p "${CHKV_DIR}"
+    printf "contig_id\tcheckv_quality\tmiuvig_quality\tcontig_length\tgene_count\tviral_genes\thost_genes\tcompleteness\tcompleteness_method\tmiuvig_completeness\tcontamination\tkmer_freq\twarnings\n" > "${SUMMARY}"
+    exit 0
 fi
 
 if [ -f "${SUMMARY}" ] && [ -s "${SUMMARY}" ]; then echo "[checkv_mag] 结果已存在，跳过"; exit 0; fi

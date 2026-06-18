@@ -55,8 +55,6 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         -i "${INDEX_DIR}" \
         -l A \
         -p "${CPUS}" \
-        --meta \
-        --numBootstraps 100 \
         -1 "${R1}" -2 "${R2}" \
         -o "${QUANT_DIR}"
 

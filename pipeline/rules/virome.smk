@@ -317,7 +317,7 @@ rule vir_bacphlip:
     threads: 1
     shell:
         "bash {REPO}/scripts/67_vir_bacphlip.sh "
-        "-w {WORKDIR} -r {REPO} "
+        "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
 

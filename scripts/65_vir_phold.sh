@@ -60,8 +60,10 @@ conda run --prefix "${REPO}/envs/phold" --no-capture-output \
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] phold 失败"; exit ${EXIT_CODE}; fi
 
-# 汇总输出
-if [ -d "${OUTDIR}/results" ]; then
+# 汇总输出（phold 直接输出到 OUTDIR，不创建 results/ 子目录）
+if [ -f "${OUTDIR}/vOTU_all_cds_functions.tsv" ]; then
+    cp "${OUTDIR}/vOTU_all_cds_functions.tsv" "${SENTINEL}"
+elif [ -d "${OUTDIR}/results" ]; then
     cat "${OUTDIR}/results/"*.tsv 2>/dev/null > "${SENTINEL}" || true
 fi
 

@@ -28,8 +28,11 @@ rule kegg:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/kegg/kegg_diamond.tsv",
+    log:
+        WORKDIR + "/logs/annotation/kegg/kegg.log",
+    threads: CPUS
     shell:
-        "bash {REPO}/scripts/22_bac_kegg.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/22_bac_kegg.sh -t {threads} -w {WORKDIR} -r {REPO} > {log} 2>&1"
 
 
 # ─── 23: AMRFinderPlus antibiotic resistance ─────────────────────────────────

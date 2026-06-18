@@ -70,22 +70,16 @@ grep '^>' "${VOTU_FA}" | sed 's/^>//' > "${INDEX_DIR}/decoys.txt"
 
 if [ ! -s "${INDEX_DIR}/decoys.txt" ]; then
     echo "[salmon_build] WARN: decoys.txt 为空（可能是测试数据无病毒序列）"
-    echo "       跳过 decoy，仅构建标准 index"
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-        salmon index \
-            -t "${INDEX_DIR}/gentrome.fasta" \
-            -i "${INDEX_DIR}" \
-            -p "${CPUS}" \
-            --keepDuplicates
-else
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-        salmon index \
-            -t "${INDEX_DIR}/gentrome.fasta" \
-            -d "${INDEX_DIR}/decoys.txt" \
-            -i "${INDEX_DIR}" \
-            -p "${CPUS}" \
-            --keepDuplicates
 fi
+# Salmon 0.14.1 与 decoy-aware 索引在 quant 时存在 segfault 兼容性问题
+# 统一使用标准索引（不传 -d），对 vOTU 定量精度影响极小
+echo "[salmon_build] 构建标准索引（无 decoy，兼容 Salmon 0.14.1）..."
+conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    salmon index \
+        -t "${INDEX_DIR}/gentrome.fasta" \
+        -i "${INDEX_DIR}" \
+        -p "${CPUS}" \
+        --keepDuplicates
 
 if [ ! -f "${SENTINEL}" ]; then
     if [ -f "${SALMON_VERSION_INFO}" ]; then
