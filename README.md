@@ -4,9 +4,9 @@
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
-[![Conda](https://img.shields.io/badge/conda%20envs-42-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-105-blue)]()
-[![RAG](https://img.shields.io/badge/RAG-6769%20chunks-purple)]()
+[![Conda](https://img.shields.io/badge/conda%20envs-40-orange)](https://github.com/conda-forge/miniforge)
+[![Scripts](https://img.shields.io/badge/scripts-101-blue)]()
+[![RAG](https://img.shields.io/badge/RAG-6915%20chunks-purple)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 ---
@@ -21,7 +21,7 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 - **Portable and reproducible.** All 42 conda environments and ~700 GB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
 - **Three run modes.** Step-by-step (fine-grained debugging), Bash pipeline (lightweight, no extra deps, `--from`/`--skip` checkpointing), or Snakemake DAG (production, HPC-ready, native resume). All three modes call the identical underlying scripts.
 - **Functional integration built-in.** Script `98b` generates 11 integration tables per dimension at the end of each analysis — raw (Σ TPM), relative abundance, and CLR-normalized versions — ready for LEfSe, ANCOM-BC2, MaAsLin2, SIAMCAT, and Aitchison-distance ordination without any manual post-processing.
-- **AI-assisted.** 15 Claude Code slash commands (`/mgx-*`) cover pipeline planning, execution, visualization, and new-script integration, backed by a dual-source RAG knowledge base: 1,377 chunks of team experience docs + 5,392 chunks of literature Methods sections, indexed with `BAAI/bge-small-zh-v1.5`.
+- **AI-assisted.** 18 Claude Code slash commands (`/mgx-*` + `/graphify`) cover pipeline planning, execution, visualization, new-script integration, and knowledge graph construction, backed by a dual-source RAG knowledge base: 1,523 chunks of team experience docs + 5,392 chunks of literature Methods sections, indexed with `BAAI/bge-small-zh-v1.5`.
 
 ---
 
@@ -32,11 +32,11 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | OS | Linux x86_64 · Ubuntu 22.04 |
 | Environment manager | Miniforge3 (self-contained, under project root) |
 | Workflow engine | Snakemake 9.22.0 |
-| Analysis scripts | 105 (numbered 00–98b, incl. 54b/70/71/72) |
-| Snakemake rules | 98 across 9 rule files |
-| Conda environments | 42 isolated tool environments |
-| Databases | ~700 GB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, etc.) |
-| RAG knowledge base | 6,769 chunks (ChromaDB + bge-small-zh-v1.5) |
+| Analysis scripts | 101 (numbered 00–98d, incl. 54b/70/71/72/97_crosscohort) |
+| Snakemake rules | 98 across 10 rule files |
+| Conda environments | 40 isolated tool environments |
+| Databases | ~1.1 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, etc.) |
+| RAG knowledge base | 6,915 chunks (1,523 experience_kb + 5,392 literature_kb; ChromaDB + bge-small-zh-v1.5) |
 
 ---
 
@@ -360,10 +360,11 @@ Raw reads (*.fastq.gz)
                                         │
                                         ▼
     ┌───────────────────────────────────────────────────────────────────────┐
-    │  Route C — Assembly + MAG + functional annotation ⚠ partial          │
+    │  Route C — Assembly + MAG + functional annotation ✅ all complete          │
     │                                                                       │
     │  78  MEGAHIT        Fungal-enriched assembly (reads from 71/72)      │
-    │  79  Eukfinder      ⚠ Requires db/eukfinder_db/ (plast DB missing)  │
+    │  79  Eukfinder      Eukaryotic MAG recovery (EukDB 628 genomes,      │
+    │                     12.8 GB, built 2026-06-17; ✅ verified on S01)   │
     │  80b Prodigal       Fungal gene prediction on assembly contigs        │
     │                     (runs on 78 output; independent of 79)           │
     └────────────────────┬──────────────────────────────────────────────────┘
@@ -394,7 +395,6 @@ fungi/
 > **Quantification note**: Route A (PHF profiler) produces cluster-level relative abundance using the Singular/Escrow algorithm, consistent with Yan et al. 2024. Routes B/C functional tables use **gene count per sample** (not TPM). Normalized tables (`*_relab` / `*_clr`) are suitable for all downstream statistics.
 
 > **Known issues / pending steps**:
-> - **79 Eukfinder**: `db/eukfinder_db/` not configured — plast database required. Re-run after installing the database.
 > - **75b FunOMIC aggregate**: Per-sample classification complete (6/6); multi-sample matrix aggregation (`75b_fun_funomics_aggregate.sh`) not yet run.
 > - **76 CCMetagen**: Requires full NCBI nt database (>200 GB). Not currently configured.
 
@@ -411,7 +411,7 @@ fungi/
 | `funomic/{sample}/` | FunOMIC per-sample classification results |
 | `microfisher/{sample}/` | MicroFisher ITS/18S/28S marker profiles |
 | `assembly/{sample}/` | MEGAHIT fungal-enriched contigs (.contigs.fa) |
-| `eukfinder/{sample}/` | Eukaryotic MAG bins (⚠ pending database setup) |
+| `eukfinder/{sample}/` | Eukaryotic MAG bins (EukDB 628 genomes, 12.8 GB; low-biomass samples yield 0 MAGs — expected) |
 | `prodigal/{sample}/` | Per-sample predicted genes (.faa / .fna / .gff) |
 | `eggnog/eggnog.emapper.annotations` | Combined COG / KEGG / GO / EC annotations |
 | `kegg/kegg_diamond.tsv` | KEGG KO diamond hits |
@@ -497,7 +497,7 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | 76 | Eukaryote + prokaryote combined classification | CCMetagen | ⚠ requires NCBI nt DB |
 | 77 | Multi-hypervariable region extraction (ITS/18S/28S) | MicroFisher | ✅ |
 | 78–80b | Fungal assembly → gene prediction (Prodigal on contigs) | MEGAHIT · Prodigal | ✅ |
-| 79 | Eukaryotic MAG recovery | Eukfinder | ⚠ Centrifuge DB building (EukDB.{1-4}.cf, 628 genomes) |
+| 79 | Eukaryotic MAG recovery | Eukfinder | ✅ EukDB built 2026-06-17 (628/667 genomes, 12.8 GB) |
 | 81–86 | Functional annotation (COG / KEGG / CAZyme / VF / AMR / protease) | eggNOG · KEGG · dbCAN3 · VFDB · AMRFinder · MEROPS | ✅ |
 
 ### 📊 Statistics (91–98)
@@ -510,7 +510,8 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | 94 | Unified visualization (heatmap / PCoA / Sankey / UpSet) | ggplot2 (R) |
 | 95a / 95b | Batch correction (top-10 methods) → evaluation report | MBECS · ConQuR · MMUPHin (R) |
 | 96 | ML biomarker selection + ROC (lasso / RF / SVM / enet, 10-fold CV; ≥10 samples required) | SIAMCAT 2.10.0 (R) |
-| 97 | Cross-cohort replication | curatedMetagenomicData · SIAMCAT (R) — requires online Bioconductor access |
+| 97 | Cross-cohort replication — local multi-cohort mode (meta-analysis + 8 visualizations) | SIAMCAT · R · random effects model | ✅ local mode |
+| 97 (online) | Cross-cohort via curatedMetagenomicData | curatedMetagenomicData · SIAMCAT (R) — requires online Bioconductor access | ⚠ offline only |
 | 98 | Timestamped analysis snapshot report | bash + Rscript |
 
 ---
@@ -529,6 +530,9 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | `/mgx-integrate` | Integrate a new analysis script into Snakemake + skill library |
 | `/mgx-review` | Review a Snakemake rule integration for correctness |
 | `/mgx-learn` | Record a run result to the provenance log |
+| `/mgx-tune` | Hardware-aware parameter recommendation (threads + max_jobs) |
+| `/mgx-replicate` | Generate reproducible skill package from a paper / GitHub repo |
+| `/mgx-index` | Incremental / full RAG knowledge base rebuild |
 | `/mgx-plot-ordination` | PCoA / NMDS ordination plots |
 | `/mgx-plot-composition` | Species composition bar / stacked charts |
 | `/mgx-plot-diversity` | Alpha diversity plots |
@@ -536,12 +540,29 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | `/mgx-plot-network` | Co-occurrence network visualization |
 | `/mgx-plot-phylotree` | Phylogenetic tree rendering |
 | `/mgx-plot-volcano` | Differential abundance volcano plots |
+| `/graphify` | Build project knowledge graph (NetworkX + Leiden community detection) |
+
+### Knowledge Graph (graphify)
+
+`graphify 0.8.38` (package `graphifyy`) is pre-installed in the project's miniforge3 base environment. It turns source files, docs, and skill cards into a queryable knowledge graph:
+
+```bash
+# Build knowledge graph from docs + skills + pipeline rules
+/graphify docs/ agents/skills/ pipeline/rules/
+
+# Query the graph
+graphify path "metaphlan4" "humann3"
+graphify explain "vOTU clustering"
+
+# Incremental update after new scripts are integrated
+graphify update . --force
+```
 
 ### RAG Knowledge Base
 
 | Collection | Size | Source |
 |------------|------|--------|
-| `experience_kb` | 1,377 chunks | Team experience docs (`docs/experience/`, 78 Markdown files) · tool docs · script parameters · skill cards |
+| `experience_kb` | 1,523 chunks | Team experience docs (`docs/experience/`, 79 Markdown files) · tool docs · script headers · skill cards |
 | `literature_kb` | 5,392 chunks | Methods sections from 237 OA metagenomics papers (Europe PMC fullTextXML) |
 
 Embedding model: `BAAI/bge-small-zh-v1.5` (bilingual, 384-dim). Add a new experience doc to `docs/experience/` and re-run indexer:
@@ -556,25 +577,27 @@ conda run --prefix miniforge3 python mcp/indexer.py
 
 ```
 MaxMetagenome/
-├── scripts/                  94 analysis scripts (00–98b, incl. 54b/70/71/72)
+├── scripts/                  101 analysis scripts (00–98d, incl. 54b/70/71/72/97_crosscohort)
 ├── pipeline/
 │   ├── Snakefile             DAG entry point
 │   ├── config/config.yaml    Per-run parameters (samples / workdir / threads)
-│   └── rules/                9 rule files:
+│   ├── profiles/             Hardware presets (auto / local_16c / 48c / 96c / hpc_slurm)
+│   └── rules/                10 rule files:
 │                               preprocessing · bacteria_taxonomy · bacteria_assembly
 │                               bacteria_annotation · bacteria_binning
-│                               virome · mycobiome · statistics · rag
+│                               virome · mycobiome · statistics · rag · crosscohort
 ├── agents/
-│   ├── registry.yaml         Global script status tracker (91 entries)
-│   └── skills/               81 tool skill cards (YAML)
+│   ├── registry.yaml         Global script status tracker (97 entries)
+│   ├── skills/               96 tool skill cards (YAML / Markdown)
+│   └── provenance/           186 run records (auto-generated by /mgx-learn)
 ├── docs/
-│   ├── experience/           78 team experience documents (RAG source, editable)
+│   ├── experience/           79 team experience documents (RAG source, editable)
 │   └── tools_ref/            Auto-generated tool parameter docs (WebSearch cache)
-├── mcp/                      RAG MCP server (ChromaDB + literature pipeline)
-├── .claude/skills/           15 /mgx-* Claude Code skill files
-├── db/                       ~700 GB analysis databases
-├── envs/                     38 conda environment definitions
-├── 0Install.sh               Environment + database installation (§1–§15)
+├── mcp/                      RAG MCP server (ChromaDB + BM25 hybrid, RRF fusion)
+├── .claude/skills/           18 /mgx-* + /graphify Claude Code skill files
+├── db/                       ~1.1 TB analysis databases
+├── envs/                     40 conda environment definitions
+├── 0Install.sh               Environment + database installation
 ├── CLAUDE.md                 CC + Codex collaboration guide
 └── README.md
 ```
@@ -585,8 +608,8 @@ MaxMetagenome/
 
 | Component | Space |
 |-----------|-------|
-| miniforge3 + 38 conda envs | ~50 GB |
-| `db/` databases | ~700 GB |
+| miniforge3 + 40 conda envs | ~52 GB |
+| `db/` databases | ~1.1 TB |
 | 100-sample project data (raw + intermediates + results) | ~2 TB |
 | `scripts/` + `pipeline/` + `docs/` (git-tracked) | < 100 MB |
 
