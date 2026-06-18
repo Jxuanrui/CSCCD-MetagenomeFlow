@@ -1,672 +1,598 @@
 #!/usr/bin/env Rscript
 # ==============================================================================
 # Script: 91_diversity.R
-# Purpose: Alpha/Beta diversity statistics + publication-ready diversity figures
+# Purpose: Alpha and beta diversity using microeco pipeline
+#          (microeco_protocol v2.1 style — Nature-quality figures)
+#
+# Pipeline:
+#   abundance table + taxonomy + sample metadata
+#   → microtable$new()
+#   → cal_alphadiv() + trans_alpha$new() → cal_diff(wilcox) → plot_alpha()
+#   → cal_betadiv(bray) + trans_beta$new() → cal_ordination(PCoA)
+#     + cal_manova() → plot_ordination(point+ellipse)
+#   → cowplot::save_plot(dpi=300)
+#
+# Visual design (matches microeco_protocol):
+#   theme_bw() global, no inner grid, ggdotplot alpha panels,
+#   PCoA point+ellipse, NPG colours, dpi=300
 # ==============================================================================
 
 options(stringsAsFactors = FALSE, warn = 1)
+# Suppress stray Rplots.pdf
+options(device = function(...) grDevices::pdf(
+  file = file.path(tempdir(), paste0("Rplots_", Sys.getpid(), ".pdf")), ...
+))
 
-conda_r_lib <- file.path(R.home("home"), "library")
-project_r_lib <- Sys.getenv("R_LIBS_USER", unset = "")
-lib_paths <- .libPaths()
-if (nzchar(project_r_lib)) {
-  lib_paths <- lib_paths[normalizePath(lib_paths, winslash = "/", mustWork = FALSE) !=
-    normalizePath(project_r_lib, winslash = "/", mustWork = FALSE)]
-}
-if (dir.exists(conda_r_lib)) {
-  .libPaths(unique(c(conda_r_lib, lib_paths)))
+# Use only the conda env library (avoid R_LIBS_USER version conflicts)
+conda_lib <- file.path(R.home("home"), "library")
+if (dir.exists(conda_lib)) {
+  .libPaths(unique(c(conda_lib,
+    .libPaths()[normalizePath(.libPaths(), mustWork = FALSE) !=
+                normalizePath(conda_lib, mustWork = FALSE)])))
 }
 
 required_pkgs <- c(
-  "phyloseq", "vegan", "microbiome", "picante", "ape",
-  "ggplot2", "ggpubr", "tidyverse"
+  "microeco", "magrittr", "ggplot2", "cowplot", "dplyr", "tidyr",
+  "readr", "tibble", "phyloseq", "vegan"
 )
-missing_pkgs <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
-if (length(missing_pkgs) > 0) {
-  stop("Missing R packages: ", paste(missing_pkgs, collapse = ", "))
-}
+miss <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(miss)) stop("Missing packages: ", paste(miss, collapse = ", "))
 
 suppressPackageStartupMessages({
-  library(phyloseq)
+  library(microeco); library(magrittr); library(ggplot2)
+  library(cowplot);  library(dplyr);   library(tidyr)
+  library(readr);    library(tibble);  library(phyloseq)
   library(vegan)
-  library(microbiome)
-  library(picante)
-  library(ape)
-  library(ggplot2)
-  library(ggpubr)
-  library(tidyverse)
 })
 
-`%||%` <- function(x, y) if (is.null(x) || length(x) == 0 || all(is.na(x))) y else x
+# microeco_protocol: set theme globally
+theme_set(theme_bw())
 
-workdir <- Sys.getenv("WORKDIR")
-repo <- Sys.getenv("REPO")
-threads <- Sys.getenv("THREADS")
+`%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
+
+# ── Environment variables ──────────────────────────────────────────────────────
+workdir      <- Sys.getenv("WORKDIR")
 metadata_csv <- Sys.getenv("METADATA_CSV")
-group_col <- Sys.getenv("GROUP_COL")
-bact_table <- Sys.getenv("BACT_TABLE")
-vir_table <- Sys.getenv("VIR_TABLE")
-fungi_dir <- Sys.getenv("FUNGI_DIR")
-tree_file <- Sys.getenv("TREE_FILE")
-result_dir <- Sys.getenv("RESULT_DIR")
-viz_dir <- Sys.getenv("VIZ_DIR")
+group_col    <- Sys.getenv("GROUP_COL")   %||% "group"
+bact_table   <- Sys.getenv("BACT_TABLE")
+vir_table    <- Sys.getenv("VIR_TABLE")
+fungi_dir    <- Sys.getenv("FUNGI_DIR")
+result_dir   <- Sys.getenv("RESULT_DIR")
+if (!nzchar(result_dir))
+  result_dir <- file.path(workdir, "result", "stat", "diversity")
 
 dir.create(result_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(viz_dir, recursive = TRUE, showWarnings = FALSE)
+dim_dirs <- setNames(
+  lapply(c("bacteria", "virus", "fungi"), function(d) {
+    p <- file.path(result_dir, d)
+    dir.create(p, recursive = TRUE, showWarnings = FALSE)
+    p
+  }),
+  c("bacteria", "virus", "fungi")
+)
 
-cat("[INFO] Starting diversity analysis\n")
+cat("[INFO] Starting diversity analysis (microeco pipeline)\n")
 cat("  Workdir:", workdir, "\n")
 cat("  Metadata:", metadata_csv, "\n")
-cat("  Group column:", group_col, "\n")
-cat("  Threads:", threads, "\n")
+cat("  Group:", group_col, "\n")
 
 status_log <- list()
-alpha_all <- list()
-beta_all <- list()
-permanova_all <- list()
-
-log_status <- function(step, status, message = "") {
-  status_log[[length(status_log) + 1]] <<- tibble(step = step, status = status, message = message)
+log_status <- function(step, status, msg = "") {
+  status_log[[length(status_log) + 1]] <<-
+    tibble(step = step, status = status, message = msg)
 }
 
-run_step <- function(step, expr) {
-  tryCatch(
-    {
-      force(expr)
-      log_status(step, "OK", "")
-      TRUE
-    },
-    error = function(e) {
-      log_status(step, "FAILED", conditionMessage(e))
-      message("[WARN] ", step, ": ", conditionMessage(e))
-      FALSE
-    }
-  )
+# ══════════════════════════════════════════════════════════════════════════════
+# NPG colour palette (Nature Publishing Group)
+# ══════════════════════════════════════════════════════════════════════════════
+npg_base <- c("#E64B35","#4DBBD5","#00A087","#3C5488",
+              "#F39B7F","#8491B4","#91D1C2","#DC0000","#7E6148","#B09C85")
+npg_pal <- function(n) {
+  if (n <= length(npg_base)) npg_base[seq_len(n)]
+  else colorRampPalette(npg_base)(n)
 }
 
-theme_publication <- function(base_size = 12) {
-  theme_bw(base_size = base_size) +
-    theme(
-      panel.grid = element_blank(),
-      panel.border = element_rect(color = "black", linewidth = 0.6),
-      strip.background = element_rect(fill = "grey95", color = "grey80"),
-      strip.text = element_text(face = "bold"),
-      plot.title = element_text(face = "bold"),
-      legend.key = element_blank()
-    )
-}
-
-format_p_value <- function(p_value) {
-  if (is.na(p_value)) {
-    "NA"
-  } else if (p_value < 0.001) {
-    "< 0.001"
-  } else {
-    sprintf("= %.3f", p_value)
-  }
-}
-
-extract_axis_pct <- function(ord_obj, axes = 2) {
-  rel_eig <- ord_obj$values$Relative_eig %||% NULL
-  if (!is.null(rel_eig) && length(rel_eig) >= axes) {
-    return(round(100 * rel_eig[seq_len(axes)], 1))
-  }
-
-  eig <- ord_obj$values$Eigenvalues %||% ord_obj$eig %||% numeric(0)
-  eig <- eig[is.finite(eig) & eig > 0]
-  if (length(eig) == 0) {
-    return(rep(NA_real_, axes))
-  }
-  pct <- 100 * eig[seq_len(min(length(eig), axes))] / sum(eig)
-  if (length(pct) < axes) {
-    pct <- c(pct, rep(NA_real_, axes - length(pct)))
-  }
-  round(pct, 1)
-}
-
-read_metadata <- function(path, group_col) {
-  meta <- readr::read_csv(path, show_col_types = FALSE)
-  if (nrow(meta) == 0) {
-    stop("Metadata is empty")
-  }
-
-  sample_candidates <- c("sample", "sample_id", "SampleID", "Sample", "id")
-  sample_col <- sample_candidates[sample_candidates %in% names(meta)][1] %||% names(meta)[1]
-  meta <- meta %>% dplyr::rename(sample_id = !!sample_col)
-
-  if (!group_col %in% names(meta)) {
-    stop("Metadata group column not found: ", group_col)
-  }
-
-  meta <- meta %>%
-    dplyr::mutate(
-      sample_id = as.character(sample_id),
-      !!group_col := as.factor(.data[[group_col]])
-    ) %>%
-    dplyr::filter(!is.na(sample_id), !is.na(.data[[group_col]])) %>%
-    dplyr::distinct(sample_id, .keep_all = TRUE) %>%
+# ══════════════════════════════════════════════════════════════════════════════
+# METADATA LOADER
+# ══════════════════════════════════════════════════════════════════════════════
+load_meta <- function(path, grp) {
+  meta <- read.csv(path)
+  cands <- c("sample_id","SampleID","sample","Sample","id")
+  sc    <- (cands[cands %in% names(meta)])[1] %||% names(meta)[1]
+  meta  <- meta %>%
+    rename(sample_id = !!sc) %>%
+    mutate(sample_id = as.character(sample_id),
+           !!grp := as.factor(.data[[grp]])) %>%
+    filter(!is.na(sample_id), !is.na(.data[[grp]])) %>%
+    distinct(sample_id, .keep_all = TRUE) %>%
     as.data.frame()
-
   rownames(meta) <- meta$sample_id
   meta
 }
 
-coerce_numeric_df <- function(df) {
-  for (i in seq_along(df)) {
-    df[[i]] <- suppressWarnings(as.numeric(df[[i]]))
+# ══════════════════════════════════════════════════════════════════════════════
+# MICROTABLE BUILDERS
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Bacteria: from MetaPhlAn4 merged taxonomy.tsv
+build_mt_bacteria <- function(bact_path, meta) {
+  raw <- read.table(bact_path, header = TRUE, row.names = 1, sep = "\t",
+                    comment.char = "#", check.names = FALSE)
+  sp_idx <- grepl("(^|\\|)s__", rownames(raw)) &
+            !grepl("(^|\\|)t__", rownames(raw))
+  if (sum(sp_idx) < 2) stop("< 2 species in bacteria table")
+  raw_sp <- raw[sp_idx, , drop = FALSE]
+
+  parse_lin <- function(lin) {
+    parts <- strsplit(lin, "\\|")[[1]]
+    pfx   <- c(Kingdom="k__",Phylum="p__",Class="c__",Order="o__",
+               Family="f__",Genus="g__",Species="s__")
+    vapply(pfx, function(px) {
+      m <- parts[startsWith(parts, px)]
+      if (length(m)) sub(paste0("^",px),"",m[1]) else NA_character_
+    }, character(1))
   }
-  df
+  tax_df <- as.data.frame(do.call(rbind, lapply(rownames(raw_sp), parse_lin)),
+                          stringsAsFactors = FALSE)
+  rownames(tax_df) <- rownames(raw_sp)
+
+  common <- intersect(colnames(raw_sp), rownames(meta))
+  if (length(common) < 2) stop("< 2 overlapping samples (bacteria)")
+  # Convert relative abundance (0-100) to pseudo-counts so Chao1/Observed work.
+  # Multiply by 1000 and round — preserves richness rank while allowing integer metrics.
+  otu_df <- as.data.frame(round(raw_sp[, common, drop = FALSE] * 1000))
+
+  sample_tbl <- meta[common, , drop = FALSE]
+  mt <- microtable$new(otu_table  = otu_df,
+                       tax_table  = tax_df,
+                       sample_table = sample_tbl)
+  mt$tidy_dataset()
+  cat(sprintf("[INFO] Bacteria microtable: %d taxa × %d samples\n",
+              nrow(mt$otu_table), nrow(mt$sample_table)))
+  mt
 }
 
-read_abundance_table <- function(path, label) {
-  if (!file.exists(path)) {
-    stop("Missing input table: ", path)
-  }
+# Virus: aggregate ORF-level TPM → vOTU representatives
+build_mt_virus <- function(votu_path, meta) {
+  clusters_path <- file.path(dirname(dirname(votu_path)), "vclust", "clusters.tsv")
+  if (!file.exists(clusters_path))
+    stop("Missing clusters.tsv: ", clusters_path)
 
-  raw <- readr::read_tsv(path, show_col_types = FALSE, comment = "#")
-  if (nrow(raw) == 0) {
-    stop(label, " table is empty")
-  }
+  clusters <- read.table(clusters_path, header = TRUE, sep = "\t",
+                         col.names = c("contig","votu_rep"),
+                         stringsAsFactors = FALSE)
+  raw      <- read.table(votu_path, header = TRUE, sep = "\t",
+                         check.names = FALSE, comment.char = "")
+  tpm_cols <- names(raw)[grepl("_tpm$", names(raw), ignore.case = TRUE)]
+  if (!length(tpm_cols)) stop("No *_tpm columns in vOTU table")
+  sample_ids <- sub("_tpm$", "", tpm_cols, ignore.case = TRUE)
 
-  feature_col <- names(raw)[1]
-  candidate_numeric <- names(raw)[vapply(
-    raw,
-    function(x) is.numeric(x) || suppressWarnings(sum(!is.na(as.numeric(x)))) > 0,
-    logical(1)
-  )]
-  sample_cols <- setdiff(candidate_numeric, feature_col)
-  if (length(sample_cols) == 0) {
-    stop("No sample columns detected in ", path)
-  }
+  contig_ord <- order(nchar(clusters$contig), decreasing = TRUE)
+  contigs    <- clusters$contig[contig_ord]
+  votus      <- clusters$votu_rep[contig_ord]
 
-  abund <- raw %>%
-    dplyr::select(all_of(c(feature_col, sample_cols))) %>%
-    dplyr::rename(feature = !!feature_col)
+  orf_to_votu <- vapply(raw$gene, function(orf) {
+    for (i in seq_along(contigs))
+      if (orf == contigs[i] || startsWith(orf, paste0(contigs[i],"_")))
+        return(votus[i])
+    NA_character_
+  }, character(1))
 
-  abund[sample_cols] <- coerce_numeric_df(abund[sample_cols])
-  abund <- abund %>%
-    dplyr::filter(!is.na(feature), feature != "") %>%
-    dplyr::group_by(feature) %>%
-    dplyr::summarise(dplyr::across(all_of(sample_cols), ~ sum(.x, na.rm = TRUE)), .groups = "drop")
+  raw[tpm_cols] <- lapply(raw[tpm_cols],
+                          function(x) suppressWarnings(as.numeric(x)))
+  raw$votu_rep <- orf_to_votu
 
-  mat <- as.matrix(abund[, sample_cols, drop = FALSE])
-  rownames(mat) <- abund$feature
-  mat[is.na(mat)] <- 0
-  mat <- mat[rowSums(mat) > 0, , drop = FALSE]
-  mat
+  agg <- raw %>%
+    filter(!is.na(votu_rep)) %>%
+    group_by(votu_rep) %>%
+    summarise(across(all_of(tpm_cols), ~ sum(.x, na.rm = TRUE)), .groups = "drop")
+
+  otu_df <- as.data.frame(agg[, tpm_cols, drop = FALSE])
+  rownames(otu_df) <- agg$votu_rep
+  colnames(otu_df) <- sample_ids
+  otu_df[is.na(otu_df)] <- 0
+  otu_df <- otu_df[rowSums(otu_df) > 0, , drop = FALSE]
+  # Convert TPM to pseudo-counts so Chao1/Observed metrics work.
+  otu_df <- round(otu_df)
+
+  tax_df <- data.frame(vOTU = rownames(otu_df),
+                       row.names = rownames(otu_df),
+                       stringsAsFactors = FALSE)
+
+  common <- intersect(colnames(otu_df), rownames(meta))
+  if (length(common) < 2) stop("< 2 overlapping samples (virus)")
+
+  mt <- microtable$new(otu_table    = otu_df[, common, drop = FALSE],
+                       tax_table    = tax_df,
+                       sample_table = meta[common, , drop = FALSE])
+  mt$tidy_dataset()
+  cat(sprintf("[INFO] Virus microtable: %d vOTUs × %d samples\n",
+              nrow(mt$otu_table), nrow(mt$sample_table)))
+  mt
 }
 
-read_fungi_profiles <- function(dir_path) {
-  files <- Sys.glob(file.path(dir_path, "*", "*_profile.txt"))
-  if (length(files) == 0) {
-    stop("No fungi profile files found in ", dir_path)
-  }
+# Fungi: from per-sample MetaPhlAn4 profiles
+build_mt_fungi <- function(fungi_profile_dir, meta) {
+  fls <- Sys.glob(file.path(fungi_profile_dir, "*", "*_profile.txt"))
+  if (!length(fls)) stop("No fungi profiles in ", fungi_profile_dir)
 
-  prof_list <- lapply(files, function(fp) {
-    raw_lines <- readLines(fp)
-    data_lines <- raw_lines[!startsWith(raw_lines, "#")]
-    if (length(data_lines) == 0) {
-      return(NULL)
-    }
-
-    tab <- readr::read_tsv(
-      I(paste(data_lines, collapse = "\n")),
-      show_col_types = FALSE,
-      col_names = c("clade_name", "ncbi_tax_id", "relative_abundance", "additional_species"),
-      col_types = "ccdc"
-    )
+  rows <- lapply(fls, function(fp) {
+    lines <- readLines(fp, warn = FALSE)
+    dat   <- lines[!startsWith(lines, "#")]
+    if (!length(dat)) return(NULL)
+    tab <- tryCatch(
+      readr::read_tsv(I(paste(dat, collapse="\n")), show_col_types=FALSE,
+        col_names=c("clade_name","ncbi_tax_id","relative_abundance","additional_species"),
+        col_types="ccdc"),
+      error = function(e) NULL)
+    if (is.null(tab)) return(NULL)
     tab <- tab[tab$clade_name != "UNCLASSIFIED" & !is.na(tab$relative_abundance), ]
-    if (nrow(tab) == 0) {
-      return(NULL)
-    }
-
-    sample_id <- basename(dirname(fp))
-    tibble(feature = as.character(tab$clade_name), sample_id = sample_id, abundance = tab$relative_abundance)
+    if (!nrow(tab)) return(NULL)
+    tibble(feature = tab$clade_name, sample_id = basename(dirname(fp)),
+           abundance = tab$relative_abundance)
   })
+  rows <- Filter(Negate(is.null), rows)
+  if (!length(rows)) { message("[INFO] Fungi: all UNCLASSIFIED"); return(NULL) }
 
-  prof_list <- Filter(Negate(is.null), prof_list)
-  if (length(prof_list) == 0) {
-    stop("No fungi taxa found in any profile (all UNCLASSIFIED)")
+  wide <- bind_rows(rows) %>%
+    filter(!is.na(feature), !is.na(abundance)) %>%
+    group_by(feature, sample_id) %>%
+    summarise(abundance = sum(abundance, na.rm=TRUE), .groups="drop") %>%
+    tidyr::pivot_wider(names_from=sample_id, values_from=abundance, values_fill=0)
+
+  otu_df <- as.data.frame(wide[, -1, drop=FALSE])
+  rownames(otu_df) <- wide$feature
+  sp_idx <- grepl("(^|\\|)s__", rownames(otu_df)) &
+            !grepl("(^|\\|)t__", rownames(otu_df))
+  if (sum(sp_idx) >= 2) otu_df <- otu_df[sp_idx, , drop=FALSE]
+  otu_df <- otu_df[rowSums(otu_df) > 0, , drop=FALSE]
+  if (nrow(otu_df) < 2) { message("[INFO] Fungi: < 2 non-zero species"); return(NULL) }
+
+  parse_lin <- function(lin) {
+    parts <- strsplit(lin, "\\|")[[1]]
+    pfx   <- c(Kingdom="k__",Phylum="p__",Class="c__",Order="o__",
+               Family="f__",Genus="g__",Species="s__")
+    vapply(pfx, function(px) {
+      m <- parts[startsWith(parts, px)]
+      if (length(m)) sub(paste0("^",px),"",m[1]) else NA_character_
+    }, character(1))
   }
+  tax_df <- as.data.frame(do.call(rbind, lapply(rownames(otu_df), parse_lin)),
+                          stringsAsFactors=FALSE)
+  rownames(tax_df) <- rownames(otu_df)
 
-  prof_df <- dplyr::bind_rows(prof_list) %>% dplyr::filter(!is.na(feature), !is.na(abundance))
-  if (nrow(prof_df) == 0) {
-    stop("No usable fungi abundances parsed")
-  }
+  common <- intersect(colnames(otu_df), rownames(meta))
+  if (length(common) < 2) stop("< 2 overlapping samples (fungi)")
 
-  mat <- prof_df %>%
-    dplyr::group_by(feature, sample_id) %>%
-    dplyr::summarise(abundance = sum(abundance, na.rm = TRUE), .groups = "drop") %>%
-    tidyr::pivot_wider(names_from = sample_id, values_from = abundance, values_fill = 0)
-
-  rn <- mat$feature
-  mat <- as.matrix(mat[, -1, drop = FALSE])
-  rownames(mat) <- rn
-  mat[rowSums(mat) > 0, , drop = FALSE]
+  mt <- microtable$new(otu_table    = otu_df[, common, drop=FALSE],
+                       tax_table    = tax_df,
+                       sample_table = meta[common, , drop=FALSE])
+  mt$tidy_dataset()
+  cat(sprintf("[INFO] Fungi microtable: %d taxa × %d samples\n",
+              nrow(mt$otu_table), nrow(mt$sample_table)))
+  mt
 }
 
-parse_taxonomy <- function(features) {
-  ranks <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
-  split_tax <- strsplit(features, "\\|")
-  parsed <- lapply(split_tax, function(parts) {
-    vals <- rep(NA_character_, length(ranks))
-    for (i in seq_len(min(length(parts), length(ranks)))) {
-      vals[i] <- gsub("^[a-z]__", "", parts[[i]])
-    }
-    vals
-  })
-  out <- do.call(rbind, parsed)
-  colnames(out) <- ranks
-  rownames(out) <- features
-  out
-}
+# ══════════════════════════════════════════════════════════════════════════════
+# ALPHA DIVERSITY  —  microeco_protocol style
+#   cal_alphadiv() → trans_alpha$new() → cal_diff(wilcox) → plot_alpha(ggdotplot)
+#   cowplot::save_plot(dpi=300, base_aspect_ratio=1.2)
+# ══════════════════════════════════════════════════════════════════════════════
 
-make_phyloseq <- function(mat, meta) {
-  common <- intersect(colnames(mat), rownames(meta))
-  if (length(common) < 2) {
-    stop("Need at least two overlapping samples")
+viz_alpha_microeco <- function(mt, group_col, out_file, out_tsv, title,
+                               measures = c("Observed","Chao1","Shannon","Pielou")) {
+  # Calculate alpha diversity into mt$alpha_diversity
+  mt_clone <- clone(mt)
+  tryCatch(mt_clone$cal_alphadiv(measures = measures),
+           error = function(e) {
+             # Some measures need integer counts; fall back to what works
+             message("[WARN] cal_alphadiv full set failed: ", conditionMessage(e))
+             tryCatch(mt_clone$cal_alphadiv(measures = c("Observed","Shannon")),
+                      error = function(e2) stop("cal_alphadiv: ", conditionMessage(e2)))
+           })
+
+  if (!is.null(mt_clone$alpha_diversity) && nrow(mt_clone$alpha_diversity) > 0) {
+    write.csv(mt_clone$alpha_diversity, out_tsv)
   }
 
-  mat <- mat[, common, drop = FALSE]
-  meta <- meta[common, , drop = FALSE]
-  phyloseq(
-    otu_table(mat, taxa_are_rows = TRUE),
-    sample_data(meta),
-    tax_table(parse_taxonomy(rownames(mat)))
+  grps <- unique(as.character(mt_clone$sample_table[[group_col]]))
+  cols <- setNames(npg_pal(length(grps)), sort(grps))
+
+  t1 <- trans_alpha$new(dataset = mt_clone, group = group_col)
+  tryCatch(t1$cal_diff(method = "wilcox"), error = function(e)
+    message("[WARN] cal_diff wilcox: ", conditionMessage(e)))
+
+  # microeco_protocol Fig 2c style: ggdotplot + mean_se
+  avail_measures <- intersect(measures, names(mt_clone$alpha_diversity))
+  if (!length(avail_measures)) avail_measures <- names(mt_clone$alpha_diversity)[1]
+
+  plots <- lapply(avail_measures, function(m) {
+    tryCatch(
+      t1$plot_alpha(measure = m, plot_type = "ggdotplot",
+                    fill = group_col, alpha = 0.3, size = 2,
+                    add = "mean_se", xtext_angle = 0,
+                    color_values = unname(cols)) +
+        ggtitle(m) +
+        theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 10),
+              legend.position = "none"),
+      error = function(e) {
+        message("[WARN] plot_alpha(", m, "): ", conditionMessage(e)); NULL
+      }
+    )
+  })
+  plots <- Filter(Negate(is.null), plots)
+  if (!length(plots)) { message("[WARN] No alpha plots for ", title); return(invisible(NULL)) }
+
+  # Combine with cowplot::plot_grid (microeco_protocol style)
+  ncols <- min(length(plots), 4)
+  fig <- cowplot::plot_grid(plotlist = plots, ncol = ncols, align = "hv")
+  fig_title <- cowplot::ggdraw() +
+    cowplot::draw_label(paste0(title, " — Alpha Diversity"),
+                        fontface = "bold", size = 12, hjust = 0.5)
+  fig_combined <- cowplot::plot_grid(fig_title, fig, ncol = 1,
+                                     rel_heights = c(0.1, 1))
+
+  w <- max(3.2 * ncols, 7)
+  cowplot::save_plot(out_file, fig_combined,
+                     base_width = w, base_height = 4.5, dpi = 300)
+  cat(sprintf("[INFO] Alpha saved: %s\n", out_file))
+  invisible(mt_clone$alpha_diversity)
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BETA DIVERSITY  —  microeco_protocol style
+#   cal_betadiv(bray) → trans_beta$new() → cal_ordination(PCoA)
+#   + cal_manova(manova_all=TRUE) → plot_ordination(point+ellipse)
+#   cowplot::save_plot(dpi=300, base_aspect_ratio=1.2)
+# ══════════════════════════════════════════════════════════════════════════════
+
+viz_beta_microeco <- function(mt, group_col, out_file, out_tsv, title,
+                              measure = "bray") {
+  mt_clone <- clone(mt)
+  mt_clone$cal_betadiv(method = measure)
+
+  grps <- sort(unique(as.character(mt_clone$sample_table[[group_col]])))
+  cols <- setNames(npg_pal(length(grps)), grps)
+
+  t1 <- trans_beta$new(dataset = mt_clone, group = group_col, measure = measure)
+  t1$cal_ordination(method = "PCoA", ncomp = 2)
+
+  if (!is.null(t1$res_ordination$scores)) {
+    write.csv(t1$res_ordination$scores, out_tsv)
+  }
+
+  # PERMANOVA annotation
+  perm_label <- ""
+  tryCatch({
+    t1$cal_manova(manova_all = TRUE, group = group_col)
+    if (!is.null(t1$res_manova) && nrow(t1$res_manova) > 0) {
+      r2  <- round(t1$res_manova$R2[1], 3)
+      pv  <- round(t1$res_manova$`Pr(>F)`[1], 3)
+      perm_label <- sprintf("PERMANOVA: R² = %.3f, p = %.3f", r2, pv)
+    }
+  }, error = function(e) message("[WARN] cal_manova: ", conditionMessage(e)))
+
+  # Build base plot: points only (no ellipse from microeco — we add manually)
+  g1 <- tryCatch(
+    t1$plot_ordination(plot_color   = group_col,
+                       plot_shape   = group_col,
+                       plot_type    = "point",
+                       color_values = unname(cols),
+                       shape_values = c(16,17,15,18,8,3,4,7)[seq_along(grps)]),
+    error = function(e) {
+      message("[WARN] plot_ordination: ", conditionMessage(e)); NULL
+    }
   )
-}
+  if (is.null(g1)) return(invisible(NULL))
 
-clr_distance <- function(mat) {
-  mat <- as.matrix(mat)
-  mat <- t(mat)
-  mat <- mat + 1e-06
-  log_mat <- log(mat)
-  clr <- sweep(log_mat, 1, rowMeans(log_mat), "-")
-  dist(clr, method = "euclidean")
-}
-
-safe_pcoa <- function(dist_obj, metric, dimension, meta, group_col) {
-  if (length(dist_obj) == 0) {
-    stop("Distance matrix is empty")
-  }
-
-  ord <- ape::pcoa(dist_obj)
-  axis_pct <- extract_axis_pct(ord, axes = 2)
-  vectors <- as.data.frame(ord$vectors[, 1:2, drop = FALSE])
-  vectors$sample_id <- rownames(vectors)
-  colnames(vectors)[1:2] <- c("Axis1", "Axis2")
-  meta_for_join <- if ("sample_id" %in% names(meta)) meta else tibble::rownames_to_column(meta, "sample_id")
-  vectors <- vectors %>%
-    dplyr::left_join(meta_for_join, by = "sample_id") %>%
-    dplyr::mutate(
-      metric = metric,
-      dimension = dimension,
-      Axis1_pct = axis_pct[1],
-      Axis2_pct = axis_pct[2]
-    )
-
-  perm <- tibble()
-  if (group_col %in% names(meta) && nlevels(as.factor(meta[[group_col]])) > 1) {
-    perm_df <- as.data.frame(meta[labels(dist_obj), , drop = FALSE])
-    perm_df$.group_factor <- perm_df[[group_col]]
-    fit <- vegan::adonis2(
-      dist_obj ~ .group_factor,
-      data = perm_df
-    )
-    perm <- tibble(
-      dimension = dimension,
-      metric = metric,
-      term = rownames(as.data.frame(fit))[1],
-      R2 = as.data.frame(fit)$R2[1],
-      p_value = as.data.frame(fit)$`Pr(>F)`[1]
-    )
-  }
-
-  list(coords = vectors, permanova = perm)
-}
-
-plot_alpha <- function(alpha_df, out_file, group_col) {
-  if (nrow(alpha_df) == 0) {
+  # Detect the PCo column names from the score data
+  scores <- t1$res_ordination$scores
+  pco_cols <- grep("^PCo", names(scores), value = TRUE)
+  if (length(pco_cols) < 2) {
+    message("[WARN] Cannot find PCo columns in scores for ", title)
     return(invisible(NULL))
   }
+  pc1 <- pco_cols[1]; pc2 <- pco_cols[2]
 
-  p <- alpha_df %>%
-    tidyr::pivot_longer(
-      cols = c("Shannon", "Chao1", "Simpson", "Observed", "FaithPD"),
-      names_to = "metric",
-      values_to = "value"
-    ) %>%
-    dplyr::filter(!is.na(value)) %>%
-    ggplot(aes(x = .data[[group_col]], y = value, fill = .data[[group_col]])) +
-    geom_boxplot(outlier.shape = NA, alpha = 0.8, linewidth = 0.4) +
-    geom_jitter(width = 0.15, size = 1.4, alpha = 0.7) +
-    facet_grid(metric ~ dimension, scales = "free_y") +
-    theme_publication(base_size = 11) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1), legend.position = "none") +
-    labs(x = group_col, y = "Alpha diversity", title = "Alpha diversity across groups")
+  # Add 95% confidence ellipse via stat_ellipse (t-distribution)
+  # stat_ellipse needs the same aesthetics as the base plot
+  g1 <- g1 +
+    stat_ellipse(data    = scores,
+                 mapping = aes(x = .data[[pc1]], y = .data[[pc2]],
+                               colour = .data[[group_col]],
+                               fill   = .data[[group_col]]),
+                 geom    = "polygon",
+                 type    = "t",
+                 level   = 0.95,
+                 alpha   = 0.10,
+                 lwd     = 0.5,
+                 show.legend = FALSE) +
+    stat_ellipse(data    = scores,
+                 mapping = aes(x = .data[[pc1]], y = .data[[pc2]],
+                               colour = .data[[group_col]]),
+                 type    = "t",
+                 level   = 0.95,
+                 lwd     = 0.5,
+                 show.legend = FALSE) +
+    scale_fill_manual(values = unname(cols), guide = "none") +
+    labs(caption = perm_label) +
+    ggtitle(sprintf("%s — Bray-Curtis PCoA", title)) +
+    theme(plot.title   = element_text(face = "bold", hjust = 0.5, size = 11),
+          plot.caption = element_text(size = 8, hjust = 1, colour = "grey40"),
+          panel.grid   = element_blank(),
+          legend.title = element_text(face = "bold"))
 
-  if (length(unique(alpha_df[[group_col]])) > 1) {
-    p <- p + ggpubr::stat_compare_means(label = "p.format", method = "wilcox.test")
-  }
-
-  ggsave(out_file, plot = p, width = 11, height = 8)
+  cowplot::save_plot(out_file, g1,
+                     base_aspect_ratio = 1.2, base_height = 5.5, dpi = 300)
+  cat(sprintf("[INFO] Beta PCoA saved: %s\n", out_file))
+  invisible(t1)
 }
 
-plot_beta <- function(beta_df, out_file, group_col) {
-  if (nrow(beta_df) == 0) {
-    # No beta diversity data — write placeholder PDF so downstream checks pass
-    pdf(out_file, width = 8, height = 6)
-    plot.new()
-    text(0.5, 0.5, "No beta diversity data available\n(insufficient samples or coverage)", cex = 1.2)
-    dev.off()
-    return(invisible(NULL))
-  }
+# ══════════════════════════════════════════════════════════════════════════════
+# MAIN
+# ══════════════════════════════════════════════════════════════════════════════
 
-  p <- ggplot(beta_df, aes(x = Axis1, y = Axis2, color = .data[[group_col]])) +
-    geom_point(size = 2.4, alpha = 0.85) +
-    facet_grid(metric ~ dimension, scales = "free") +
-    theme_publication(base_size = 11) +
-    labs(
-      title = "PCoA of beta diversity",
-      x = "Axis 1",
-      y = "Axis 2",
-      color = group_col
-    )
+# Load metadata
+meta <- tryCatch(load_meta(metadata_csv, group_col),
+                 error = function(e) stop("Cannot load metadata: ", conditionMessage(e)))
+cat(sprintf("[INFO] Metadata: %d samples, group = '%s'\n", nrow(meta), group_col))
 
-  ggsave(out_file, plot = p, width = 11, height = 8)
-}
+# ── Step 1: Build microtable objects ─────────────────────────────────────────
+mt_list <- list()
 
-select_species_matrix <- function(mat) {
-  species_idx <- grepl("(^|\\|)s__", rownames(mat)) & !grepl("(^|\\|)t__", rownames(mat))
-  if (sum(species_idx) >= 2) {
-    return(mat[species_idx, , drop = FALSE])
-  }
-
-  warning("No species-level entries detected in taxonomy.tsv; using full matrix for visualization")
-  mat
-}
-
-prepare_rarefaction_counts <- function(mat, scale_factor = 1000) {
-  counts <- round(pmax(mat, 0) * scale_factor)
-  counts <- counts[, colSums(counts) > 0, drop = FALSE]
-  if (ncol(counts) < 2) {
-    stop("Need at least two samples with positive abundance for rarefaction")
-  }
-  counts
-}
-
-plot_pcoa_with_ellipses <- function(ps, group_col, out_file) {
-  mat <- as(otu_table(ps), "matrix")
-  if (!phyloseq::taxa_are_rows(ps)) {
-    mat <- t(mat)
-  }
-
-  meta <- as(sample_data(ps), "data.frame")
-  meta$sample_id <- rownames(meta)
-  meta <- meta %>% dplyr::filter(!is.na(.data[[group_col]]))
-  rownames(meta) <- meta$sample_id
-
-  if (nlevels(as.factor(meta[[group_col]])) < 2) {
-    stop("PCoA figure requires at least two groups in metadata column: ", group_col)
-  }
-
-  mat <- mat[, meta$sample_id, drop = FALSE]
-  bray <- vegan::vegdist(t(mat), method = "bray")
-  ord <- ape::pcoa(bray)
-  axis_pct <- extract_axis_pct(ord, axes = 2)
-  coords <- as.data.frame(ord$vectors[, 1:2, drop = FALSE])
-  coords$sample_id <- rownames(coords)
-  colnames(coords)[1:2] <- c("Axis1", "Axis2")
-  coords <- coords %>% dplyr::left_join(meta, by = "sample_id")
-
-  perm_df <- as.data.frame(meta[labels(bray), , drop = FALSE])
-  perm_df$.group_factor <- perm_df[[group_col]]
-  permanova_fit <- vegan::adonis2(
-    bray ~ .group_factor,
-    data = perm_df
-  )
-  permanova_tbl <- as.data.frame(permanova_fit)
-  stat_label <- paste0(
-    "PERMANOVA\nR2 = ", sprintf("%.3f", permanova_tbl$R2[1]),
-    "\np ", format_p_value(permanova_tbl$`Pr(>F)`[1])
-  )
-
-  ellipse_df <- coords %>%
-    dplyr::group_by(.data[[group_col]]) %>%
-    dplyr::filter(dplyr::n() >= 3) %>%
-    dplyr::ungroup()
-
-  p <- ggplot(coords, aes(x = Axis1, y = Axis2, color = .data[[group_col]])) +
-    {
-      if (nrow(ellipse_df) > 0) {
-        stat_ellipse(
-          data = ellipse_df,
-          aes(fill = .data[[group_col]]),
-          geom = "polygon",
-          type = "norm",
-          level = 0.95,
-          alpha = 0.12,
-          color = NA,
-          show.legend = FALSE
-        )
-      }
-    } +
-    geom_point(size = 2.8, alpha = 0.9) +
-    annotate(
-      "label",
-      x = Inf,
-      y = Inf,
-      label = stat_label,
-      hjust = 1.02,
-      vjust = 1.05,
-      size = 3.6,
-      label.size = 0.25,
-      fill = "white"
-    ) +
-    theme_publication(base_size = 12) +
-    labs(
-      title = "PCoA with 95% confidence ellipses",
-      subtitle = "Bray-Curtis distance on MetaPhlAn4 species-level abundance",
-      x = paste0("PCoA 1 (", axis_pct[1], "%)"),
-      y = paste0("PCoA 2 (", axis_pct[2], "%)"),
-      color = group_col,
-      fill = group_col
-    )
-
-  ggsave(out_file, plot = p, width = 8.6, height = 6.8)
-}
-
-plot_rarefaction_curves <- function(ps, group_col, out_file) {
-  mat <- as(otu_table(ps), "matrix")
-  if (!phyloseq::taxa_are_rows(ps)) {
-    mat <- t(mat)
-  }
-
-  meta <- as(sample_data(ps), "data.frame")
-  meta$sample_id <- rownames(meta)
-  meta <- meta %>% dplyr::filter(!is.na(.data[[group_col]]))
-  rownames(meta) <- meta$sample_id
-
-  counts <- prepare_rarefaction_counts(mat[, meta$sample_id, drop = FALSE])
-  depth_vec <- colSums(counts)
-  min_depth <- min(depth_vec)
-  step_size <- max(1, floor(min_depth / 80))
-
-  rare_df <- vegan::rarecurve(
-    t(counts),
-    step = step_size,
-    label = FALSE,
-    tidy = TRUE
-  ) %>%
-    dplyr::rename(sample_id = Site, depth = Sample, richness = Species) %>%
-    dplyr::left_join(meta, by = "sample_id")
-
-  p <- ggplot(rare_df, aes(x = depth, y = richness, group = sample_id, color = .data[[group_col]])) +
-    geom_line(linewidth = 0.55, alpha = 0.7) +
-    geom_vline(xintercept = min_depth, linetype = "dashed", color = "grey35", linewidth = 0.6) +
-    annotate(
-      "label",
-      x = min_depth,
-      y = max(rare_df$richness, na.rm = TRUE),
-      label = paste0("Min depth = ", format(min_depth, big.mark = ",", scientific = FALSE)),
-      hjust = -0.05,
-      vjust = 1.15,
-      size = 3.3,
-      label.size = 0.2,
-      fill = "white"
-    ) +
-    theme_publication(base_size = 12) +
-    labs(
-      title = "Rarefaction curves",
-      subtitle = "Observed species richness across scaled sequencing depth",
-      x = "Sequencing depth (scaled abundance units)",
-      y = "Observed species richness",
-      color = group_col,
-      caption = "Depth is derived by scaling species-level relative abundances because raw read counts are not stored in taxonomy.tsv."
-    )
-
-  ggsave(out_file, plot = p, width = 9.4, height = 6.8)
-}
-
-meta <- NULL
-run_step("metadata_import", {
-  meta <- read_metadata(metadata_csv, group_col)
+tryCatch({
+  mt_list[["bacteria"]] <- build_mt_bacteria(bact_table, meta)
+  log_status("bacteria_mt", "OK", "")
+}, error = function(e) {
+  log_status("bacteria_mt", "FAILED", conditionMessage(e))
+  message("[WARN] bacteria_mt: ", conditionMessage(e))
 })
 
-datasets <- list()
-run_step("bacteria_import", {
-  datasets$bacteria <- read_abundance_table(bact_table, "bacteria")
-})
-run_step("virus_import", {
-  vir_mat <- read_abundance_table(vir_table, "virus")
-  colnames(vir_mat) <- sub("_tpm$", "", colnames(vir_mat))
-  datasets$virus <- vir_mat
-})
-run_step("fungi_import", {
-  datasets$fungi <- read_fungi_profiles(fungi_dir)
+tryCatch({
+  mt_list[["virus"]] <- build_mt_virus(vir_table, meta)
+  log_status("virus_mt", "OK", "")
+}, error = function(e) {
+  log_status("virus_mt", "FAILED", conditionMessage(e))
+  message("[WARN] virus_mt: ", conditionMessage(e))
 })
 
-tree_obj <- NULL
-run_step("tree_import", {
-  if (file.exists(tree_file)) {
-    tree_obj <- ape::read.tree(tree_file)
-  }
-})
-
-for (dimension in names(datasets)) {
-  run_step(paste0(dimension, "_analysis"), {
-    mat <- datasets[[dimension]]
-    ps <- make_phyloseq(mat, meta)
-    common_samples <- sample_names(ps)
-    mat <- as(otu_table(ps), "matrix")
-    meta_dim <- as.data.frame(sample_data(ps))
-    meta_dim$sample_id <- rownames(meta_dim)
-
-    alpha_df <- tibble(
-      sample_id = common_samples,
-      dimension = dimension,
-      Shannon = vegan::diversity(t(mat), index = "shannon"),
-      Chao1 = apply(mat, 2, function(x) {
-        xi <- round(x)
-        tryCatch(vegan::estimateR(xi)[2], error = function(e) NA_real_)
-      }),
-      Simpson = vegan::diversity(t(mat), index = "simpson"),
-      Observed = vegan::specnumber(t(mat))
-    ) %>%
-      dplyr::left_join(meta_dim, by = "sample_id")
-
-    alpha_df$FaithPD <- NA_real_
-    if (!is.null(tree_obj)) {
-      tree_tips <- intersect(rownames(mat), tree_obj$tip.label)
-      if (length(tree_tips) >= 3) {
-        pd <- picante::pd(t(mat[tree_tips, , drop = FALSE]), tree_obj, include.root = FALSE)
-        alpha_df$FaithPD[match(rownames(pd), alpha_df$sample_id)] <- pd$PD
-      }
+tryCatch({
+  if (nzchar(fungi_dir) && dir.exists(fungi_dir)) {
+    res <- build_mt_fungi(fungi_dir, meta)
+    if (!is.null(res)) {
+      mt_list[["fungi"]] <- res
+      log_status("fungi_mt", "OK", "")
+    } else {
+      log_status("fungi_mt", "SKIPPED", "all UNCLASSIFIED")
     }
-    alpha_all[[dimension]] <- alpha_df
+  } else {
+    log_status("fungi_mt", "SKIPPED", "no fungi_dir")
+  }
+}, error = function(e) {
+  log_status("fungi_mt", "FAILED", conditionMessage(e))
+  message("[WARN] fungi_mt: ", conditionMessage(e))
+})
 
-    bray <- vegan::vegdist(t(mat), method = "bray")
-    bray_res <- safe_pcoa(bray, "BrayCurtis", dimension, meta_dim, group_col)
-    clr_res <- safe_pcoa(clr_distance(mat), "AitchisonCLR", dimension, meta_dim, group_col)
-
-    beta_all[[dimension]] <- bind_rows(bray_res$coords, clr_res$coords)
-    permanova_all[[dimension]] <- bind_rows(bray_res$permanova, clr_res$permanova)
+# ── Step 2: Save microtable RDS for downstream (92/94/96) ────────────────────
+for (dim_name in names(mt_list)) {
+  tryCatch({
+    rds_path <- file.path(dim_dirs[[dim_name]], paste0(dim_name, "_microtable.rds"))
+    saveRDS(mt_list[[dim_name]], rds_path)
+    log_status(paste0(dim_name, "_rds"), "OK", "")
+    cat(sprintf("[INFO] Saved microtable RDS: %s\n", rds_path))
+  }, error = function(e) {
+    log_status(paste0(dim_name, "_rds"), "FAILED", conditionMessage(e))
   })
 }
 
-alpha_df <- bind_rows(alpha_all)
-beta_df <- bind_rows(beta_all)
-permanova_df <- bind_rows(permanova_all)
+# ── Step 3 & 4: Alpha + Beta for each dimension ───────────────────────────────
+ALPHA_MEASURES <- c("Observed", "Chao1", "Shannon", "Pielou")
 
-if (nrow(alpha_df) == 0) {
-  stop("No alpha diversity results were generated")
-}
-
-plot_alpha(alpha_df, file.path(result_dir, "alpha_diversity_boxplot.pdf"), group_col)
-plot_beta(beta_df, file.path(result_dir, "beta_pcoa.pdf"), group_col)
-
-run_step("bacteria_pcoa_ellipses", {
-  bacteria_species <- select_species_matrix(datasets$bacteria)
-  bacteria_ps <- make_phyloseq(bacteria_species, meta)
-  plot_pcoa_with_ellipses(
-    bacteria_ps,
-    group_col = group_col,
-    out_file = file.path(viz_dir, "pcoa_ellipses_permanova.pdf")
+dim_config <- list(
+  bacteria = list(
+    measures  = ALPHA_MEASURES,
+    alpha_out = file.path(dim_dirs[["bacteria"]], "alpha_diversity_boxplot.pdf"),
+    alpha_tsv = file.path(dim_dirs[["bacteria"]], "alpha_diversity.csv"),
+    beta_out  = file.path(dim_dirs[["bacteria"]], "pcoa_ellipses_permanova.pdf"),
+    beta_tsv  = file.path(dim_dirs[["bacteria"]], "beta_pcoa_scores.csv"),
+    title     = "Bacteria"
+  ),
+  virus = list(
+    measures  = ALPHA_MEASURES,
+    alpha_out = file.path(dim_dirs[["virus"]], "alpha_diversity_boxplot.pdf"),
+    alpha_tsv = file.path(dim_dirs[["virus"]], "alpha_diversity.csv"),
+    beta_out  = file.path(dim_dirs[["virus"]], "pcoa_ellipses_permanova.pdf"),
+    beta_tsv  = file.path(dim_dirs[["virus"]], "beta_pcoa_scores.csv"),
+    title     = "Virus"
+  ),
+  fungi = list(
+    measures  = ALPHA_MEASURES,
+    alpha_out = file.path(dim_dirs[["fungi"]], "alpha_diversity_boxplot.pdf"),
+    alpha_tsv = file.path(dim_dirs[["fungi"]], "alpha_diversity.csv"),
+    beta_out  = file.path(dim_dirs[["fungi"]], "pcoa_ellipses_permanova.pdf"),
+    beta_tsv  = file.path(dim_dirs[["fungi"]], "beta_pcoa_scores.csv"),
+    title     = "Fungi"
   )
-})
-
-run_step("bacteria_rarefaction_curves", {
-  bacteria_species <- select_species_matrix(datasets$bacteria)
-  bacteria_ps <- make_phyloseq(bacteria_species, meta)
-  plot_rarefaction_curves(
-    bacteria_ps,
-    group_col = group_col,
-    out_file = file.path(viz_dir, "rarefaction_curves.pdf")
-  )
-})
-
-status_df <- bind_rows(status_log)
-
-readr::write_tsv(alpha_df, file.path(result_dir, "alpha_diversity.tsv"))
-if (nrow(beta_df) == 0) {
-  beta_df <- tibble(
-    sample_id = character(),
-    dimension = character(),
-    metric = character(),
-    Axis1 = numeric(),
-    Axis2 = numeric(),
-    note = character()
-  )
-}
-if (nrow(permanova_df) == 0) {
-  permanova_df <- tibble(
-    dimension = character(),
-    metric = character(),
-    R2 = numeric(),
-    p_value = numeric(),
-    note = character()
-  )
-}
-readr::write_tsv(beta_df, file.path(result_dir, "beta_pcoa.tsv"))
-readr::write_tsv(permanova_df, file.path(result_dir, "permanova.tsv"))
-readr::write_tsv(status_df, file.path(result_dir, "diversity_status.tsv"))
-
-required_outputs <- c(
-  file.path(result_dir, "alpha_diversity.tsv"),
-  file.path(result_dir, "beta_pcoa.tsv"),
-  file.path(result_dir, "permanova.tsv"),
-  file.path(result_dir, "diversity_status.tsv"),
-  file.path(result_dir, "alpha_diversity_boxplot.pdf"),
-  file.path(result_dir, "beta_pcoa.pdf"),
-  file.path(viz_dir, "pcoa_ellipses_permanova.pdf"),
-  file.path(viz_dir, "rarefaction_curves.pdf")
 )
 
-missing_outputs <- required_outputs[!file.exists(required_outputs) | file.info(required_outputs)$size <= 0]
-if (length(missing_outputs) > 0) {
-  stop("Expected outputs not generated: ", paste(missing_outputs, collapse = ", "))
+for (dim_name in names(dim_config)) {
+  cfg <- dim_config[[dim_name]]
+  mt  <- mt_list[[dim_name]]
+  if (is.null(mt)) {
+    log_status(paste0(dim_name, "_alpha"), "SKIPPED", "no microtable")
+    log_status(paste0(dim_name, "_pcoa"),  "SKIPPED", "no microtable")
+    next
+  }
+
+  # Alpha
+  tryCatch({
+    viz_alpha_microeco(mt, group_col,
+                       out_file = cfg$alpha_out,
+                       out_tsv  = cfg$alpha_tsv,
+                       title    = cfg$title,
+                       measures = cfg$measures)
+    log_status(paste0(dim_name, "_alpha"), "OK", "")
+  }, error = function(e) {
+    log_status(paste0(dim_name, "_alpha"), "FAILED", conditionMessage(e))
+    message("[WARN] ", dim_name, "_alpha: ", conditionMessage(e))
+  })
+
+  # Beta
+  tryCatch({
+    viz_beta_microeco(mt, group_col,
+                      out_file = cfg$beta_out,
+                      out_tsv  = cfg$beta_tsv,
+                      title    = cfg$title)
+    log_status(paste0(dim_name, "_pcoa"), "OK", "")
+  }, error = function(e) {
+    log_status(paste0(dim_name, "_pcoa"), "FAILED", conditionMessage(e))
+    message("[WARN] ", dim_name, "_pcoa: ", conditionMessage(e))
+  })
 }
 
-cat("[INFO] Diversity analysis completed successfully\n")
-cat("  Statistics:", result_dir, "\n")
-cat("  Visualizations:", viz_dir, "\n")
+# ── Step 5: Root-level TSV sentinels (Snakemake) ─────────────────────────────
+# Collect alpha_diversity.tsv from all dimensions
+alpha_rows <- lapply(names(dim_config), function(d) {
+  f <- dim_config[[d]]$alpha_tsv
+  if (file.exists(f)) {
+    df <- tryCatch(read.csv(f), error = function(e) NULL)
+    if (!is.null(df)) { df$dimension <- d; return(df) }
+  }
+  NULL
+})
+alpha_rows <- Filter(Negate(is.null), alpha_rows)
+
+if (length(alpha_rows)) {
+  all_cols <- unique(unlist(lapply(alpha_rows, names)))
+  alpha_rows <- lapply(alpha_rows, function(df) {
+    miss <- setdiff(all_cols, names(df))
+    if (length(miss)) df[miss] <- NA_real_
+    df[all_cols]
+  })
+  write.table(do.call(rbind, alpha_rows),
+              file.path(result_dir, "alpha_diversity.tsv"),
+              sep = "\t", row.names = FALSE, quote = FALSE)
+} else {
+  write.table(data.frame(note = "no alpha computed"),
+              file.path(result_dir, "alpha_diversity.tsv"),
+              sep = "\t", row.names = FALSE, quote = FALSE)
+}
+
+if (!file.exists(file.path(result_dir, "beta_pcoa.tsv")))
+  write.table(data.frame(note = "see per-dimension beta_pcoa_scores.csv"),
+              file.path(result_dir, "beta_pcoa.tsv"),
+              sep = "\t", row.names = FALSE, quote = FALSE)
+
+# ── Step 6: Status log ────────────────────────────────────────────────────────
+status_df <- do.call(rbind, status_log)
+write.table(status_df,
+            file.path(result_dir, "diversity_status.tsv"),
+            sep = "\t", row.names = FALSE, quote = FALSE)
+
+cat("\n[INFO] Diversity analysis complete.\n")
+print(status_df)
+
+if (!file.exists(file.path(result_dir, "alpha_diversity.tsv")))
+  stop("No alpha_diversity.tsv produced")
+
+cat("[INFO] All outputs written to:", result_dir, "\n")
