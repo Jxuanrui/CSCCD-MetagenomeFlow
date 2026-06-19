@@ -116,6 +116,82 @@ prepare_mt <- function(mt) {
   x
 }
 
+# ---------------------------------------------------------------------------
+# enrich_virus_taxonomy: inject geNomad lineage into virus microtable tax_table
+# Row names in otu_table may have "||full" ORF suffix; strip before lookup.
+# ---------------------------------------------------------------------------
+enrich_virus_taxonomy <- function(mt, workdir) {
+  genomad_path <- file.path(workdir, "result", "virus", "votu", "genomad", "virus_taxonomy.tsv")
+  if (!file.exists(genomad_path)) {
+    message("[INFO] geNomad taxonomy not found, skipping virus annotation")
+    return(mt)
+  }
+  gdf <- tryCatch(
+    read.table(genomad_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE),
+    error = function(e) { message("[WARN] Cannot read genomad taxonomy: ", e$message); NULL }
+  )
+  if (is.null(gdf) || !all(c("seq_name","lineage") %in% names(gdf))) return(mt)
+
+  # Parse lineage: Viruses;Realm;Kingdom;Phylum;Class;Order;Family;Genus
+  parse_lin <- function(lin) {
+    if (is.na(lin) || !nzchar(lin)) return(c(Domain=NA,Phylum=NA,Class=NA,Order=NA,Family=NA,Genus=NA))
+    p <- strsplit(lin, ";")[[1]]; p <- p[nzchar(p)]; n <- length(p)
+    c(Domain  = if (n>=1) p[1] else NA_character_,
+      Phylum  = if (n>=4) p[4] else NA_character_,
+      Class   = if (n>=5) p[5] else NA_character_,
+      Order   = if (n>=6) p[6] else NA_character_,
+      Family  = if (n>=7) p[7] else NA_character_,
+      Genus   = if (n>=8) p[8] else NA_character_)
+  }
+  tax_mat      <- do.call(rbind, lapply(gdf$lineage, parse_lin))
+  rownames(tax_mat) <- gdf$seq_name
+  tax_df_gen   <- as.data.frame(tax_mat, stringsAsFactors = FALSE)
+
+  new_tax <- mt$tax_table
+  for (col in c("Domain","Phylum","Class","Order","Family","Genus"))
+    new_tax[[col]] <- NA_character_
+
+  base_names <- sub("\\|\\|.*", "", rownames(new_tax))
+  for (i in seq_len(nrow(new_tax))) {
+    bn <- base_names[i]
+    if (bn %in% rownames(tax_df_gen)) {
+      for (col in c("Domain","Phylum","Class","Order","Family","Genus"))
+        new_tax[i, col] <- tax_df_gen[bn, col]
+    }
+  }
+  mt$tax_table <- new_tax
+  message(sprintf("[INFO] Virus taxonomy enriched: %d/%d vOTUs annotated",
+                  sum(!is.na(new_tax$Family) | !is.na(new_tax$Order)), nrow(new_tax)))
+  mt
+}
+
+# ---------------------------------------------------------------------------
+# get_short_name: human-readable display label for a taxa ID
+#   - Bacterial lineage (contains "|") → last segment (species/genus name)
+#   - Virus with enriched tax_table → Family (contig) or Order/Class fallback
+#   - Otherwise strip "||..." suffix
+# ---------------------------------------------------------------------------
+get_short_name <- function(taxa_ids, tax_table = NULL) {
+  vapply(taxa_ids, function(tid) {
+    tid <- as.character(tid)
+    if (grepl("\\|", tid, fixed = FALSE)) {
+      # Bacterial lineage-style: k__Bacteria|...|s__Lactobacillus_acidophilus
+      nm <- sub(".*\\|", "", tid)
+      sub("^[kpcofgst]__", "", nm)
+    } else if (!is.null(tax_table) && tid %in% rownames(tax_table)) {
+      # Virus or other: use Family > Order > Class > Phylum > bare name
+      base <- sub("\\|\\|.*", "", tid)
+      for (lvl in c("Family","Order","Class","Phylum")) {
+        val <- tryCatch(tax_table[tid, lvl], error = function(e) NA_character_)
+        if (!is.na(val) && nzchar(val)) return(paste0(val, " (", base, ")"))
+      }
+      base
+    } else {
+      sub("\\|\\|.*", "", tid)
+    }
+  }, character(1), USE.NAMES = FALSE)
+}
+
 run_diff <- function(mt, method, taxa_level, out_csv, extra = list()) {
   args <- c(list(dataset = mt, method = method, group = group_col, taxa_level = taxa_level), extra)
   obj <- do.call(trans_diff$new, args)
@@ -182,63 +258,111 @@ augment_wilcox_for_volcano <- function(obj) {
   obj
 }
 
-plot_diff_abund_fallback <- function(obj, use_number = 15, color_values = npg_base) {
-  res  <- obj$res_diff
-  abund <- tryCatch(obj$res_abund, error = function(e) NULL)
-  if (is.null(abund) || !all(c("Taxa", "Mean", "group") %in% names(abund))) {
-    stop("res_abund not available or missing required columns")
+# ---------------------------------------------------------------------------
+# plot_diff_boxplot_sci: SCI-quality boxplot (microeco_protocol style)
+#   Shows top use_number taxa ranked by P.unadj.
+#   Each panel: group-level boxplot + jitter; significance label (p.unadj).
+# ---------------------------------------------------------------------------
+plot_diff_boxplot_sci <- function(obj, taxa_level = "ASV",
+                                  use_number = 15, ncol_panels = 4,
+                                  color_values = npg_base,
+                                  group_col_name = group_col,
+                                  mt_obj = NULL) {
+  res <- obj$res_diff
+
+  # --- dataset: prefer explicitly passed mt_obj, fall back to obj$dataset ----
+  ds <- mt_obj
+  if (is.null(ds)) ds <- tryCatch(obj$dataset, error = function(e) NULL)
+  if (is.null(ds)) stop("Cannot access microtable: pass mt_obj= parameter")
+
+  # --- 1. Select top N taxa by P.unadj ------------------------------------
+  p_col    <- if ("P.unadj" %in% names(res)) "P.unadj" else
+              if ("p_value"  %in% names(res)) "p_value" else names(res)[1]
+  res_ord  <- res[order(res[[p_col]], na.last = TRUE), , drop = FALSE]
+  top_taxa <- unique(as.character(res_ord$Taxa))[seq_len(min(use_number, nrow(res_ord)))]
+  if (!length(top_taxa)) stop("No taxa in res_diff")
+
+  # --- 2. Sample-level abundance -------------------------------------------
+  # Priority: taxa_abund[[taxa_level]] > any taxa_abund level with overlap > otu_table
+  abund_mat <- NULL
+  if (taxa_level != "ASV" && !is.null(ds$taxa_abund)) {
+    if (taxa_level %in% names(ds$taxa_abund)) {
+      abund_mat <- as.matrix(ds$taxa_abund[[taxa_level]])
+    } else {
+      for (lvl in names(ds$taxa_abund)) {
+        cand <- as.matrix(ds$taxa_abund[[lvl]])
+        if (any(top_taxa %in% rownames(cand))) { abund_mat <- cand; break }
+      }
+    }
+  }
+  if (is.null(abund_mat)) {
+    raw <- as.matrix(ds$otu_table)
+    cs  <- colSums(raw, na.rm = TRUE); cs[cs == 0] <- 1
+    abund_mat <- sweep(raw, 2, cs, "/")
   }
 
-  # Select top N taxa by P.unadj (ascending); show all if < use_number
-  p_col <- intersect(c("P.unadj", "P.adj"), names(res))[1]
-  res_ord <- res[order(res[[p_col]]), , drop = FALSE]
-  taxa_order <- unique(as.character(res_ord$Taxa))[seq_len(min(use_number, nrow(res_ord)))]
+  top_taxa_present <- top_taxa[top_taxa %in% rownames(abund_mat)]
+  if (!length(top_taxa_present)) stop("No taxa found in abundance matrix (taxa_level=", taxa_level, ")")
 
-  # Map factor group levels → real group names from Comparison
-  pair_example <- strsplit(as.character(res$Comparison[1]), " - ", fixed = TRUE)[[1]]
-  grp_levels   <- sort(unique(as.character(abund$group)))
-  if (length(pair_example) == 2 && length(grp_levels) == 2) {
-    grp_map <- setNames(pair_example, grp_levels)
-    abund$grp_name <- grp_map[as.character(abund$group)]
+  # --- 3. Build long data frame -------------------------------------------
+  plot_mat <- abund_mat[top_taxa_present, , drop = FALSE]
+  samp_tbl <- ds$sample_table
+  # Avoid duplicate "sample_id" column (microeco tidy_dataset may add it)
+  samp_meta <- if (!"sample_id" %in% colnames(samp_tbl)) {
+    samp_tbl %>% tibble::rownames_to_column("sample_id")
   } else {
-    abund$grp_name <- as.character(abund$group)
+    samp_tbl
   }
 
-  plot_df <- abund[abund$Taxa %in% taxa_order, , drop = FALSE]
-  if (!nrow(plot_df)) stop("No abundance data available for top taxa")
+  long_df <- as.data.frame(t(plot_mat), stringsAsFactors = FALSE) %>%
+    tibble::rownames_to_column("sample_id") %>%
+    tidyr::pivot_longer(-sample_id, names_to = "Taxa", values_to = "Abundance") %>%
+    left_join(
+      samp_meta %>% dplyr::select("sample_id", dplyr::all_of(group_col_name)),
+      by = "sample_id"
+    )
 
-  # Significance labels from res_diff
-  sig_df <- res_ord[match(taxa_order, res_ord$Taxa), c("Taxa", "Significance"), drop = FALSE]
-  # Short label: last segment after "|"
-  short_lab <- setNames(sub(".*\\|", "", taxa_order), taxa_order)
+  # --- 4. Display labels --------------------------------------------------
+  tax_tbl   <- tryCatch(ds$tax_table, error = function(e) NULL)
+  short_lab <- setNames(get_short_name(top_taxa_present, tax_tbl), top_taxa_present)
 
-  plot_df$Taxa    <- factor(plot_df$Taxa, levels = rev(taxa_order))
-  plot_df$grp_name <- factor(plot_df$grp_name, levels = pair_example)
-  sig_df$Taxa     <- factor(sig_df$Taxa, levels = rev(taxa_order))
+  # --- 5. Significance (p.unadj) ------------------------------------------
+  p_vals <- res_ord[[p_col]][match(top_taxa_present, res_ord$Taxa)]
+  sig_map <- setNames(
+    ifelse(p_vals < 0.001, "***",
+    ifelse(p_vals < 0.01,  "**",
+    ifelse(p_vals < 0.05,  "*", "ns"))), top_taxa_present)
 
-  y_pos <- plot_df %>%
+  grp_levs <- levels(factor(long_df[[group_col_name]]))
+  long_df$Taxa              <- factor(long_df$Taxa, levels = rev(top_taxa_present))
+  long_df[[group_col_name]] <- factor(long_df[[group_col_name]], levels = grp_levs)
+
+  y_pos <- long_df %>%
     group_by(Taxa) %>%
-    summarise(y = max(Mean, na.rm = TRUE) * 1.10 + 1e-6, .groups = "drop")
-  sig_df <- left_join(sig_df, y_pos, by = "Taxa")
+    summarise(y_pos = max(Abundance, na.rm = TRUE) * 1.15 + 1e-8, .groups = "drop") %>%
+    mutate(sig_label = sig_map[as.character(Taxa)])
 
-  ggplot(plot_df, aes(x = grp_name, y = Mean,
-                      fill = grp_name, color = grp_name)) +
-    geom_bar(stat = "identity", width = 0.65, alpha = 0.75) +
-    geom_text(data = sig_df,
-              aes(x = 1.5, y = y, label = Significance),
-              inherit.aes = FALSE, size = 4.2, color = "black") +
-    facet_wrap(~ Taxa, ncol = 1, scales = "free_y",
+  ggplot(long_df,
+         aes(x = .data[[group_col_name]], y = Abundance,
+             fill = .data[[group_col_name]], color = .data[[group_col_name]])) +
+    geom_boxplot(width = 0.50, alpha = 0.25, outlier.shape = NA, linewidth = 0.6) +
+    geom_jitter(width = 0.15, size = 1.8, alpha = 0.85) +
+    geom_text(data = y_pos,
+              aes(x = length(grp_levs)/2 + 0.5, y = y_pos, label = sig_label),
+              inherit.aes = FALSE, size = 4.5, fontface = "bold", color = "grey20") +
+    facet_wrap(~ Taxa, ncol = ncol_panels, scales = "free_y",
                labeller = labeller(Taxa = short_lab)) +
     scale_fill_manual(values  = color_values, guide = "none") +
     scale_color_manual(values = color_values, guide = "none") +
-    labs(x = NULL, y = "Mean relative abundance",
-         title = sprintf("Top %d taxa by p-value (Wilcoxon)", length(taxa_order))) +
-    theme(panel.grid    = element_blank(),
-          strip.text    = element_text(face = "bold", size = 8),
-          axis.text.x   = element_text(angle = 0, hjust = 0.5))
+    labs(x = NULL, y = "Relative abundance",
+         title = sprintf("Top %d taxa by Wilcoxon p-value (unadj.)",
+                         length(top_taxa_present))) +
+    theme(panel.grid  = element_blank(),
+          strip.text  = element_text(face = "bold.italic", size = 8),
+          axis.text.x = element_text(angle = 30, hjust = 1, size = 9))
 }
 
-# Standard SCI volcano plot: x = log2FC (from res_abund means), y = -log10(p.unadj)
+
 plot_volcano_manual <- function(obj, color_values = npg_base) {
   res   <- obj$res_diff
   abund <- tryCatch(obj$res_abund, error = function(e) NULL)
@@ -261,9 +385,12 @@ plot_volcano_manual <- function(obj, color_values = npg_base) {
     select(Taxa, grp_name, Mean) %>%
     tidyr::pivot_wider(names_from = grp_name, values_from = Mean, values_fill = 0)
 
-  eps  <- 1e-6
-  p_thresh  <- 0.05
-  fc_thresh <- 1.0  # |log2FC| threshold for labelling
+  eps       <- 1e-6
+  p_thresh  <- 0.05    # applied to P.unadj for colour (small n makes P.adj >> 0.05)
+  fc_thresh <- 1.0
+
+  # Retrieve tax_table for short name lookup
+  tax_tbl <- tryCatch(obj$dataset$tax_table, error = function(e) NULL)
 
   vdf <- res %>%
     select(Taxa, P.unadj, P.adj) %>%
@@ -276,18 +403,18 @@ plot_volcano_manual <- function(obj, color_values = npg_base) {
         } else rep(NA_real_, nrow(.))
       },
       neg_log10_p = -log10(pmax(P.unadj, 1e-300)),
+      # Use P.unadj for colouring — with n=6 samples P.adj is almost never < 0.05
       category = case_when(
-        P.adj < p_thresh & log2FC >  fc_thresh ~ "Up",
-        P.adj < p_thresh & log2FC < -fc_thresh ~ "Down",
+        P.unadj < p_thresh & log2FC >  fc_thresh ~ "Up",
+        P.unadj < p_thresh & log2FC < -fc_thresh ~ "Down",
         TRUE ~ "NS"
       ),
-      short_name = sub(".*\\|", "", as.character(Taxa))
+      short_name = get_short_name(as.character(Taxa), tax_tbl)
     ) %>%
     filter(!is.na(log2FC))
 
   if (!nrow(vdf)) stop("No data for volcano plot after log2FC calculation")
 
-  # Label top 10 by -log10(p) among significant; if none significant label top 10 overall
   sig_vdf <- vdf[vdf$category != "NS", ]
   lab_vdf <- if (nrow(sig_vdf) > 0) {
     sig_vdf[order(-sig_vdf$neg_log10_p)[seq_len(min(10, nrow(sig_vdf)))], ]
@@ -295,11 +422,12 @@ plot_volcano_manual <- function(obj, color_values = npg_base) {
     vdf[order(-vdf$neg_log10_p)[seq_len(min(10, nrow(vdf)))], ]
   }
 
-  col_map <- c("Up" = color_values[1], "Down" = color_values[2], "NS" = "grey70")
-  n_up   <- sum(vdf$category == "Up",   na.rm = TRUE)
-  n_down <- sum(vdf$category == "Down", na.rm = TRUE)
-  subtitle <- sprintf("Up: %d | Down: %d | NS: %d  (p.adj < %.2f, |log2FC| > %.1f)",
-                      n_up, n_down, nrow(vdf) - n_up - n_down, p_thresh, fc_thresh)
+  col_map  <- c("Up" = color_values[1], "Down" = color_values[2], "NS" = "grey70")
+  n_up     <- sum(vdf$category == "Up",   na.rm = TRUE)
+  n_down   <- sum(vdf$category == "Down", na.rm = TRUE)
+  subtitle <- sprintf(
+    "Up: %d | Down: %d | NS: %d  (p.unadj < %.2f, |log2FC| > %.1f; colour by unadj. p)",
+    n_up, n_down, nrow(vdf) - n_up - n_down, p_thresh, fc_thresh)
 
   ggplot(vdf, aes(x = log2FC, y = neg_log10_p, color = category)) +
     geom_point(size = 1.8, alpha = 0.75) +
@@ -312,16 +440,16 @@ plot_volcano_manual <- function(obj, color_values = npg_base) {
                               size = 2.8, max.overlaps = 20,
                               segment.size = 0.3, show.legend = FALSE) +
     scale_color_manual(values = col_map,
-                       labels = c("Up" = paste0("Up (", n_up, ")"),
+                       labels = c("Up"   = paste0("Up (", n_up, ")"),
                                   "Down" = paste0("Down (", n_down, ")"),
                                   "NS"   = paste0("NS (", nrow(vdf) - n_up - n_down, ")"))) +
     labs(x = paste0("log2FC (", paste(pair_example, collapse = " / "), ")"),
-         y = expression(-log[10](p)),
+         y = expression(-log[10](p~unadj.)),
          color = NULL,
          subtitle = subtitle) +
-    theme(panel.grid   = element_blank(),
+    theme(panel.grid      = element_blank(),
           legend.position = c(0.85, 0.85),
-          plot.subtitle = element_text(size = 7, color = "grey40"))
+          plot.subtitle   = element_text(size = 7, color = "grey40"))
 }
 
 save_plot_safe <- function(plot_expr, output_file, dimension, step, method, taxa_level, ratio, height) {
@@ -370,6 +498,9 @@ for (dim in selected_dims) {
   mt_raw <- load_mt(dim)
   if (is.null(mt_raw)) next
 
+  # Inject geNomad taxonomy for virus dimension
+  if (dim == "virus") mt_raw <- enrich_virus_taxonomy(mt_raw, workdir)
+
   mt <- tryCatch({
     x <- prepare_mt(mt_raw)
     add_status(dim, "prepare", "", "", "OK", sprintf("%d samples; %d groups", nrow(x$sample_table), length(unique(x$sample_table[[group_col]]))))
@@ -398,7 +529,7 @@ for (dim in selected_dims) {
     add_summary(dim, "lefse", lefse_res$n_sig, lefse_res$top_feature, lefse_res$output)
     lefse_res$obj$taxa_level
   } else {
-    if (dim == "bacteria") "Species" else "ASV"
+    if (dim == "bacteria") "Species" else if (dim == "virus") "vOTU" else "ASV"
   }
   success_dims <- success_dims + 1L
 
@@ -433,33 +564,40 @@ for (dim in selected_dims) {
   # LEfSe plots — only when we have a valid result with features
   if (!is.null(lefse_res) && !is.null(lefse_res$obj) && !is.null(lefse_res$obj$res_diff) && nrow(lefse_res$obj$res_diff) > 0) {
     save_plot_safe(lefse_res$obj$plot_diff_bar(width = 0.7, color_values = group_colors), lefse_bar, dim, "plot", "lefse_bar", taxa_level, 1.3, 6)
-    diff_abund_ok <- save_plot_safe(lefse_res$obj$plot_diff_abund(add_sig = TRUE, use_number = 15, color_values = group_colors), diff_abund, dim, "plot", "lefse_abund", taxa_level, 1.3, 7)
+    diff_abund_ok <- save_plot_safe(
+      lefse_res$obj$plot_diff_abund(add_sig = TRUE, use_number = 15, color_values = group_colors),
+      diff_abund, dim, "plot", "lefse_abund", taxa_level, 1.3, 7)
     if (!isTRUE(diff_abund_ok)) {
-      save_plot_safe(plot_diff_abund_fallback(lefse_res$obj, use_number = 15, color_values = group_colors), diff_abund, dim, "plot", "lefse_abund_fallback", taxa_level, 1.3, 7)
+      n_tax  <- min(15L, nrow(lefse_res$obj$res_diff))
+      ncol_p <- min(4L, n_tax); n_rows <- ceiling(n_tax / ncol_p)
+      save_plot_safe(
+        plot_diff_boxplot_sci(lefse_res$obj, taxa_level, n_tax, ncol_p, group_colors, group_col, mt),
+        diff_abund, dim, "plot", "lefse_abund_fallback", taxa_level, 1.3, max(4, n_rows * 3))
     }
   } else {
-    add_status(dim, "plot", "lefse_bar", taxa_level, "SKIPPED", "0 LEfSe features (small sample set)", lefse_bar)
-    add_status(dim, "plot", "lefse_abund", taxa_level, "SKIPPED", "0 LEfSe features (small sample set)", diff_abund)
+    add_status(dim, "plot", "lefse_bar",   taxa_level, "SKIPPED", "0 LEfSe features", lefse_bar)
+    add_status(dim, "plot", "lefse_abund", taxa_level, "SKIPPED", "0 LEfSe features", diff_abund)
   }
 
   # Wilcox-based plots — always attempted when wilcox succeeded
   if (!is.null(wilcox_res)) {
-    # Differential abundance: top N by p.unadj (fallback function handles all-ns case)
-    diff_abund_wil <- file.path(dim_dir, "diff_abund_wilcox.pdf")
-    diff_abund_wil_ok <- save_plot_safe(
-      plot_diff_abund_fallback(wilcox_res$obj, use_number = 15, color_values = group_colors),
-      diff_abund_wil, dim, "plot", "wilcox_abund", taxa_level, 1.3, max(7, min(15, 0.55 * 15))
-    )
-    if (!file.exists(diff_abund) && file.exists(diff_abund_wil)) file.copy(diff_abund_wil, diff_abund)
+    n_tax  <- min(15L, nrow(wilcox_res$obj$res_diff))
+    ncol_p <- min(4L, n_tax); n_rows <- ceiling(n_tax / ncol_p)
+    dyn_h  <- max(4, n_rows * 3)
 
-    # Volcano plot: manual ggplot2 (plot_volcano requires Estimate col, may fail)
+    diff_abund_wil <- file.path(dim_dir, "diff_abund_wilcox.pdf")
+    save_plot_safe(
+      plot_diff_boxplot_sci(wilcox_res$obj, taxa_level, n_tax, ncol_p, group_colors, group_col, mt),
+      diff_abund_wil, dim, "plot", "wilcox_abund", taxa_level, 1.3, dyn_h
+    )
+    if (!file.exists(diff_abund) && file.exists(diff_abund_wil))
+      file.copy(diff_abund_wil, diff_abund)
+
+    # Volcano plot
     save_plot_safe(
       tryCatch(
         plot_volcano_manual(wilcox_res$obj, group_colors),
-        error = function(e) {
-          message("[WARN] manual volcano: ", e$message)
-          stop(e)
-        }
+        error = function(e) { message("[WARN] manual volcano: ", e$message); stop(e) }
       ),
       volcano, dim, "plot", "wilcox_volcano", taxa_level, 1.15, 5.5
     )
