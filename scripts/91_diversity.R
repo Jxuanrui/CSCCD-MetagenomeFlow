@@ -334,6 +334,26 @@ enrich_virus_taxonomy <- function(mt, workdir) {
   mt
 }
 
+# Filter vOTUs with no geNomad taxonomy (Domain = NA) from a virus microtable.
+# These are contigs that could not be classified by any method; removing them
+# keeps the abundance/diversity/differential outputs to verified viral sequences.
+filter_unclassified_virus <- function(mt) {
+  if (!"Domain" %in% colnames(mt$tax_table)) return(mt)
+  keep <- !is.na(mt$tax_table$Domain)
+  n_before <- nrow(mt$tax_table)
+  n_keep   <- sum(keep)
+  if (n_keep == 0) stop("No classified virus vOTUs remain after filtering")
+  if (n_keep < n_before) {
+    message(sprintf("[INFO] virus filter: %d / %d vOTUs have taxonomy; dropping %d unclassified",
+                    n_keep, n_before, n_before - n_keep))
+    keep_ids <- rownames(mt$tax_table)[keep]
+    mt$tax_table <- mt$tax_table[keep_ids, , drop = FALSE]
+    mt$otu_table  <- mt$otu_table[keep_ids, , drop = FALSE]
+    mt$tidy_dataset()
+  }
+  mt
+}
+
 compute_bray_matrix <- function(mt) {
   otu <- as.matrix(mt$otu_table)
   sample_sums <- colSums(otu, na.rm = TRUE)
@@ -553,7 +573,9 @@ tryCatch({
 })
 
 tryCatch({
-  mt_list[["virus"]] <- enrich_virus_taxonomy(build_mt_virus(vir_table, meta), workdir)
+  mt_list[["virus"]] <- filter_unclassified_virus(
+    enrich_virus_taxonomy(build_mt_virus(vir_table, meta), workdir)
+  )
   log_status("virus_mt", "OK", "")
 }, error = function(e) {
   log_status("virus_mt", "FAILED", conditionMessage(e))

@@ -362,7 +362,22 @@ for (dim in selected_dims) {
 
   mt_raw <- load_mt(dim)
   if (is.null(mt_raw)) next
-  if (dim == "virus") mt_raw <- enrich_virus_taxonomy(mt_raw, workdir)
+  if (dim == "virus") {
+    mt_raw <- enrich_virus_taxonomy(mt_raw, workdir)
+    # Drop vOTUs with no geNomad taxonomy (Domain = NA) — same filter as 91_diversity.R
+    if ("Domain" %in% colnames(mt_raw$tax_table)) {
+      keep <- !is.na(mt_raw$tax_table$Domain)
+      n_drop <- sum(!keep)
+      if (n_drop > 0) {
+        keep_ids <- rownames(mt_raw$tax_table)[keep]
+        mt_raw$tax_table <- mt_raw$tax_table[keep_ids, , drop = FALSE]
+        mt_raw$otu_table  <- mt_raw$otu_table[keep_ids, , drop = FALSE]
+        mt_raw$tidy_dataset()
+        message(sprintf("[INFO] virus: dropped %d unclassified vOTUs; %d remain",
+                        n_drop, sum(keep)))
+      }
+    }
+  }
 
   mt <- tryCatch({
     x <- prepare_mt(mt_raw)
