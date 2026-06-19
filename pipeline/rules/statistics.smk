@@ -6,9 +6,7 @@ meta_file = WORKDIR + "/metadata.csv"
 
 
 rule stat_diversity:
-    """Alpha/beta diversity statistics across bacteria, virus, and fungi.
-    Also generates PCoA-with-ellipses and rarefaction curves under result/viz_diversity/.
-    """
+    """Alpha/beta diversity statistics across bacteria, virus, and fungi."""
     input:
         bact = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
         vir = WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
@@ -18,8 +16,6 @@ rule stat_diversity:
         ),
     output:
         stats   = WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
-        pcoa    = WORKDIR + "/result/viz_diversity/pcoa_ellipses_permanova.pdf",
-        rarefac = WORKDIR + "/result/viz_diversity/rarefaction_curves.pdf",
     params:
         meta = meta_file,
         group = "group"
@@ -31,15 +27,11 @@ rule stat_diversity:
 
 
 rule stat_differential:
-    """Differential abundance analysis across supported omics dimensions.
-    Also generates volcano plot and LEfSe LDA bar chart under result/viz_differential/.
-    """
+    """Differential abundance analysis across supported omics dimensions."""
     input:
         WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
     output:
         stats   = WORKDIR + "/result/stat/diff/diff_summary.tsv",
-        volcano = WORKDIR + "/result/viz_differential/volcano_plot.pdf",
-        lefse   = WORKDIR + "/result/viz_differential/lefse_lda_bars.pdf",
     params:
         meta = meta_file,
         group = "group"
@@ -63,26 +55,6 @@ rule stat_cooccurrence:
         "bash {REPO}/scripts/93_stat_cooccurrence.sh "
         "-w {WORKDIR} -r {REPO} -t {threads} "
         "-m {params.meta}"
-
-
-rule stat_visualization:
-    """Unified downstream visualization from statistical outputs.
-    Also generates grouped composition barplot and genus ComplexHeatmap under result/viz_composition/.
-    """
-    input:
-        WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
-        WORKDIR + "/result/stat/diff/diff_summary.tsv",
-    output:
-        sentinel = WORKDIR + "/result/stat/visualization/plots.done",
-        barplot  = WORKDIR + "/result/viz_composition/barplot_composition_by_group.pdf",
-        heatmap  = WORKDIR + "/result/viz_composition/heatmap_genus_complexheatmap.pdf",
-    params:
-        meta = meta_file
-    threads: CPUS
-    shell:
-        "bash {REPO}/scripts/94_stat_visualization.sh "
-        "-w {WORKDIR} -r {REPO} -m {params.meta}"
-
 
 rule stat_batch_correct:
     """Apply supported batch-correction methods to the bacteria matrix."""
@@ -120,14 +92,14 @@ rule stat_batch_evaluate:
 
 rule stat_ml_siamcat:
     """SIAMCAT-based biomarker modeling and evaluation.
-    Also generates multi-model ROC overlay and feature importance plots under result/viz_ml/.
+    Also generates multi-model ROC overlay and feature importance plots under result/stat/ml/.
     """
     input:
         WORKDIR + "/result/stat/diff/diff_summary.tsv",
     output:
         sentinel   = WORKDIR + "/result/stat/ml/siamcat_done.txt",
-        roc_multi  = WORKDIR + "/result/viz_ml/roc_multimodel_comparison.pdf",
-        importance = WORKDIR + "/result/viz_ml/feature_importance_with_sd.pdf",
+        roc_multi  = WORKDIR + "/result/stat/ml/roc_multimodel_comparison.pdf",
+        importance = WORKDIR + "/result/stat/ml/feature_importance_with_sd.pdf",
     params:
         meta = meta_file,
         group = "group"

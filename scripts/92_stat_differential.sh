@@ -63,11 +63,9 @@ BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 RESULT_DIR="${WORKDIR}/result/stat/diff"
-VIZ_DIR="${WORKDIR}/result/viz_differential"
+VIZ_DIR="${WORKDIR}/result/stat/diff"
 LOG_DIR="${WORKDIR}/logs/stat/diff"
 SENTINEL="${RESULT_DIR}/diff_summary.tsv"
-VOLCANO_PDF="${VIZ_DIR}/volcano_plot.pdf"
-LEFSE_PDF="${VIZ_DIR}/lefse_lda_bars.pdf"
 
 mkdir -p "${RESULT_DIR}" "${VIZ_DIR}" "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/92_stat_differential.log"
@@ -78,11 +76,9 @@ if [ ! -f "${METADATA_CSV}" ]; then
     exit 1
 fi
 
-if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ] && [ -s "${VOLCANO_PDF}" ] && [ -s "${LEFSE_PDF}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] Existing outputs detected, skipping rerun"
     echo "  Sentinel: ${SENTINEL}"
-    echo "  Volcano PDF: ${VOLCANO_PDF}"
-    echo "  LEfSe PDF: ${LEFSE_PDF}"
     echo "[INFO] Use --force to re-run"
     exit 0
 fi
@@ -105,14 +101,6 @@ fi
 if [ ! -s "${SENTINEL}" ]; then
     echo "[ERROR] Expected sentinel not generated: ${SENTINEL}"
     exit 1
-fi
-
-if [ ! -s "${VOLCANO_PDF}" ]; then
-    echo "[WARN] Volcano plot not generated: ${VOLCANO_PDF}"
-fi
-
-if [ ! -s "${LEFSE_PDF}" ]; then
-    echo "[WARN] LEfSe LDA plot not generated: ${LEFSE_PDF}"
 fi
 
 echo "[INFO] Differential abundance analysis completed in ${SECONDS}s"

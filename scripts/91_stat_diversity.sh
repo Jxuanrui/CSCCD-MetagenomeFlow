@@ -61,13 +61,10 @@ VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 TREE_FILE="${WORKDIR}/result/metaphlan4/merged/mpa_tree.nwk"
 RESULT_DIR="${WORKDIR}/result/stat/diversity"
-VIZ_DIR="${WORKDIR}/result/viz_diversity"
 LOG_DIR="${WORKDIR}/logs/stat/diversity"
 SENTINEL="${RESULT_DIR}/alpha_diversity.tsv"
-PCOA_PDF="${VIZ_DIR}/pcoa_ellipses_permanova.pdf"
-RAREFACTION_PDF="${VIZ_DIR}/rarefaction_curves.pdf"
 
-mkdir -p "${RESULT_DIR}" "${VIZ_DIR}" "${LOG_DIR}"
+mkdir -p "${RESULT_DIR}" "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/91_stat_diversity_$(date +%Y%m%d_%H%M%S).log"
 exec > >(tee -a "${LOG_FILE}") 2>&1
 
@@ -81,11 +78,9 @@ if [ ! -f "${METADATA_CSV}" ]; then
     exit 1
 fi
 
-if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ] && [ -s "${PCOA_PDF}" ] && [ -s "${RAREFACTION_PDF}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] Existing outputs detected, skipping rerun"
     echo "  Sentinel: ${SENTINEL}"
-    echo "  PCoA PDF: ${PCOA_PDF}"
-    echo "  Rarefaction PDF: ${RAREFACTION_PDF}"
     echo "[INFO] Use --force to re-run"
     exit 0
 fi
@@ -94,10 +89,9 @@ echo "[INFO] Running diversity statistics"
 echo "[INFO] Workdir: ${WORKDIR}"
 echo "[INFO] Metadata: ${METADATA_CSV}"
 echo "[INFO] Group column: ${GROUP_COL}"
-echo "[INFO] Statistics dir: ${RESULT_DIR}"
-echo "[INFO] Visualization dir: ${VIZ_DIR}"
+echo "[INFO] Results dir: ${RESULT_DIR}"
 
-export WORKDIR REPO THREADS METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DIR TREE_FILE RESULT_DIR VIZ_DIR
+export WORKDIR REPO THREADS METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DIR TREE_FILE RESULT_DIR
 
 echo "[INFO] Running R script for diversity analysis..."
 
@@ -114,14 +108,8 @@ if [ ! -s "${SENTINEL}" ]; then
     exit 1
 fi
 
-if [ ! -s "${PCOA_PDF}" ] || [ ! -s "${RAREFACTION_PDF}" ]; then
-    echo "[ERROR] Expected visualization PDFs not generated under ${VIZ_DIR}"
-    exit 1
-fi
-
 echo "=============================================================================="
 echo "[SUCCESS] Diversity analysis completed in ${SECONDS}s"
-echo "Statistics: ${RESULT_DIR}"
-echo "Visualizations: ${VIZ_DIR}"
+echo "Results: ${RESULT_DIR}"
 echo "Log: ${LOG_FILE}"
 echo "=============================================================================="
