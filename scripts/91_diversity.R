@@ -397,6 +397,31 @@ export_metadata <- function(meta) {
   })
 }
 
+# For virus dimension, microeco cal_abund() produces compound row names like
+# "k127_XXX||full|Domain|Phylum|Class|Order" because "vOTU" (contig ID) is the
+# first tax_table column. Strip the leading vOTU field and return the last
+# meaningful taxonomy token; fall back to the bare contig ID when no taxonomy.
+clean_virus_compound_label <- function(x) {
+  vapply(x, function(label) {
+    # Only process labels that contain a | separator
+    if (!grepl("|", label, fixed = TRUE)) return(label)
+    # Remove leading vOTU field: k127_NNN or k127_NNN||full, then the | after it
+    tax_part <- sub("^k127_[0-9]+(\\|\\|full)?\\|", "", label)
+    # If regex did not match (no trailing | after vOTU), strip ||full and return
+    if (tax_part == label) return(sub("\\|\\|full$", "", label))
+    # Split on literal | (fixed=TRUE uses literal string, NOT regex "\\|")
+    parts <- strsplit(tax_part, "|", fixed = TRUE)[[1]]
+    parts <- parts[nzchar(parts) & parts != "NA"]
+    if (!length(parts)) {
+      # All NA taxonomy: return plain contig ID (strip ||full suffix)
+      contig <- sub("\\|.*", "", label)
+      contig <- sub("\\|\\|full$", "", contig)
+      return(contig)
+    }
+    parts[length(parts)]
+  }, character(1), USE.NAMES = FALSE)
+}
+
 export_abundance_levels <- function(mt, dimension, abundance_dir) {
   safe_write(paste0(dimension, "_cal_abund"), file.path(abundance_dir, ".ok"), {
     mt$cal_abund(rel = TRUE)
@@ -409,7 +434,17 @@ export_abundance_levels <- function(mt, dimension, abundance_dir) {
   for (level in names(mt$taxa_abund)) {
     lvl_path <- file.path(abundance_dir, paste0(sanitize_level_name(level), "_relabund.tsv"))
     safe_write(paste0(dimension, "_abundance_", level), lvl_path, {
-      write_tsv_matrix(as.data.frame(mt$taxa_abund[[level]], check.names = FALSE), lvl_path)
+      df <- as.data.frame(mt$taxa_abund[[level]], check.names = FALSE)
+      # For virus, microeco compound labels include the contig ID as prefix.
+      # Skip cleaning at the vOTU level (those ARE the identifiers); clean higher levels.
+      if (dimension == "virus" && level != "vOTU") {
+        new_labels <- clean_virus_compound_label(rownames(df))
+        # Use rowsum on the numeric matrix (avoids duplicate rowname error in data.frame)
+        mat <- as.matrix(df)
+        mat <- rowsum(mat, new_labels, na.rm = TRUE)
+        df <- as.data.frame(mat, check.names = FALSE)
+      }
+      write_tsv_matrix(df, lvl_path)
     })
   }
 }
