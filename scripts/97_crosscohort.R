@@ -6,6 +6,8 @@
 
 options(stringsAsFactors = FALSE, warn = 1)
 
+options(device = function(...) grDevices::pdf(file = file.path(tempdir(), paste0("Rplots_", Sys.getpid(), ".pdf")), ...))
+
 # Load required packages
 suppressPackageStartupMessages({
   library(SIAMCAT)

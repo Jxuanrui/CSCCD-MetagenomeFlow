@@ -196,7 +196,9 @@ rule vir_votu_table:
     log:
         WORKDIR + "/logs/virus/votu/table.log",
     run:
-        samples_file = WORKDIR + "/.smk_samples.txt"
+        import os
+        os.makedirs(os.path.join(WORKDIR, "logs", "virus", "votu"), exist_ok=True)
+        samples_file = os.path.join(WORKDIR, "logs", "virus", "votu", "samples.txt")
         with open(samples_file, "w") as f:
             f.write("\n".join(SAMPLES) + "\n")
         shell(

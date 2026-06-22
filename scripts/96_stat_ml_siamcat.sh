@@ -66,7 +66,7 @@ BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 RESULT_DIR="${WORKDIR}/result/stat/ml"
-VIZ_ML_DIR="${WORKDIR}/result/viz_ml"
+VIZ_ML_DIR="${WORKDIR}/result/stat/ml"
 LOG_DIR="${WORKDIR}/logs/stat/ml"
 SENTINEL="${RESULT_DIR}/siamcat_done.txt"
 
@@ -76,7 +76,7 @@ exec > >(tee -a "${LOG_FILE}") 2>&1
 
 run_ml_visualization() {
     export RESULT_DIR VIZ_ML_DIR
-    export VIZ_ML_DIR="${WORKDIR}/result/viz_ml"
+    export VIZ_ML_DIR="${WORKDIR}/result/stat/ml"
     export FORCE
     # If SIAMCAT was skipped (too few samples), generate placeholder PDFs
     if grep -q "^SKIPPED" "${RESULT_DIR}/siamcat_done.txt" 2>/dev/null; then

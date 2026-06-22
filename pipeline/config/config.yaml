@@ -9,7 +9,7 @@ repo: "/home/labuser/Course/Maxmetagenome"
 # Total thread usage: threads_per_job × max_jobs
 # Example: threads_per_job=16, max_jobs=4 → 64 threads total (suitable for 64-128 core servers)
 threads_per_job: 16
-max_jobs: 1
+max_jobs: 2
 
 # Legacy field for backward compatibility (some rules may still reference it)
 cpus: 16

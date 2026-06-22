@@ -12,6 +12,8 @@ envs/
 *.log
 # MaxMetagenome .gitignore
 mcp/chromadb_data/
+mcp/chroma_data/
+mcp/chroma_db/
 mcp/data/
 miniforge3/
 # Miniforge3 自包含环境（~27G）
@@ -78,3 +80,9 @@ skills/replications/**/code/adapted/**/*.zip
 /*.tmp
 /*.temp
 /*.cache
+
+# Claude Code 运行时文件（session lock，不入库）
+.claude/scheduled_tasks.lock
+# /mgx-tune skill 文件（由 CC 生成，不属于 agents/skills/ 正式库）
+.claude/skills/mgx-tune.md
+.claude/commands/mgx-tune.md
