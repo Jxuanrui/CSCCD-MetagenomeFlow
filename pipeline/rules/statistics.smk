@@ -123,7 +123,7 @@ rule stat_curatedMGD:
         condition = "CRC"
     threads: CPUS
     shell:
-        "bash {REPO}/scripts/97_stat_curatedMGD.sh "
+        "bash {REPO}/scripts/97_stat_crosscohort.sh "
         "-w {WORKDIR} -r {REPO} "
         "-m {params.meta} -g {params.group} -c {params.condition}"
 
