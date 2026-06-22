@@ -134,7 +134,9 @@ top_feature <- function(res) {
     x <- res
   }
   if (!nrow(x)) return("")
-  as.character(x$Taxa[1])
+  feat <- x$Taxa[1]
+  if (!length(feat) || is.na(feat)) return("")
+  as.character(feat)
 }
 
 prepare_mt <- function(mt) {
@@ -406,7 +408,7 @@ for (dim in selected_dims) {
     safe_write(dim, "export", "lefse", lefse_res$obj$taxa_level %||% "", lefse_path, {
       write_tsv(format_lefse_results(lefse_res$res), lefse_path)
     })
-    add_summary(dim, "lefse", lefse_res$n_sig, lefse_res$top_feature, lefse_path)
+    add_summary(dim, "lefse", lefse_res$n_sig, lefse_res$top_feature %||% "", lefse_path)
     lefse_res$obj$taxa_level
   } else {
     if (dim == "bacteria") "Species" else if (dim == "virus") "vOTU" else "ASV"
@@ -424,7 +426,7 @@ for (dim in selected_dims) {
     safe_write(dim, "export", "wilcox", taxa_level, wilcox_path, {
       write_tsv(format_wilcox_results(wilcox_res$obj), wilcox_path)
     })
-    add_summary(dim, "wilcox", wilcox_res$n_sig, wilcox_res$top_feature, wilcox_path)
+    add_summary(dim, "wilcox", wilcox_res$n_sig, wilcox_res$top_feature %||% "", wilcox_path)
   }
 
   if (!has_file2meco()) {
@@ -442,7 +444,7 @@ for (dim in selected_dims) {
       safe_write(dim, "export", "ancombc2", taxa_level, ancombc_path, {
         write_tsv(ancombc_res$res, ancombc_path)
       })
-      add_summary(dim, "ancombc2", ancombc_res$n_sig, ancombc_res$top_feature, ancombc_path)
+      add_summary(dim, "ancombc2", ancombc_res$n_sig, ancombc_res$top_feature %||% "", ancombc_path)
     }
   }
 }

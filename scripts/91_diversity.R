@@ -68,6 +68,31 @@ safe_write <- function(step, path, expr) {
   })
 }
 
+write_fungi_skip_sentinels <- function(message) {
+  diversity_path <- file.path(stat_root, "fungi", "diversity", "diversity_status.tsv")
+  abundance_path <- file.path(stat_root, "fungi", "abundance", ".ok")
+  differential_path <- file.path(stat_root, "fungi", "differential", ".skipped")
+
+  dir.create(dirname(diversity_path), recursive = TRUE, showWarnings = FALSE)
+  dir.create(dirname(abundance_path), recursive = TRUE, showWarnings = FALSE)
+  dir.create(dirname(differential_path), recursive = TRUE, showWarnings = FALSE)
+
+  write.table(
+    data.frame(
+      step = "fungi_mt",
+      status = "SKIPPED",
+      message = message,
+      stringsAsFactors = FALSE
+    ),
+    diversity_path,
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
+  )
+  writeLines("", abundance_path)
+  writeLines("", differential_path)
+}
+
 sanitize_level_name <- function(x) {
   x <- gsub("[^A-Za-z0-9]+", "_", x)
   x <- gsub("_+", "_", x)
@@ -442,6 +467,10 @@ clean_virus_compound_label <- function(x) {
   }, character(1), USE.NAMES = FALSE)
 }
 
+clean_votu_label <- function(x) {
+  ifelse(grepl("|", x, fixed = TRUE), sub(".*\\|", "", x), x)
+}
+
 export_abundance_levels <- function(mt, dimension, abundance_dir) {
   safe_write(paste0(dimension, "_cal_abund"), file.path(abundance_dir, ".ok"), {
     mt$cal_abund(rel = TRUE)
@@ -455,6 +484,9 @@ export_abundance_levels <- function(mt, dimension, abundance_dir) {
     lvl_path <- file.path(abundance_dir, paste0(sanitize_level_name(level), "_relabund.tsv"))
     safe_write(paste0(dimension, "_abundance_", level), lvl_path, {
       df <- as.data.frame(mt$taxa_abund[[level]], check.names = FALSE)
+      if (dimension == "virus" && level == "vOTU") {
+        rownames(df) <- clean_votu_label(rownames(df))
+      }
       # For virus, microeco compound labels include the contig ID as prefix.
       # Skip cleaning at the vOTU level (those ARE the identifiers); clean higher levels.
       if (dimension == "virus" && level != "vOTU") {
@@ -590,9 +622,11 @@ tryCatch({
       log_status("fungi_mt", "OK", "")
     } else {
       log_status("fungi_mt", "SKIPPED", "all UNCLASSIFIED or < 2 taxa")
+      write_fungi_skip_sentinels("all UNCLASSIFIED or < 2 taxa")
     }
   } else {
     log_status("fungi_mt", "SKIPPED", "no fungi_dir")
+    write_fungi_skip_sentinels("no fungi_dir")
   }
 }, error = function(e) {
   log_status("fungi_mt", "FAILED", conditionMessage(e))

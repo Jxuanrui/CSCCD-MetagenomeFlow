@@ -1,3 +1,6 @@
+# NOTE: Statistics pipeline (91-98) outputs TSV data tables only.
+# Visualization PDFs are generated on-demand; run scripts 94/96 manually after the pipeline.
+# Only 4 TSV sentinels are tracked by rule all: diversity, diff, ml, network.
 # MaxMetagenome — Statistics pipeline rules (scripts 91-98)
 # ==============================================================================
 
@@ -97,9 +100,7 @@ rule stat_ml_siamcat:
     input:
         WORKDIR + "/result/stat/diff/diff_summary.tsv",
     output:
-        sentinel   = WORKDIR + "/result/stat/ml/siamcat_done.txt",
-        roc_multi  = WORKDIR + "/result/stat/ml/roc_multimodel_comparison.pdf",
-        importance = WORKDIR + "/result/stat/ml/feature_importance_with_sd.pdf",
+        sentinel = WORKDIR + "/result/stat/ml/siamcat_done.txt",
     params:
         meta = meta_file,
         group = "group"
