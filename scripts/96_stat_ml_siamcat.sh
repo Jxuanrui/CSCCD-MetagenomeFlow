@@ -3,13 +3,13 @@
 # Script: 96_stat_ml_siamcat.sh
 # Purpose: SIAMCAT machine-learning biomarker discovery
 # Usage:   bash 96_stat_ml_siamcat.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV
-#                                    -g GROUP_COL [-d DIMENSION] [--folds N] [--force]
+#                                    -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N] [--force]
 # ==============================================================================
 
 show_help() {
 cat <<'EOF'
 Usage: bash 96_stat_ml_siamcat.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV
-                                  -g GROUP_COL [-d DIMENSION] [--folds N] [--force]
+                                  -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N] [--force]
 
 Required:
   -w  Project work directory
@@ -20,6 +20,7 @@ Required:
 
 Optional:
   -d  Dimension: bacteria|all (default: bacteria)
+  -M  Fungi input method: auto|phf|funomic|metaphlan4 (default: auto)
   --folds  Cross-validation folds (default: 10)
   --force  Re-run even if sentinel exists
   -h, --help  Show this help message
@@ -32,6 +33,7 @@ THREADS=""
 METADATA_CSV=""
 GROUP_COL=""
 DIMENSION="bacteria"
+FUNGI_METHOD="auto"
 FOLDS="10"
 FORCE=0
 
@@ -43,6 +45,7 @@ while [[ $# -gt 0 ]]; do
         -m) METADATA_CSV="$2"; shift 2 ;;
         -g) GROUP_COL="$2"; shift 2 ;;
         -d) DIMENSION="$2"; shift 2 ;;
+        -M) FUNGI_METHOD="$2"; shift 2 ;;
         --folds) FOLDS="$2"; shift 2 ;;
         --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
@@ -65,6 +68,9 @@ SECONDS=0
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
+PHF_FUNGI_TABLE="${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv"
+FUNOMIC_FUNGI_TABLE="${WORKDIR}/result/integration/fungi/funomic_species_relab.tsv"
+FUNGI_ABUND_TABLE=""
 RESULT_DIR="${WORKDIR}/result/stat/ml"
 VIZ_ML_DIR="${WORKDIR}/result/stat/ml"
 LOG_DIR="${WORKDIR}/logs/stat/ml"
@@ -102,6 +108,45 @@ if [ ! -f "${METADATA_CSV}" ]; then
     exit 1
 fi
 
+case "${FUNGI_METHOD}" in
+    auto)
+        if [ -f "${PHF_FUNGI_TABLE}" ]; then
+            FUNGI_METHOD="phf"
+            FUNGI_ABUND_TABLE="${PHF_FUNGI_TABLE}"
+        elif [ -f "${FUNOMIC_FUNGI_TABLE}" ]; then
+            FUNGI_METHOD="funomic"
+            FUNGI_ABUND_TABLE="${FUNOMIC_FUNGI_TABLE}"
+        else
+            FUNGI_METHOD="metaphlan4"
+            FUNGI_ABUND_TABLE=""
+        fi
+        ;;
+    phf)
+        FUNGI_ABUND_TABLE="${PHF_FUNGI_TABLE}"
+        if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
+            echo "[ERROR] PHF fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
+            exit 1
+        fi
+        ;;
+    funomic)
+        FUNGI_ABUND_TABLE="${FUNOMIC_FUNGI_TABLE}"
+        if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
+            echo "[ERROR] FunOMIC fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
+            exit 1
+        fi
+        ;;
+    metaphlan4)
+        FUNGI_ABUND_TABLE=""
+        ;;
+    *)
+        echo "[ERROR] Invalid fungi method: ${FUNGI_METHOD}"
+        show_help
+        exit 1
+        ;;
+esac
+
+echo "[INFO] Fungi input: METHOD=${FUNGI_METHOD} TABLE=${FUNGI_ABUND_TABLE:-${FUNGI_DIR}}"
+
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] Sentinel exists, skipping: ${SENTINEL}"
     run_ml_visualization
@@ -115,7 +160,7 @@ fi
 
 echo "[INFO] Running SIAMCAT ML analysis"
 
-export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VIR_TABLE FUNGI_DIR RESULT_DIR
+export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE RESULT_DIR
 
 (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
@@ -151,6 +196,7 @@ folds <- as.integer(Sys.getenv("FOLDS", "10"))
 bact_table <- Sys.getenv("BACT_TABLE")
 vir_table <- Sys.getenv("VIR_TABLE")
 fungi_dir <- Sys.getenv("FUNGI_DIR")
+fungi_abund_table <- Sys.getenv("FUNGI_ABUND_TABLE")
 result_dir <- Sys.getenv("RESULT_DIR")
 
 dir.create(result_dir, recursive = TRUE, showWarnings = FALSE)
@@ -234,7 +280,10 @@ read_fungi_profiles <- function(dir_path) {
 load_matrix <- function(dimension) {
   if (dimension == "bacteria") return(read_abundance_table(bact_table))
   if (dimension == "virus") return(read_abundance_table(vir_table))
-  if (dimension == "fungi") return(read_fungi_profiles(fungi_dir))
+  if (dimension == "fungi") {
+    if (nzchar(fungi_abund_table)) return(read_abundance_table(fungi_abund_table))
+    return(read_fungi_profiles(fungi_dir))
+  }
   if (dimension == "all") {
     bac <- read_abundance_table(bact_table)
     vir <- read_abundance_table(vir_table)
