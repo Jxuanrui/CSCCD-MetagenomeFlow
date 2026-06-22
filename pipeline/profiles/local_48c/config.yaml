@@ -1,6 +1,7 @@
 # Profile: local_48c — 48-core server (this machine)
 # Total thread budget: 44 (reserve 4 for OS)
-# Effective concurrency: 44 / 16 = 2 jobs
+# threads_per_job=12 → concurrency: 44 / 12 = 3 jobs
+# (was 16 threads → 2 jobs; reduced to 12 to gain one extra concurrent slot)
 cores: 44
 rerun-incomplete: true
 printshellcmds: false

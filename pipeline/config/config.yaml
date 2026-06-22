@@ -1,17 +1,20 @@
-samplesheet: "/home/labuser/Course/Maxmetagenome/Project/Project_example/samplesheet.csv"
+samplesheet: "/home/labuser/Course/Maxmetagenome/Project/Project01/samplesheet.csv"
 
-workdir: "/home/labuser/Course/Maxmetagenome/Project/Project_example"
+workdir: "/home/labuser/Course/Maxmetagenome/Project/Project01"
 repo: "/home/labuser/Course/Maxmetagenome"
 
-# Thread configuration (align with Mode 2 Bash pipeline)
-# - threads_per_job: threads for each tool invocation (passed to -t/-p/--nproc)
-# - max_jobs: max concurrent jobs (passed to snakemake -j)
-# Total thread usage: threads_per_job × max_jobs
-# Example: threads_per_job=16, max_jobs=4 → 64 threads total (suitable for 64-128 core servers)
-threads_per_job: 16
-max_jobs: 2
+# Thread configuration
+# threads_per_job: threads each tool uses internally (-t / -p / --nproc)
+# Profile local_48c: cores=44, threads_per_job=12 → 3 concurrent jobs
+# Profile local_96c: cores=92, threads_per_job=16 → 5 concurrent jobs
+threads_per_job: 12
+max_jobs: 3
 
-# Legacy field for backward compatibility (some rules may still reference it)
-cpus: 16
+# Legacy field (backward compat)
+cpus: 12
 
 humann_speed: "standard"
+
+# metadata for statistical analysis (91-98)
+metadata: "/home/labuser/Course/Maxmetagenome/Project/Project01/metadata.csv"
+group_col: "group"
