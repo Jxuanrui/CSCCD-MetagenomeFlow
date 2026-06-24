@@ -199,12 +199,13 @@ bash ~/Course/Maxmetagenome/scripts/01_qc_fastp.sh \
 
 > **为什么用 `-t 16`**：fastp 的 `-w`（worker threads）参数超过 16 后性能不再提升，这是工具本身的设计限制。本机 48 核，单样本最优就是 16 线程。
 
-*模式二 — 10样本验证集，rush 并行（单样本审核通过后使用）：*
+*模式二 — rush 并行剩余9样本（单样本审核通过后执行，补齐10样本验证集）：*
 ```bash
 PROJ=~/Course/Maxmetagenome
 WORKDIR=$PROJ/Project/Project01
 
-# 从 samplesheet_test10.csv 读取样本 ID，-j 3 并发（48核/16线程=3）
+# 从 samplesheet_test10.csv 读取全部10个样本 ID，-j 3 并发（48核/16线程=3）
+# fastp 幂等：Sample1 已完成会自动跳过，实际只跑剩余9个
 # log 统一写入 temp/logs/fastp/
 tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
   $PROJ/miniforge3/bin/rush -j 3 -k \
@@ -215,18 +216,7 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
     > $WORKDIR/temp/logs/fastp/fastp_{1}.log 2>&1 && echo "[{1}] fastp done"'
 ```
 
-*模式三 — 全量50样本（10样本验证全部通过后切换）：*
-```bash
-# 切换为完整 samplesheet.csv 即可，rush 幂等：已完成的样本自动跳过
-tail -n +2 $WORKDIR/samplesheet.csv | cut -d, -f1 | \
-  $PROJ/miniforge3/bin/rush -j 3 -k \
-  'bash $PROJ/scripts/01_qc_fastp.sh \
-    -s {1} -t 16 \
-    -w $WORKDIR \
-    -r $PROJ \
-    > $WORKDIR/temp/logs/fastp/fastp_{1}.log 2>&1 && echo "[{1}] fastp done"'
-```
-
+> **10样本验证完成后**：全量50样本通过 Snakemake 执行（见后续"批量运行"章节），不再用 rush 跑全量。
 > **log 路径**：所有 rush 并行的日志统一写入 `temp/logs/<tool>/` 子目录，避免 temp/ 根目录散乱。
 
 **输出结果**：
@@ -248,18 +238,15 @@ Q30（过滤后）：97.94%
 接头修剪 reads：1,389,841（占比 1.64%）
 ```
 
-**Project01 批量执行记录（2026-06-24）**：
+**Project01 执行进度（fastp）**：
 
-| 阶段 | 完成样本 | 备注 |
-|------|---------|------|
-| 单样本验证 | **Sample1** ✅ | 耗时 445 秒，各指标通过审核 |
-| rush -j 3 第一批 | **Sample2/3/4/10/11**（5个）✅ | 与 Sample1 同批 rush 运行 |
-| rush -j 3 第二批（10样本补齐） | **Sample12/13/14/15**（4个）✅ | 补齐至10样本验证集 |
-| 10样本验证集最终状态 | **10/10** ✅ | Sample1-4, Sample10-15（注：编号不含5-9） |
-| 剩余 40 个样本 | 待 Snakemake 批量 | 10样本所有步骤审核完毕后切换 |
+| 阶段 | 执行方式 | 完成样本 | 状态 |
+|------|---------|---------|------|
+| ① 单样本测试 | 模式一，手动 | Sample1 | ✅ 审核通过（耗时 445 s，保留率 99.9967%）|
+| ② rush 并行9样本 | 模式二，rush -j 3 | Sample2-4, Sample10-15 | ✅ 10/10 完成 |
+| ③ 剩余40样本 | Snakemake | Sample16-51 | ⏳ 10样本所有步骤通过后启动 |
 
-> **注意**：fastp 为幂等脚本，已完成的样本自动跳过，可随时对全量 samplesheet 续跑。
-> Project01 样本编号不连续（Sample1-4 后直接跳到 Sample10），使用 `samplesheet_test10.csv` 管理验证集。
+> Project01 样本编号不连续（Sample1-4 后跳到 Sample10），验证集为 `samplesheet_test10.csv`（Sample1-4, Sample10-15）。
 
 **审核要点**：
 
@@ -303,12 +290,13 @@ bash ~/Course/Maxmetagenome/scripts/02_qc_kneaddata.sh \
 
 > **为什么用 `-t 16`**：kneaddata 底层是 Bowtie2，线程数越高比对越快，16 线程是单任务合理上限（超过后收益递减且挤占并行空间）。
 
-*模式二 — 10样本验证集，rush 并行（单样本审核通过后使用）：*
+*模式二 — rush 并行剩余9样本（单样本审核通过后执行，补齐10样本验证集）：*
 ```bash
 PROJ=~/Course/Maxmetagenome
 WORKDIR=$PROJ/Project/Project01
 
 # kneaddata CPU+内存密集，-j 2（每个实例占用 16 线程 + ~13 GB 内存）
+# kneaddata 幂等：Sample1 已完成会自动跳过，实际只跑剩余9个
 tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
   $PROJ/miniforge3/bin/rush -j 2 -k \
   'bash $PROJ/scripts/02_qc_kneaddata.sh \
@@ -318,16 +306,7 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
     > $WORKDIR/temp/logs/kneaddata/kneaddata_{1}.log 2>&1 && echo "[{1}] kneaddata done"'
 ```
 
-*模式三 — 全量50样本（10样本验证全部通过后切换）：*
-```bash
-tail -n +2 $WORKDIR/samplesheet.csv | cut -d, -f1 | \
-  $PROJ/miniforge3/bin/rush -j 2 -k \
-  'bash $PROJ/scripts/02_qc_kneaddata.sh \
-    -s {1} -t 16 \
-    -w $WORKDIR \
-    -r $PROJ \
-    > $WORKDIR/temp/logs/kneaddata/kneaddata_{1}.log 2>&1 && echo "[{1}] kneaddata done"'
-```
+> **10样本验证完成后**：全量50样本通过 Snakemake 执行，不再用 rush 跑全量。
 
 **输出结果**：
 ```
@@ -357,9 +336,16 @@ Project/MyProject/result/kneaddata/Sample1/
 | 输出文件是否成对 | R1+R2 均存在 | **均 4.3 GB** | ✅ | 任一缺失说明脚本中断 |
 | 耗时 | 60–180 min/样本 | **~135 min** | — | 大样本（>10 Gb）正常偏长 |
 
-> **注意**：kneaddata 是流程中最耗时的单步骤。
-> 单样本顺序跑 50 个样本约需 5 天；Snakemake 3 并发可压缩至 ~2 天。
-> 等所有单样本步骤审核完毕后切换批量模式。
+**Project01 执行进度（kneaddata）**：
+
+| 阶段 | 执行方式 | 完成样本 | 状态 |
+|------|---------|---------|------|
+| ① 单样本测试 | 模式一，手动 | Sample1 | ✅ 审核通过（宿主去除率 0.75%，耗时 ~135 min）|
+| ② rush 并行9样本 | 模式二，rush -j 2 | Sample2-4, Sample10-15 | ⏳ 进行中 |
+| ③ 剩余40样本 | Snakemake | Sample16-51 | ⏳ 10样本所有步骤通过后启动 |
+
+> kneaddata 是流程中最耗时的单步骤（~135 min/样本）。
+> 10样本 rush -j 2 预计约 5 × 135 min ≈ 11 小时。全量50样本交由 Snakemake -j 2 并发处理，约需 2 天。
 
 **LLM 调用方式（Prompt）**：
 ```
