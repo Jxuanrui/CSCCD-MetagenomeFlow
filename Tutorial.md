@@ -199,15 +199,35 @@ bash ~/Course/Maxmetagenome/scripts/01_qc_fastp.sh \
 
 > **为什么用 `-t 16`**：fastp 的 `-w`（worker threads）参数超过 16 后性能不再提升，这是工具本身的设计限制。本机 48 核，单样本最优就是 16 线程。
 
-*多样本并行执行（单样本审核通过后使用）：*
+*模式二 — 10样本验证集，rush 并行（单样本审核通过后使用）：*
 ```bash
-# rush 并行（推荐）：3 并发，fastp I/O 密集型，48核服务器可跑满 3 个
-cat Project/Project01/samplesheet.csv | tail -n +2 | cut -d, -f1 | \
-rush -j 3 -k 'bash ~/Course/Maxmetagenome/scripts/01_qc_fastp.sh \
-  -s {} -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome'
+PROJ=~/Course/Maxmetagenome
+WORKDIR=$PROJ/Project/Project01
+
+# 从 samplesheet_test10.csv 读取样本 ID，-j 3 并发（48核/16线程=3）
+# log 统一写入 temp/logs/fastp/
+tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
+  $PROJ/miniforge3/bin/rush -j 3 -k \
+  'bash $PROJ/scripts/01_qc_fastp.sh \
+    -s {1} -t 16 \
+    -w $WORKDIR \
+    -r $PROJ \
+    > $WORKDIR/temp/logs/fastp/fastp_{1}.log 2>&1 && echo "[{1}] fastp done"'
 ```
+
+*模式三 — 全量50样本（10样本验证全部通过后切换）：*
+```bash
+# 切换为完整 samplesheet.csv 即可，rush 幂等：已完成的样本自动跳过
+tail -n +2 $WORKDIR/samplesheet.csv | cut -d, -f1 | \
+  $PROJ/miniforge3/bin/rush -j 3 -k \
+  'bash $PROJ/scripts/01_qc_fastp.sh \
+    -s {1} -t 16 \
+    -w $WORKDIR \
+    -r $PROJ \
+    > $WORKDIR/temp/logs/fastp/fastp_{1}.log 2>&1 && echo "[{1}] fastp done"'
+```
+
+> **log 路径**：所有 rush 并行的日志统一写入 `temp/logs/<tool>/` 子目录，避免 temp/ 根目录散乱。
 
 **输出结果**：
 ```
@@ -232,10 +252,14 @@ Q30（过滤后）：97.94%
 
 | 阶段 | 完成样本 | 备注 |
 |------|---------|------|
-| rush -j 3 并行（第一批） | **6/50** ✅ | Sample1/2/3/4/10/11，均通过审核 |
-| 剩余 44 个样本 | 待运行 | 补充软链接后继续 `rush -j 3` |
+| 单样本验证 | **Sample1** ✅ | 耗时 445 秒，各指标通过审核 |
+| rush -j 3 第一批 | **Sample2/3/4/10/11**（5个）✅ | 与 Sample1 同批 rush 运行 |
+| rush -j 3 第二批（10样本补齐） | **Sample12/13/14/15**（4个）✅ | 补齐至10样本验证集 |
+| 10样本验证集最终状态 | **10/10** ✅ | Sample1-4, Sample10-15（注：编号不含5-9） |
+| 剩余 40 个样本 | 待 Snakemake 批量 | 10样本所有步骤审核完毕后切换 |
 
-> **注意**：fastp 为幂等脚本，已完成的样本会自动跳过，直接对全量 samplesheet 重跑 rush 即可续接。
+> **注意**：fastp 为幂等脚本，已完成的样本自动跳过，可随时对全量 samplesheet 续跑。
+> Project01 样本编号不连续（Sample1-4 后直接跳到 Sample10），使用 `samplesheet_test10.csv` 管理验证集。
 
 **审核要点**：
 
@@ -279,14 +303,30 @@ bash ~/Course/Maxmetagenome/scripts/02_qc_kneaddata.sh \
 
 > **为什么用 `-t 16`**：kneaddata 底层是 Bowtie2，线程数越高比对越快，16 线程是单任务合理上限（超过后收益递减且挤占并行空间）。
 
-*多样本并行执行（单样本审核通过后使用）：*
+*模式二 — 10样本验证集，rush 并行（单样本审核通过后使用）：*
 ```bash
-# rush 并行：kneaddata I/O+CPU 混合，48核建议 2 并发
-cat Project/Project01/samplesheet.csv | tail -n +2 | cut -d, -f1 | \
-rush -j 2 -k 'bash ~/Course/Maxmetagenome/scripts/02_qc_kneaddata.sh \
-  -s {} -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome'
+PROJ=~/Course/Maxmetagenome
+WORKDIR=$PROJ/Project/Project01
+
+# kneaddata CPU+内存密集，-j 2（每个实例占用 16 线程 + ~13 GB 内存）
+tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
+  $PROJ/miniforge3/bin/rush -j 2 -k \
+  'bash $PROJ/scripts/02_qc_kneaddata.sh \
+    -s {1} -t 16 \
+    -w $WORKDIR \
+    -r $PROJ \
+    > $WORKDIR/temp/logs/kneaddata/kneaddata_{1}.log 2>&1 && echo "[{1}] kneaddata done"'
+```
+
+*模式三 — 全量50样本（10样本验证全部通过后切换）：*
+```bash
+tail -n +2 $WORKDIR/samplesheet.csv | cut -d, -f1 | \
+  $PROJ/miniforge3/bin/rush -j 2 -k \
+  'bash $PROJ/scripts/02_qc_kneaddata.sh \
+    -s {1} -t 16 \
+    -w $WORKDIR \
+    -r $PROJ \
+    > $WORKDIR/temp/logs/kneaddata/kneaddata_{1}.log 2>&1 && echo "[{1}] kneaddata done"'
 ```
 
 **输出结果**：

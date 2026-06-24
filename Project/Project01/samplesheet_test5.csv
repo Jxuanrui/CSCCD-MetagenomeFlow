@@ -1,6 +1,0 @@
-sample_id,r1,r2
-Sample1,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample1_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample1_2.fastq.gz
-Sample2,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample2_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample2_2.fastq.gz
-Sample3,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample3_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample3_2.fastq.gz
-Sample4,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample4_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample4_2.fastq.gz
-Sample10,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample10_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project01/data/Sample10_2.fastq.gz
