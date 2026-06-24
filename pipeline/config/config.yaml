@@ -7,11 +7,11 @@ repo: "/home/labuser/Course/Maxmetagenome"
 # threads_per_job: threads each tool uses internally (-t / -p / --nproc)
 # Profile local_48c: cores=44, threads_per_job=12 → 3 concurrent jobs
 # Profile local_96c: cores=92, threads_per_job=16 → 5 concurrent jobs
-threads_per_job: 12
+threads_per_job: 16
 max_jobs: 3
 
 # Legacy field (backward compat)
-cpus: 12
+cpus: 16
 
 humann_speed: "standard"
 

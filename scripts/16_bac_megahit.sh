@@ -118,6 +118,22 @@ fi
 mkdir -p "${RESULT_DIR}"
 rm -rf "${MEGAHIT_TMP}"
 
+# --- kneaddata trailing-garbage workaround ---
+# kneaddata writes gzip files with trailing bytes that MEGAHIT's reader rejects.
+# Detect and silently recompress if needed; idempotent (skipped when file is already clean).
+_recompress_if_dirty() {
+    local f="$1"
+    if gzip -t "$f" 2>/dev/null; then
+        return 0  # already clean
+    fi
+    echo "[megahit] [WARN] trailing garbage detected in $(basename "$f"), recompressing..."
+    local tmp="${f}.recompress.tmp.gz"
+    zcat "$f" 2>/dev/null | gzip -c > "$tmp" && mv "$tmp" "$f"
+    echo "[megahit] [INFO] recompressed: $(basename "$f")"
+}
+_recompress_if_dirty "${INPUT_R1}"
+_recompress_if_dirty "${INPUT_R2}"
+
 echo "[megahit] 开始宏基因组组装: ${SAMPLE}"
 echo "[megahit] 预设: ${PRESETS}，最小 contig: ${MIN_CONTIG_LEN} bp，线程: ${CPUS}"
 
