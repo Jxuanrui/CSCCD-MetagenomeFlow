@@ -341,7 +341,7 @@ Project/MyProject/result/kneaddata/Sample1/
 | 阶段 | 执行方式 | 完成样本 | 状态 |
 |------|---------|---------|------|
 | ① 单样本测试 | 模式一，手动 | Sample1 | ✅ 审核通过（宿主去除率 0.75%，耗时 ~135 min）|
-| ② rush 并行9样本 | 模式二，rush -j 2 | Sample2-4, Sample10-15 | ⏳ 进行中 |
+| ② rush 并行9样本 | 模式二，rush -j 2 | Sample2-4, Sample10-15 | ✅ 全部完成（10/10 样本，reads 范围 38.9M–55.4M）|
 | ③ 剩余40样本 | Snakemake | Sample16-51 | ⏳ 10样本所有步骤通过后启动 |
 
 > kneaddata 是流程中最耗时的单步骤（~135 min/样本）。
