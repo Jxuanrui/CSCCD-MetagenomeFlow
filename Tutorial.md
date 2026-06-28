@@ -957,3 +957,74 @@ Project/Project01/result/assembly/prodigal/Sample1/
 
 ---
 
+### A2. HUMAnN3 加速方案（--speed-mode）
+
+**背景**：HUMAnN3 默认 standard 模式在 62M reads 样本上耗时 **8-15 小时/样本**，瓶颈是构建物种定制 ChocoPhlAn 子数据库的 bowtie2-build 阶段（非 Diamond）。对于大批量队列（50+ 样本），即使 Snakemake 3 并发也需约 4 天。脚本内置三种速度模式，可按分析目的灵活选择。
+
+**三种模式对比**：
+
+| 模式 | 耗时（62M reads） | 加速倍数 | 物种阈值 | 输入 reads | 适用场景 |
+|------|----------------|---------|---------|-----------|---------|
+| `standard` | 8-15 h | 1× | 0.01%（几乎全部） | R1+R2 双端 | 发表级最终分析、低深度样本（<20M reads） |
+| `balanced` | 1-2 h | **5-10×** | 1%（~21 个 SGBs） | R1+R2 双端 | **>20M reads 样本首选**，精度损失 <5% |
+| `fast` | 0.5-1 h | **15-20×** | 3%（~5 个 SGBs） | 仅 R1 | 探索性分析、大规模队列初筛 |
+
+**加速原理**：
+
+HUMAnN3 核苷酸搜索前需构建物种定制 ChocoPhlAn 子数据库（bowtie2-build）：
+- `standard`：纳入 >0.01% 物种 → ~126 SGBs → 子数据库 ~60 GB → bowtie2-build **~20 小时**
+- `balanced`：纳入 >1% 物种 → ~21 SGBs → 子数据库 ~2-5 GB → bowtie2-build **~30-60 分钟**
+
+> bowtie2-build 是最大时间黑洞（不是 Diamond）。`balanced` 的核心收益来自大幅缩小子数据库。
+
+**精度说明**：
+- `balanced`：unstratified 社区通路精度损失 <5%，绝大多数分析的合理取舍。<1% 稀有物种的 stratified 分层通路会丢失，汇总通路不受影响。
+- `fast`：适合"先看趋势"的探索分析，不建议直接发表。
+
+**使用方式**：
+
+*单样本手动（推荐 balanced）：*
+```bash
+bash ~/Course/Maxmetagenome/scripts/13_bac_humann3.sh \
+  -s Sample1 -t 16 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome \
+  --speed-mode balanced
+```
+
+*rush 批量（balanced，可提升至 -j 3）：*
+```bash
+PROJ=~/Course/Maxmetagenome
+WORKDIR=$PROJ/Project/Project01
+tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
+  $PROJ/miniforge3/bin/rush -j 3 -k \
+  "bash ${PROJ}/scripts/13_bac_humann3.sh \
+    -s {1} -t 16 \
+    -w ${WORKDIR} \
+    -r ${PROJ} \
+    --speed-mode balanced \
+    > ${WORKDIR}/temp/logs/humann3/humann3_{1}.log 2>&1 && echo '[{1}] humann3 done'"
+```
+
+> `balanced` 内存峰值从 ~80 GB/实例降至 ~20 GB/实例，因此并发数可从 `-j 2` 提升至 `-j 3`。
+
+**LLM 调用方式（Prompt）**：
+```
+请帮我用 balanced 模式重新运行 MaxMetagenome HUMAnN3，样本列表来自
+Project01/samplesheet_test10.csv，线程 16，rush -j 3 并发。
+已完成的样本自动跳过（脚本幂等）。完成后告知每个样本的通路数。
+```
+
+**Project01 后续建议**：
+
+本次 10 个测试样本已用 `standard` 模式运行完毕。**后续 40 个样本（Sample16-51）的 Snakemake 批量建议改用 `balanced`**，总耗时可从 ~4 天压缩至 **~8-12 小时**。
+
+修改方式：在 `pipeline/config/config.yaml` 中追加：
+```yaml
+humann3_speed_mode: "balanced"
+```
+
+Snakemake rule 会读取此参数并自动传入 `--speed-mode balanced`（`pipeline/rules/bacteria_taxonomy.smk` 已支持）。
+
+---
+
