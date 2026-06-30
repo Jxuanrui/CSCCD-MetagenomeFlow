@@ -980,6 +980,86 @@ Project/Project01/result/assembly/prodigal/Sample1/
 
 ---
 
+### 步骤 9：基因去冗余（NR Gene Catalog 构建）
+
+**步骤名称**：非冗余基因目录（NR gene catalog）构建
+
+**目的**：将所有样本各自独立预测的基因合并，按 95% 核苷酸相似度聚类去冗余，得到代表整个队列的非冗余基因集（NR gene catalog）。这是 per-sample 组装策略的必要后处理步骤，也是后续 Salmon 定量和所有功能注释的统一输入。
+
+> **为什么需要去冗余而不是直接合并？**
+> 不同样本中同一物种的同一基因会被各自组装出来，直接合并会产生大量冗余序列，导致 Salmon 定量时 reads 被随机分配到多个相同序列，丰度估计偏低且不可重现。去冗余后每个基因只保留一条代表序列，冗余率通常可压缩 50-80%。
+
+**依赖**：步骤 8 所有样本的 `.fna` 输出（核苷酸基因序列）
+
+---
+
+#### 工具选择：CD-HIT vs MMseqs2 Linclust
+
+脚本 `18_bac_cdhit.sh` 通过 `--tool` 参数支持两种后端，按样本规模选用：
+
+| 后端 | 参数 | 算法复杂度 | 速度（48核，2.5M基因） | 适用场景 |
+|------|------|-----------|----------------------|---------|
+| **CD-HIT-EST**（默认） | `--tool cdhit` | 近 O(n²) | ~30-60 分钟 | ≤500万基因，≤20样本，结果最被同行引用 |
+| **MMseqs2 Linclust** | `--tool mmseqs` | O(n) 线性 | ~5-15 分钟（**4-10×快**） | >500万基因，>50样本，或追求速度 |
+
+> **规模临界点**：10 样本 (~250万基因/样本) 用 CD-HIT 约 30 分钟；50 样本 (~1250万基因) 用 CD-HIT 将超 5 小时，此时应切换 MMseqs2。两者 95% identity 结果高度一致，均被 MetaHIT/IGC/UHGG 等大型基因目录项目采用。
+>
+> 参考文献：[Linclust (Nature Comms 2018)](https://www.nature.com/articles/s41467-018-04964-5) — 1.6 亿序列 10 小时，CD-HIT 同规模需数周
+
+**执行方式**：
+
+*本步骤是聚合步骤（aggregate），不按样本分，只运行一次：*
+
+```bash
+# ── 方式 A：CD-HIT（≤500万基因，默认，10样本推荐）──────────────────
+bash ~/Course/Maxmetagenome/scripts/18_bac_cdhit.sh \
+  -t 48 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome
+
+# ── 方式 B：MMseqs2 Linclust（>500万基因，50样本全量推荐）───────────
+bash ~/Course/Maxmetagenome/scripts/18_bac_cdhit.sh \
+  --tool mmseqs \
+  -t 48 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome
+```
+
+> `envs/assembly` 中已同时安装 CD-HIT v4.8.1 和 MMseqs2 v13.45111，无需额外配置。
+
+**LLM 调用示例**：
+```
+请帮我运行步骤 9（基因去冗余），当前 Project01 有 10 个样本，使用默认 CD-HIT 后端。
+工作目录：~/Course/Maxmetagenome/Project/Project01
+如果样本数将来超过 50 个，记得提示我切换到 --tool mmseqs。
+```
+
+**输出结果**：
+```
+Project/Project01/result/assembly/cdhit/
+  ├── nucleotide_nr.fa        ← 非冗余核苷酸基因集（→ Salmon 定量输入）
+  ├── protein_nr.fa           ← 非冗余蛋白序列（→ eggNOG/KEGG/AMR 注释输入）
+  ├── nucleotide_nr.fa.clstr  ← 聚类信息文件（CD-HIT 模式）
+  └── mmseqs_cluster_*        ← MMseqs2 中间文件（mmseqs 模式，自动清理）
+```
+
+**审核要点**：
+
+| 指标 | 正常范围 | 说明 |
+|------|---------|------|
+| NR 基因数 | 输入的 20–50% | 10样本约 48-52%，样本越多冗余越高 |
+| protein_nr.fa 存在且非空 | 必须 | 功能注释直接使用 |
+| 去冗余率 | 50-80% | 低于 20% 说明样本间差异极大（检查组装质量） |
+
+**Project01 执行进度（步骤 9）**：
+
+| 阶段 | 执行方式 | 状态 |
+|------|---------|------|
+| 聚合去冗余（10样本，CD-HIT） | 单次运行，-t 48 | ✅ 完成（2,570,710 → 1,241,517 NR genes，去冗余率 51.7%，耗时 ~32 min）|
+| ③ 剩余40样本加入后重跑 | Snakemake（--tool mmseqs 推荐） | ⏳ 10样本所有步骤通过后启动 |
+
+---
+
 > 本章记录在 Claude Code 中执行分析时发现的实用操作技巧，按发现时间顺序追加。
 > 凡是在执行过程中遇到的有价值的 LLM 交互模式，均同步记录于此。
 
