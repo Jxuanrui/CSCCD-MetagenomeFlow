@@ -973,7 +973,7 @@ Project/Project01/result/assembly/prodigal/Sample1/
 | 阶段 | 执行方式 | 完成样本 | 状态 |
 |------|---------|---------|------|
 | ① 单样本测试 | 模式一，手动 | Sample1 | ✅ 审核通过（329,908 genes，完整基因 54.8%，耗时 ~22 min）|
-| ② rush 并行9样本 | 模式二，rush -j 6 | Sample2-4, Sample10-15 | ⏳ 进行中 |
+| ② rush 并行9样本 | 模式二，rush -j 6 | Sample2-4, Sample10-15 | ✅ 全部完成（10/10 样本，genes 范围 84,083–410,914）|
 | ③ 剩余40样本 | Snakemake | Sample16-51 | ⏳ 10样本所有步骤通过后启动 |
 
 > Prodigal 单线程，~22 min/样本，-j 6 并发（6×1核=6核），9 个样本约 40 分钟完成。
