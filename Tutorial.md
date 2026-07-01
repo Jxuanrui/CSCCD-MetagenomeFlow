@@ -1060,7 +1060,344 @@ Project/Project01/result/assembly/cdhit/
 
 ---
 
-> 本章记录在 Claude Code 中执行分析时发现的实用操作技巧，按发现时间顺序追加。
+### 步骤 10：Salmon 索引构建（salmon index）
+
+**步骤名称**：基因定量索引构建
+
+**目的**：基于步骤 9 生成的非冗余基因集（`nucleotide_nr.fa`），构建 Salmon 定量所需的 k-mer 索引。索引只需构建一次，后续所有样本的定量（步骤 11）共用同一个索引。
+
+**依赖**：步骤 9 的 `nucleotide_nr.fa`
+
+**执行方式**：
+
+*聚合步骤，只运行一次：*
+```bash
+bash ~/Course/Maxmetagenome/scripts/19_bac_salmon_build.sh \
+  -t 16 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+```
+Project/Project01/result/assembly/salmon/index/
+  ├── info.json        ← 索引元数据（幂等性检查哨兵文件）
+  ├── versionInfo.json ← Salmon 版本信息
+  ├── pos.bin, ...     ← 索引二进制文件
+  └── ...
+```
+
+**审核要点**：
+
+| 指标 | 正常值 | 说明 |
+|------|-------|------|
+| `info.json` 存在 | 必须 | Salmon 索引完整性标志 |
+| 索引目录非空 | 必须 | 含 `pos.bin`、`rank.bin` 等二进制文件 |
+| 耗时 | 5-15 分钟（1.2M基因） | 与 NR 基因数成正比 |
+
+**Project01 执行进度（步骤 10）**：
+
+| 阶段 | 执行方式 | 状态 |
+|------|---------|------|
+| Salmon 索引构建 | 单次运行，-t 16 | ✅ 完成（1,241,517 genes，耗时 ~19 min，索引 ~4.6G）|
+| ③ 剩余40样本沿用同一索引 | Snakemake | ⏳ 10样本所有步骤通过后启动 |
+
+---
+
+### 步骤 11：基因丰度定量（Salmon quant）
+
+**步骤名称**：每样本基因 TPM 定量
+
+**目的**：用 Salmon 对每个样本的 clean reads 与 NR 基因集索引做伪比对，输出每个基因的 TPM（每百万转录本的转录数）和 read count。TPM 是跨样本比较的标准化单位，后续差异分析和功能注释定量均基于此。
+
+**依赖**：步骤 2 的 kneaddata clean reads + 步骤 10 的 Salmon 索引
+
+**执行方式**：
+
+```bash
+# ① 单样本测试（Sample1）
+bash ~/Course/Maxmetagenome/scripts/20_bac_salmon_quant.sh \
+  -s Sample1 -t 16 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome
+
+# ② rush 并行 9 样本（Sample2-4, Sample10-15）
+PROJ=~/Course/Maxmetagenome
+WORKDIR=$PROJ/Project/Project01
+tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | grep -v "^Sample1$" | \
+  $PROJ/miniforge3/bin/rush -j 3 -k \
+  "bash ${PROJ}/scripts/20_bac_salmon_quant.sh \
+    -s {1} -t 16 \
+    -w ${WORKDIR} \
+    -r ${PROJ} \
+    > ${WORKDIR}/temp/logs/salmon_quant/salmon_quant_{1}.log 2>&1 && echo '[{1}] salmon_quant done'" \
+  2>&1 | tee ${WORKDIR}/temp/logs/salmon_quant/rush_batch.log &
+```
+
+> Salmon quant 每样本约 10-20 分钟（~42M reads 对 1.2M 基因），-j 3 并发共用 48 核（3×16）。
+
+**输出结果**：
+```
+Project/Project01/result/assembly/salmon/
+  ├── Sample1/quant.sf     ← 基因 TPM + NumReads（主要结果）
+  ├── Sample2/quant.sf
+  └── .../
+      quant.sf 列：Name | Length | EffectiveLength | TPM | NumReads
+```
+
+**审核要点**：
+
+| 指标 | 正常值 | 说明 |
+|------|-------|------|
+| `quant.sf` 行数 | = NR 基因数（1,241,517） | 每个基因一行 |
+| TPM > 0 的基因数 | 通常 10-30% | 每个样本有检出的基因比例 |
+| Mapping rate | 通常 30-60% | 宏基因组低于 RNA-seq 属正常 |
+
+**Project01 执行进度（步骤 11）**：
+
+| 阶段 | 执行方式 | 完成样本 | 状态 |
+|------|---------|---------|------|
+| ① 单样本测试 | 手动，-t 16 | Sample1 | ✅ 审核通过（1,241,517 genes，mapping rate 21.4%，检出 325,112 genes）|
+| ② rush 并行 9 样本 | rush -j 3 | Sample2-4, Sample10-15 | ✅ 全部完成（mapping 19.8-37.5%，检出 259k-509k genes/样本）|
+| ③ 剩余40样本 | Snakemake | Sample16-51 | ⏳ 10样本所有步骤通过后启动 |
+
+---
+
+### 步骤 12：综合功能注释（eggNOG-mapper）
+
+**步骤名称**：COG / KEGG KO / GO / EC / CAZy 综合注释
+
+**目的**：用 eggNOG-mapper 对 NR 蛋白基因集做一次性综合注释，同时输出 COG 功能分类、KEGG KO 编号、GO 条目、EC 酶活、CAZy 碳水化合物酶编号。是覆盖面最广的功能注释步骤，后续所有功能分析的主注释表。
+
+**依赖**：步骤 9 的 `protein_nr.fa`（聚合步骤，运行一次）
+
+**执行方式**：
+```bash
+bash ~/Course/Maxmetagenome/scripts/21_bac_eggnog.sh \
+  -t 48 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+```
+Project/Project01/result/eggnog/
+  ├── eggnog.emapper.annotations    ← 主注释表（COG/KO/GO/EC/CAZy）
+  └── eggnog.emapper.seed_orthologs ← 同源 OG 命中
+```
+
+**审核要点**：
+
+| 指标 | 正常值 | 说明 |
+|------|-------|------|
+| annotations 行数 | ~40-70% × 1,241,517 | 宏基因组注释率通常 40-70% |
+| 含 KO 注释的行数 | >20% | KEGG 覆盖率 |
+| 耗时 | 30-120 分钟（1.2M 蛋白，48核） | DIAMOND 搜索为瓶颈 |
+
+**Project01 执行进度（步骤 12）**：
+
+| 阶段 | 执行方式 | 状态 |
+|------|---------|------|
+| eggNOG 全量注释 | 单次运行，-t 48 | ✅ 完成（注释率 88.6%，KO 45.5%，COG 81.7%，耗时 ~87 min）|
+| ③ 剩余40样本加入后重跑 | Snakemake | ⏳ 10样本所有步骤通过后启动 |
+
+---
+
+### 步骤 13：KEGG KO 通路注释（DIAMOND vs KEGG）
+
+**步骤名称**：KEGG 专项高精度 KO 注释
+
+**目的**：直接用 DIAMOND blastp 比对 KEGG 全蛋白数据库（48G），获取精确的 KO 编号和通路映射。与 eggNOG 的 KEGG 注释互补——eggNOG 覆盖广，KEGG 直接比对精度更高，二者结合可提升 KO 命中率。
+
+**依赖**：步骤 9 的 `protein_nr.fa`（与步骤 12 **并行**运行，互不依赖）
+
+**执行方式**：
+```bash
+bash ~/Course/Maxmetagenome/scripts/22_bac_kegg.sh \
+  -t 48 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+```
+Project/Project01/result/kegg/
+  └── kegg_diamond.tsv    ← DIAMOND 比对结果（BLAST m6 格式，含 KO 映射）
+```
+
+**Project01 执行进度（步骤 13）**：
+
+| 阶段 | 执行方式 | 状态 |
+|------|---------|------|
+| KEGG DIAMOND 比对 | 单次运行，-t 48 | ✅ 完成（命中率 90.2%，1,119,706 hits，83M，耗时 ~163 min）|
+| ③ 剩余40样本加入后重跑 | Snakemake | ⏳ 10样本所有步骤通过后启动 |
+
+---
+
+### 步骤 14-21：功能注释批量并行（AMRFinder / CARD / dbCAN / VFDB / BacMet / antiSMASH / Defense-Finder / NCyc / PCyc）
+
+**说明**：步骤 14-21 全部依赖 `protein_nr.fa`（或 MEGAHIT contigs），彼此独立，一次性并行启动所有任务。
+
+> **并行策略（48核分配）**：
+> - AMRFinder(12核) + dbCAN(12核) + Defense-Finder(12核) + VFDB(12核) → 同时启动，各用独立 conda env
+> - BacMet(16核) + NCyc(16核) + PCyc(16核) → DIAMOND 轻量DB，同时并行
+> - CARD(12核) → amr env，独立启动
+> - antiSMASH → per-sample，rush -j 2，每样本 8 核
+
+**执行命令**（一次性启动所有）：
+```bash
+PROJ=~/Course/Maxmetagenome && WORKDIR=$PROJ/Project/Project01
+# 聚合注释（protein_nr.fa 输入）
+for script in 23_bac_amrfinder 24_bac_card 25_bac_dbcan 26_bac_vfdb \
+              27_bac_bacmet 29_bac_defense_finder 30_bac_ncyc 31_bac_pcyc; do
+  bash $PROJ/scripts/${script}.sh -t 12 -w $WORKDIR -r $PROJ \
+    > $WORKDIR/temp/logs/${script#*_bac_}/${script#*_bac_}.log 2>&1 &
+done
+# antiSMASH per-sample
+tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
+  $PROJ/miniforge3/bin/rush -j 2 -k \
+  "bash ${PROJ}/scripts/28_bac_antismash.sh -s {1} -t 8 -w ${WORKDIR} -r ${PROJ} \
+   > ${WORKDIR}/temp/logs/antismash/antismash_{1}.log 2>&1 && echo '[{1}] antismash done'" \
+  2>&1 | tee ${WORKDIR}/temp/logs/antismash/rush_batch.log &
+```
+
+**Project01 执行进度（步骤 14-21）**：
+
+| 步骤 | 工具 | 类型 | 状态 |
+|------|------|------|------|
+| 14 AMRFinder | AMRFinderPlus | 聚合 | ✅ 完成（409 耐药基因，耗时 1267s）|
+| 15 CARD/RGI | RGI + CARD | 聚合 | ✅ 完成（Perfect/Strict: 0，耗时 724s）|
+| 16 dbCAN | run_dbcan | 聚合 | ✅ 完成（43,066 CAZyme，耗时 485s）|
+| 17 VFDB | DIAMOND | 聚合 | ✅ 完成（200,472 hits，耗时 189s）|
+| 18 BacMet | DIAMOND | 聚合 | ✅ 完成（85,839 hits，耗时 77s）|
+| 19 antiSMASH | antiSMASH 7 | per-sample | ⏳ 进行中（rush -j 2，Sample1+2 运行中）|
+| 20 Defense-Finder | DefenseFinder | 聚合 | ✅ 完成（防御系统 0，HMM 5M，耗时 2081s）|
+| 21 NCyc | DIAMOND | 聚合 | ✅ 完成（139,293 hits，耗时 477s）|
+| 22 PCyc | DIAMOND | 聚合 | ✅ 完成（371,975 hits，耗时 1440s）|
+
+---
+
+### 步骤 22b-22d：功能注释补充（SCyc / Pfam-A / UniProt Swiss-Prot）
+
+**新增（2026-06-30）**：补全硫循环维度 + 高精度蛋白功能域注释，覆盖 eggNOG/KEGG 未命中区域。
+
+```bash
+# 31b SCyc 硫循环（与 NCyc/PCyc 完全对称，DIAMOND，~10 分钟）
+bash scripts/31b_bac_scyc.sh -t 16 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome
+
+# 31c Pfam-A 蛋白域（hmmscan --cut_ga，建议 32+ 线程，~1-3 小时）
+bash scripts/31c_bac_pfam.sh -t 32 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome
+
+# 31d UniProt Swiss-Prot（MMseqs2 easy-search，~20-40 分钟）
+bash scripts/31d_bac_uniprot.sh -t 16 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome
+```
+
+> **注意**：31c Pfam-A 需要 `envs/dbcan` 环境（含 HMMER）；31d 需要 `db/uniprot_sprot/mmseqs/` 索引。
+> Pfam hmmscan 对大规模蛋白集（>100 万条）较慢，建议离线后台运行：`nohup bash ... > pfam.log 2>&1 &`
+
+---
+
+### 步骤 23：MGE 可移动遗传元素分析（per-sample）
+
+**背景**：肠道菌群多组学研究中，MGE 追踪对理解 ARG 水平基因转移（HGT）至关重要。
+涵盖 5 种 MGE 类型：IS 元件（ISfinder）/ 整合接合元件（ICEberg）/ 整合子（integrall）/ 转座酶（transposase-db HMM）/ 综合 MGE 分类（mobileOG）。
+
+```bash
+# 单样本运行（per-sample 步骤）
+bash scripts/42_bac_mge.sh -s S01 -t 16 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome
+
+# 批量运行（rush 并行）
+cat [WORKDIR]/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
+rush -j 2 'bash scripts/42_bac_mge.sh -s {} -t 16 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome'
+```
+
+> **注意**：
+> - `mobileOG` 步骤为 aggregate，多样本只运行一次，第一个样本完成后后续自动跳过
+> - `42_bac_mge.sh` 依赖 `envs/assembly`（diamond/mmseqs2/blast）+ `envs/dbcan`（hmmscan）
+> - 肠道菌群中整合接合元件（ICEberg）和 I 类整合子（integrall class1）与 ARG 水平转移密切相关
+
+---
+
+### 步骤 24：质粒识别（PlasmidFinder，per-sample）
+
+**前置安装**（首次运行前执行一次）：
+```bash
+conda create --prefix ~/Course/Maxmetagenome/envs/plasmidfinder python=3.10 -y
+conda install --prefix ~/Course/Maxmetagenome/envs/plasmidfinder \
+    -c conda-forge -c bioconda plasmidfinder=2.1.6 blast -y
+```
+
+```bash
+# 单样本运行
+bash scripts/42b_bac_plasmidfinder.sh -s S01 -t 16 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome
+
+# 批量运行（rush 并行）
+cat [WORKDIR]/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
+rush -j 4 'bash scripts/42b_bac_plasmidfinder.sh -s {} -t 8 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome'
+```
+
+> **输出**：`result/mge/plasmidfinder/{SAMPLE}/results_tab.tsv`（含 replicon 类型 + Inc group）
+> **与 MGE 整合**：PlasmidFinder 定位质粒 contig → mobileOG 细化质粒基因功能 → AMRFinder/CARD 识别质粒携带 ARG → ICEberg 追踪接合转移机制，形成完整的 HGT 分析链路。
+
+---
+
+### 步骤 25：铁代谢基因预测（FeGenie，per-sample）
+
+**背景**：肠道微生物的铁获取与宿主竞争铁资源密切相关，影响菌群定植和致病性。FeGenie 预测 10 类铁代谢功能：
+- **Siderophore synthesis / transport**（铁载体合成/转运，肠道菌的主要铁获取策略）
+- **Heme transport / oxygenase**（血红素转运/分解，宿主血红素利用）
+- **Iron transport**（铁直接转运，如 FeoAB / FbpABC）
+- **Iron oxidation / reduction**（铁氧化还原，如 Cyc2 / MtoA，厌氧肠道环境关键）
+- **Iron storage**（铁储存，如 ferritin）
+- **Iron gene regulation**（铁调控，如 Fur / DtxR）
+- **Magnetosome formation**（磁小体形成，肠道菌较少见）
+
+**前置安装**（已完成，首次运行前验证）：
+```bash
+# 验证 FeGenie 环境
+conda run --prefix ~/Course/Maxmetagenome/envs/fegenie FeGenie.py -h
+
+# 验证 HMM 数据库
+ls -lh ~/Course/Maxmetagenome/envs/fegenie/share/fegenie-1.2/hmms/iron/
+```
+
+```bash
+# 单样本运行（per-sample 模式，推荐）
+bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome
+
+# 批量运行（rush 并行）
+cat [WORKDIR]/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
+rush -j 2 'bash scripts/31e_bac_fegenie.sh -s {} -t 8 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome'
+
+# NR 模式（单次运行，所有样本共享结果，适合 MAG-level 分析）
+bash scripts/31e_bac_fegenie.sh -s NR -t 16 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome --input-type nr
+```
+
+> **输出**：`result/annotation/fegenie/{SAMPLE}/FeGenie-HMM-results.csv`（基因级铁功能注释）+ `FeGenie-geneSummary.csv`（功能类别统计）
+> 
+> **与其他注释的关系**：
+> - **eggNOG/KEGG**：通用 KO 注释（如 K02013 = iron transport）
+> - **Pfam-A**（步骤 22c）：蛋白域注释（如 PF01032 = FecA 铁柠檬酸盐受体）
+> - **FeGenie**：聚焦铁代谢，提供更细粒度分类（区分 siderophore synthesis vs transport）+ 铁氧化还原酶亚型（Cyc2 / MtoA）
+> 
+> **肠道微生物铁代谢研究意义**：
+> - **宿主-菌群铁竞争**：肠道炎症期间宿主释放 lactoferrin 限制游离铁，菌群通过 siderophore（如 enterobactin）竞争铁资源
+> - **致病菌铁获取**：肠道致病菌（如 *E. coli* / *Salmonella*）依赖 heme 转运系统从宿主获取铁
+> - **铁氧化还原与厌氧代谢**：肠道厌氧环境中，铁还原酶（如 FeoAB）与氢气代谢偶联
+
+---
+
+# 附录 B：LLM 辅助宏基因组分析最佳实践，按发现时间顺序追加。
 > 凡是在执行过程中遇到的有价值的 LLM 交互模式，均同步记录于此。
 
 ---

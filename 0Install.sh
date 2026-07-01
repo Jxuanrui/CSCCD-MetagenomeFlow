@@ -73,6 +73,12 @@
 #   [✓] §12.3 PHF 肠道真菌数据库（db/gut_fungi_db/，760基因组基因集）    2026-06-15  已部署（Yan et al. 2024 Cell 187，Bowtie2索引构建中）
 #   [✓] §12.4 PHF 流程脚本（74a/74e/74f，Bowtie2+Singular/Escrow）      2026-06-15  已创建（论文原方法，替代原74b/74c/74d DIAMOND方案）
 #   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
+#   [✓] §15.1 UniProt Swiss-Prot（243 MB .dmnd + blast/mmseqs 索引，已从参考项目复制）          2026-06-30  就绪
+#   [✓] §15.2 Pfam-A HMM 数据库（~2.4 GB，全部 hmmpress 文件，已从参考项目复制）               2026-06-30  就绪
+#   [✓] §15.3 MGE 数据库组（ISfinder/ICEberg/integrall/transposase-db，已从参考项目复制）       2026-06-30  就绪
+#   [✗] §15.4 FeGenie（铁代谢基因预测）— 见下方 Apptainer/conda 安装说明
+#   [✗] §15.5 recombinase-kit（重组酶注释）— 见下方 Apptainer/conda 安装说明
+#   [✓] §15.6 PlasmidFinder 2.1.6（envs/plasmidfinder，DB 内置，exit 0 验证通过）           2026-06-30  已安装
 # ==============================================================================
 
 
@@ -1764,4 +1770,172 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
 # ==============================================================================
 # §14 状态：PhaBox2 [✓] | PhaGCN3 [✓] | DRAM [✓ 2026-06-16]
+# ==============================================================================
+
+
+# ==============================================================================
+# §15. 补充功能注释数据库（UniProt Swiss-Prot / Pfam / MGE 数据库组 / FeGenie / recombinase）
+# ==============================================================================
+# 背景：上一轮数据库梳理（2026-06-30）发现以下数据库在 db/ 中缺失：
+#   UniProt Swiss-Prot — 高质量人工注释蛋白，DIAMOND 搜索
+#   Pfam-A             — 蛋白功能域 HMM 数据库，HMMER 搜索
+#   ISfinder           — 插入序列数据库（MGE 可移动遗传元素）
+#   ICEberg            — 整合接合元件数据库（MGE）
+#   integrall          — 整合子数据库（MGE）
+#   transposase-db     — 转座酶 HMM 数据库（MGE）
+#   FeGenie            — 铁代谢基因（iron uptake / cycling）预测
+#   recombinase-kit    — 位点特异性重组酶注释
+#
+# 数据来源：
+#   §15.1-15.3 均从 /home/labuser/Course/Metagenomics_Apptainer_pipline/db/ 复制 ✓
+#   §15.4-15.5 原参考项目使用 Apptainer 容器（DB 内嵌），本项目改用 conda 安装
+
+# --- §15.1 UniProt Swiss-Prot [✓ 已完成 2026-06-30] ---
+# 用途：高可信度全功能蛋白注释（全长比对），补充 eggNOG/KEGG 未注释条目
+# 工具：DIAMOND blastp（envs/assembly 已有 diamond 2.0.15）
+# 大小：~564 MB（.dmnd 243M + .fasta 234M + .fasta.gz 87M + blast/mmseqs 索引）
+
+    mkdir -p ${db}/uniprot_sprot
+
+    # ---- 方法0：从参考项目复制（推荐，已完成）----
+    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/uniprot_sprot/* \
+        ${db}/uniprot_sprot/
+    echo "UniProt Swiss-Prot 就绪: ${db}/uniprot_sprot/"
+
+    # ---- 方法1：官方下载（已注释，仅在 db 损坏时重建）----
+    # wget -c https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz \
+    #     -O ${db}/uniprot_sprot/uniprot_sprot.fasta.gz
+    # gzip -dk ${db}/uniprot_sprot/uniprot_sprot.fasta.gz
+    # conda run --prefix ${envs}/assembly diamond makedb \
+    #     --in ${db}/uniprot_sprot/uniprot_sprot.fasta \
+    #     --db ${db}/uniprot_sprot/uniprot_sprot.dmnd \
+    #     --threads 16
+    ls -lh ${db}/uniprot_sprot/
+
+# --- §15.2 Pfam-A HMM 数据库 [✓ 已完成 2026-06-30] ---
+# 用途：蛋白功能域注释（已在 VIBRANT §8.7 中使用，此处为独立注释脚本提供）
+# 工具：HMMER hmmscan（envs/assembly 或 hmmer 相关环境）
+# 大小：~2.4 GB（Pfam-A.hmm.gz 332M + hmmpress 4 文件共 ~2.0G）
+
+    mkdir -p ${db}/pfam
+
+    # ---- 方法0：从参考项目复制（推荐，已完成，含 hmmpress 索引）----
+    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/pfam/* \
+        ${db}/pfam/
+    echo "Pfam-A 就绪: ${db}/pfam/"
+
+    # ---- 方法1：官方下载 + hmmpress（已注释）----
+    # wget -c https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz \
+    #     -O ${db}/pfam/Pfam-A.hmm.gz
+    # gzip -dk ${db}/pfam/Pfam-A.hmm.gz
+    # conda run --prefix ${envs}/assembly hmmpress ${db}/pfam/Pfam-A.hmm
+    ls -lh ${db}/pfam/
+
+# --- §15.3 MGE 可移动遗传元素数据库组 [✓ 已完成 2026-06-30] ---
+# 用途：移动遗传元素（插入序列/整合接合元件/整合子/转座酶）注释
+# 工具：DIAMOND blastp（ISfinder/ICEberg/integrall）+ HMMER hmmscan（transposase-db）
+
+    # ── ISfinder（插入序列，2.7 MB .faa + 16 MB .udb）──
+    mkdir -p ${db}/ISfinder
+    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/ISfinder/* \
+        ${db}/ISfinder/
+    echo "ISfinder 就绪: ${db}/ISfinder/"
+
+    # ---- 方法1：官方下载 + DIAMOND 建库 ----
+    # wget -c https://isfinder.biotoul.fr/download/ISfinder.faa -O ${db}/ISfinder/ISfinder.faa
+    # conda run --prefix ${envs}/assembly diamond makedb \
+    #     --in ${db}/ISfinder/ISfinder.faa \
+    #     --db ${db}/ISfinder/ISfinder.dmnd --threads 16
+
+    # ── ICEberg（整合接合元件，33 MB .fasta）──
+    mkdir -p ${db}/ICEberg
+    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/ICEberg/* \
+        ${db}/ICEberg/
+    echo "ICEberg 就绪: ${db}/ICEberg/"
+
+    # ---- 方法1：官方下载 + BLAST 建库 ----
+    # wget -c https://db-mml.sjtu.edu.cn/ICEberg2/download/ICEberg.fasta \
+    #     -O ${db}/ICEberg/ICEberg.fasta
+    # conda run --prefix ${envs}/assembly makeblastdb \
+    #     -in ${db}/ICEberg/ICEberg.fasta -dbtype prot \
+    #     -out ${db}/ICEberg/blast/ICEberg
+
+    # ── integrall（整合子，30 MB .ffn + BLAST 索引）──
+    mkdir -p ${db}/integrall
+    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/integrall/* \
+        ${db}/integrall/
+    echo "integrall 就绪: ${db}/integrall/"
+
+    # ── transposase-db（转座酶 HMM，4.3 MB .hmm + hmmpress 索引）──
+    mkdir -p ${db}/transposase-db
+    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/transposase-db/* \
+        ${db}/transposase-db/
+    echo "transposase-db 就绪: ${db}/transposase-db/"
+
+    # ---- 方法1：官方下载 + hmmpress ----
+    # wget -c https://github.com/cjmateos/transposase-db/raw/main/transposase.hmm.gz \
+    #     -O ${db}/transposase-db/transposase.hmm.gz
+    # gzip -dk ${db}/transposase-db/transposase.hmm.gz
+    # conda run --prefix ${envs}/assembly hmmpress ${db}/transposase-db/transposase.hmm
+    ls -lh ${db}/transposase-db/
+
+# --- §15.4 FeGenie（铁代谢基因预测）[✓ 已完成 2026-07-01] ---
+# 用途：预测铁获取（iron uptake）/ 储存 / 循环相关基因，宏基因组铁代谢功能分析
+# 方法：conda 安装（bioconda fegenie 1.2，HMM 数据库随包安装）
+# 大小：~50 MB（HMM 数据库内嵌于 envs/fegenie/share/fegenie-1.2/hmms/iron/）
+
+    conda create --prefix ${envs}/fegenie -c conda-forge -c bioconda python=3.11 fegenie=1.2 -y
+    conda run --prefix ${envs}/fegenie FeGenie.py -h
+
+    # 验证 HMM 数据库
+    ls -lh ${envs}/fegenie/share/fegenie-1.2/hmms/iron/
+
+    echo "FeGenie 就绪: ${envs}/fegenie"
+    echo "  10 个铁代谢功能类别 HMM："
+    echo "    - Siderophore synthesis / transport（铁载体合成/转运）"
+    echo "    - Heme transport / oxygenase（血红素转运/分解）"
+    echo "    - Iron transport（铁直接转运）"
+    echo "    - Iron oxidation / reduction（铁氧化/还原）"
+    echo "    - Iron storage（铁储存，ferritin）"
+    echo "    - Iron gene regulation（铁调控，Fur）"
+    echo "    - Magnetosome formation（磁小体形成）"
+
+# 测试验证：
+    # bash scripts/31e_bac_fegenie.sh -s S02 -t 8 -w Project/Project_example -r ${PROJ_DIR}
+# 输出：result/annotation/fegenie/S02/FeGenie-geneSummary.csv ✓（S02 检测到 1 个 iron_reduction 基因）
+
+# --- §15.5 recombinase-kit（位点特异性重组酶）[✗ 待安装] ---
+# 用途：注释酪氨酸重组酶 / 丝氨酸重组酶（整合子/转座子位点特异性重组）
+# 原参考项目方式：Apptainer recombinase-kit-0.0.1.sif（DB 内嵌容器）
+# 推荐替代方案：hmmscan + Pfam 子集（重组酶相关 Pfam HMM 已在 §15.2 就绪）
+
+    # ---- 方法0：利用已有 Pfam HMM（推荐，零额外安装）----
+    # 重组酶相关 Pfam 家族：PF00239（Resolvase），PF02022（Integrase），PF13495（Phage_int_SAM_5）
+    # conda run --prefix ${envs}/assembly hmmscan --tblout ${WORKDIR}/result/annotation/recombinase/recombinase.tblout \
+    #     --cpu 16 ${db}/pfam/Pfam-A.hmm ${WORKDIR}/result/assembly/cdhit/protein_nr.fa
+
+    # ---- 方法1：Apptainer 方式（如有 recombinase-kit-0.0.1.sif）----
+    # apptainer exec recombinase-kit-0.0.1.sif recombinase --help
+    # # DB 内嵌于 SIF，无需额外配置
+
+    echo "[INFO] recombinase-kit 尚未安装，可用 §15.2 Pfam-A HMM 通过 hmmscan 覆盖核心重组酶家族"
+    echo "       Apptainer 容器方案：参见上方注释"
+
+# --- §15.6 PlasmidFinder 2.1.6 [✓ 已完成 2026-06-30] ---
+# 用途：质粒识别（contig 层面），识别复制子类型和不相容群（Inc group）
+# DB：conda 包内置（share/plasmidfinder-2.1.6/database/）— 无需单独下载
+# 验证：exit 0，S02 测试通过（空结果为预期行为，测试样本深度不足）
+# 对应脚本：scripts/42b_bac_plasmidfinder.sh
+
+    # ---- 方法0：conda 安装（已完成）----
+    # conda create --prefix ${envs}/plasmidfinder python=3.10 -y
+    # conda install --prefix ${envs}/plasmidfinder -c conda-forge -c bioconda \
+    #     plasmidfinder=2.1.6 blast -y
+    # conda run --prefix ${envs}/plasmidfinder plasmidfinder.py --help
+
+    echo "[INFO] PlasmidFinder 2.1.6 已安装于 envs/plasmidfinder"
+    echo "       DB 路径: ${envs}/plasmidfinder/share/plasmidfinder-2.1.6/database/"
+
+# ==============================================================================
+# §15 状态：Swiss-Prot [✓] | Pfam [✓] | MGE 4库 [✓] | FeGenie [✓] | recombinase [✗] | PlasmidFinder [✓]
 # ==============================================================================

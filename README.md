@@ -35,7 +35,7 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | Analysis scripts | 101 (numbered 00–98d, incl. 54b/70/71/72/97_crosscohort) |
 | Snakemake rules | 98 across 10 rule files |
 | Conda environments | 40 isolated tool environments |
-| Databases | ~1.1 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, etc.) |
+| Databases | ~1.1 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, UniProt Swiss-Prot, Pfam-A, ISfinder, ICEberg, integrall, transposase-db, etc.) |
 | RAG knowledge base | 6,915 chunks (1,523 experience_kb + 5,392 literature_kb; ChromaDB + bge-small-zh-v1.5) |
 
 ---
@@ -637,4 +637,4 @@ claude mcp list                     # should show: codex: ✓ Connected
 
 ## Tools & References
 
-MetaPhlAn4 · StrainPhlAn4 · HUMAnN3 · Kraken2/Bracken · Centrifuger · MEGAHIT · Prodigal · CD-HIT · Salmon · eggNOG-mapper · AMRFinderPlus · CARD/RGI · dbCAN3 · antiSMASH · Defense-Finder · NCyc · PCyc · BacMet · VFDB · CoverM · MetaBAT2 · MaxBin2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta · mlst · Roary · Snippy · geNomad · VirSorter2 · CheckV · Prodigal-gv · vclust · PHAROKKA · PHOLD · VOGDB · BACPHLIP · iPHoP · vConTACT3 · FunOMIC · CCMetagen · MicroFisher · Eukfinder · MEROPS · SIAMCAT · DESeq2 · MMUPHin · ConQuR · FastSpar · MBECS · curatedMetagenomicData
+MetaPhlAn4 · StrainPhlAn4 · HUMAnN3 · Kraken2/Bracken · Centrifuger · MEGAHIT · Prodigal · CD-HIT · Salmon · eggNOG-mapper · AMRFinderPlus · CARD/RGI · dbCAN3 · antiSMASH · Defense-Finder · NCyc · PCyc · BacMet · VFDB · CoverM · MetaBAT2 · MaxBin2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta · mlst · Roary · Snippy · geNomad · VirSorter2 · CheckV · Prodigal-gv · vclust · PHAROKKA · PHOLD · VOGDB · BACPHLIP · iPHoP · vConTACT3 · FunOMIC · CCMetagen · MicroFisher · Eukfinder · MEROPS · SIAMCAT · DESeq2 · MMUPHin · ConQuR · FastSpar · MBECS · curatedMetagenomicData · UniProt Swiss-Prot · Pfam-A · ISfinder · ICEberg · integrall · transposase-db · FeGenie
