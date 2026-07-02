@@ -1266,7 +1266,7 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
 | 步骤 | 工具 | 类型 | 状态 |
 |------|------|------|------|
 | 14 AMRFinder | AMRFinderPlus | 聚合 | ✅ 完成（409 耐药基因，耗时 1267s）|
-| 15 CARD/RGI | RGI + CARD | 聚合 | ✅ 完成（Perfect/Strict: 0，耗时 724s）|
+| 15 CARD/RGI | RGI + CARD | 聚合 | ✅ 完成（Perfect/Strict: 0，输出 99M，耗时 724s）|
 | 16 dbCAN | run_dbcan | 聚合 | ✅ 完成（43,066 CAZyme，耗时 485s）|
 | 17 VFDB | DIAMOND | 聚合 | ✅ 完成（200,472 hits，耗时 189s）|
 | 18 BacMet | DIAMOND | 聚合 | ✅ 完成（85,839 hits，耗时 77s）|
