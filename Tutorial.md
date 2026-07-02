@@ -1270,7 +1270,7 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
 | 16 dbCAN | run_dbcan | 聚合 | ✅ 完成（43,066 CAZyme，耗时 485s）|
 | 17 VFDB | DIAMOND | 聚合 | ✅ 完成（200,472 hits，耗时 189s）|
 | 18 BacMet | DIAMOND | 聚合 | ✅ 完成（85,839 hits，耗时 77s）|
-| 19 antiSMASH | antiSMASH 7 | per-sample | ⏳ 进行中（rush -j 2，Sample1+2 运行中）|
+| 19 antiSMASH | antiSMASH 7 | per-sample | ⏳ 进行中（8/10 完成，Sample14/Sample15 运行中）|
 | 20 Defense-Finder | DefenseFinder | 聚合 | ✅ 完成（防御系统 0，HMM 5M，耗时 2081s）|
 | 21 NCyc | DIAMOND | 聚合 | ✅ 完成（139,293 hits，耗时 477s）|
 | 22 PCyc | DIAMOND | 聚合 | ✅ 完成（371,975 hits，耗时 1440s）|
@@ -1397,8 +1397,59 @@ bash scripts/31e_bac_fegenie.sh -s NR -t 16 \
 
 ---
 
-# 附录 B：LLM 辅助宏基因组分析最佳实践，按发现时间顺序追加。
-> 凡是在执行过程中遇到的有价值的 LLM 交互模式，均同步记录于此。
+## 步骤 26：Binning（MAG 回收，脚本 32-41）
+
+**步骤名称**：宏基因组组装基因组（MAG）回收与质量评估
+
+**目的**：从组装 contig 中通过覆盖度+序列组成信息聚类出单菌基因组草图（bin），经多算法整合、质量评估、去冗余后得到高质量 MAG 集合，用于菌株级功能与系统发育分析。
+
+**依赖**：步骤 7（MEGAHIT 组装）输出的 contigs + 步骤 2（去宿主 reads，用于覆盖度计算）
+
+**流程链**：32 CoverM depth → 33/34/35（MetaBAT2 / MaxBin2 / SemiBin2，三算法独立并行）→ 36 DAS_Tool（整合择优）→ 37 CheckM2（ML 质量评估）→ 38 dRep（去冗余）→ 39 CoverM quant（丰度定量）→ 40 GTDB-Tk（系统发育分类）→ 41 Bakta（精细注释）
+
+**执行方式（单样本示例，Sample1）**：
+```bash
+bash scripts/32_bac_coverm_depth.sh   -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
+bash scripts/33_bac_metabat2.sh       -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
+bash scripts/34_bac_maxbin2.sh        -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
+bash scripts/35_bac_semibin2.sh       -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
+bash scripts/36_bac_dastool.sh        -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
+bash scripts/37_bac_checkm2.sh        -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome   # 跨样本汇总，非 per-sample
+```
+
+**已知问题与修复**（本次 10 样本执行中发现并修复，均为工具真实输出结构与脚本假设不一致导致）：
+
+| 脚本 | 问题 | 修复 |
+|------|------|------|
+| 35_bac_semibin2.sh | SemiBin2 1.5.0 实际将 `contig_bins.tsv` 输出到 `OUTDIR` 根目录（非 `OUTDIR/output/`），bin fasta 在 `OUTDIR/output_bins/`（非通配 `*.fa`），脚本按错误路径判断导致误报"0 bins" | 修正路径判断逻辑，兼容新旧两种布局 |
+| 36_bac_dastool.sh | ① `--write_bins 1` 在新版 docopt 下不接受参数值，需改为纯 flag；② MetaBAT2/SemiBin2 的 contig2bin 表含表头行，导致 DAS_Tool 报错 "Contigs not found in assembly"；③ 输出目录实际为 `${OUTDIR}/${SAMPLE}_DASTool_bins`，脚本原假设 `${OUTDIR}/bins` 导致误报"整合 bins: 0" | ① 去掉 `1`；② 增加 awk 表头清洗步骤；③ 修正 `BINS_DIR` 变量 |
+| 37_bac_checkm2.sh | ① bin 收集通配符 `*/bins` 不匹配实际的 `*/{sample}_DASTool_bins`，且跨样本存在同名 bin（如 Sample1/0.fa 与 Sample2/0.fa）无前缀导致覆盖；② `--database_path` 需指向具体 `.dmnd` 文件而非父目录；③ 输入符号链接目录若嵌套在 `--output-directory` 内，会被 CheckM2 的 `--force` 清空 | ① 改用正确通配符 + 按样本名加前缀；② 指向 `db/checkm2/CheckM2_database/uniref100.KO.1.dmnd`；③ 迁移到 `${WORKDIR}/temp/checkm2_input`（输出目录之外）|
+| envs/dastool（环境） | `r-docopt` 0.7.2 与 DAS_Tool R 脚本不兼容（`envRefInferField` 报错） | 降级为 `r-docopt=0.7.1` |
+| envs/checkm2（环境） | 缺少 `prodigal` 二进制（CheckM2 内部调用） | `conda install` 补装 |
+| envs/checkm2（环境，pandas 2.0.3） | `predictQuality.py` 中 `str.split(sep, 1, expand=True)` 位置参数写法与 pandas 2.0 API 不兼容，报 `TypeError: split() takes from 1 to 2 positional arguments but 3 were given` | 直接 patch 源码两行，将位置参数 `1` 改为关键字参数 `n=1`；用 `checkm2 predict --resume` 复用已有 DIAMOND 输出重跑预测阶段，避免重新计算 |
+
+**Project01 执行进度（Binning，全部 10 样本）**：
+
+| 步骤 | 工具 | 内容 | 状态 |
+|------|------|------|------|
+| 32 | CoverM | 测序深度计算 | ✅ 10/10 |
+| 33 | MetaBAT2 | 分箱算法1 | ✅ 10/10 |
+| 34 | MaxBin2 | 分箱算法2 | ✅ 10/10 |
+| 35 | SemiBin2 | 分箱算法3（ML自训练） | ✅ 10/10 |
+| 36 | DAS_Tool | 三算法整合择优 | ✅ 10/10，各样本整合后 bin 数：Sample1=49 / Sample2=41 / Sample3=64 / Sample4=35 / Sample10=66 / Sample11=56 / Sample12=56 / Sample13=70 / Sample14=80 / Sample15=95（**总计 612 bins**）|
+| 37 | CheckM2 | ML 质量评估（跨样本一次性跑全部 612 bins） | ✅ `quality_report.tsv`（612 行）；过滤（完整度≥50%，污染度≤10%）后 **488 个高质量 MAG** 进入 `drep_input/` |
+| 38 | dRep | 去冗余（ANI 95%，物种级） | ✅ 488 个高质量 MAG（87.7% 通过 checkM 过滤，428 个）→ 去冗余后 **213 个代表基因组**，耗时 432s（复用 CheckM2 genomeInfo，跳过内部 checkm1 重算）|
+| 39 | CoverM quant | MAG 丰度定量 | ✅ 10/10 样本（Sample1/10-18），213 个代表 MAG mapping率 ~69%（30.6% unmapped）|
+| 40 | GTDB-Tk | 系统发育分类（R214 数据库，跳过 skani，marker-based 分类）| ✅ 213 个 MAG 全部分类为细菌（无古菌），耗时 2636s。**已知问题**：GTDB-Tk 2.5.2 强依赖 R226 skani 数据，R214 数据库无法直接使用；修复方案：① patch `ani_rep.py` 跳过空 reference 时的 skani 调用；② 启用 `classify.py` 内置 DEBUG 机制（`skani_verification = {}`）强制跳过所有 skani ANI 验证，仅使用传统 pplacer marker-based 分类。分类结果示例：`d__Bacteria;p__Bacillota_A;c__Clostridia;o__Oscillospirales;f__Oscillospiraceae;g__CAG-103` |
+| 41 | Prokka | MAG 精细注释 | ⏳ 批量运行中（6/213 完成，预计 16 小时）。**备注**：Bakta 因 Diamond sORF 兼容性问题放弃，Prokka 注释精度对大多数下游分析足够 |
+
+> 612 个 bin 中 488 个（79.7%）通过高质量过滤，比例正常（宏基因组 binning 典型高质量 MAG 占比 60-85%，与测序深度、样本复杂度相关）。
+
+---
+
+## 附录 B：LLM 辅助宏基因组分析最佳实践
+
+> 按发现时间顺序追加。凡是在执行过程中遇到的有价值的 LLM 交互模式，均同步记录于此。
 
 ---
 
