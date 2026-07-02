@@ -1277,9 +1277,9 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
 
 ---
 
-### 步骤 22b-22d：功能注释补充（SCyc / Pfam-A / UniProt Swiss-Prot）
+### 步骤 22：功能注释补充（SCyc / Pfam-A / UniProt Swiss-Prot / FeGenie）
 
-**新增（2026-06-30）**：补全硫循环维度 + 高精度蛋白功能域注释，覆盖 eggNOG/KEGG 未命中区域。
+**新增（2026-06-30）**：补全硫循环维度 + 高精度蛋白功能域注释 + 铁代谢基因预测，覆盖 eggNOG/KEGG 未命中区域。
 
 ```bash
 # 31b SCyc 硫循环（与 NCyc/PCyc 完全对称，DIAMOND，~10 分钟）
@@ -1293,10 +1293,64 @@ bash scripts/31c_bac_pfam.sh -t 32 \
 # 31d UniProt Swiss-Prot（MMseqs2 easy-search，~20-40 分钟）
 bash scripts/31d_bac_uniprot.sh -t 16 \
      -w [WORKDIR] -r ~/Course/Maxmetagenome
+
+# 31e FeGenie 铁代谢（per-sample 模式，推荐）
+bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome
 ```
 
-> **注意**：31c Pfam-A 需要 `envs/dbcan` 环境（含 HMMER）；31d 需要 `db/uniprot_sprot/mmseqs/` 索引。
-> Pfam hmmscan 对大规模蛋白集（>100 万条）较慢，建议离线后台运行：`nohup bash ... > pfam.log 2>&1 &`
+> **注意**：
+> - 31c Pfam-A 需要 `envs/dbcan` 环境（含 HMMER）；31d 需要 `db/uniprot_sprot/mmseqs/` 索引
+> - 31e FeGenie 需要 `envs/fegenie` 环境，HMM 数据库内置于 conda
+> - Pfam hmmscan 对大规模蛋白集（>100 万条）较慢，建议离线后台运行：`nohup bash ... > pfam.log 2>&1 &`
+
+#### 31e FeGenie 铁代谢基因预测详细说明
+
+**背景**：肠道微生物的铁获取与宿主竞争铁资源密切相关，影响菌群定植和致病性。FeGenie 预测 10 类铁代谢功能：
+- **Siderophore synthesis / transport**（铁载体合成/转运，肠道菌的主要铁获取策略）
+- **Heme transport / oxygenase**（血红素转运/分解，宿主血红素利用）
+- **Iron transport**（铁直接转运，如 FeoAB / FbpABC）
+- **Iron oxidation / reduction**（铁氧化还原，如 Cyc2 / MtoA，厌氧肠道环境关键）
+- **Iron storage**（铁储存，如 ferritin）
+- **Iron gene regulation**（铁调控，如 Fur / DtxR）
+- **Magnetosome formation**（磁小体形成，肠道菌较少见）
+
+**前置安装**（已完成，首次运行前验证）：
+```bash
+# 验证 FeGenie 环境
+conda run --prefix ~/Course/Maxmetagenome/envs/fegenie FeGenie.py -h
+
+# 验证 HMM 数据库
+ls -lh ~/Course/Maxmetagenome/envs/fegenie/share/fegenie-1.2/hmms/iron/
+```
+
+**执行方式**：
+```bash
+# 单样本运行（per-sample 模式，推荐）
+bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome
+
+# 批量运行（rush 并行）
+cat [WORKDIR]/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
+rush -j 2 'bash scripts/31e_bac_fegenie.sh -s {} -t 8 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome'
+
+# NR 模式（单次运行，所有样本共享结果，适合 MAG-level 分析）
+bash scripts/31e_bac_fegenie.sh -s NR -t 16 \
+     -w [WORKDIR] -r ~/Course/Maxmetagenome --input-type nr
+```
+
+**输出**：`result/annotation/fegenie/{SAMPLE}/FeGenie-HMM-results.csv`（基因级铁功能注释）+ `FeGenie-geneSummary.csv`（功能类别统计）
+
+**与其他注释的关系**：
+- **eggNOG/KEGG**：通用 KO 注释（如 K02013 = iron transport）
+- **Pfam-A**（步骤 22）：蛋白域注释（如 PF01032 = FecA 铁柠檬酸盐受体）
+- **FeGenie**：聚焦铁代谢，提供更细粒度分类（区分 siderophore synthesis vs transport）+ 铁氧化还原酶亚型（Cyc2 / MtoA）
+
+**肠道微生物铁代谢研究意义**：
+- **宿主-菌群铁竞争**：肠道炎症期间宿主释放 lactoferrin 限制游离铁，菌群通过 siderophore（如 enterobactin）竞争铁资源
+- **致病菌铁获取**：肠道致病菌（如 *E. coli* / *Salmonella*）依赖 heme 转运系统从宿主获取铁
+- **铁氧化还原与厌氧代谢**：肠道厌氧环境中，铁还原酶（如 FeoAB）与氢气代谢偶联
 
 ---
 
@@ -1348,56 +1402,7 @@ rush -j 4 'bash scripts/42b_bac_plasmidfinder.sh -s {} -t 8 \
 
 ---
 
-### 步骤 25：铁代谢基因预测（FeGenie，per-sample）
-
-**背景**：肠道微生物的铁获取与宿主竞争铁资源密切相关，影响菌群定植和致病性。FeGenie 预测 10 类铁代谢功能：
-- **Siderophore synthesis / transport**（铁载体合成/转运，肠道菌的主要铁获取策略）
-- **Heme transport / oxygenase**（血红素转运/分解，宿主血红素利用）
-- **Iron transport**（铁直接转运，如 FeoAB / FbpABC）
-- **Iron oxidation / reduction**（铁氧化还原，如 Cyc2 / MtoA，厌氧肠道环境关键）
-- **Iron storage**（铁储存，如 ferritin）
-- **Iron gene regulation**（铁调控，如 Fur / DtxR）
-- **Magnetosome formation**（磁小体形成，肠道菌较少见）
-
-**前置安装**（已完成，首次运行前验证）：
-```bash
-# 验证 FeGenie 环境
-conda run --prefix ~/Course/Maxmetagenome/envs/fegenie FeGenie.py -h
-
-# 验证 HMM 数据库
-ls -lh ~/Course/Maxmetagenome/envs/fegenie/share/fegenie-1.2/hmms/iron/
-```
-
-```bash
-# 单样本运行（per-sample 模式，推荐）
-bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome
-
-# 批量运行（rush 并行）
-cat [WORKDIR]/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
-rush -j 2 'bash scripts/31e_bac_fegenie.sh -s {} -t 8 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome'
-
-# NR 模式（单次运行，所有样本共享结果，适合 MAG-level 分析）
-bash scripts/31e_bac_fegenie.sh -s NR -t 16 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome --input-type nr
-```
-
-> **输出**：`result/annotation/fegenie/{SAMPLE}/FeGenie-HMM-results.csv`（基因级铁功能注释）+ `FeGenie-geneSummary.csv`（功能类别统计）
-> 
-> **与其他注释的关系**：
-> - **eggNOG/KEGG**：通用 KO 注释（如 K02013 = iron transport）
-> - **Pfam-A**（步骤 22c）：蛋白域注释（如 PF01032 = FecA 铁柠檬酸盐受体）
-> - **FeGenie**：聚焦铁代谢，提供更细粒度分类（区分 siderophore synthesis vs transport）+ 铁氧化还原酶亚型（Cyc2 / MtoA）
-> 
-> **肠道微生物铁代谢研究意义**：
-> - **宿主-菌群铁竞争**：肠道炎症期间宿主释放 lactoferrin 限制游离铁，菌群通过 siderophore（如 enterobactin）竞争铁资源
-> - **致病菌铁获取**：肠道致病菌（如 *E. coli* / *Salmonella*）依赖 heme 转运系统从宿主获取铁
-> - **铁氧化还原与厌氧代谢**：肠道厌氧环境中，铁还原酶（如 FeoAB）与氢气代谢偶联
-
----
-
-## 步骤 26：Binning（MAG 回收，脚本 32-41）
+### 步骤 25：Binning（MAG 回收，脚本 32-41）
 
 **步骤名称**：宏基因组组装基因组（MAG）回收与质量评估
 
@@ -1447,7 +1452,7 @@ bash scripts/37_bac_checkm2.sh        -t 32 -w [WORKDIR] -r ~/Course/Maxmetageno
 
 ---
 
-## 附录 B：LLM 辅助宏基因组分析最佳实践
+## 附录：LLM 辅助宏基因组分析最佳实践
 
 > 按发现时间顺序追加。凡是在执行过程中遇到的有价值的 LLM 交互模式，均同步记录于此。
 
