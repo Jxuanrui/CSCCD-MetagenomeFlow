@@ -132,3 +132,18 @@ rule pcyc:
         hits = WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
     shell:
         "bash {REPO}/scripts/31_bac_pcyc.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 31e: FeGenie iron metabolism gene prediction ───────────────────────────
+
+rule fegenie:
+    input:
+        protein_nr = PROTEIN_NR_PATH,
+    output:
+        summary = WORKDIR + "/result/annotation/fegenie/FeGenie-geneSummary.csv",
+        presence = WORKDIR + "/result/annotation/fegenie/FeGenie-presenceAbsence.csv",
+    log:
+        WORKDIR + "/temp/logs/fegenie/fegenie.log"
+    threads: 8
+    shell:
+        "bash {REPO}/scripts/31e_bac_fegenie.sh -s NR -t {threads} -w {WORKDIR} -r {REPO} --input-type nr > {log} 2>&1"
