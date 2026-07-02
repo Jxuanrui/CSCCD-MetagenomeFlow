@@ -645,6 +645,19 @@ for (dim_name in names(dimension_roots)) {
     saveRDS(mt, compat_rds_path)
   })
 
+  # Export phyloseq RDS (Phase 1: Phyloseq centralization)
+  phyloseq_dir <- file.path(stat_root, dim_name, "phyloseq")
+  phyloseq_rds_path <- file.path(phyloseq_dir, paste0(dim_name, "_phyloseq.rds"))
+  if (requireNamespace("file2meco", quietly = TRUE)) {
+    safe_write(paste0(dim_name, "_phyloseq"), phyloseq_rds_path, {
+      dir.create(phyloseq_dir, recursive = TRUE, showWarnings = FALSE)
+      ps <- file2meco::meco2phyloseq(mt)
+      saveRDS(ps, phyloseq_rds_path)
+    })
+  } else {
+    log_status(paste0(dim_name, "_phyloseq"), "SKIPPED", "file2meco not available")
+  }
+
   export_abundance_levels(mt, dim_name, dirs$abundance)
   alpha_results[[dim_name]] <- export_alpha_diversity(mt, dim_name, dirs$diversity)
   export_beta_outputs(mt, dim_name, dirs$diversity)
