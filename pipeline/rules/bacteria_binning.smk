@@ -170,3 +170,36 @@ rule bac_snippy:
         core_tsv = WORKDIR + "/result/wgs/snippy/core.tsv",
     shell:
         "bash {REPO}/scripts/41d_bac_snippy.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 42: MGE comprehensive annotation (per-sample) ──────────────────────────
+
+rule bac_mge:
+    input:
+        contigs = ASSEMBLY + "/megahit/{sample}/{sample}.contigs.fa",
+        proteins = ASSEMBLY + "/prodigal/{sample}/{sample}.faa",
+        nr_proteins = ASSEMBLY + "/cdhit/protein_nr.fa",
+    output:
+        isfinder = WORKDIR + "/result/mge/isfinder/{sample}/isfinder_hits.tsv",
+        iceberg = WORKDIR + "/result/mge/iceberg/{sample}/iceberg_hits.tsv",
+        integrall = WORKDIR + "/result/mge/integrall/{sample}/integrall_hits.tsv",
+        transposase = WORKDIR + "/result/mge/transposase/{sample}/transposase_hits.tsv",
+    log:
+        WORKDIR + "/temp/logs/mge/mge_{sample}.log"
+    threads: 16
+    shell:
+        "bash {REPO}/scripts/42_bac_mge.sh -s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} > {log} 2>&1"
+
+
+# ─── 42b: PlasmidFinder plasmid identification (per-sample) ─────────────────
+
+rule bac_plasmidfinder:
+    input:
+        contigs = ASSEMBLY + "/megahit/{sample}/{sample}.contigs.fa",
+    output:
+        results = WORKDIR + "/result/mge/plasmidfinder/{sample}/results_tab.tsv",
+    log:
+        WORKDIR + "/temp/logs/plasmidfinder/plasmidfinder_{sample}.log"
+    threads: 4
+    shell:
+        "bash {REPO}/scripts/42b_bac_plasmidfinder.sh -s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} > {log} 2>&1"
