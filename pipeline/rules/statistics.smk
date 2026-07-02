@@ -111,21 +111,9 @@ rule stat_ml_siamcat:
         "-m {params.meta} -g {params.group}"
 
 
-rule stat_curatedMGD:
-    """Cross-cohort validation against curatedMetagenomicData cohorts."""
-    input:
-        WORKDIR + "/result/stat/ml/siamcat_done.txt",
-    output:
-        WORKDIR + "/result/stat/crosscohort/crosscohort_done.txt"
-    params:
-        meta = meta_file,
-        group = "group",
-        condition = "CRC"
-    threads: CPUS
-    shell:
-        "bash {REPO}/scripts/97_stat_crosscohort.sh "
-        "-w {WORKDIR} -r {REPO} "
-        "-m {params.meta} -g {params.group} -c {params.condition}"
+# NOTE: Cross-cohort validation is now handled by pipeline/rules/crosscohort.smk
+# The old stat_curatedMGD rule has been removed to avoid conflict (Phase 2a)
+# Use crosscohort.smk::crosscohort_validation instead
 
 
 rule stat_report:
