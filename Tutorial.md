@@ -1270,7 +1270,7 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
 | 16 dbCAN | run_dbcan | 聚合 | ✅ 完成（43,066 CAZyme，耗时 485s）|
 | 17 VFDB | DIAMOND | 聚合 | ✅ 完成（200,472 hits，耗时 189s）|
 | 18 BacMet | DIAMOND | 聚合 | ✅ 完成（85,839 hits，耗时 77s）|
-| 19 antiSMASH | antiSMASH 7 | per-sample | ⏳ 进行中（8/10 完成，Sample14/Sample15 运行中）|
+| 19 antiSMASH | antiSMASH 7 | per-sample | ✅ 完成（10/10 样本，Sample14: 275 BGC，耗时 ~10.7h/样本）|
 | 20 Defense-Finder | DefenseFinder | 聚合 | ✅ 完成（防御系统 0，HMM 5M，耗时 2081s）|
 | 21 NCyc | DIAMOND | 聚合 | ✅ 完成（139,293 hits，耗时 477s）|
 | 22 PCyc | DIAMOND | 聚合 | ✅ 完成（371,975 hits，耗时 1440s）|
