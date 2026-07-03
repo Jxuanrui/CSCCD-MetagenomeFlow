@@ -404,16 +404,22 @@ for (target in targets) {
       label <- "fungi"
     } else if (target == "cross_bac_vir") {
       common <- intersect(colnames(datasets$bacteria), colnames(datasets$virus))
+      # Fix: Ensure column order matches before rbind to avoid dimension mismatch
+      bac_sub <- datasets$bacteria[, common, drop = FALSE]
+      vir_sub <- datasets$virus[, common, drop = FALSE]
       mat <- rbind(
-        stats::setNames(as.data.frame(datasets$bacteria[, common, drop = FALSE]), common) %>% as.matrix() %>% `rownames<-`(paste0("BAC|", rownames(datasets$bacteria))),
-        stats::setNames(as.data.frame(datasets$virus[, common, drop = FALSE]), common) %>% as.matrix() %>% `rownames<-`(paste0("VIR|", rownames(datasets$virus)))
+        `rownames<-`(bac_sub, paste0("BAC|", rownames(bac_sub))),
+        `rownames<-`(vir_sub, paste0("VIR|", rownames(vir_sub)))
       )
       label <- "cross_bac_vir"
     } else if (target == "cross_bac_fun") {
       common <- intersect(colnames(datasets$bacteria), colnames(datasets$fungi))
+      # Fix: Ensure column order matches before rbind
+      bac_sub <- datasets$bacteria[, common, drop = FALSE]
+      fun_sub <- datasets$fungi[, common, drop = FALSE]
       mat <- rbind(
-        stats::setNames(as.data.frame(datasets$bacteria[, common, drop = FALSE]), common) %>% as.matrix() %>% `rownames<-`(paste0("BAC|", rownames(datasets$bacteria))),
-        stats::setNames(as.data.frame(datasets$fungi[, common, drop = FALSE]), common) %>% as.matrix() %>% `rownames<-`(paste0("FUN|", rownames(datasets$fungi)))
+        `rownames<-`(bac_sub, paste0("BAC|", rownames(bac_sub))),
+        `rownames<-`(fun_sub, paste0("FUN|", rownames(fun_sub)))
       )
       label <- "cross_bac_fun"
     } else {

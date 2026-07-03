@@ -102,22 +102,75 @@ cat("[INFO] Generated MetaPhlAn4 taxonomy.tsv:", nrow(mpa_df), "species x", ncol
 # ==============================================================================
 # 3. Bacteria: HUMAnN3 pathway abundance (merged)
 # ==============================================================================
-n_pathways <- 200
-pathway_names <- paste0("PWY-", 1000 + 1:n_pathways)
+n_named_pathways <- 198
+n_pathways <- n_named_pathways + 2
+pathway_names <- paste0("PWY-", 1000 + 1:n_named_pathways)
 
-humann_matrix <- matrix(rpois(n_pathways * n_samples, lambda = 50), nrow = n_pathways, ncol = n_samples)
+special_total <- runif(n_samples, 0.88, 0.98)
+unmapped <- special_total * runif(n_samples, 0.52, 0.62)
+unintegrated <- special_total - unmapped
+named_matrix <- matrix(0, nrow = n_named_pathways, ncol = n_samples)
+for (i in 1:n_samples) {
+  pathway_weights <- rgamma(n_named_pathways, shape = 0.7, rate = 1)
+  pathway_weights[sample(1:n_named_pathways, round(n_named_pathways * 0.15))] <- 0
+  named_matrix[, i] <- (pathway_weights / sum(pathway_weights)) * (1 - special_total[i])
+}
+
+humann_matrix <- rbind(UNMAPPED = unmapped, UNINTEGRATED = unintegrated, named_matrix)
 humann_df <- data.frame(
-  Pathway = pathway_names,
+  Pathway = c("UNMAPPED", "UNINTEGRATED", pathway_names),
   humann_matrix,
   check.names = FALSE,
   stringsAsFactors = FALSE
 )
-colnames(humann_df)[2:ncol(humann_df)] <- paste0(metadata$sample_id, "_Abundance")
+colnames(humann_df)[2:ncol(humann_df)] <- metadata$sample_id
 
 humann_dir <- file.path(outdir, "result/humann3/merged")
 dir.create(humann_dir, recursive = TRUE, showWarnings = FALSE)
-humann_path <- file.path(humann_dir, "humann3_pathabundance.tsv")
-write.table(humann_df, humann_path, sep = "\t", quote = FALSE, row.names = FALSE)
+old_humann_path <- file.path(humann_dir, "humann3_pathabundance.tsv")
+if (file.exists(old_humann_path)) {
+  invisible(file.remove(old_humann_path))
+}
+humann_path <- file.path(humann_dir, "pathabundance_relab.tsv")
+cat(paste(c("# Pathway", metadata$sample_id), collapse = "\t"), "\n", file = humann_path, sep = "")
+write.table(humann_df, humann_path, sep = "\t", quote = FALSE, row.names = FALSE,
+            col.names = FALSE, append = TRUE)
+
+contrib_species <- paste0("g__SyntheticGenus", sprintf("%02d", 1:6),
+                          ".s__Synthetic_species_", sprintf("%02d", 1:6))
+for (i in 1:n_samples) {
+  sid <- metadata$sample_id[i]
+
+  unstrat_dir <- file.path(outdir, "result/humann3", sid, "unstratified")
+  dir.create(unstrat_dir, recursive = TRUE, showWarnings = FALSE)
+  unstrat_path <- file.path(unstrat_dir, paste0(sid, "_pathabundance_relab_unstratified.tsv"))
+  cat(paste(c("# Pathway", paste0(sid, "_Abundance")), collapse = "\t"), "\n",
+      file = unstrat_path, sep = "")
+  write.table(humann_df[, c("Pathway", sid)], unstrat_path, sep = "\t", quote = FALSE,
+              row.names = FALSE, col.names = FALSE, append = TRUE)
+
+  strat_features <- c(paste0("UNINTEGRATED|", c("unclassified", contrib_species[1:3])))
+  strat_values <- unintegrated[i] * c(0.4, 0.25, 0.2, 0.15)
+  for (j in 1:n_named_pathways) {
+    species_idx <- ((j + 0:2 - 1) %% length(contrib_species)) + 1
+    strat_features <- c(strat_features,
+                        paste0(pathway_names[j], "|", c("unclassified", contrib_species[species_idx])))
+    strat_values <- c(strat_values, named_matrix[j, i] * c(0.25, 0.35, 0.25, 0.15))
+  }
+
+  strat_dir <- file.path(outdir, "result/humann3", sid, "stratified")
+  dir.create(strat_dir, recursive = TRUE, showWarnings = FALSE)
+  strat_path <- file.path(strat_dir, paste0(sid, "_pathabundance_relab_stratified.tsv"))
+  strat_df <- data.frame(
+    Pathway = strat_features,
+    Abundance = strat_values,
+    stringsAsFactors = FALSE
+  )
+  cat(paste(c("# Pathway", paste0(sid, "_Abundance")), collapse = "\t"), "\n",
+      file = strat_path, sep = "")
+  write.table(strat_df, strat_path, sep = "\t", quote = FALSE, row.names = FALSE,
+              col.names = FALSE, append = TRUE)
+}
 cat("[INFO] Generated HUMAnN3 pathway abundance:", n_pathways, "pathways x", n_samples, "samples\n")
 
 # ==============================================================================
@@ -152,18 +205,45 @@ cat("[INFO] Generated Salmon quant.sf for", n_samples, "samples:", n_genes, "gen
 # eggNOG
 eggnog_dir <- file.path(outdir, "result/annotation/eggnog")
 dir.create(eggnog_dir, recursive = TRUE, showWarnings = FALSE)
+n_eggnog <- min(4000, n_genes)
+cog_choices <- c("M", "K", "L", "S", "T", "U", "C", "E", "G", "KM", "LT")
 eggnog_df <- data.frame(
-  query = gene_names[1:min(4000, n_genes)],
-  seed_ortholog = paste0("COG", sprintf("%04d", 1:min(4000, n_genes))),
-  evalue = runif(min(4000, n_genes), 1e-50, 1e-10),
-  score = runif(min(4000, n_genes), 100, 500),
-  eggNOG_OGs = paste0("COG", sprintf("%04d", 1:min(4000, n_genes))),
-  KEGG_ko = paste0("K", sprintf("%05d", sample(1:20000, min(4000, n_genes), replace = TRUE))),
-  KEGG_Pathway = sample(c("ko00010", "ko00020", "ko00030", "ko00040", "ko00051", "ko00052"), min(4000, n_genes), replace = TRUE),
-  GO_terms = paste0("GO:", sprintf("%07d", sample(1:9999999, min(4000, n_genes), replace = TRUE))),
-  stringsAsFactors = FALSE
+  query = gene_names[1:n_eggnog],
+  seed_ortholog = paste0(sample(c("1408323", "411467", "1203611"), n_eggnog, replace = TRUE),
+                         ".synthetic_gene", 1:n_eggnog),
+  evalue = formatC(10^runif(n_eggnog, -180, -10), format = "e", digits = 2),
+  score = round(runif(n_eggnog, 80, 500), 1),
+  eggNOG_OGs = paste0("COG", sprintf("%04d", sample(1:5000, n_eggnog, replace = TRUE)),
+                      "@2|Bacteria"),
+  max_annot_lvl = sample(c("2|Bacteria", "1239|Firmicutes", "976|Bacteroidetes"),
+                         n_eggnog, replace = TRUE),
+  COG_category = sample(cog_choices, n_eggnog, replace = TRUE),
+  Description = paste0("Synthetic eggNOG protein ", 1:n_eggnog),
+  Preferred_name = paste0("gene", 1:n_eggnog),
+  GOs = paste0("GO:", sprintf("%07d", sample(1:9999999, n_eggnog, replace = TRUE))),
+  EC = sample(c("1.1.1.1", "2.7.1.1", "3.5.1.4", "-"), n_eggnog, replace = TRUE),
+  KEGG_ko = paste0("ko:K", sprintf("%05d", sample(1:20000, n_eggnog, replace = TRUE))),
+  KEGG_Pathway = sample(c("ko00010", "ko00020", "ko00030", "ko00040", "ko00051", "ko00052"),
+                        n_eggnog, replace = TRUE),
+  KEGG_Module = "-",
+  KEGG_Reaction = "-",
+  KEGG_rclass = "-",
+  BRITE = sample(c("ko00000,ko01000", "ko02000", "-"), n_eggnog, replace = TRUE),
+  KEGG_TC = "-",
+  CAZy = sample(c("GH13", "GT2", "CBM48", "-"), n_eggnog, replace = TRUE),
+  BiGG_Reaction = "-",
+  PFAMs = sample(c("PF00005", "PF00155", "PF00501", "-"), n_eggnog, replace = TRUE),
+  stringsAsFactors = FALSE,
+  check.names = FALSE
 )
-write.table(eggnog_df, file.path(eggnog_dir, "eggnog.emapper.annotations"), sep = "\t", quote = FALSE, row.names = FALSE)
+eggnog_path <- file.path(eggnog_dir, "eggnog.emapper.annotations")
+writeLines(c(
+  "## synthetic eggNOG-mapper output for MaxMetagenome tests",
+  "## emapper-2.1 synthetic",
+  paste0("#", paste(colnames(eggnog_df), collapse = "\t"))
+), eggnog_path)
+write.table(eggnog_df, eggnog_path, sep = "\t", quote = FALSE, row.names = FALSE,
+            col.names = FALSE, append = TRUE)
 
 # KEGG
 kegg_dir <- file.path(outdir, "result/annotation/kegg")
@@ -206,12 +286,14 @@ write.table(card_df, file.path(card_dir, "rgi_results.txt"), sep = "\t", quote =
 dbcan_dir <- file.path(outdir, "result/annotation/dbcan")
 dir.create(dbcan_dir, recursive = TRUE, showWarnings = FALSE)
 dbcan_df <- data.frame(
-  Gene_ID = gene_names[sample(1:n_genes, 200)],
+  `Gene ID` = gene_names[sample(1:n_genes, 200)],
+  `EC#` = "-",
   HMMER = paste0("GH", sample(1:150, 200, replace = TRUE)),
-  Hotpep = paste0("GH", sample(1:150, 200, replace = TRUE)),
+  eCAMI = "-",
   DIAMOND = paste0("GH", sample(1:150, 200, replace = TRUE)),
-  num_tools = sample(1:3, 200, replace = TRUE),
-  stringsAsFactors = FALSE
+  `#ofTools` = sample(1:3, 200, replace = TRUE),
+  stringsAsFactors = FALSE,
+  check.names = FALSE
 )
 write.table(dbcan_df, file.path(dbcan_dir, "overview.txt"), sep = "\t", quote = FALSE, row.names = FALSE)
 
@@ -249,7 +331,73 @@ pcyc_df <- data.frame(
 )
 write.table(pcyc_df, file.path(pcyc_dir, "pcyc_hits.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
-cat("[INFO] Generated functional annotation tables (eggNOG/KEGG/AMR/CARD/dbCAN/VFDB/NCyc/PCyc)\n")
+# BacMet
+bacmet_dir <- file.path(outdir, "result/annotation/bacmet")
+dir.create(bacmet_dir, recursive = TRUE, showWarnings = FALSE)
+n_bacmet <- 75
+bacmet_length <- sample(80:300, n_bacmet, replace = TRUE)
+bacmet_identity <- runif(n_bacmet, 24, 45)
+bacmet_qstart <- sample(1:60, n_bacmet, replace = TRUE)
+bacmet_sstart <- sample(1:800, n_bacmet, replace = TRUE)
+bacmet_df <- data.frame(
+  gene_id = gene_names[sample(1:n_genes, n_bacmet)],
+  BAC_id = paste0("BAC", sprintf("%04d", sample(1:900, n_bacmet, replace = TRUE))),
+  identity = round(bacmet_identity, 1),
+  length = bacmet_length,
+  mismatch = pmax(0, round(bacmet_length * (100 - bacmet_identity) / 100)),
+  gapopen = sample(0:5, n_bacmet, replace = TRUE),
+  qstart = bacmet_qstart,
+  qend = bacmet_qstart + bacmet_length - 1,
+  sstart = bacmet_sstart,
+  send = bacmet_sstart + bacmet_length - 1,
+  evalue = formatC(10^runif(n_bacmet, -45, -8), format = "e", digits = 2),
+  bitscore = round(runif(n_bacmet, 40, 180), 1),
+  stringsAsFactors = FALSE
+)
+write.table(bacmet_df, file.path(bacmet_dir, "bacmet_hits.tsv"), sep = "\t", quote = FALSE,
+            row.names = FALSE, col.names = FALSE)
+
+# Defense-Finder
+defense_dir <- file.path(outdir, "result/annotation/defense_finder")
+dir.create(defense_dir, recursive = TRUE, showWarnings = FALSE)
+n_defense <- 80
+defense_types <- sample(c("CBASS", "Wadjet", "RM", "Restriction", "AbiEii"), n_defense, replace = TRUE)
+defense_subtypes <- sample(c("CBASS-I", "CBASS-II", "Wadjet-I", "Type_I_RM", "AbiEii_1"),
+                           n_defense, replace = TRUE)
+defense_hit_len <- sample(120:900, n_defense, replace = TRUE)
+defense_df <- data.frame(
+  replicon = gene_names[sample(1:n_genes, n_defense)],
+  hit_id = paste0("hit_", sprintf("%04d", 1:n_defense)),
+  gene_name = paste0("defense_gene_", 1:n_defense),
+  hit_pos = 1:n_defense,
+  model_fqn = paste0("DefenseFinder/", defense_types, "/", defense_subtypes),
+  sys_id = paste0("sys_", sprintf("%04d", 1:n_defense)),
+  sys_loci = paste0("locus_", sprintf("%04d", 1:n_defense)),
+  locus_num = 1,
+  sys_wholeness = "complete",
+  sys_score = round(runif(n_defense, 0.5, 1), 3),
+  sys_occ = 1,
+  hit_gene_ref = paste0("DF", sprintf("%05d", 1:n_defense)),
+  hit_status = "mandatory",
+  hit_seq_len = defense_hit_len,
+  hit_i_eval = formatC(10^runif(n_defense, -50, -10), format = "e", digits = 2),
+  hit_score = round(runif(n_defense, 50, 300), 1),
+  hit_profile_cov = round(runif(n_defense, 0.5, 1), 3),
+  hit_seq_cov = round(runif(n_defense, 0.5, 1), 3),
+  hit_begin_match = 1,
+  hit_end_match = defense_hit_len,
+  counterpart = "",
+  used_in = "1",
+  type = defense_types,
+  subtype = defense_subtypes,
+  activity = "",
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
+write.table(defense_df, file.path(defense_dir, "defense_finder_genes.tsv"), sep = "\t",
+            quote = FALSE, row.names = FALSE)
+
+cat("[INFO] Generated functional annotation tables (eggNOG/KEGG/AMR/CARD/dbCAN/VFDB/NCyc/PCyc/BacMet/Defense-Finder)\n")
 
 # ==============================================================================
 # 6. Virus: vOTU abundance table with taxonomy
