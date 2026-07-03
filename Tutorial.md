@@ -1446,7 +1446,7 @@ bash scripts/37_bac_checkm2.sh        -t 32 -w [WORKDIR] -r ~/Course/Maxmetageno
 | 38 | dRep | 去冗余（ANI 95%，物种级） | ✅ 488 个高质量 MAG（87.7% 通过 checkM 过滤，428 个）→ 去冗余后 **213 个代表基因组**，耗时 432s（复用 CheckM2 genomeInfo，跳过内部 checkm1 重算）|
 | 39 | CoverM quant | MAG 丰度定量 | ✅ 10/10 样本（Sample1/10-18），213 个代表 MAG mapping率 ~69%（30.6% unmapped）|
 | 40 | GTDB-Tk | 系统发育分类（R214 数据库，跳过 skani，marker-based 分类）| ✅ 213 个 MAG 全部分类为细菌（无古菌），耗时 2636s。**已知问题**：GTDB-Tk 2.5.2 强依赖 R226 skani 数据，R214 数据库无法直接使用；修复方案：① patch `ani_rep.py` 跳过空 reference 时的 skani 调用；② 启用 `classify.py` 内置 DEBUG 机制（`skani_verification = {}`）强制跳过所有 skani ANI 验证，仅使用传统 pplacer marker-based 分类。分类结果示例：`d__Bacteria;p__Bacillota_A;c__Clostridia;o__Oscillospirales;f__Oscillospiraceae;g__CAG-103` |
-| 41 | Prokka | MAG 精细注释 | ⏳ 批量运行中（6/213 完成，预计 16 小时）。**备注**：Bakta 因 Diamond sORF 兼容性问题放弃，Prokka 注释精度对大多数下游分析足够 |
+| 41 | Prokka | MAG 精细注释 | ✅ 213/213 完成（并行优化：`41_bac_prokka_parallel.sh`，6 并发 × 8 线程，耗时 ~26 小时，相比原串行方案 5-9 天加速 5-8×）。**备注**：Bakta 因 Diamond sORF 兼容性问题放弃，Prokka 注释精度对大多数下游分析足够 |
 
 > 612 个 bin 中 488 个（79.7%）通过高质量过滤，比例正常（宏基因组 binning 典型高质量 MAG 占比 60-85%，与测序深度、样本复杂度相关）。
 
