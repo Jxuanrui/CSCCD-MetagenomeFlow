@@ -403,28 +403,64 @@ cat("[INFO] Generated functional annotation tables (eggNOG/KEGG/AMR/CARD/dbCAN/V
 # 6. Virus: vOTU abundance table with taxonomy
 # ==============================================================================
 n_votu <- 100
-votu_names <- paste0("vOTU_", 1:n_votu)
-votu_matrix <- matrix(rpois(n_votu * n_samples, lambda = 20), nrow = n_votu, ncol = n_samples)
-
-votu_df <- data.frame(
-  vOTU = votu_names,
-  Domain = "Viruses",
-  Phylum = sample(c("Caudovirales", "Microviridae", "Inoviridae"), n_votu, replace = TRUE),
-  Class = sample(c("Class1", "Class2", "Class3"), n_votu, replace = TRUE),
-  Order = sample(c("Order1", "Order2", "Order3"), n_votu, replace = TRUE),
-  Family = sample(c("Siphoviridae", "Myoviridae", "Podoviridae"), n_votu, replace = TRUE),
-  Genus = paste0("Genus_", sample(1:20, n_votu, replace = TRUE)),
-  votu_matrix,
-  check.names = FALSE,
-  stringsAsFactors = FALSE
-)
-colnames(votu_df)[8:ncol(votu_df)] <- metadata$sample_id
-
 votu_dir <- file.path(outdir, "result/virus/votu/table")
 dir.create(votu_dir, recursive = TRUE, showWarnings = FALSE)
+votu_cluster_dir <- file.path(outdir, "result/virus/votu/vclust")
+dir.create(votu_cluster_dir, recursive = TRUE, showWarnings = FALSE)
+
+n_cds_per_votu <- sample(1:3, n_votu, replace = TRUE)
+sample_value_cols <- as.vector(rbind(paste0(metadata$sample_id, "_tpm"),
+                                     paste0(metadata$sample_id, "_count")))
+votu_rows <- list()
+cluster_rows <- list()
+row_idx <- 1
+taxonomy_choices <- c(
+  "Unclassified",
+  "Viruses;Duplodnaviria;Heunggongvirae;Uroviricota;Caudoviricetes",
+  "Viruses;Monodnaviria;Shotokuvirae;Cressdnaviricota;Repensiviricetes"
+)
+
+for (i in 1:n_votu) {
+  votu_rep <- paste0("k127_", 100000 + i * 10)
+  for (j in 1:n_cds_per_votu[i]) {
+    contig_base <- if (j == 1) votu_rep else paste0("k127_", 100000 + i * 10 + j)
+    gene_id <- paste0(contig_base, "||full_", j)
+    cluster_object <- paste0(contig_base, "||full")
+    length_bp <- sample(300:5000, 1)
+
+    tpm <- rgamma(n_samples, shape = 1.5, scale = 60)
+    tpm[runif(n_samples) < 0.35] <- 0
+    if (all(tpm == 0)) {
+      tpm[sample(1:n_samples, 1)] <- runif(1, 20, 200)
+    }
+    count <- ifelse(tpm > 0, rpois(n_samples, lambda = pmax(tpm / 10, 1)), 0)
+    sample_values <- as.vector(rbind(sprintf("%.6f", tpm), sprintf("%.3f", count)))
+
+    votu_rows[[row_idx]] <- c(
+      gene_id,
+      as.character(length_bp),
+      sample_values,
+      sample(taxonomy_choices, 1)
+    )
+    cluster_rows[[row_idx]] <- c(cluster_object, votu_rep)
+    row_idx <- row_idx + 1
+  }
+}
+
+votu_df <- as.data.frame(do.call(rbind, votu_rows), stringsAsFactors = FALSE)
+colnames(votu_df) <- c("gene", "length", sample_value_cols, "taxonomy")
 votu_path <- file.path(votu_dir, "vOTU_table_ann.txt")
 write.table(votu_df, votu_path, sep = "\t", quote = FALSE, row.names = FALSE)
-cat("[INFO] Generated vOTU table:", n_votu, "vOTUs x", n_samples, "samples\n")
+
+votu_no_tax <- votu_df[, setdiff(colnames(votu_df), "taxonomy"), drop = FALSE]
+write.table(votu_no_tax, file.path(votu_dir, "vOTU_table.txt"), sep = "\t",
+            quote = FALSE, row.names = FALSE)
+
+clusters_df <- as.data.frame(do.call(rbind, cluster_rows), stringsAsFactors = FALSE)
+colnames(clusters_df) <- c("object", "cluster")
+write.table(clusters_df, file.path(votu_cluster_dir, "clusters.tsv"), sep = "\t",
+            quote = FALSE, row.names = FALSE)
+cat("[INFO] Generated vOTU CDS table:", nrow(votu_df), "CDS across", n_votu, "vOTUs x", n_samples, "samples\n")
 
 # Virus PHAROKKA gff (dummy)
 pharokka_dir <- file.path(outdir, "result/virus/pharokka")
@@ -441,18 +477,20 @@ for (sid in metadata$sample_id) {
   fungi_dir <- file.path(outdir, "result/fungi/metaphlan4", sid)
   dir.create(fungi_dir, recursive = TRUE, showWarnings = FALSE)
 
-  fungi_abund <- rexp(n_fungi_species, rate = 1)
-  fungi_abund <- (fungi_abund / sum(fungi_abund)) * 100
+  fungi_prob <- rexp(n_fungi_species, rate = 1)
+  fungi_prob <- fungi_prob / sum(fungi_prob)
+  fungi_abund <- as.vector(rmultinom(1, size = 10000, prob = fungi_prob))
 
   fungi_profile <- data.frame(
     clade_name = fungi_species_names,
     NCBI_tax_id = paste0("taxid_fungi_", 1:n_fungi_species),
     relative_abundance = fungi_abund,
+    additional_species = "-",
     stringsAsFactors = FALSE
   )
 
   write.table(fungi_profile, file.path(fungi_dir, paste0(sid, "_profile.txt")),
-              sep = "\t", quote = FALSE, row.names = FALSE)
+              sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
 }
 cat("[INFO] Generated Fungi MetaPhlAn4 profiles:", n_samples, "samples x", n_fungi_species, "species\n")
 

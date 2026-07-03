@@ -1,9 +1,9 @@
 # 多样性分析（Alpha / Beta Diversity）
 
-**环境**: `envs/r_stat` | **脚本**: `scripts/91_stat_diversity.sh`
+**环境**: `envs/r_stat` | **脚本**: `scripts/91_stat_diversity.sh` → `scripts/91_diversity.R`
 
 ## 功能
-对 MetaPhlAn4 细菌/真菌分类表和病毒 vOTU 丰度表，计算 Alpha 多样性（Shannon / Chao1 / Simpson / Observed / FaithPD）和 Beta 多样性（Bray-Curtis / Aitchison CLR），生成 PCoA 可视化和 PERMANOVA 统计。支持细菌、病毒、真菌三个维度并行分析。
+对细菌（MetaPhlAn4）、病毒（vOTU）、真菌（MetaPhlAn4）三个维度分别构建 `microeco::microtable` 对象，计算 Alpha 多样性（vegan 默认全套指标）与 Beta 多样性（Bray-Curtis），输出 PCoA 坐标与 PERMANOVA 检验结果。同时导出标准 `phyloseq` RDS（见下）供后续所有 R 包直接使用。
 
 ## 用法
 
@@ -27,44 +27,52 @@ bash scripts/91_stat_diversity.sh \
 | 维度 | 输入路径 | 格式 |
 |------|---------|------|
 | 细菌 | `result/metaphlan4/merged/taxonomy.tsv` | 样本×物种丰度矩阵 |
-| 病毒 | `result/virus/votu/table/vOTU_table_ann.txt` | 样本×vOTU 丰度矩阵 |
+| 病毒 | `result/virus/votu/table/vOTU_table_ann.txt` + `result/virus/votu/vclust/clusters.tsv` | 样本×vOTU 丰度矩阵 + 聚类映射 |
 | 真菌 | `result/fungi/metaphlan4/{sample}/*_profile.txt` | MetaPhlAn4 单样本 profile |
-| 系统发育树 | `result/metaphlan4/merged/mpa_tree.nwk` | FaithPD 计算所需（可选） |
 
-## 输出
+不涉及系统发育树输入（未启用 UniFrac/FaithPD，见下方限制）。
+
+## 输出（每维度独立，路径 `result/stat/{bacteria,virus,fungi}/`）
 
 | 文件 | 内容 |
 |------|------|
-| `alpha_diversity.tsv` | 所有样本的 Alpha 多样性值（5 指标×3 维度） |
-| `beta_pcoa.tsv` | PCoA 坐标（Bray-Curtis + Aitchison CLR） |
-| `permanova.tsv` | PERMANOVA 检验结果 |
-| `diversity_status.tsv` | 各步骤运行状态日志 |
-| `alpha_diversity_boxplot.pdf` | 分组箱线图（含 Wilcoxon 检验） |
-| `beta_pcoa.pdf` | PCoA 散点图 |
+| `abundance/{kingdom,phylum,class,order,family,genus,species}_relabund.tsv` | 各分类级别相对丰度矩阵 |
+| `diversity/alpha_diversity.tsv` | Alpha 多样性表（microeco `cal_alphadiv()` 默认指标：Observed/Chao1/ACE/Shannon/Simpson/InvSimpson/Fisher/Pielou/Coverage） |
+| `diversity/beta_bray_curtis.tsv` | 样本间 Bray-Curtis 距离矩阵 |
+| `diversity/pcoa_coordinates.tsv` | PCoA 前 3 个主坐标（基于 Bray-Curtis） |
+| `diversity/permanova_results.tsv` | `vegan::adonis2` 按分组列检验结果 |
+| `{dimension}_microtable.rds` | microeco microtable 对象（兼容旧脚本读取路径） |
+| `phyloseq/{dimension}_phyloseq.rds` | 标准 phyloseq 对象（`file2meco::meco2phyloseq()` 转换，供 92-98 及新增脚本直接读取） |
+| `metadata.tsv`（`result/stat/` 根目录） | 标准化后的元数据表 |
 
-## Alpha 多样性指标
+真菌维度若物种表全部为 UNCLASSIFIED 或有效物种数 <2，会跳过并写入 `diversity/diversity_status.tsv`（`fungi_mt SKIPPED`）、`abundance/.ok`、`differential/.skipped` 作为哨兵，属预期行为。
 
-| 指标 | 含义 | 生物意义 |
-|------|------|---------|
-| Shannon | 物种丰富度+均匀度综合 | 群落多样性综合指标 |
-| Chao1 | 估计物种总数 | 反映稀有物种补充 |
-| Simpson | 优势度集中度 | 优势物种比例 |
-| Observed | 观测物种数 | 直接计数 |
-| FaithPD | 系统发育多样性 | 物种进化距离总和（需系统发育树） |
+**不生成可视化 PDF** — 组成柱状图/热图由 `94_stat_visualization.sh` 单独生成（见 `docs/08_statistics/visualization.md`），本脚本只产出数据表格。
+
+## Alpha 多样性指标（microeco 默认全套，非可选）
+
+| 指标 | 含义 |
+|------|------|
+| Observed | 观测物种数 |
+| Chao1 / se.chao1 | 估计物种总数及标准误 |
+| ACE / se.ACE | 丰度覆盖估计量及标准误 |
+| Shannon | 丰富度+均匀度综合 |
+| Simpson / InvSimpson | 优势度集中度 |
+| Fisher | Fisher's alpha 多样性 |
+| Pielou | 均匀度 |
+| Coverage | Good's coverage |
 
 ## Beta 多样性指标
 
-| 指标 | 距离类型 | 推荐场景 |
-|------|---------|---------|
-| Bray-Curtis | 丰度差异 | 物种组成差异（标准指标） |
-| Aitchison CLR | 成分对数比 | 成分数据（宏基因组丰度本质上是成分数据，推荐首选） |
+| 指标 | 说明 |
+|------|------|
+| Bray-Curtis | 唯一实现的距离度量，用于 PCoA 和 PERMANOVA |
 
 ## 注意事项
-- 元数据 CSV 必须包含样本 ID 列（列名可以是 `sample` / `sample_id` / `SampleID` 等）和分组列
-- 至少有 3 个样本（分组后每组 ≥2）才能进行有意义的统计比较
-- CLR 变换后使用欧氏距离，符合成分数据分析标准（优于 Bray-Curtis 但解释性稍差）
-- FaithPD 需要系统发育树文件，若不存在则跳过该指标
-- 真菌输入来自 MetaPhlAn4（脚本 72），若真菌 profile 目录为空则跳过真菌维度
+- 元数据 CSV 必须包含样本 ID 列和分组列
+- 至少有 2 个样本才能计算 Bray-Curtis/PCoA/PERMANOVA
+- 真菌输入来自 MetaPhlAn4（脚本 72），若真菌 profile 目录为空或全 UNCLASSIFIED 则跳过该维度
+- 当前实现**不包含** FaithPD/UniFrac（无系统发育树输入）和 Aitchison CLR 距离——如需这些指标需扩展脚本
 
 ## R 依赖包
-`phyloseq`, `vegan`, `microbiome`, `picante`, `ape`, `ggplot2`, `ggpubr`, `tidyverse`
+`microeco`, `vegan`, `file2meco`, `magrittr`
