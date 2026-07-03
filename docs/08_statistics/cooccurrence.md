@@ -61,6 +61,8 @@ bash scripts/93_stat_cooccurrence.sh \
 ## 注意事项
 - 特征过滤：保留存在率 ≥10% 的特征；最多保留 Top 300 特征
 - 跨维度网络的特征名加前缀：`BAC|`、`VIR|`、`FUN|`
+- **已知问题（2026-07-03 修复）**：跨维度（`cross_bac_vir`/`cross_bac_fun`）rbind 前需保证两个子矩阵列（样本）顺序完全一致，否则会导致维度错位。已修复为显式按 `common` 样本向量提取子矩阵后再 rbind。已在 Project_example 真实数据验证通过。
+- **合成测试数据限制**：在 `Project/Test_100samples` 上运行单维度或跨维度网络时可能报错 `"Length of new attribute value must be 1 or 100..."`，这是合成数据物种数偏少（62个细菌种）导致的网络推断阶段稀疏图问题，非脚本 bug，尚未深入排查根因。
 
 ## R 依赖包
 `SpiecEasi`, `NetCoMi`, `igraph`, `ggraph`, `phyloseq`, `tidyverse`
