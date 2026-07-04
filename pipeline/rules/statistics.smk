@@ -1,6 +1,6 @@
 # NOTE: Statistics pipeline (91-98) outputs TSV data tables only.
 # Visualization PDFs are generated on-demand; run scripts 94/96 manually after the pipeline.
-# Only 4 TSV sentinels are tracked by rule all: diversity, diff, ml, network.
+# Only 4 TSV sentinels are tracked by rule all: diversity, differential, ml, network.
 # MaxMetagenome — Statistics pipeline rules (scripts 91-98)
 # ==============================================================================
 
@@ -18,7 +18,7 @@ rule stat_diversity:
             sample=SAMPLES,
         ),
     output:
-        stats   = WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
+        stats   = WORKDIR + "/result/stat/diversity_alpha_summary.tsv",
     params:
         meta = meta_file,
         group = "group"
@@ -32,9 +32,9 @@ rule stat_diversity:
 rule stat_differential:
     """Differential abundance analysis across supported omics dimensions."""
     input:
-        WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
+        WORKDIR + "/result/stat/diversity_alpha_summary.tsv",
     output:
-        stats   = WORKDIR + "/result/stat/diff/diff_summary.tsv",
+        stats   = WORKDIR + "/result/stat/differential_summary.tsv",
     params:
         meta = meta_file,
         group = "group"
@@ -48,7 +48,7 @@ rule stat_differential:
 rule stat_cooccurrence:
     """Co-occurrence network inference and summary statistics."""
     input:
-        WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
+        WORKDIR + "/result/stat/diversity_alpha_summary.tsv",
     output:
         WORKDIR + "/result/stat/network/network_summary.txt"
     params:
@@ -64,7 +64,7 @@ rule stat_batch_correct:
     input:
         WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
     output:
-        WORKDIR + "/result/stat/batch/corrected_matrices.done"
+        WORKDIR + "/result/stat/bacteria/batch/corrected_matrices.done"
     params:
         meta = meta_file,
         batch = "batch",
@@ -79,9 +79,9 @@ rule stat_batch_correct:
 rule stat_batch_evaluate:
     """Evaluate corrected matrices and rank batch-correction methods."""
     input:
-        WORKDIR + "/result/stat/batch/corrected_matrices.done",
+        WORKDIR + "/result/stat/bacteria/batch/corrected_matrices.done",
     output:
-        WORKDIR + "/result/stat/batch/evaluation_report.tsv"
+        WORKDIR + "/result/stat/bacteria/batch/evaluation_report.tsv"
     params:
         meta = meta_file,
         batch = "batch",
@@ -95,12 +95,12 @@ rule stat_batch_evaluate:
 
 rule stat_ml_siamcat:
     """SIAMCAT-based biomarker modeling and evaluation.
-    Also generates multi-model ROC overlay and feature importance plots under result/stat/ml/.
+    Also generates multi-model ROC overlay and feature importance plots under result/stat/bacteria/ml/ by default.
     """
     input:
-        WORKDIR + "/result/stat/diff/diff_summary.tsv",
+        WORKDIR + "/result/stat/differential_summary.tsv",
     output:
-        sentinel = WORKDIR + "/result/stat/ml/siamcat_done.txt",
+        sentinel = WORKDIR + "/result/stat/bacteria/ml/siamcat_done.txt",
     params:
         meta = meta_file,
         group = "group"
@@ -119,9 +119,9 @@ rule stat_ml_siamcat:
 rule stat_report:
     """Generate a markdown summary snapshot from statistical outputs."""
     input:
-        WORKDIR + "/result/stat/diversity/alpha_diversity.tsv",
-        WORKDIR + "/result/stat/diff/diff_summary.tsv",
-        WORKDIR + "/result/stat/ml/siamcat_done.txt",
+        WORKDIR + "/result/stat/diversity_alpha_summary.tsv",
+        WORKDIR + "/result/stat/differential_summary.tsv",
+        WORKDIR + "/result/stat/bacteria/ml/siamcat_done.txt",
     output:
         touch(WORKDIR + "/result/stat/report/report.done")
     threads: 1

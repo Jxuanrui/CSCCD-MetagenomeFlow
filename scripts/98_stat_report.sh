@@ -99,23 +99,23 @@ extract_table_preview() {
 
     echo "## Diversity"
     echo
-    if [ -f "${STAT_DIR}/diversity/alpha_diversity.tsv" ]; then
+    if [ -f "${STAT_DIR}/diversity_alpha_summary.tsv" ]; then
         echo '```tsv'
-        extract_table_preview "${STAT_DIR}/diversity/alpha_diversity.tsv" 6
+        extract_table_preview "${STAT_DIR}/diversity_alpha_summary.tsv" 6
         echo '```'
     else
-        echo "- Missing: \`result/stat/diversity/alpha_diversity.tsv\`"
+        echo "- Missing: \`result/stat/diversity_alpha_summary.tsv\`"
     fi
     echo
 
     echo "## Differential Abundance"
     echo
-    if [ -f "${STAT_DIR}/diff/diff_summary.tsv" ]; then
+    if [ -f "${STAT_DIR}/differential_summary.tsv" ]; then
         echo '```tsv'
-        extract_table_preview "${STAT_DIR}/diff/diff_summary.tsv" 6
+        extract_table_preview "${STAT_DIR}/differential_summary.tsv" 6
         echo '```'
     else
-        echo "- Missing: \`result/stat/diff/diff_summary.tsv\`"
+        echo "- Missing: \`result/stat/differential_summary.tsv\`"
     fi
     echo
 
@@ -136,24 +136,25 @@ extract_table_preview() {
 
     echo "## Batch"
     echo
-    if [ -f "${STAT_DIR}/batch/evaluation_report.tsv" ]; then
+    if [ -f "${STAT_DIR}/bacteria/batch/evaluation_report.tsv" ]; then
         echo '```tsv'
-        extract_table_preview "${STAT_DIR}/batch/evaluation_report.tsv" 8
+        extract_table_preview "${STAT_DIR}/bacteria/batch/evaluation_report.tsv" 8
         echo '```'
     else
-        echo "- Missing: \`result/stat/batch/evaluation_report.tsv\`"
+        echo "- Missing: \`result/stat/bacteria/batch/evaluation_report.tsv\`"
     fi
     echo
 
     echo "## ML"
     echo
-    if [ -f "${STAT_DIR}/ml/siamcat_auc_summary.tsv" ]; then
+    echo "<!-- Default preview shows bacteria ML. Virus/fungi ML live under their dimension ml/ folders; all-dimension ML lives under result/stat/ml/. -->"
+    if [ -f "${STAT_DIR}/bacteria/ml/siamcat_auc_summary.tsv" ]; then
         echo '```tsv'
-        extract_table_preview "${STAT_DIR}/ml/siamcat_auc_summary.tsv" 8
+        extract_table_preview "${STAT_DIR}/bacteria/ml/siamcat_auc_summary.tsv" 8
         echo '```'
-    elif [ -f "${STAT_DIR}/ml/siamcat_done.txt" ]; then
+    elif [ -f "${STAT_DIR}/bacteria/ml/siamcat_done.txt" ]; then
         echo '```text'
-        sed -n '1,20p' "${STAT_DIR}/ml/siamcat_done.txt"
+        sed -n '1,20p' "${STAT_DIR}/bacteria/ml/siamcat_done.txt"
         echo '```'
     else
         echo "- Missing ML summary outputs"

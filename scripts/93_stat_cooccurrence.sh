@@ -320,6 +320,7 @@ infer_network <- function(mat, label, repo, threads) {
 }
 
 save_network_outputs <- function(net, label, out_dir) {
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   graph <- net$graph
   nodes <- tibble(
     taxon = V(graph)$name,
@@ -329,9 +330,9 @@ save_network_outputs <- function(net, label, out_dir) {
     degree = igraph::degree(graph)
   )
   edges <- igraph::as_data_frame(graph, what = "edges")
-  readr::write_tsv(nodes, file.path(out_dir, paste0(label, "_nodes.tsv")))
-  readr::write_tsv(edges, file.path(out_dir, paste0(label, "_edges.tsv")))
-  pdf(file.path(out_dir, paste0(label, "_network.pdf")), width = 11, height = 8)
+  readr::write_tsv(nodes, file.path(out_dir, "nodes.tsv"))
+  readr::write_tsv(edges, file.path(out_dir, "edges.tsv"))
+  pdf(file.path(out_dir, "network.pdf"), width = 11, height = 8)
   # Use circle layout — weight-free, always valid for signed correlation networks
   p <- ggraph::ggraph(graph, layout = "circle") +
     ggraph::geom_edge_link(aes(alpha = abs(weight), color = weight > 0), show.legend = FALSE) +
@@ -363,7 +364,7 @@ run_netcomi_compare <- function(mat, meta, group_col, label, out_dir) {
     verbose = 0
   )
   cmp <- NetCoMi::netCompare(net_obj, verbose = 0)
-  capture.output(cmp, file = file.path(out_dir, paste0(label, "_group_compare.txt")))
+  capture.output(cmp, file = file.path(out_dir, "group_compare.txt"))
 }
 
 meta <- read_metadata(metadata_csv)
@@ -426,15 +427,26 @@ for (target in targets) {
       stop("Unsupported network type: ", target)
     }
 
+    folder_name <- switch(
+      target,
+      bac = "bacteria",
+      vir = "virus",
+      fun = "fungi",
+      cross_bac_vir = "cross_bac_vir",
+      cross_bac_fun = "cross_bac_fun",
+      target
+    )
+    out_dir <- file.path(result_dir, folder_name)
+
     if (is.null(mat)) stop("Input unavailable for target: ", target)
     common_meta <- intersect(colnames(mat), rownames(meta))
     if (length(common_meta) < 5) stop("Need at least five metadata-matched samples")
     mat <- mat[, common_meta, drop = FALSE]
     meta_sub <- meta[common_meta, , drop = FALSE]
     net <- infer_network(mat, label, repo, threads)
-    save_network_outputs(net, label, result_dir)
+    save_network_outputs(net, label, out_dir)
     run_step(paste0("netcomi_", label), {
-      run_netcomi_compare(mat, meta_sub, group_col, label, result_dir)
+      run_netcomi_compare(mat, meta_sub, group_col, label, out_dir)
     })
     summary_rows[[length(summary_rows) + 1]] <- tibble(
       network = label,

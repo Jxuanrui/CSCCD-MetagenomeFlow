@@ -11,9 +11,12 @@ if (dir.exists(conda_lib)) {
   )))
 }
 
-required_pkgs <- c("microeco", "magrittr", "dplyr", "tidyr", "vegan")
-missing_pkgs <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
+core_required_pkgs <- c("microeco", "magrittr", "dplyr", "tidyr", "vegan")
+plot_pkgs <- c("ggplot2", "ggpubr")
+required_pkgs <- c(core_required_pkgs, plot_pkgs)
+missing_pkgs <- core_required_pkgs[!vapply(core_required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing_pkgs)) stop("Missing packages: ", paste(missing_pkgs, collapse = ", "))
+plot_pkgs_available <- vapply(plot_pkgs, requireNamespace, logical(1), quietly = TRUE)
 
 suppressPackageStartupMessages({
   library(microeco)
@@ -24,6 +27,8 @@ suppressPackageStartupMessages({
 })
 
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
+npg_pal <- c("#E64B35", "#4DBBD5", "#00A087", "#3C5488", "#F39B7F",
+             "#8491B4", "#91D1C2", "#DC0000", "#7E6148", "#B09C85")
 
 workdir <- Sys.getenv("WORKDIR")
 metadata_csv <- Sys.getenv("METADATA_CSV")
@@ -33,13 +38,15 @@ vir_table <- Sys.getenv("VIR_TABLE")
 fungi_dir <- Sys.getenv("FUNGI_DIR")
 result_dir <- Sys.getenv("RESULT_DIR")
 if (!nzchar(result_dir)) {
-  result_dir <- file.path(workdir, "result", "stat", "diversity")
+  result_dir <- file.path(workdir, "result", "stat")
 }
 
-stat_root <- dirname(result_dir)
-compat_diversity_dir <- file.path(stat_root, "diversity")
-dir.create(result_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(compat_diversity_dir, recursive = TRUE, showWarnings = FALSE)
+stat_root <- Sys.getenv("STAT_ROOT")
+if (!nzchar(stat_root)) {
+  result_base <- basename(normalizePath(result_dir, winslash = "/", mustWork = FALSE))
+  stat_root <- if (result_base == "diversity") dirname(result_dir) else result_dir
+}
+dir.create(stat_root, recursive = TRUE, showWarnings = FALSE)
 
 status_log <- list()
 log_status <- function(step, status, message = "") {
@@ -513,12 +520,68 @@ export_alpha_diversity <- function(mt, dimension, diversity_dir) {
   alpha_df
 }
 
+plot_packages_ready <- function(dimension, plot_name) {
+  missing_plot_pkgs <- names(plot_pkgs_available)[!plot_pkgs_available]
+  if (length(missing_plot_pkgs)) {
+    log_status(
+      paste0(dimension, "_", plot_name),
+      "SKIPPED",
+      paste("missing plotting packages:", paste(missing_plot_pkgs, collapse = ", "))
+    )
+    return(FALSE)
+  }
+  TRUE
+}
+
+export_alpha_boxplot <- function(alpha_df, sample_table, dimension, diversity_dir, group_col) {
+  if (!plot_packages_ready(dimension, "alpha_boxplot")) return(invisible(FALSE))
+
+  plot_path <- file.path(diversity_dir, "alpha_diversity_boxplot.pdf")
+  safe_write(paste0(dimension, "_alpha_boxplot"), plot_path, {
+    if (is.null(alpha_df) || !nrow(alpha_df)) stop("alpha diversity table is empty")
+    if (!"Shannon" %in% colnames(alpha_df)) stop("Shannon column not found")
+    if (!group_col %in% colnames(sample_table)) stop("Group column not found: ", group_col)
+
+    plot_df <- data.frame(
+      sample_id = rownames(alpha_df),
+      Shannon = suppressWarnings(as.numeric(alpha_df$Shannon)),
+      stringsAsFactors = FALSE
+    )
+    group_df <- data.frame(
+      sample_id = rownames(sample_table),
+      group = as.factor(sample_table[[group_col]]),
+      stringsAsFactors = FALSE
+    )
+    plot_df <- merge(plot_df, group_df, by = "sample_id", all.x = TRUE)
+    plot_df <- plot_df[!is.na(plot_df$Shannon) & !is.na(plot_df$group), , drop = FALSE]
+    if (nrow(plot_df) < 2) stop("Need at least 2 samples for alpha boxplot")
+
+    n_groups <- length(levels(droplevels(plot_df$group)))
+    pal <- npg_pal[seq_len(min(length(npg_pal), max(1L, n_groups)))]
+    p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = group, y = Shannon, fill = group, color = group)) +
+      ggplot2::geom_boxplot(width = 0.65, outlier.shape = NA, alpha = 0.35) +
+      ggplot2::geom_jitter(width = 0.16, size = 1.8, alpha = 0.8) +
+      ggplot2::scale_fill_manual(values = pal) +
+      ggplot2::scale_color_manual(values = pal) +
+      ggplot2::labs(x = group_col, y = "Shannon diversity", title = paste(dimension, "alpha diversity")) +
+      ggplot2::theme_bw(base_size = 12) +
+      ggplot2::theme(legend.position = "none")
+
+    if (n_groups == 2) {
+      p <- p + ggpubr::stat_compare_means(method = "wilcox.test")
+    }
+
+    ggplot2::ggsave(plot_path, p, width = 5, height = 5, units = "in")
+  })
+}
+
 export_beta_outputs <- function(mt, dimension, diversity_dir) {
   beta_path <- file.path(diversity_dir, "beta_bray_curtis.tsv")
   pcoa_path <- file.path(diversity_dir, "pcoa_coordinates.tsv")
   permanova_path <- file.path(diversity_dir, "permanova_results.tsv")
 
   bray_mat <- NULL
+  pcoa_df <- NULL
   safe_write(paste0(dimension, "_beta_calc"), beta_path, {
     mt$cal_betadiv(unifrac = FALSE)
     bray_mat <- compute_bray_matrix(mt)
@@ -536,10 +599,63 @@ export_beta_outputs <- function(mt, dimension, diversity_dir) {
     permanova_df <- compute_permanova_table(bray_mat, mt$sample_table, group_col)
     write.table(permanova_df, permanova_path, sep = "\t", quote = FALSE, row.names = FALSE, na = "")
   })
+
+  pcoa_df
+}
+
+export_pcoa_scatter <- function(pcoa_df, sample_table, dimension, diversity_dir, group_col) {
+  if (!plot_packages_ready(dimension, "pcoa_scatter")) return(invisible(FALSE))
+
+  plot_path <- file.path(diversity_dir, "pcoa_beta_scatter.pdf")
+  safe_write(paste0(dimension, "_pcoa_scatter"), plot_path, {
+    if (is.null(pcoa_df) || !nrow(pcoa_df)) stop("PCoA table is empty")
+    if (!all(c("PC1", "PC2") %in% colnames(pcoa_df))) stop("PC1/PC2 columns not found")
+    if (!group_col %in% colnames(sample_table)) stop("Group column not found: ", group_col)
+
+    var_exp <- if ("variance_explained" %in% rownames(pcoa_df)) pcoa_df["variance_explained", , drop = FALSE] else NULL
+    point_df <- pcoa_df[rownames(pcoa_df) != "variance_explained", , drop = FALSE]
+    point_df <- data.frame(
+      sample_id = rownames(point_df),
+      PC1 = suppressWarnings(as.numeric(point_df$PC1)),
+      PC2 = suppressWarnings(as.numeric(point_df$PC2)),
+      stringsAsFactors = FALSE
+    )
+    group_df <- data.frame(
+      sample_id = rownames(sample_table),
+      group = as.factor(sample_table[[group_col]]),
+      stringsAsFactors = FALSE
+    )
+    point_df <- merge(point_df, group_df, by = "sample_id", all.x = TRUE)
+    point_df <- point_df[!is.na(point_df$PC1) & !is.na(point_df$PC2) & !is.na(point_df$group), , drop = FALSE]
+    if (nrow(point_df) < 2) stop("Need at least 2 samples for PCoA scatter")
+
+    pc1_pct <- suppressWarnings(as.numeric(var_exp$PC1[1])) * 100
+    pc2_pct <- suppressWarnings(as.numeric(var_exp$PC2[1])) * 100
+    x_lab <- if (is.finite(pc1_pct)) sprintf("PC1 (%.1f%%)", pc1_pct) else "PC1"
+    y_lab <- if (is.finite(pc2_pct)) sprintf("PC2 (%.1f%%)", pc2_pct) else "PC2"
+    n_groups <- length(levels(droplevels(point_df$group)))
+    pal <- npg_pal[seq_len(min(length(npg_pal), max(1L, n_groups)))]
+
+    p <- ggplot2::ggplot(point_df, ggplot2::aes(x = PC1, y = PC2, color = group)) +
+      ggplot2::geom_point(size = 2.4, alpha = 0.85) +
+      ggplot2::scale_color_manual(values = pal) +
+      ggplot2::labs(x = x_lab, y = y_lab, color = group_col, title = paste(dimension, "PCoA")) +
+      ggplot2::theme_bw(base_size = 12)
+
+    ellipse_ok <- all(vapply(split(point_df, point_df$group), nrow, integer(1)) >= 3)
+    if (ellipse_ok) {
+      p <- tryCatch(
+        p + ggplot2::stat_ellipse(ggplot2::aes(group = group), linewidth = 0.5, show.legend = FALSE),
+        error = function(e) p
+      )
+    }
+
+    ggplot2::ggsave(plot_path, p, width = 5.5, height = 5, units = "in")
+  })
 }
 
 write_alpha_sentinel <- function(alpha_results) {
-  sentinel_path <- file.path(compat_diversity_dir, "alpha_diversity.tsv")
+  sentinel_path <- file.path(stat_root, "diversity_alpha_summary.tsv")
   if (!length(alpha_results)) {
     write.table(
       data.frame(note = "no alpha computed"),
@@ -585,14 +701,9 @@ dimension_roots <- setNames(lapply(c("bacteria", "virus", "fungi"), function(dim
     root = dim_root,
     abundance = file.path(dim_root, "abundance"),
     diversity = file.path(dim_root, "diversity"),
-    differential = file.path(dim_root, "differential"),
-    compat = file.path(result_dir, dim_name)
+    differential = file.path(dim_root, "differential")
   )
 }), c("bacteria", "virus", "fungi"))
-
-for (dim_name in names(dimension_roots)) {
-  dir.create(dimension_roots[[dim_name]]$compat, recursive = TRUE, showWarnings = FALSE)
-}
 
 mt_list <- list()
 
@@ -640,9 +751,9 @@ for (dim_name in names(dimension_roots)) {
   dirs <- dimension_roots[[dim_name]]
   if (is.null(mt)) next
 
-  compat_rds_path <- file.path(result_dir, dim_name, paste0(dim_name, "_microtable.rds"))
-  safe_write(paste0(dim_name, "_rds"), compat_rds_path, {
-    saveRDS(mt, compat_rds_path)
+  rds_path <- file.path(stat_root, dim_name, paste0(dim_name, "_microtable.rds"))
+  safe_write(paste0(dim_name, "_rds"), rds_path, {
+    saveRDS(mt, rds_path)
   })
 
   # Export phyloseq RDS (Phase 1: Phyloseq centralization)
@@ -660,7 +771,9 @@ for (dim_name in names(dimension_roots)) {
 
   export_abundance_levels(mt, dim_name, dirs$abundance)
   alpha_results[[dim_name]] <- export_alpha_diversity(mt, dim_name, dirs$diversity)
-  export_beta_outputs(mt, dim_name, dirs$diversity)
+  export_alpha_boxplot(alpha_results[[dim_name]], mt$sample_table, dim_name, dirs$diversity, group_col)
+  pcoa_df <- export_beta_outputs(mt, dim_name, dirs$diversity)
+  export_pcoa_scatter(pcoa_df, mt$sample_table, dim_name, dirs$diversity, group_col)
 }
 
 write_alpha_sentinel(alpha_results)
@@ -673,14 +786,14 @@ status_df <- if (length(status_log)) do.call(rbind, status_log) else data.frame(
 )
 write.table(
   status_df,
-  file.path(compat_diversity_dir, "diversity_status.tsv"),
+  file.path(stat_root, "diversity_status.tsv"),
   sep = "\t",
   quote = FALSE,
   row.names = FALSE
 )
 
-if (!file.exists(file.path(compat_diversity_dir, "alpha_diversity.tsv"))) {
-  stop("No alpha_diversity.tsv produced")
+if (!file.exists(file.path(stat_root, "diversity_alpha_summary.tsv"))) {
+  stop("No diversity_alpha_summary.tsv produced")
 }
 
 message("[INFO] Diversity analysis complete")

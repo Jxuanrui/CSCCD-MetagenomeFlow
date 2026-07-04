@@ -45,10 +45,10 @@ bash scripts/93_stat_cooccurrence.sh \
 
 | 文件 | 内容 |
 |------|------|
-| `{network}_nodes.tsv` | 节点属性（丰度、门、模块、度） |
-| `{network}_edges.tsv` | 边权重（相关系数） |
-| `{network}_network.pdf` | 网络可视化图 |
-| `{network}_group_compare.txt` | 分组比较结果（若提供 -g） |
+| `network/{bacteria,virus,fungi,cross_bac_vir,cross_bac_fun}/nodes.tsv` | 节点属性（丰度、门、模块、度） |
+| `network/{bacteria,virus,fungi,cross_bac_vir,cross_bac_fun}/edges.tsv` | 边权重（相关系数） |
+| `network/{bacteria,virus,fungi,cross_bac_vir,cross_bac_fun}/network.pdf` | 网络可视化图 |
+| `network/{bacteria,virus,fungi,cross_bac_vir,cross_bac_fun}/group_compare.txt` | 分组比较结果（若提供 -g） |
 | `network_summary.tsv` | 所有网络统计汇总 |
 
 ## 网络推断方法

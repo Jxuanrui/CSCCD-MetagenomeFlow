@@ -68,7 +68,7 @@ bash scripts/95b_stat_batch_evaluate.sh \
 - 建议在差异分析（92）之前运行批次校正
 - 若批次效应不显著（RDA R² < 5%），可能不需要校正
 - `-g group` 帮助评估校正是否保留了生物差异；不指定则仅评估批次混合度
-- 校正矩阵存于 `result/stat/batch/`，供下游分析手动选择
+- 校正矩阵存于 `result/stat/bacteria/batch/`，供下游分析手动选择
 
 ## R 依赖包
 `MBECS`, `ConQuR`, `MMUPHin`, `sva`, `limma`, `harmony`, `vegan`, `tidyverse`

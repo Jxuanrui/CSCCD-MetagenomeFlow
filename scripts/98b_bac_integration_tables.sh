@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 98b_bac_integration_tables.sh
-# 功  能: 细菌维度功能整合 — 生成两类共 11 张整合表格
+# 功  能: 细菌维度功能整合 — 生成三类共 13 张整合表格
 #
-#   类型 A (8 张): 功能聚合表 (行=功能条目, 列=样本, 值=Σ TPM)
+#   类型 A (10 张): 功能聚合表 (行=功能条目, 列=样本, 值=Σ TPM)
 #     1. kegg_ko_abundance.tsv      KEGG KO × 样本
 #     2. cog_abundance.tsv          COG category × 样本
 #     3. arg_abundance.tsv          ARG gene (AMRFinder+CARD) × 样本
@@ -11,14 +11,17 @@
 #     5. vfdb_abundance.tsv         Virulence factor × 样本
 #     6. ncyc_abundance.tsv         氮循环功能基因 × 样本
 #     7. pcyc_abundance.tsv         磷循环功能基因 × 样本
-#     8. defense_abundance.tsv      防御系统类型 × 样本
+#     8. scyc_abundance.tsv         硫循环功能基因 × 样本 (可选)
+#     9. iron_abundance.tsv         铁代谢功能类别 × 样本 (可选)
+#    10. defense_abundance.tsv      防御系统类型 × 样本
 #
 #   类型 B (1 张): 基因级宽表 (行=NR基因, 列=样本TPM+全注释字段)
-#     9. gene_annotation_matrix.tsv 8623基因 × (TPM×6 + 10类注释)
+#    11. gene_annotation_matrix.tsv NR基因 × (TPM样本列 + 15类注释)
+#         新增列: SCyc_gene, Iron_category, UniProt_SwissProt
 #
 #   类型 C (2 张): 通路-物种关联表
-#    10. pathway_community.tsv      社区整体通路丰度 (来自 humann3 merged unstratified)
-#    11. pathway_species_contrib.tsv 物种分层通路贡献 (来自 humann3 stratified)
+#    12. pathway_community.tsv      社区整体通路丰度 (来自 humann3 merged unstratified)
+#    13. pathway_species_contrib.tsv 物种分层通路贡献 (来自 humann3 stratified)
 #
 # 依  赖:
 #   - scripts/19/20: Salmon quant (result/assembly/salmon/{sample}/quant.sf)
@@ -31,6 +34,9 @@
 #   - scripts/27: BacMet (result/annotation/bacmet/bacmet_hits.tsv)
 #   - scripts/30: NCyc (result/annotation/ncyc/ncyc_hits.tsv)
 #   - scripts/31: PCyc (result/annotation/pcyc/pcyc_hits.tsv)
+#   - scripts/31b: SCyc (result/annotation/scyc/scyc_hits.tsv, 可选)
+#   - scripts/31d: UniProt Swiss-Prot (result/annotation/uniprot_sprot/sprot_hits.tsv, 可选)
+#   - scripts/31e: FeGenie NR (result/annotation/fegenie/NR/FeGenie-geneSummary.csv, 可选)
 #   - scripts/29: Defense-Finder (result/annotation/defense_finder/defense_finder_genes.tsv)
 #   - scripts/13b: HUMAnN3 merged (result/humann3/merged/)
 #
@@ -79,6 +85,7 @@ HUMANN_DIR="${WORKDIR}/result/humann3"
 OUT_DIR="${WORKDIR}/result/integration/bacteria"
 NCYC_MAP="${REPO}/db/ncyc/misc/annotation.txt"
 PCYC_MAP="${REPO}/db/pcyc/misc/annotation.txt"
+SCYC_MAP="${REPO}/db/scyc/scyc-db/misc/annotation.txt"
 
 # 幂等检查
 if [ -f "${OUT_DIR}/gene_annotation_matrix.tsv" ] && \
@@ -109,6 +116,27 @@ for f in \
 done
 [ ${MISSING} -eq 1 ] && exit 1
 
+# --- 检查可选输入（缺失只影响对应新增表/列） ---
+for f in \
+    "${ANNO_DIR}/scyc/scyc_hits.tsv" \
+    "${ANNO_DIR}/uniprot_sprot/sprot_hits.tsv"; do
+    if [ ! -f "${f}" ]; then
+        echo "[WARNING] 缺少可选输入文件: ${f}"
+    fi
+done
+
+FEGENIE_GENE_SUMMARY="${ANNO_DIR}/fegenie/NR/FeGenie-geneSummary.csv"
+if [ ! -f "${FEGENIE_GENE_SUMMARY}" ]; then
+    FEGENIE_FALLBACK_COUNT=$(find "${ANNO_DIR}/fegenie/NR" -maxdepth 1 -type f \
+        -name "*-summary.csv" ! -name "FeGenie-summary.csv" ! -name "FinalSummary*" \
+        2>/dev/null | wc -l)
+    if [ "${FEGENIE_FALLBACK_COUNT}" -gt 0 ]; then
+        echo "[WARNING] 缺少可选输入文件: ${FEGENIE_GENE_SUMMARY}; 将尝试合并 FeGenie per-category *-summary.csv"
+    else
+        echo "[WARNING] 缺少可选输入文件: ${FEGENIE_GENE_SUMMARY}"
+    fi
+fi
+
 # 检查至少有一个 Salmon quant 文件
 QUANT_FOUND=$(find "${SALMON_DIR}" -name "quant.sf" 2>/dev/null | wc -l)
 if [ "${QUANT_FOUND}" -eq 0 ]; then
@@ -131,6 +159,7 @@ python3 - \
     "${OUT_DIR}" \
     "${NCYC_MAP}" \
     "${PCYC_MAP}" \
+    "${SCYC_MAP}" \
 <<'PYEOF'
 import sys
 import os
@@ -143,6 +172,7 @@ REPO      = sys.argv[2]
 OUT_DIR   = sys.argv[3]
 NCYC_MAP  = sys.argv[4]
 PCYC_MAP  = sys.argv[5]
+SCYC_MAP  = sys.argv[6]
 
 ANNO_DIR   = os.path.join(WORKDIR, "result", "annotation")
 SALMON_DIR = os.path.join(WORKDIR, "result", "assembly", "salmon")
@@ -192,6 +222,22 @@ def make_abundance_table(func_map, samples, outpath, func_col_name="function"):
     n = len(func_tpm)
     print(f"  → {os.path.basename(outpath)}: {n} 行 × {len(samples)+1} 列")
     return func_tpm
+
+def optional_file(path, label):
+    if os.path.isfile(path):
+        return True
+    print(f"  [WARNING] {label} 可选输入缺失，相关表/列将跳过或填充 '-'：{path}")
+    return False
+
+def add_label(label_map, gene, label):
+    if not gene or not label or label == "-":
+        return
+    labels = []
+    if gene in label_map and label_map[gene] != "-":
+        labels = [x.strip() for x in label_map[gene].split(",") if x.strip()]
+    if label not in labels:
+        labels.append(label)
+    label_map[gene] = ",".join(labels)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Step 2: 读取各注释文件
@@ -375,7 +421,188 @@ with open(pcyc_file) as fh:
 
 print(f"  PCyc: {len(pcyc_map)} 基因")
 
-# 2j. Defense-Finder: gene → type (col 23) + subtype (col 24)
+# 2j. SCyc: same DIAMOND outfmt6 structure as NCyc/PCyc (optional)
+scyc_acc_to_func = {}
+if os.path.isfile(SCYC_MAP):
+    with open(SCYC_MAP) as fh:
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) >= 2:
+                scyc_acc_to_func[parts[0].strip()] = parts[1].strip()
+else:
+    print(f"  [WARNING] SCyc annotation map missing, falling back to hit accession: {SCYC_MAP}")
+
+scyc_map = {}
+scyc_file = os.path.join(ANNO_DIR, "scyc", "scyc_hits.tsv")
+if optional_file(scyc_file, "SCyc"):
+    with open(scyc_file) as fh:
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) >= 2:
+                gene = parts[0].strip()
+                ref  = parts[1].strip()
+                func = scyc_acc_to_func.get(ref, ref)
+                if gene:
+                    scyc_map[gene] = func
+
+print(f"  SCyc: {len(scyc_map)} 基因")
+
+# 2k. FeGenie NR: gene → iron category (optional)
+iron_map = {}
+fegenie_dir = os.path.join(ANNO_DIR, "fegenie", "NR")
+fegenie_gene_summary = os.path.join(fegenie_dir, "FeGenie-geneSummary.csv")
+
+def add_iron_label(gene, category):
+    category = category.strip() if category else ""
+    gene = gene.strip() if gene else ""
+    if category in ("", "-", "EMPTY", "category"):
+        return False
+    if gene not in gene_tpm:
+        return False
+    add_label(iron_map, gene, category)
+    return True
+
+def load_fegenie_category_summaries():
+    summary_files = sorted(glob.glob(os.path.join(fegenie_dir, "*-summary.csv")))
+    summary_files = [
+        f for f in summary_files
+        if os.path.basename(f) not in ("FeGenie-summary.csv", "FinalSummary.csv")
+    ]
+    for summary_file in summary_files:
+        category = os.path.basename(summary_file).rsplit("-summary.csv", 1)[0]
+        with open(summary_file, newline="") as fh:
+            reader = csv.DictReader(fh)
+            for row in reader:
+                gene = (row.get("ORF") or row.get("orf") or row.get("gene") or
+                        row.get("gene_id") or row.get("Gene ID") or "").strip()
+                add_iron_label(gene, category)
+    return len(summary_files)
+
+def build_fegenie_hmm_to_category():
+    hmm_root = os.path.join(REPO, "envs", "fegenie", "share", "fegenie-1.2", "hmms", "iron")
+    if not os.path.isdir(hmm_root):
+        return {}
+
+    hmm_to_category = {}
+    for category in os.listdir(hmm_root):
+        category_dir = os.path.join(hmm_root, category)
+        if not os.path.isdir(category_dir):
+            continue
+        for hmm_file in glob.glob(os.path.join(category_dir, "*.hmm")):
+            hmm_to_category[os.path.basename(hmm_file)] = category
+    return hmm_to_category
+
+def load_fegenie_hmm_results_csv():
+    hmm_results_csv = os.path.join(fegenie_dir, "FeGenie-HMM-results.csv")
+    if not os.path.isfile(hmm_results_csv):
+        return False
+    hmm_to_category = build_fegenie_hmm_to_category()
+    with open(hmm_results_csv, newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            gene = (row.get("orf") or row.get("ORF") or row.get("gene") or
+                    row.get("gene_id") or row.get("Gene ID") or row.get("target") or "").strip()
+            category = (row.get("category") or row.get("Category") or
+                        row.get("function") or row.get("Function") or "").strip()
+            if not category:
+                hmm = (row.get("HMM") or row.get("hmm") or row.get("related_hmm") or "").strip()
+                if hmm and not hmm.endswith(".hmm"):
+                    hmm = f"{hmm}.hmm"
+                category = hmm_to_category.get(hmm, "")
+            add_iron_label(gene, category)
+    return True
+
+def load_fegenie_hmm_results():
+    hmm_to_category = build_fegenie_hmm_to_category()
+    if not hmm_to_category:
+        return 0
+
+    tblout_files = []
+    tblout_files.extend(glob.glob(os.path.join(fegenie_dir, "*-HMM", "*.tblout")))
+    tblout_files.extend(glob.glob(os.path.join(fegenie_dir, "HMM_results", "*-HMM", "*.tblout")))
+
+    used_files = 0
+    for tblout_file in sorted(tblout_files):
+        hmm_name = os.path.basename(tblout_file).rsplit(".tblout", 1)[0]
+        category = hmm_to_category.get(hmm_name)
+        if not category:
+            continue
+        used_files += 1
+        with open(tblout_file) as fh:
+            for line in fh:
+                if line.startswith("#") or not line.strip():
+                    continue
+                parts = line.split()
+                if parts:
+                    add_iron_label(parts[0], category)
+    return used_files
+
+if os.path.isfile(fegenie_gene_summary):
+    with open(fegenie_gene_summary, newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            gene = (row.get("orf") or row.get("ORF") or row.get("gene") or
+                    row.get("gene_id") or row.get("Gene ID") or "").strip()
+            category = (row.get("category") or row.get("Category") or
+                        row.get("function") or row.get("Function") or "").strip()
+            add_iron_label(gene, category)
+    if iron_map:
+        print(f"  FeGenie: {len(iron_map)} 基因 (FeGenie-geneSummary.csv)")
+    else:
+        print(f"  [WARNING] FeGenie-geneSummary.csv 未提供可匹配 NR gene_id 的有效 category，尝试 fallback：{fegenie_gene_summary}")
+
+if not iron_map:
+    n_summary_files = load_fegenie_category_summaries()
+    if iron_map:
+        print(f"  FeGenie: {len(iron_map)} 基因 (merged {n_summary_files} per-category summary files)")
+
+if not iron_map:
+    has_hmm_csv = load_fegenie_hmm_results_csv()
+    if iron_map:
+        print(f"  FeGenie: {len(iron_map)} 基因 (FeGenie-HMM-results.csv)")
+    elif has_hmm_csv:
+        print("  [WARNING] FeGenie-HMM-results.csv 未提供可匹配 NR gene_id 的有效 category，尝试 HMM_results tblout fallback")
+
+if not iron_map:
+    n_hmm_files = load_fegenie_hmm_results()
+    if iron_map:
+        print(f"  FeGenie: {len(iron_map)} 基因 (parsed {n_hmm_files} HMM_results tblout files)")
+
+if not iron_map:
+    print(f"  [WARNING] FeGenie NR 可选输入缺失或无法匹配 NR gene_id，Iron_category 将填充 '-'：{fegenie_dir}")
+    print("  FeGenie: 0 基因")
+
+# 2l. UniProt Swiss-Prot: gene → best-hit accession (optional)
+uniprot_map = {}
+uniprot_best = {}  # gene → (bitscore, evalue, accession)
+uniprot_file = os.path.join(ANNO_DIR, "uniprot_sprot", "sprot_hits.tsv")
+if optional_file(uniprot_file, "UniProt Swiss-Prot"):
+    with open(uniprot_file) as fh:
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 12:
+                continue
+            gene = parts[0].strip()
+            acc  = parts[1].strip()
+            try:
+                evalue = float(parts[10])
+            except ValueError:
+                evalue = float("inf")
+            try:
+                bits = float(parts[11])
+            except ValueError:
+                bits = float("-inf")
+            if not gene or not acc:
+                continue
+            prev = uniprot_best.get(gene)
+            if prev is None or bits > prev[0] or (bits == prev[0] and evalue < prev[1]):
+                uniprot_best[gene] = (bits, evalue, acc)
+    for gene, best in uniprot_best.items():
+        uniprot_map[gene] = best[2]
+
+print(f"  UniProt Swiss-Prot: {len(uniprot_map)} 基因")
+
+# 2m. Defense-Finder: gene → type (col 23) + subtype (col 24)
 defense_map = {}
 def_file = os.path.join(ANNO_DIR, "defense_finder", "defense_finder_genes.tsv")
 with open(def_file) as fh:
@@ -392,9 +619,9 @@ with open(def_file) as fh:
 print(f"  Defense-Finder: {len(defense_map)} 基因")
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Step 3: 生成类型 A — 功能聚合表 (8 张)
+# Step 3: 生成类型 A — 功能聚合表 (10 张；其中 2 张可选)
 # ──────────────────────────────────────────────────────────────────────────────
-print("\n[Step3] 生成类型 A 功能聚合表（8 张）")
+print("\n[Step3] 生成类型 A 功能聚合表（10 张；SCyc/Iron 可选）")
 
 make_abundance_table(eggnog_ko,  samples,
     os.path.join(OUT_DIR, "kegg_ko_abundance.tsv"),  "KEGG_KO")
@@ -425,6 +652,18 @@ make_abundance_table(ncyc_map,   samples,
 make_abundance_table(pcyc_map,   samples,
     os.path.join(OUT_DIR, "pcyc_abundance.tsv"),     "PCyc_gene")
 
+if scyc_map:
+    make_abundance_table(scyc_map,   samples,
+        os.path.join(OUT_DIR, "scyc_abundance.tsv"),     "SCyc_gene")
+else:
+    print("  [WARNING] 跳过 scyc_abundance.tsv：无 SCyc 注释")
+
+if iron_map:
+    make_abundance_table(iron_map,   samples,
+        os.path.join(OUT_DIR, "iron_abundance.tsv"),     "Iron_category")
+else:
+    print("  [WARNING] 跳过 iron_abundance.tsv：无 FeGenie NR 注释")
+
 make_abundance_table(defense_map, samples,
     os.path.join(OUT_DIR, "defense_abundance.tsv"),  "Defense_system")
 
@@ -437,7 +676,8 @@ all_genes = sorted(gene_tpm.keys())
 tpm_headers   = [f"TPM_{s}" for s in samples]
 anno_headers  = ["COG_category", "KEGG_KO", "EC", "GO",
                  "ARG_AMRFinder", "ARG_CARD", "CAZyme",
-                 "VFDB", "BacMet", "NCyc_gene", "PCyc_gene", "Defense_system"]
+                 "VFDB", "BacMet", "NCyc_gene", "PCyc_gene", "Defense_system",
+                 "SCyc_gene", "Iron_category", "UniProt_SwissProt"]
 
 outpath_b = os.path.join(OUT_DIR, "gene_annotation_matrix.tsv")
 with open(outpath_b, "w", newline="") as fh:
@@ -458,6 +698,9 @@ with open(outpath_b, "w", newline="") as fh:
             ncyc_map.get(gene, "-"),
             pcyc_map.get(gene, "-"),
             defense_map.get(gene, "-"),
+            scyc_map.get(gene, "-"),
+            iron_map.get(gene, "-"),
+            uniprot_map.get(gene, "-"),
         ]
         writer.writerow(row)
 

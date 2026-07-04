@@ -31,13 +31,15 @@ metadata_csv <- Sys.getenv("METADATA_CSV")
 group_col <- Sys.getenv("GROUP_COL")
 result_dir <- Sys.getenv("RESULT_DIR")
 dimension_req <- Sys.getenv("DIMENSION", "all")
-if (!nzchar(result_dir)) result_dir <- file.path(workdir, "result", "stat", "diff")
+if (!nzchar(result_dir)) result_dir <- file.path(workdir, "result", "stat")
 if (!is.na(threads) && threads > 0) options(mc.cores = threads)
 
-stat_root <- dirname(result_dir)
-compat_diff_dir <- file.path(stat_root, "diff")
-dir.create(result_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(compat_diff_dir, recursive = TRUE, showWarnings = FALSE)
+stat_root <- Sys.getenv("STAT_ROOT")
+if (!nzchar(stat_root)) {
+  result_base <- basename(normalizePath(result_dir, winslash = "/", mustWork = FALSE))
+  stat_root <- if (result_base == "diff") dirname(result_dir) else result_dir
+}
+dir.create(stat_root, recursive = TRUE, showWarnings = FALSE)
 
 status_rows <- list()
 summary_rows <- list()
@@ -331,7 +333,7 @@ format_lefse_results <- function(res) {
 }
 
 load_mt <- function(dim) {
-  rds_path <- file.path(workdir, "result", "stat", "diversity", dim, paste0(dim, "_microtable.rds"))
+  rds_path <- file.path(workdir, "result", "stat", dim, paste0(dim, "_microtable.rds"))
   if (!file.exists(rds_path)) {
     add_status(dim, "load_rds", "", "", "SKIPPED", "RDS not found", rds_path)
     return(NULL)
@@ -452,10 +454,10 @@ for (dim in selected_dims) {
 status_df <- if (length(status_rows)) bind_rows(status_rows) else empty_status()
 summary_df <- if (length(summary_rows)) bind_rows(summary_rows) else empty_summary()
 
-write_tsv(status_df, file.path(compat_diff_dir, "diff_status.tsv"))
-write_tsv(summary_df, file.path(compat_diff_dir, "diff_summary.tsv"))
+write_tsv(status_df, file.path(stat_root, "differential_status.tsv"))
+write_tsv(summary_df, file.path(stat_root, "differential_summary.tsv"))
 
 if (!success_dims) {
-  message("[WARN] No dimension completed successfully; wrote header-only diff_summary.tsv")
+  message("[WARN] No dimension completed successfully; wrote header-only differential_summary.tsv")
 }
 message("[INFO] Differential analysis finished")

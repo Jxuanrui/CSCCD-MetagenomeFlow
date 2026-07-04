@@ -55,6 +55,8 @@ bash scripts/96_stat_ml_siamcat.sh \
 
 ## 输出
 
+默认 `-d bacteria` 输出到 `result/stat/bacteria/ml/`；`-d virus` / `-d fungi` 分别输出到对应维度的 `ml/` 子目录；`-d all` 输出到 `result/stat/ml/`。
+
 | 文件 | 内容 |
 |------|------|
 | `siamcat_auc_summary.tsv` | 四种模型 AUC 汇总 |

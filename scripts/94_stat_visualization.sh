@@ -52,16 +52,14 @@ GROUP_COL="${GROUP_COL:-group}"
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
-DIVERSITY_DIR="${WORKDIR}/result/stat/diversity"
-RESULT_DIR="${WORKDIR}/result/stat/visualization"
-VIZ_DIR="${WORKDIR}/result/stat/composition"
+STAT_ROOT="${WORKDIR}/result/stat"
 LOG_DIR="${WORKDIR}/logs/stat/visualization"
-SENTINEL="${RESULT_DIR}/plots.done"
+SENTINEL="${STAT_ROOT}/composition_done.txt"
 # Per-dimension output (bacteria is the primary check; virus/fungi are bonus)
-BACT_BARPLOT="${VIZ_DIR}/bacteria/barplot_composition_by_group.pdf"
-BACT_HEATMAP="${VIZ_DIR}/bacteria/heatmap_genus.pdf"
+BACT_BARPLOT="${STAT_ROOT}/bacteria/composition/barplot_composition_by_group.pdf"
+BACT_HEATMAP="${STAT_ROOT}/bacteria/composition/heatmap_genus.pdf"
 
-mkdir -p "${RESULT_DIR}" "${VIZ_DIR}" "${LOG_DIR}"
+mkdir -p "${STAT_ROOT}" "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/94_stat_visualization.log"
 exec > >(tee -a "${LOG_FILE}") 2>&1
 
@@ -83,9 +81,9 @@ echo "[INFO] Running unified visualization"
 echo "[INFO] Workdir: ${WORKDIR}"
 echo "[INFO] Metadata: ${METADATA_CSV:-<none>}"
 echo "[INFO] Group column: ${GROUP_COL}"
-echo "[INFO] Visualization dir: ${VIZ_DIR}"
+echo "[INFO] Stat root: ${STAT_ROOT}"
 
-export WORKDIR REPO METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DIR DIVERSITY_DIR RESULT_DIR VIZ_DIR FORCE SENTINEL
+export WORKDIR REPO METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DIR STAT_ROOT FORCE SENTINEL
 
 (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/94_visualization.R")
 

@@ -19,7 +19,7 @@ Required:
   -g  Group column
 
 Optional:
-  -d  Dimension: bacteria|all (default: bacteria)
+  -d  Dimension: bacteria|virus|fungi|all (default: bacteria)
   -M  Fungi input method: auto|phf|funomic|metaphlan4 (default: auto)
   --folds  Cross-validation folds (default: 10)
   --force  Re-run even if sentinel exists
@@ -71,8 +71,16 @@ FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 PHF_FUNGI_TABLE="${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv"
 FUNOMIC_FUNGI_TABLE="${WORKDIR}/result/integration/fungi/funomic_species_relab.tsv"
 FUNGI_ABUND_TABLE=""
-RESULT_DIR="${WORKDIR}/result/stat/ml"
-VIZ_ML_DIR="${WORKDIR}/result/stat/ml"
+case "${DIMENSION}" in
+    all) RESULT_DIR="${WORKDIR}/result/stat/ml" ;;
+    bacteria|virus|fungi) RESULT_DIR="${WORKDIR}/result/stat/${DIMENSION}/ml" ;;
+    *)
+        echo "[ERROR] Invalid dimension: ${DIMENSION}"
+        show_help
+        exit 1
+        ;;
+esac
+VIZ_ML_DIR="${RESULT_DIR}"
 LOG_DIR="${WORKDIR}/logs/stat/ml"
 SENTINEL="${RESULT_DIR}/siamcat_done.txt"
 
@@ -82,7 +90,6 @@ exec > >(tee -a "${LOG_FILE}") 2>&1
 
 run_ml_visualization() {
     export RESULT_DIR VIZ_ML_DIR
-    export VIZ_ML_DIR="${WORKDIR}/result/stat/ml"
     export FORCE
     # If SIAMCAT was skipped (too few samples), generate placeholder PDFs
     if grep -q "^SKIPPED" "${RESULT_DIR}/siamcat_done.txt" 2>/dev/null; then

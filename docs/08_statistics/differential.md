@@ -42,15 +42,11 @@ bash scripts/92_stat_differential.sh \
 
 | 文件 | 内容 |
 |------|------|
-| `{dimension}/diff_summary.tsv` | 差异分析汇总（各方法显著特征数） |
-| `{dimension}/{dimension}_consensus.tsv` | **共识特征**（≥2 方法一致显著） |
-| `{dimension}/{dimension}_aldex2.tsv` | ALDEx2 完整结果 |
-| `{dimension}/{dimension}_maaslin2.tsv` | MaAsLin2 结果 |
-| `{dimension}/{dimension}_linda.tsv` | LinDA 结果 |
-| `{dimension}/{dimension}_ancombc2.tsv` | ANCOMBC2 结果 |
-| `{dimension}/{dimension}_overlap_upset.pdf` | 方法间重叠 UpSet 图 |
-| `{dimension}/{dimension}_top30_heatmap.pdf` | Top30 差异特征热图 |
-| `diff_status.tsv` | 各步骤运行状态 |
+| `result/stat/differential_summary.tsv` | 差异分析汇总（各方法显著特征数） |
+| `result/stat/differential_status.tsv` | 各步骤运行状态 |
+| `result/stat/{dimension}/differential/lefse_results.tsv` | LEfSe 结果（当前仅细菌维度启用） |
+| `result/stat/{dimension}/differential/wilcox_results.tsv` | Wilcoxon 差异检验结果 |
+| `result/stat/{dimension}/differential/ancombc2_results.tsv` | ANCOMBC2 结果（依赖 `file2meco`） |
 
 ## 共识策略
 

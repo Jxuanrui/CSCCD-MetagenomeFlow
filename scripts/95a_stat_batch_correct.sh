@@ -60,7 +60,7 @@ WORKDIR="$(cd "${WORKDIR}" && pwd)"
 SECONDS=0
 
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
-RESULT_DIR="${WORKDIR}/result/stat/batch"
+RESULT_DIR="${WORKDIR}/result/stat/bacteria/batch"
 LOG_DIR="${WORKDIR}/logs/stat/batch"
 SENTINEL="${RESULT_DIR}/corrected_matrices.done"
 

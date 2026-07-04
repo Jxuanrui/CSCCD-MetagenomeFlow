@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 # 94_visualization.R — composition plots per dimension (bacteria / virus / fungi)
-# Outputs: result/stat/composition/{dim}/barplot_composition_by_group.pdf
-#                                        barplot_genus_groupmean.pdf
-#                                        heatmap_genus.pdf
-#                                        {dim}_viz_status.tsv
+# Outputs: result/stat/{dim}/composition/barplot_composition_by_group.pdf
+#                                            barplot_genus_groupmean.pdf
+#                                            heatmap_genus.pdf
+#                                            {dim}_viz_status.tsv
 
 options(stringsAsFactors = FALSE, warn = 1)
 options(device = function(...) grDevices::pdf(
@@ -16,9 +16,8 @@ workdir      <- Sys.getenv("WORKDIR")
 repo         <- Sys.getenv("REPO")
 metadata_csv <- Sys.getenv("METADATA_CSV")
 group_col    <- Sys.getenv("GROUP_COL") %||% "group"
-sentinel     <- Sys.getenv("SENTINEL") %||% file.path(workdir, "result", "stat", "visualization", "plots.done")
-comp_root    <- file.path(workdir, "result", "stat", "composition")
-div_root     <- file.path(workdir, "result", "stat", "diversity")
+stat_root    <- Sys.getenv("STAT_ROOT") %||% file.path(workdir, "result", "stat")
+sentinel     <- Sys.getenv("SENTINEL") %||% file.path(stat_root, "composition_done.txt")
 
 dir.create(dirname(sentinel), recursive = TRUE, showWarnings = FALSE)
 
@@ -84,12 +83,12 @@ completed <- 0L
 cat("[INFO] Starting composition visualization\n")
 cat("  Workdir:", workdir, "\n")
 cat("  Group column:", group_col, "\n")
-cat("  Output root:", comp_root, "\n")
+cat("  Stat root:", stat_root, "\n")
 
 for (dim in dims) {
   cat(sprintf("\n[INFO] === Dimension: %s ===\n", dim))
-  rds_path   <- file.path(div_root, dim, paste0(dim, "_microtable.rds"))
-  out_dir    <- file.path(comp_root, dim)
+  rds_path   <- file.path(stat_root, dim, paste0(dim, "_microtable.rds"))
+  out_dir    <- file.path(stat_root, dim, "composition")
   status_tsv <- file.path(out_dir, paste0(dim, "_viz_status.tsv"))
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   status_log <- list()

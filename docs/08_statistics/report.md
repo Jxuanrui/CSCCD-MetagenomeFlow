@@ -18,11 +18,11 @@ bash scripts/98_stat_report.sh -w /path/to/workdir -r ~/Course/Maxmetagenome -o 
 ## 报告内容
 
 - **QA Summary**: 检测到的 `.FAILED` 哨兵文件数量
-- **Diversity**: `alpha_diversity.tsv` 前 6 行预览
-- **Differential Abundance**: `diff_summary.tsv` 前 6 行预览
+- **Diversity**: `diversity_alpha_summary.tsv` 前 6 行预览
+- **Differential Abundance**: `differential_summary.tsv` 前 6 行预览
 - **Networks**: `network_summary.tsv` 或 `network_summary.txt` 内容
-- **Batch**: `evaluation_report.tsv` 前 8 行预览
-- **ML**: `siamcat_auc_summary.tsv` 或 `siamcat_done.txt` 内容
+- **Batch**: `bacteria/batch/evaluation_report.tsv` 前 8 行预览
+- **ML**: `bacteria/ml/siamcat_auc_summary.tsv` 或 `bacteria/ml/siamcat_done.txt` 内容
 - **Cross-cohort**: `crosscohort_auc.tsv` 或 `crosscohort_done.txt` 内容
 - **Figures**: 自动发现 `result/stat/` 下的所有 PDF/PNG 图
 

@@ -20,13 +20,14 @@ bash scripts/94_stat_visualization.sh \
 
 ## 输出
 
+所有组成可视化按维度写入 `result/stat/{bacteria,virus,fungi}/composition/`，完成哨兵为 `result/stat/composition_done.txt`。
+
 | 文件 | 内容 |
 |------|------|
-| `bacteria_top20_stacked_barplot.pdf` | Top 20 物种样本间堆叠图 |
-| `merged_multiomics_heatmap.pdf` | 细菌+病毒+真菌联合热图（CLR） |
-| `taxonomy_alluvial.pdf` | Kingdom→Phylum→Class 桑基图 |
-| `dimension_presence_upset.pdf` | 三维度特征 UpSet 图 |
-| `pcoa_composite.pdf` | 三维度 PCoA 联合图 |
+| `barplot_composition_by_group.pdf` | Phylum/Genus 组成柱状图 |
+| `barplot_genus_groupmean.pdf` | Genus 分组均值柱状图 |
+| `heatmap_genus.pdf` | Genus 丰度热图 |
+| `{dimension}_viz_status.tsv` | 该维度可视化状态日志 |
 
 ## 图表说明
 
@@ -40,7 +41,7 @@ bash scripts/94_stat_visualization.sh \
 
 ## 注意事项
 - 热图使用 CLR 变换（成分数据标准预处理）
-- 若 `DIVERSITY_DIR`（`result/stat/diversity`）中有 PCoA 结果，会自动复用
+- 读取 `result/stat/{dimension}/{dimension}_microtable.rds`，并写入对应维度的 `composition/` 子目录
 - 各维度图表独立，某一维度缺失不影响其他维度输出
 
 ## R 依赖包
