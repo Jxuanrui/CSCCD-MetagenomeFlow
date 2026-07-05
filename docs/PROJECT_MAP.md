@@ -1,0 +1,507 @@
+# MaxMetagenome Project Map
+
+> 本文件是 CLAUDE.md §14（原 "MaxMetagenome Project Map"）的完整迁移版本。
+> **触发时机**：当用户询问"如何启动"、"做什么分析"、"某工具怎么用"、某脚本编号/功能时，CC 读取本文件。
+> 未知工具参数 → WebSearch 获取官方文档，结果缓存至 `docs/tools_ref/`。
+>
+> **状态标注说明**：本文件中的 ✅/⚠️ 完成状态标注是特定时间点（多为 `Project_example` 测试项目）的快照，
+> 会随分析进展变化。如需了解当前最新进度，优先核对实际 `result/` 目录内容或 `agents/provenance/`，
+> 而不要仅依赖本文件的历史标注。
+
+## 1.1 快速启动
+
+MaxMetagenome 支持三种运行模式，按需选择：
+
+### 模式一：逐步模式（Step-by-step）
+研究级，每步独立运行，参数可精细调控。适合单步调试或探索性分析。
+
+```bash
+# 1. 激活项目环境
+source ~/Course/Maxmetagenome/scripts/activate.sh
+
+# 2. 单步运行示例（质控 → 去宿主 → 物种分类）
+bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+```
+
+### 模式二：Bash 一站式流程（轻量 Pipeline）
+无额外依赖，传入 samplesheet.csv 串联步骤。支持 `--skip`/`--from`/`--only` 断点续跑。
+适合单机小批量样本、不想依赖 Snakemake 的场景。
+
+```bash
+# 运行完整细菌流程
+bash scripts/00_pipeline_bacteria.sh \
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16
+
+# 断点续跑（从 metaphlan4 步骤开始）
+bash scripts/00_pipeline_bacteria.sh \
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --from metaphlan4
+
+# 多样本并行（需要 rush）
+bash scripts/00_pipeline_bacteria.sh \
+     -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 -j 2
+```
+
+### 模式三：Snakemake Pipeline（生产级，推荐）
+基于 DAG 的自动依赖追踪，原生断点续跑，支持 HPC/多节点。
+适合大批量样本、正式分析、需要完整 provenance 记录的场景。
+
+**并行参数说明**（与模式二对齐）：
+- `threads_per_job`：每个工具内部使用的线程数（对应模式二的 `-t`，在 `config/config.yaml` 中设置）
+- `--cores N`：告诉 Snakemake 可用总线程数，**自动推算并发 job 数**（推荐，无需手动计算）
+- 并发 job 数 = `cores / threads_per_job`，例如 `--cores 48`、`threads_per_job=16` → 自动 3 并发
+
+**Profile 预设**（`pipeline/profiles/` 目录，按服务器配置选用）：
+
+| Profile | 适用场景 | 核数 | 实际并发 |
+|---------|---------|------|---------|
+| `auto` | 由 `/mgx-tune` 根据当前机器自动生成 | 自动检测 | 自动 |
+| `local_16c` | 16 核笔记本/小型工作站 | 12 | 1 |
+| `local_48c` | 48 核服务器（本机） | 44 | 2 |
+| `local_96c` | 96 核服务器 | 92 | 5 |
+| `hpc_slurm` | HPC 集群（SLURM） | — | 20 jobs |
+
+```bash
+# 0. 首次使用：检测当前硬件并生成 profiles/auto/
+/mgx-tune   # 在 Claude Code 中执行
+
+# 1. 编辑运行参数（samplesheet 路径、workdir、threads_per_job）
+vim pipeline/config/config.yaml
+
+# 2. 预演（检查 DAG，不实际运行）
+snakemake -s pipeline/Snakefile --profile pipeline/profiles/auto --dry-run
+
+# 3. 正式运行（profile 自动传入 --cores，无需手动指定 -j）
+snakemake -s pipeline/Snakefile --profile pipeline/profiles/auto
+
+# 4. 断点续跑（profile 内已包含 rerun-incomplete: true，直接重跑即可）
+snakemake -s pipeline/Snakefile --profile pipeline/profiles/auto
+
+# 5. 指定 profile（换机器时选对应预设）
+snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
+```
+
+> **注意**：
+> - Snakemake 已安装在项目内 miniforge3 base 环境，激活 `activate.sh` 后即可直接调用。
+> - 迁移到新服务器后运行 `/mgx-tune` 重新生成 `profiles/auto/`。
+> - `--cores` 控制总线程预算，Snakemake 根据每个 rule 的 `threads:` 声明自动分配并发数；merge 等聚合 rule 的 DAG 依赖保证所有 per-sample job 完成后才触发，无需人工分步。
+
+## 1.2 分析流程索引
+
+### 📦 通用预处理（所有维度共享）
+
+| 编号 | 脚本 | 功能 | 文档 |
+|------|------|------|------|
+| 01 | `scripts/01_qc_fastp.sh` | 质量控制（接头去除、低质碱基修剪） | `docs/01_preprocessing/fastp.md` |
+| 02 | `scripts/02_qc_kneaddata.sh` | 去宿主（人/鼠/大鼠） | `docs/01_preprocessing/kneaddata.md` |
+
+### 🦠 细菌维度（Bacteria，编号 11-41）
+
+> **分析完成状态（Project_example，2026-06-18 更新）**
+> - 11 MetaPhlAn4 ✅ / **12 StrainPhlAn4 ✅**（6个.json.bz2 marker生成，测试样本无可追踪菌株属预期行为）/ 13 HUMAnN3 ✅（6/6）/ 14 Kraken2 ✅ / 15 Centrifuger ✅（6/6）
+> - 16 MEGAHIT ✅ / 17 Prodigal ✅ / 18 CD-HIT ✅ / 19 Salmon index ✅ / 20 Salmon quant ✅（6/6）
+> - 21-31 功能注释全部完成 ✅（eggNOG/KEGG/AMRFinder/CARD/dbCAN/VFDB/BacMet/antiSMASH/Defense-Finder/NCyc/PCyc）
+> - 32-36 Binning ✅（流程跑通，Project_example测序深度不足产出0个MAG，属预期行为）
+> - 37 CheckM2 ✅ / 38 dRep ✅ / 39-41 MAG后处理 ✅ / 41b-41d WGS整合 ✅（0个MAG输入，sentinel文件正常）
+> - **⚠️ Snakemake bug 修复（2026-06-17）**：kegg rule 缺少 log:/threads: → 双进程写入冲突；已修复，重跑完成（KEGG 48G DB + 6样本 NR蛋白，~20min）
+> - **98b 细菌功能整合表（2026-07-03 补跑）**：`agents/registry.yaml` 中 `integrated_date: "2026-06-16"` 仅代表脚本已接入 Snakemake，Project_example 实际从未运行过 98b（无 log 记录）。已补跑：先运行 `13b_bac_humann3_merge.sh` 生成缺失的 `result/humann3/merged/pathabundance_relab.tsv`，再运行 `98b_bac_integration_tables.sh`，11 张整合表全部生成成功，输出 `result/integration/bacteria/`。
+
+| 编号 | 脚本 | 功能 | 工具 |
+|------|------|------|------|
+| 11 | `scripts/11_bac_metaphlan4.sh` | 物种组成（精确分类，菌株级） | MetaPhlAn4 |
+| 12 | `scripts/12_bac_strainphlan4.sh` | 菌株追踪与系统发育 | StrainPhlAn4 |
+| 13 | `scripts/13_bac_humann3.sh` | 功能通路定量（PathwayAbundance） | HUMAnN3（v3.9） | 支持 `--speed-mode balanced/fast` 提速；输出到 `result/humann3/` |
+| 14 | `scripts/14_bac_kraken2.sh` | 快速物种分类（k-mer） | Kraken2+Bracken |
+| 15 | `scripts/15_bac_centrifuger.sh` | 蛋白级精确分类（GTDB R226） | Centrifuger |
+| 16 | `scripts/16_bac_megahit.sh` | 宏基因组组装 | MEGAHIT |
+| 17 | `scripts/17_bac_prodigal.sh` | 蛋白编码基因预测 | Prodigal |
+| 18 | `scripts/18_bac_cdhit.sh` | 基因去冗余（95% ANI） | CD-HIT |
+| 19 | `scripts/19_bac_salmon_build.sh` | 构建基因定量索引 | Salmon |
+| 20 | `scripts/20_bac_salmon_quant.sh` | 基因丰度定量（TPM） | Salmon |
+| 21 | `scripts/21_bac_eggnog.sh` | 综合功能注释（COG/KEGG/GO/EC） | eggNOG-mapper |
+| 22 | `scripts/22_bac_kegg.sh` | KEGG KO 通路注释 | KEGG diamond |
+| 23 | `scripts/23_bac_amrfinder.sh` | 抗生素耐药基因 | AMRFinder |
+| 24 | `scripts/24_bac_card.sh` | 抗性基因综合 | CARD/RGI |
+| 25 | `scripts/25_bac_dbcan.sh` | 碳水化合物酶（CAZyme） | dbCAN3 |
+| 26 | `scripts/26_bac_vfdb.sh` | 毒力因子 | VFDB |
+| 27 | `scripts/27_bac_bacmet.sh` | 重金属抗性基因 | BacMet |
+| 28 | `scripts/28_bac_antismash.sh` | 次级代谢产物/BGC | antiSMASH |
+| 29 | `scripts/29_bac_defense_finder.sh` | CRISPR/防御系统 | Defense-Finder |
+| 30 | `scripts/30_bac_ncyc.sh` | 氮循环功能基因 | NCyc |
+| 31 | `scripts/31_bac_pcyc.sh` | 磷循环功能基因 | PCyc |
+| **31b** | **`scripts/31b_bac_scyc.sh`** | **硫循环功能基因（SCyc，补全 N/P/C/S 循环）** | **SCyc + DIAMOND** |
+| **31c** | **`scripts/31c_bac_pfam.sh`** | **Pfam-A 蛋白域注释（hmmscan，--cut_ga）** | **HMMER + Pfam-A** |
+| **31d** | **`scripts/31d_bac_uniprot.sh`** | **UniProt Swiss-Prot 高精度注释（补充 eggNOG 未命中）** | **MMseqs2 easy-search** |
+| **31e** | **`scripts/31e_bac_fegenie.sh`** | **铁代谢基因预测（iron uptake/storage/cycling，10 类功能）** | **FeGenie 1.2** |
+| 32 | `scripts/32_bac_coverm_depth.sh` | 测序深度计算（Binning前置） | CoverM |
+| 33 | `scripts/33_bac_metabat2.sh` | MetaBAT2 分箱 | MetaBAT2 |
+| 34 | `scripts/34_bac_maxbin2.sh` | MaxBin2 分箱 | MaxBin2 |
+| 35 | `scripts/35_bac_semibin2.sh` | SemiBin2 分箱（ML自训练） | SemiBin2 |
+| 36 | `scripts/36_bac_dastool.sh` | 多算法分箱整合优化 | DAS_Tool |
+| 37 | `scripts/37_bac_checkm2.sh` | MAG 质量评估（ML） | CheckM2 |
+| 38 | `scripts/38_bac_drep.sh` | MAG 去冗余（ANI 97%） | dRep |
+| 39 | `scripts/39_bac_coverm_quant.sh` | MAG 丰度定量 | CoverM |
+| 40 | `scripts/40_bac_gtdbtk.sh` | MAG 系统发育分类（GTDB R214） | GTDB-Tk |
+| 41 | `scripts/41_bac_bakta.sh` | MAG 全基因组精细注释 | Bakta |
+| 41b | `scripts/41b_bac_mlst.sh` | MAG MLST 多位点序列分型（WGS 融入模块） | mlst | envs/prokaWGS (mlst 2.11) |
+| 41c | `scripts/41c_bac_pangenome.sh` | 同种 MAG 泛基因组分析（WGS 融入模块） | Roary | envs/prokaWGS (roary 3.12.0) |
+| 41d | `scripts/41d_bac_snippy.sh` | MAG SNP/InDel 变异检测（WGS 融入模块） | Snippy | envs/snippy (snippy 4.0.2) |
+| **42** | **`scripts/42_bac_mge.sh`** | **MGE 综合注释（ISfinder/ICEberg/integrall/transposase/mobileOG，HGT 追踪）** | **MMseqs2 + BLAST + HMMER + DIAMOND** |
+| **42b** | **`scripts/42b_bac_plasmidfinder.sh`** | **质粒识别与分类（replicon 类型 + Inc group，conda 内置 DB）** | **PlasmidFinder 2.1.6** |
+
+### 🦠 病毒维度（Virome，编号 51-69）
+
+> **分析完成状态（Project_example，2026-06-18 更新）**
+> - 51-72 全部完成 ✅（含新增脚本 54b/70/71/72）；Snakemake 全流程验证通过（2026-06-17）
+> - **54b** (`54b_vir_checkv_filter.sh`): MIUVIG标准质量过滤 — 42个contigs（S01=0, S02=21, S03=4, S04=8, S05=1, S06=8）
+> - **55** Prodigal-gv：6/6样本完成，输出 `result/virus/prodigal/`
+> - **57** vOTU geNomad分类：`result/virus/votu/genomad/virus_taxonomy.tsv`（42行）✅
+> - **59** Salmon quant：6/6样本完成 ✅（修复：Salmon 0.14.1 decoy-aware 索引 segfault → 标准索引）
+> - **60** vOTU丰度矩阵：`result/virus/votu/table/vOTU_table_ann.txt`（533行）✅
+> - **65** PHOLD：输出路径修复（`vOTU_all_cds_functions.tsv` 正确拷贝为 sentinel）✅
+> - **67** BACPHLIP：Snakemake rule 补加 `-t {threads}` 参数 ✅
+> - **70** PhaBox2 2.1.12：`result/virus/phabox2/phabox2_summary.tsv` ✅
+> - **71** DRAM-v 1.5.0：`result/virus/dram/DRAM_annotations.tsv` ✅（无viral DB时auxiliary_score=5填充）
+> - **72** PhaGCN3 3.1：`result/virus/phagcn3/phagcn3_prediction.tsv` ✅
+> - vOTU聚类：42个filtered contigs → **20个cluster representatives**（95% ANI, 0.85 qcov）
+> - 61-63 vMAG链：Project_example测序深度不足，无vMAG产出（预期行为）；62/63脚本已修复0-vMAG sentinel创建
+> - **98c 病毒功能整合表（2026-07-03 补跑）**：`98c_vir_integration_tables.sh` 已成功运行，输出 `result/integration/virus/`（7张聚合/宽表 + 8张标准化表）。`host_genus_abundance.tsv` 为0行（iPHoP在Project_example无命中，属预期行为）。
+
+| 编号 | 脚本 | 功能 | 工具 |
+|------|------|------|------|
+| 51 | `scripts/51_vir_megahit.sh` | 组装（病毒优化参数，≥1.5kb） | MEGAHIT |
+| 52 | `scripts/52_vir_genomad.sh` | 病毒/质粒鉴定（神经网络+生活方式预测） | geNomad |
+| 53 | `scripts/53_vir_virsorter2.sh` | 病毒序列预测（与geNomad取交集） | VirSorter2 |
+| 54 | `scripts/54_vir_checkv_contig.sh` | 病毒contig质量评估 | CheckV |
+| **54b** | **`scripts/54b_vir_checkv_filter.sh`** | **MIUVIG质量过滤**（Complete/HQ/MQ/LQ + Not-det+viral_genes≥1，长度≥2000bp） | **seqkit** |
+| 55 | `scripts/55_vir_prodigal_gv.sh` | 病毒蛋白预测（病毒遗传密码子） | Prodigal-gv |
+| 56 | `scripts/56_vir_votu_gen.sh` | vOTU 生成（95% ANI, 0.85 qcov；优先读54b filtered输出） | vclust |
+| 57 | `scripts/57_vir_votu_genomad.sh` | vOTU 分类学注释 | geNomad |
+| 58 | `scripts/58_vir_salmon_build.sh` | 构建 vOTU 定量索引（per-sample CDS + vOTU representatives） | Salmon |
+| 59 | `scripts/59_vir_salmon_quant.sh` | vOTU 样本间丰度定量 | Salmon |
+| 60 | `scripts/60_vir_votu_table.sh` | 生成 vOTU 丰度矩阵（CDS-level Salmon输出→合并） | Python |
+| 61 | `scripts/61_vir_vmag.sh` | vMAG 生成（病毒基因组重建） | vmag pipeline |
+| 62 | `scripts/62_vir_checkv_mag.sh` | vMAG 质量评估与过滤 | CheckV |
+| 63 | `scripts/63_vir_coverm_quant.sh` | vMAG 样本间丰度定量 | CoverM |
+| 64 | `scripts/64_vir_pharokka.sh` | 病毒基因组端到端注释（含ARG） | PHAROKKA + PHROG |
+| 65 | `scripts/65_vir_phold.sh` | 结构暗物质ORF注释（PHAROKKA补充） | PHOLD + PDB |
+| 66 | `scripts/66_vir_vog.sh` | VOG HMM 扫描（跨界病毒注释） | VOGDB |
+| 67 | `scripts/67_vir_bacphlip.sh` | 噬菌体生活方式预测（裂解/溶原） | BACPHLIP |
+| 68 | `scripts/68_vir_iphop.sh` | 病毒-宿主关联预测 | iPHoP |
+| 69 | `scripts/69_vir_vcontact3.sh` | 病毒分类基因共享网络 | vConTACT3 |
+| 70 | `scripts/70_vir_phabox2.sh` | 端到端分类（virus/质粒+完整lineage+宿主+生活方式） | PhaBox2 2.1.12 | envs/phabox2, db/phabox2_db ✅ 2026-06-16 |
+| 71 | `scripts/71_vir_dram.sh` | 病毒功能注释 + AMG预测（辅助代谢基因） | DRAM 1.5.0 | envs/dram, db/dram_db ✅ 2026-06-16 |
+| 72 | `scripts/72_vir_phagcn3.sh` | 深度学习图卷积病毒分类（补充vConTACT3） | PhaGCN3 3.1 | envs/phagcn3, db/phagcn3_db ✅ 2026-06-16 |
+
+### 🍄 真菌维度（Mycobiome，编号 71-86）
+
+> **分析路线说明（对应 Yan et al. 2024 Cell 187）**
+>
+> 真菌维度分为三条并行子路线，互相补充：
+>
+> **路线 A — PHF 丰度定量（论文原方法，推荐首选）✅ Project_example 已完成**
+> `74a`（一次性建库）→ `74e`（per-sample Bowtie2+Singular/Escrow）→ `74f`（多样本聚合）
+> - 数据库：`db/gut_fungi_db/`（760基因组基因集，4个Bowtie2索引，已构建完成）
+> - 算法：5步Bowtie2过滤（去宿主/细菌/rRNA）+ Singular/Escrow reads分配 + GPA.py 相对丰度
+> - 输出：`result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv`（8簇×6样本，317簇分类注释）
+> - **与论文一致性**：✅ 完全对应（Yan et al. 2024 Cell 187 完整实现，identity=0.95，-k 1000）
+>
+> **路线 B — 多工具分类（互补，取共识）✅ Project_example 已完成**
+> `71`（Kraken2）/ `72`（MetaPhlAn4）/ `73`（HUMAnN4真菌通路提取）/ `74`（BLAST备用）/ `75`（FunOMIC）/ `77`（MicroFisher）
+> - 71：`result/fungi/kraken2/` — Bracken多分类级别输出（S/G/P），6/6样本 ✅
+> - 72：`result/fungi/metaphlan4/` — 真菌物种组成，6/6样本 ✅
+> - 73：`result/fungi/humann4/` — 真菌功能通路丰度，6/6样本 ✅
+> - 74：`result/fungi/blast_gutdb/` — BLAST比对肠道真菌库，6/6样本 ✅
+> - 75：`result/fungi/funomic/` — FunOMIC分类，6/6样本 ✅（75b多样本聚合待运行）
+> - 76：**CCMetagen — 未运行**（依赖NCBI nt全库，数据库未配置）
+> - 77：`result/fungi/microfisher/` — ITS/18S/28S多超变区，6/6样本 ✅
+>
+> **路线 C — 组装+MAG+注释（深度功能分析）✅ 流程全部跑通**
+> `78`（reads提取+组装）→ `79`（Eukfinder MAG）→ `80b`（Prodigal基因预测）→ `81-86`（功能注释）
+> - 78：`result/fungi/assembly/` — MEGAHIT组装，6/6样本 .contigs.fa ✅
+> - 79：`result/fungi/eukfinder/` — EukDB构建完成（628/667基因组，12.8GB），S01测试通过（exit 0，0个真核contig，低测序深度预期行为）✅ 2026-06-17
+> - 80/80b：`result/fungi/prodigal/` — Prodigal基因预测（.faa/.fna/.gff），6/6样本 ✅（基于78组装contigs）
+> - 81：`result/fungi/eggnog/` — eggNOG注释（combined_fungi.faa合并） ✅
+> - 82：`result/fungi/kegg/` — KEGG KO通路注释 ✅
+> - 83：`result/fungi/dbcan/` — CAZyme注释（diamond+hmmer+eCAMI三工具） ✅
+> - 84：`result/fungi/vfdb/` — 毒力因子 ✅
+> - 85：`result/fungi/amr/` — 抗真菌药物耐药基因 ✅
+> - 86：`result/fungi/merops/` — 蛋白酶注释 ✅
+>
+> **⚠️ 待完成项**：
+> - **75b FunOMIC聚合** ✅ 2026-06-22：`result/integration/fungi/funomic_species_count.tsv` + `normalized/funomic_species_relab.tsv` + `funomic_species_clr.tsv`（3544 species × 6 samples）
+> - **76 CCMetagen**：需要NCBI nt全库（>200G），暂未配置
+
+| 编号 | 脚本 | 功能 | 工具 |
+|------|------|------|------|
+| 71 | `scripts/71_fun_kraken2_fungi.sh` | Kraken2 真菌分类（PlusPF含真菌，基础快速） | Kraken2+Bracken |
+| 72 | `scripts/72_fun_metaphlan4_euk.sh` | MetaPhlAn4 真菌分类（不过滤真核生物） | MetaPhlAn4 |
+| 73 | `scripts/73_fun_humann4_fungi.sh` | 从HUMAnN4 stratified矩阵提取真菌通路 | HUMAnN4 |
+| 74 | `scripts/74_fun_blast_gutdb.sh` | BLAST 比对肠道真菌参考库（47G，高精度，备用） | BLAST |
+| 74a | `scripts/74a_fun_gut_db_build.sh` | **一次性建库**：Bowtie2 索引（4个，来自 db/gut_fungi_db/） | Bowtie2 |
+| 74e | `scripts/74e_fun_phf_profiler.sh` | **论文方法** per-sample：5步过滤+Singular/Escrow（Yan et al. 2024 Cell 187） | Bowtie2+GPA.py |
+| 74f | `scripts/74f_fun_phf_aggregate.sh` | **论文方法** 聚合：多样本.rc矩阵+物种分类注释 | Python |
+| 75 | `scripts/75_fun_funomics.sh` | FunOMIC 专用真菌WGS流程（1.6M marker+3.4M功能蛋白） | FunOMIC |
+| 75b | `scripts/75b_fun_funomics_aggregate.sh` | FunOMIC 多样本结果聚合 | Python |
+| 76 | `scripts/76_fun_ccmetagen.sh` | CCMetagen 真核+原核综合分类（NCBI nt全库） | CCMetagen |
+| 77 | `scripts/77_fun_microfisher.sh` | MicroFisher 多超变区提取（ITS1/ITS2/18S/28S） | MicroFisher |
+| 78 | `scripts/78_fun_megahit.sh` | 真菌reads提取（依赖71/72输出）+重新组装 | MEGAHIT |
+| 79 | `scripts/79_fun_eukfinder.sh` | 真核生物MAG回收（Eukfinder，2025，专用真核binning） | Eukfinder |
+| 80 | `scripts/80_fun_prodigal.sh` | 真菌蛋白编码基因预测（真核密码子表） | Prodigal |
+| 80b | `scripts/80b_fun_metaeuk.sh` | 真菌基因预测双模式（`--method prodigal\|metaeuk`，默认Prodigal） | Prodigal/MetaEuk |
+| 81 | `scripts/81_fun_eggnog.sh` | 真菌综合功能注释（COG/KEGG/GO） | eggNOG-mapper |
+| 82 | `scripts/82_fun_kegg.sh` | 真菌 KEGG KO 通路注释 | KEGG diamond |
+| 83 | `scripts/83_fun_dbcan.sh` | 真菌 CAZyme 注释 | dbCAN3 |
+| 84 | `scripts/84_fun_vfdb.sh` | 真菌毒力因子（念珠菌/曲霉等） | VFDB |
+| 85 | `scripts/85_fun_amr.sh` | 抗真菌药物耐药基因 | AMRFinder |
+| 86 | `scripts/86_fun_merops.sh` | 真菌蛋白酶注释（侵袭相关） | MEROPS |
+
+### 📊 统计分析（编号 91-98）
+
+> **分析完成状态（Project_example，2026-06-22 更新）**
+> - 91 多样性 ✅ / 92 差异分析 ✅ / 93 共现网络 ✅ / 94 可视化 ✅ / 95a/b 批次校正 ✅ / 96 SIAMCAT ML ✅
+> - **统计分析管道已重设计（2026-06-22）**：去除可视化 PDF 输出，专注数据表格输出（TSV矩阵）
+>   - `result/stat/{bacteria,virus,fungi}/{abundance,diversity,differential}/` — 三维度分层数据表格
+>   - Snakemake rule all 仅追踪 4 个 TSV sentinel（diversity/diff/network/ml），PDF 按需手动运行
+>   - 真菌维度：Project_example 测序深度不足，fungi_mt SKIPPED（预期行为）；现在会写 3 个 sentinel 文件标记跳过原因
+>   - 病毒 vOTU 丰度表行名已清理为 `vOTU_N` 格式（原为 microeco compound label `k127_XXX|...`）
+>   - 未分类 vOTU（Domain=NA）已从所有统计分析中过滤（22/49 有分类，27 已过滤）
+> - **97 跨队列验证（本地多队列）**：97_stat_crosscohort.sh ✅（8个可视化+meta-analysis，支持本地多队列）
+> - **✅ R 统计包依赖（envs/r_stat，2026-07-02 更新）**：
+>   - 核心：phyloseq, microeco, vegan, microbiome, ggplot2, tidyverse
+>   - 差异分析：ANCOMBC, Maaslin2, DESeq2, edgeR
+>   - 机器学习：SIAMCAT, curatedMetagenomicData, caret, randomForest, glmnet
+>   - 批次校正：MMUPHin, ConQuR, sva, MBECS, limma
+>   - 网络分析：NetCoMi, SpiecEasi, igraph
+>   - 新增：**file2meco**（microeco↔phyloseq转换桥梁）、**indicspecies**（指示物种分析）
+>   - 其他：DirichletMultinomial（肠型分析）, patchwork, ggpubr, RColorBrewer
+
+| 编号 | 脚本 | 功能 | 工具 |
+|------|------|------|------|
+| 91 | `scripts/91_stat_diversity.sh` | Alpha/Beta 多样性计算与可视化。**新增（Phase 1）**：自动导出标准 phyloseq RDS 到 `result/stat/{dimension}/phyloseq/` 供下游所有 R 包使用 | vegan/phyloseq/microeco/file2meco (R) |
+| 92 | `scripts/92_stat_differential.sh` | 差异分析（LEfSe/ANCOM-BC2/DESeq2/edgeR/MaAsLin2） | R |
+| 93 | `scripts/93_stat_cooccurrence.sh` | 跨维度共现网络 | FastSpar/SparCC |
+| 94 | `scripts/94_stat_visualization.sh` | 统一可视化（热图/PCoA/桑基图/UpSet） | ggplot2 (R) |
+| 95a | `scripts/95a_stat_batch_correct.sh` | 多中心批次校正 Top10 方法（**Phase 2b 验证**：包依赖齐全，ComBat-seq 正常；其他方法因 API 变更需修复） | MBECS/ConQuR/MMUPHin (R) |
+| 95b | `scripts/95b_stat_batch_evaluate.sh` | 批次校正评估报告（**Phase 2b**：存在 vegan::adonis2 公式拼接 bug，待 Phase 3 修复） | MBECS (R) |
+| 96 | `scripts/96_stat_ml_siamcat.sh` | ML筛选+ROC评估（lasso/RF/SVM/enet 10折交叉验证，Top10特征+AUC对比），输出至 result/stat/ml/ | SIAMCAT (R) |
+| 97 | `scripts/97_stat_crosscohort.sh` | **跨队列验证（Phase 2a 统一）**：本地多队列 ML 迁移验证（8 个可视化 + meta-analysis）。输出到 `result/viz_crosscohort/`。旧的 `statistics.smk::stat_curatedMGD` 规则已删除避免冲突。 | SIAMCAT/MMUPHin (R) |
+| 98 | `scripts/98_stat_report.sh` | 按需生成带时间戳的分析结果 Markdown 快照报告 | bash + Rscript |
+
+### 🔄 串联流程脚本
+
+| 脚本 | 功能 |
+|------|------|
+| `scripts/00_pipeline_bacteria.sh` | 细菌完整流程（01-02 + 11-41） |
+| `scripts/00_pipeline_virome.sh` | 病毒完整流程（01-02 + 51-69） |
+| `scripts/00_pipeline_fungi.sh` | 真菌完整流程（01-02 + 71-86） |
+| `scripts/00_pipeline_full.sh` | 三维度完整流程 |
+
+## 1.3 维度间依赖说明
+
+- **真菌 74e/74f**（PHF丰度定量）依赖 **74a** 的 Bowtie2 索引（一次性前置建库）
+- **真菌 78-79**（组装+MAG）依赖 **71/72/74/75/76/77** 的分类输出（用于真菌 reads 提取）
+- **真菌 75/76/77** 为三种互补分类策略（FunOMIC/CCMetagen/MicroFisher），建议同时运行后取共识
+- **病毒 65**（PHOLD）依赖 **64**（PHAROKKA）的输出
+- **统计 95b** 依赖 **95a** 的输出
+- **统计 97** 依赖 **96** 或 **92** 的 Top10 特征输出
+
+## 1.4 未知工具处理规则
+
+当用户询问某工具的参数、用法或最佳实践时：
+1. 先检查 `docs/` 下是否有对应 `.md` 文件（含 `docs/tools_ref/`）
+2. 若无，使用 WebSearch + WebFetch 获取官方文档
+3. 将学到的知识缓存至 `docs/tools_ref/{tool_name}.md`（文件名加 `.auto.md` 后缀表示自动生成，已加入 .gitignore）
+4. 基于获取的知识回答问题或生成脚本
+
+## 1.5 脚本编写前置调研规则（必须遵守）
+
+**编写任何分析脚本前，必须完成以下调研步骤，综合后再动笔：**
+
+### Step 1 — 读取本地资料
+优先阅读以下资料中与当前脚本功能相关的内容：
+
+| 资料 | 路径 | 适用场景 |
+|------|------|---------|
+| EasyMetagenome | `~/Course/Maxmetagenome/Reference/EasyMetagenome.zip`（已解压至 `/tmp/EasyMetagenome_ref/`）| 宏基因组全流程，MetaPhlAn4/HUMAnN4/组装/Binning/统计 |
+| Metagenomics_Apptainer_pipline | `/home/labuser/Course/Metagenomics_Apptainer_pipline/` | Centrifuger 分类、宏基因组组装、功能注释 |
+| Binning_Apptainer_pipline | `/home/labuser/Course/Binning_Apptainer_pipline/` | MAG 挖掘、Binning、CheckM2、dRep |
+| Virus_Apptainer_pipline | `/home/labuser/Course/Virus_Apptainer_pipline/` | 宏病毒组全流程（geNomad/VirSorter2/CheckV/iPHoP） |
+| WGS 单菌分析资料 | `~/Course/Maxmetagenome/Reference/WGS_prokaryote.pipeline.v0.7.sh` | 单菌/分离株 WGS：组装、MLST、泛基因组、系统发育树、变异检测 |
+
+### Step 2 — 网络检索最新实践
+**每次编写脚本前必须检索**（使用 WebSearch 工具）：
+1. **PubMed**：搜索工具名 + "metagenomics" / "pipeline" / "tutorial"，了解最新发表的使用方式和推荐参数
+2. **GitHub**：搜索工具官方仓库的 README / wiki / tutorial，获取最新命令行用法和已知 issue
+3. **工具官方文档**：如有官网或 ReadTheDocs，优先参考
+
+检索关键词格式：`{tool_name} metagenomics pipeline best practice {year}`，year 填写当前年份（2026）。
+
+### Step 3 — 综合后编写
+- 对比本地参考与在线最新实践的差异
+- 优先采用工具官方推荐参数（README/文档 > 发表文章 > 其他流程二手引用）
+- 如有参数版本差异，以当前环境实际安装版本为准（`conda run --prefix ... tool --version`）
+- 在脚本注释中注明关键参数的来源依据
+
+## 1.6 Architecture Components（架构层说明）
+
+> 当 CC 需要了解项目架构、各层职责或如何整合新脚本时，优先读本节。
+
+### 双模式架构总览
+
+```
+scripts/*.sh          ← 原子执行单元（永远不变，所有模式共用）
+      │
+      ├── Mode 2: Bash Pipeline    scripts/00_pipeline_bacteria.sh
+      │          轻量，单机，无额外依赖，--skip/--from/--only 控制步骤
+      │
+      └── Mode 3: Snakemake        pipeline/Snakefile
+                 DAG 依赖追踪，原生断点续跑，HPC 就绪
+
+agents/               ← Agent Skills 系统（Claude Code 交互式驱动）
+  registry.yaml       全局脚本状态（not_started/in_progress/ready/integrated）
+  skills/*.yaml       工具卡片（输入/输出/依赖/性能/已知问题）
+  provenance/*.json   运行轨迹记录（/mgx-learn 自动写入）
+
+.claude/skills/*.md   ← Claude Code 可调用技能（/mgx-* 前缀）
+```
+
+### 各层文件职责
+
+| 层 | 文件 | 维护者 | 触发时机 |
+|---|---|---|---|
+| 执行层 | `scripts/*.sh` | 脚本作者 | 编写/测试新分析步骤 |
+| Snakemake 层 | `pipeline/rules/*.smk` | CC | 每次新脚本 integrated |
+| 工具卡片层 | `agents/skills/*.yaml` | CC | 每次新脚本 integrated |
+| 状态追踪层 | `agents/registry.yaml` | 双方 | 脚本 ready 或 integrated 时 |
+| 运行记录层 | `agents/provenance/*.json` | CC (`/mgx-learn` 或 `batch_provenance_backfill.py`) | 每次实际运行后 |
+| CC 技能层 | `.claude/skills/*.md` | CC | 架构演进时修改 |
+
+### pipeline/ 目录结构
+
+```
+pipeline/
+├── Snakefile                   入口（include rules/*.smk）
+├── config/
+│   └── config.yaml             运行时参数（每次分析前编辑）
+├── profiles/
+│   ├── auto/                   当前机器自动生成（/mgx-tune）
+│   ├── local_16c/              16核预设
+│   ├── local_48c/              48核预设（本机）
+│   ├── local_96c/              96核预设
+│   └── hpc_slurm/              HPC SLURM预设
+└── rules/
+    ├── preprocessing.smk       rules: fastp_qc, kneaddata ✅
+    ├── bacteria_taxonomy.smk   rules: metaphlan4, metaphlan4_merge, strainphlan4, humann3 ✅
+    ├── bacteria_assembly.smk   rules: megahit, prodigal, cdhit, salmon_build, salmon_quant ✅
+    ├── bacteria_annotation.smk rules: eggnog, kegg, amrfinder, card, dbcan, vfdb, bacmet, antismash, defense_finder, ncyc, pcyc ✅ (kegg已加log:/threads:)
+    ├── bacteria_binning.smk    rules: coverm_depth, metabat2, maxbin2, semibin2, dastool, checkm2, drep, coverm_quant, gtdbtk, bakta, mlst, pangenome, snippy ✅
+    ├── virome.smk              rules: 51-72（含54b/58-60/70/71/72）✅ 全流程验证通过 2026-06-17
+    ├── mycobiome.smk           rules: 71-86（含74a/74e/74f/75/77-86）✅
+    ├── statistics.smk          rules: 91-98 ✅（已从rule all移除，R包缺失，需手动安装后运行）
+    └── rag.smk                 rules: refresh_literature_kb ✅
+```
+
+### agents/skills/ 工具卡片格式（关键字段）
+
+```yaml
+id: "14_bac_kraken2"           # 脚本 ID
+rule_type: "per_sample"        # per_sample | aggregate
+inputs:  [{name, path_pattern, required}]
+outputs: [{name, path_pattern, description}]
+depends_on: [...]              # DAG 依赖
+benchmarks: {typical_runtime_min, peak_memory_gb}
+known_issues: [{description, workaround}]
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::rule_name"
+```
+
+## 1.7 CC 新脚本集成工作流（必须遵守）
+
+当脚本作者在 `agents/registry.yaml` 中将某脚本状态更新为 `ready`，或直接告知 CC "XX 脚本 ready 了"时，CC 执行以下固定流程：
+
+### Step 1 — 调用 /mgx-integrate
+读取脚本 → 提取路径/依赖 → 生成工具卡片 → 写 Snakemake rule → 更新 registry
+
+### Step 2 — 调用 /mgx-review
+验证清单：
+- [ ] Snakemake rule 输入路径与脚本变量完全一致
+- [ ] 输出路径与脚本变量完全一致
+- [ ] rule_type 正确（per_sample / aggregate）
+- [ ] 聚合 rule 用 `expand()` 收集所有样本
+- [ ] 聚合 rule 输出使用 sentinel `.done` 文件
+- [ ] skill card 的 `snakemake_rule` 字段指向正确
+
+### Step 3 — git commit
+```
+git add pipeline/rules/*.smk agents/skills/<id>.yaml agents/registry.yaml
+git commit -m "feat: integrate <script_id> into Snakemake pipeline + skill library"
+```
+
+### Step 4 — 更新 Snakefile rule all（如需）
+新脚本的输出如果是下游分析的必要前置，将其加入 `pipeline/Snakefile` 的 `rule all` 输入列表。
+
+## 1.8 跨队列验证详情（脚本 97 补充说明）
+
+**脚本 97** (`97_stat_crosscohort.sh`) 增强版跨队列验证，支持本地多队列和 curatedMetagenomicData：
+
+**核心功能**：
+- ✅ 本地多队列模式（推荐）：从多个项目目录读取数据
+- ✅ 模型迁移验证：在训练队列训练 → 测试队列预测
+- ✅ 8 个核心可视化：森林图/瀑布图/ROC叠加/UpSet/特征稳定性热图/PCoA批次/校准曲线/效应相关
+- ✅ Meta-analysis：随机效应模型合并 AUC + I² 异质性评估
+
+**使用场景**：
+```bash
+# 本地多队列（3个医院数据）
+bash scripts/97_stat_crosscohort.sh \
+  -w Project/Hospital_A -r ~/Course/Maxmetagenome \
+  -m metadata.csv -g Group \
+  --source local --cohorts "Hospital_A,Hospital_B,Hospital_C" \
+  --train-cohort Hospital_A --meta-analysis
+
+# 单队列（框架测试）
+bash scripts/97_stat_crosscohort.sh \
+  -w Project/Project_example -r ~/Course/Maxmetagenome \
+  -m metadata.csv -g Group --source local
+```
+
+**输出目录**：`${WORKDIR}/result/viz_crosscohort/`（8个PDF + 2个TSV + sentinel）
+
+**详细文档**：`docs/97_crosscohort_usage.md`
+**测试脚本**：`scripts/test_97_crosscohort.sh`（使用 mock 数据验证框架）
+
+## 1.9 文献技能包存放规范
+
+```
+skills/replications/
+  SCHEMA.md                         — 统一 schema 规范（nf-core+xKG+MCP+RO-Crate）
+  registry.yaml                     — 全局技能包索引
+  fungi/
+    Yan2024_Cell187/                 — 命名规范：<Author><Year>_<Journal><Vol>
+      manifest.yaml                 — PaperBench 四维复现评分
+      method_graph.yaml             — xKG 分析 DAG
+      params.yaml                   — 文献推荐参数（跨文献对比层）
+      validate.sh                   — 可运行验证命令
+      README.md                     — RAG 自动索引摘要
+      code/original/               — 原作者代码（git clone，不修改）
+      code/adapted/                 — 项目适配版本（路径变量化）
+  bacteria/                         — 细菌维度文献
+  virome/                           — 病毒维度文献
+```
+
+## 1.10 Graphify 知识图谱技能
+
+**安装**: `pip install graphifyy && graphify install` (已完成 2026-06-12)
+**Skill 文件**: `~/.claude/skills/graphify/SKILL.md`
+
+- **graphify** (`~/.claude/skills/graphify/SKILL.md`) — 将项目文件提炼为知识图谱（NetworkX + Leiden 社区检测）。Trigger: `/graphify`
+- When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
+
+常用命令:
+- `/graphify docs/ agents/skills/ pipeline/rules/`  — 构建分析平台知识图谱
+- `/graphify docs/experience/`                      — 经验文档结构导航
+- `graphify query "metaphlan4 connects to humann3"` — 图路径查询
+- `graphify --mcp`                                  — 启动 MCP stdio 服务（与 RAG MCP 并联）
+- `graphify --update`                               — 增量更新（新脚本集成后使用）
