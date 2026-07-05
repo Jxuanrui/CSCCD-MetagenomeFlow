@@ -82,6 +82,6 @@ skills/replications/**/code/adapted/**/*.zip
 
 # Claude Code 运行时文件（session lock，不入库）
 .claude/scheduled_tasks.lock
-# /mgx-tune skill 文件（由 CC 生成，不属于 agents/skills/ 正式库）
-.claude/skills/mgx-tune.md
-.claude/commands/mgx-tune.md
+
+# RAG 索引缓存（可通过 mcp/indexer.py / mcp/bm25_index.py 重建，不入库）
+mcp/bm25_data/*.pkl
