@@ -7,10 +7,46 @@
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
-[![Conda](https://img.shields.io/badge/conda%20envs-40-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-111-blue)]()
+[![Conda](https://img.shields.io/badge/conda%20envs-43-orange)](https://github.com/conda-forge/miniforge)
+[![Scripts](https://img.shields.io/badge/scripts-125-blue)]()
 [![RAG](https://img.shields.io/badge/RAG-11988%20chunks-purple)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
+
+```
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║    ███╗   ███╗  ██████╗ ██╗  ██╗                                          ║
+║    ████╗ ████║ ██╔════╝ ╚██╗██╔╝                                          ║
+║    ██╔████╔██║ ██║  ███╗ ╚███╔╝                                           ║
+║    ██║╚██╔╝██║ ██║   ██║ ██╔██╗                                           ║
+║    ██║ ╚═╝ ██║ ╚██████╔╝██╔╝ ██╗                                          ║
+║    ╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═╝                                          ║
+║                                                                           ║
+║    MaxMetagenome Platform                                                 ║
+║    完整宏基因组多维度分析平台  ·  版本 1.0                                ║
+║                                                                           ║
+║    125 分析脚本  ·  99 Snakemake 规则  ·  43 conda 环境  ·  ~1.1TB 数据库 ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Platform](#platform)
+- [Quick Start](#quick-start)
+- [Run Modes](#run-modes)
+- [Analysis Dimensions](#analysis-dimensions)
+- [Bacteria Dimension](#bacteria-dimension--pipeline--outputs)
+- [Virome Dimension](#virome-dimension--pipeline--outputs)
+- [Mycobiome Dimension](#mycobiome-dimension--pipeline--outputs)
+- [Script Index](#script-index)
+- [AI-Assisted Features](#ai-assisted-features)
+- [Repository Layout](#repository-layout)
+- [Disk Requirements](#disk-requirements)
+- [Migrating to a New Server](#migrating-to-a-new-server)
+- [Tools & References](#tools--references)
 
 ---
 
@@ -20,9 +56,9 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 **Why CSCCD-MetagenomeFlow?**
 
-- **Three kingdoms, one platform.** Bacteria (scripts 11–41), Virome (51–72), and Mycobiome (71–86) share the same preprocessing steps, project directory layout, and Snakemake configuration — no glue scripts, no format conversion between steps.
+- **Three kingdoms, one platform.** Bacteria (scripts 11–42b), Virome (51–72), and Mycobiome (71–86) share the same preprocessing steps, project directory layout, and Snakemake configuration — no glue scripts, no format conversion between steps.
 - **Mechanistic discovery built-in.** The `mechanism_kb` RAG collection bridges 4,860 manually-curated gut microbe → metabolite → host gene relationships (sourced from GutMGene v2.0 + OmniPath), enabling direct queries like "which microbial functions produce butyrate and activate FFAR2?" — critical for cardiovascular research where short-chain fatty acids modulate inflammation and blood pressure.
-- **Portable and reproducible.** All 40 conda environments and ~1.1 TB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
+- **Portable and reproducible.** All 43 conda environments and ~1.1 TB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
 - **Three run modes.** Step-by-step (fine-grained debugging), Bash pipeline (lightweight, no extra deps, `--from`/`--skip` checkpointing), or Snakemake DAG (production, HPC-ready, native resume). All three modes call the identical underlying scripts.
 - **Functional integration built-in.** Script `98b` generates 11 integration tables per dimension at the end of each analysis — raw (Σ TPM), relative abundance, and CLR-normalized versions — ready for LEfSe, ANCOM-BC2, MaAsLin2, SIAMCAT, and Aitchison-distance ordination without any manual post-processing.
 - **AI-assisted with MCP protocol.** 18 Claude Code slash commands (`/mgx-*` + `/graphify`) cover pipeline planning, execution, visualization, new-script integration, and knowledge graph construction, backed by a quad-source RAG knowledge base (11,988 chunks: 1,634 experience_kb + 5,392 literature_kb + 102 skill_design_kb + 4,860 mechanism_kb) indexed with `BAAI/bge-small-zh-v1.5`. MCP server implements official Model Context Protocol for seamless integration with Claude Code and Codex CLI, supporting incremental indexing (20-50x faster iteration).
@@ -36,9 +72,9 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | OS | Linux x86_64 · Ubuntu 22.04 |
 | Environment manager | Miniforge3 (self-contained, under project root) |
 | Workflow engine | Snakemake 9.22.0 |
-| Analysis scripts | 111 (numbered 00–98d, incl. 54b/70/71/72/97_crosscohort) |
-| Snakemake rules | 103 across 10 rule files |
-| Conda environments | 40 isolated tool environments |
+| Analysis scripts | 125 (113 analysis workflows 01–98d + 12 utilities) |
+| Snakemake rules | 99 across 10 rule files |
+| Conda environments | 43 isolated tool environments |
 | Databases | ~1.1 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, UniProt Swiss-Prot, Pfam-A, ISfinder, ICEberg, integrall, transposase-db, etc.) |
 | RAG knowledge base | **11,988 chunks** across 4 collections (ChromaDB + bge-small-zh-v1.5 + BM25 hybrid retrieval) |
 | MCP server | Official Model Context Protocol compliance, registered with Claude Code & Codex CLI |
@@ -119,7 +155,7 @@ snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 4 --
 
 | Dimension | Scripts | Pipeline script |
 |-----------|---------|----------------|
-| 🦠 Bacteria | 11–41d | `00_pipeline_bacteria.sh` |
+| 🦠 Bacteria | 11–42b | `00_pipeline_bacteria.sh` |
 | 🦠 Virome | 51–72 | `00_pipeline_virome.sh` |
 | 🍄 Mycobiome | 71–86 | `00_pipeline_fungi.sh` |
 | 📊 Statistics | 91–98 | — |
@@ -490,7 +526,7 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | 01 | Quality control | fastp |
 | 02 | Host removal | KneadData + bowtie2 |
 
-### 🦠 Bacteria (11–41)
+### 🦠 Bacteria (11–42b)
 
 | No. | Function | Tool |
 |-----|----------|------|
@@ -641,7 +677,7 @@ All collections are queryable via `/mgx-ask` slash command or direct MCP tool ca
 
 ```
 CSCCD-MetagenomeFlow/
-├── scripts/                  111 analysis scripts (00–98d, incl. 54b/70/71/72/97_crosscohort)
+├── scripts/                  125 scripts (113 analysis workflows 01–98d + 12 utilities)
 ├── pipeline/
 │   ├── Snakefile             DAG entry point
 │   ├── config/config.yaml    Per-run parameters (samples / workdir / threads)

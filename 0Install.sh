@@ -1,89 +1,87 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# MaxMetagenome 软件和数据库安装脚本
-# 版本: 0.1  日期: 2026/05/29
+# CSCCD-MetagenomeFlow 软件和数据库安装脚本
+# 版本: 1.0
 # 平台: Linux x86_64 ubuntu22.04
 # 作者：Jxuanrui
 # ------------------------------------------------------------------------------
 # 安装进度（已完成节在此记录，下次从 ✗ 处继续）
-#   [✓] §0   初始化（Miniforge3 + 通道 + activate.sh + Rscript）  2026/06/01  测试通过
-#   [✓] §1.1 fastp 0.22.0                                         2026/06/01  测试通过
-#   [✓] §1.2 kneaddata v0.12.4 + bowtie2                          2026/06/01  测试通过
-#   [✓] §1.3 KneadData 数据库（human/mouse/rat，各 6 个 bt2）     2026/06/01  测试通过
-#   [✓] §2.1 humann v3.9 + MetaPhlAn4 v4.2.4 + diamond 2.0.15    2026/06/01  测试通过（端到端输出 3 个 tsv）
-#   [✓] §2.2 HUMAnN4 数据库（chocophlan 12773 + uniref 34G + mapping 20）  2026/06/01  测试通过
-#   [✓] §2.3 MetaPhlAn4 数据库（mpa_vOct22_CHOCOPhlAnSGB_202212，已识别）  2026/06/01  测试通过
-#   [✓] §2.4 LEfSe（biobakery channel）                           2026/06/01  测试通过
-#   [✓] §2.5 Kraken2 2.1.3 + Bracken 3.1                         2026/06/01  测试通过
-#   [✓] §2.6 Kraken2 数据库（pluspf_20240112，hash 77G，classify 正常）     2026/06/01  测试通过
-#   [✓] §3.1 assembly（MEGAHIT 1.2.9 / SPAdes 3.15.5 / QUAST 5.0.2 / Prodigal 2.6.3 / CD-HIT 4.8.1 / salmon 1.2.0）  2026/06/01  测试通过（MEGAHIT 端到端）
-#   [✓] §3.2 eggNOG-mapper 2.1.13（pip 安装，Python 3.9）         2026/06/01  测试通过
-#   [✓] §3.3 eggNOG 数据库（5.0.2，39G+8.7G，--data_dir 参数指定，无软链接）  2026/06/01  测试通过（DB version 5.0.2 识别）
-#   [✓] §4.1 MetaWRAP 1.3.2（--no-channel-priority 安装）          2026/06/01  测试通过
-#   [✓] §4.2 CheckM 数据库（10 个文件，~/.checkm/DATA_CONFIG 配置）2026/06/01  测试通过
-#   [✓] §4.3 dRep 3.6.2 + CheckM 1.2.5（pip 安装 + networkx）     2026/06/01  测试通过
-#   [✓] §4.4 CoverM 0.7.0                                          2026/06/01  测试通过
-#   [✓] §4.5 GTDB-Tk 2.5.2（tqdm=4.66.4 先固定）                  2026/06/01  测试通过
-#   [✓] §4.6 GTDB-Tk 数据库（160 GB，13 个目录/文件）              2026/06/01  测试通过
-#   [✓] §4.7 CheckM2（Python 3.8 + scikit-learn=0.23.2 + numpy<1.24）  2026/06/01  测试通过
-#   [✓] §4.8 CheckM2 数据库（uniref100.KO.1.dmnd 2.9 GB）          2026/06/01  测试通过
-#   [✓] §5.1 VIBRANT 1.2.1（envs/vibrant）+ CheckV（envs/checkv）  2026/06/01  测试通过（zlib冲突已拆分独立环境）
-#   [✓] §5.2 AMRFinderPlus 3.10.1 + RGI 4.0.3 + CARD 数据库       2026/06/01  测试通过
-#   [✓] §5.3 dbCAN3 + 数据库（3.5 GB）                             2026/06/01  测试通过
-#   [✓] §5.4 StrainPhlAn4 4.2.4（复用 humann4 环境）               2026/06/03  测试通过（补装 samtools/mafft/fasttree）
-#   [✓] §5.5 antiSMASH 7.1.0（--no-channel-priority 安装）         2026/06/01  测试通过
-#   [✓] §5.6 FastSpar（SparCC）                                    2026/06/01  测试通过
-#   [✓] §6.2 CRAN 包（vegan 2.7.5 / ggplot2 4.0.3 / dplyr 等 16 个）  2026/06/01  测试通过
-#   [✓] §6.3 Bioconductor 包（phyloseq / DESeq2 / edgeR / microbiome / treeio / Maaslin2）  2026/06/01  测试通过
-#   [✓] §6.4 ANCOMBC 2.12.0 + ggtree 4.0.4（conda bioconda 安装）  2026/06/01  测试通过
-#   [✓] §6.5 统计 R 包 (SIAMCAT / curatedMGD / MMUPHin / ConQuR / MBECS / sva / BatchQC)  2026/06/11  测试通过
-#   [✓] §7.1 assembly 环境扩充（centrifuger 1.0.5 / mmseqs2 13.45 / seqtk 1.4）  2026/06/02  测试通过
-#   [✓] §7.3 genomad 1.12.0（独立环境，--no-channel-priority）                    2026/06/02  测试通过
-#   [✓] §7.5 功能注释数据库（vfdb/bacmet/merops/sarg/phi/mvirdb/tcdb/ncyc/pcyc/amrfinder/genomad）  2026/06/02  测试通过
-#   [✓] §7.4 centrifuger 数据库（166 GB，7 个文件）                              2026/06/02  测试通过
-#   [✓] §7.5 KEGG 数据库（48 GB）                                                 2026/06/02  测试通过
-# ------------------------------------------------------------------------------
-# 待配置（Binning 流程新增工具，来自 Binning_Apptainer_pipline）:
-#   [✓] §8.1 MetaBAT2 2.12.1 + MaxBin2 2.2.6（追加进 metawrap）+ SemiBin2 1.5.0  2026/06/02  测试通过
-#   [✓] §8.2 DAS_Tool 1.1.7（独立环境）                                           2026/06/02  测试通过
-#   [✓] §8.3 Bakta 1.12.0（独立环境 + 数据库 3.8 GB）                             2026/06/02  测试通过
-#   [✓] §8.4 Defense-Finder 3.0.0（独立环境 + 数据库 320 MB）                     2026/06/02  测试通过
-#   [✓] §8.5 MobileOG 数据库（19 GB，diamond 搜索）                               2026/06/02  测试通过
-#   [✓] §8.6 CCyc 12G + MCyc 638M + SCyc 642M 数据库（各含1个子目录）            2026/06/02  测试通过
-#   [✓] §8.7 VIBRANT 数据库（11G，KEGG 9995 + VOG 19182 + Pfam，hmmpress 完成）  2026/06/02  测试通过
-#   [✓] §8.8 antiSMASH 数据库（从 Apptainer 项目解压，9.4 GB）                   2026/06/02  测试通过（10 个模块目录）
-#   [✓] §8.9 Snakemake 9.22.0（snakemake-minimal，miniforge3 base）                2026/06-06  测试通过（dry-run DAG 构建正常）
-#   [✓] §10.1 VirSorter2 2.2.4（独立环境 + 数据库）                               2026-06-08  已安装
-#   [✓] §10.2 vclust 1.3.1（独立环境，无专用数据库）                              2026-06-08  已安装
-#   [✓] §10.3 vRhyme 1.1.0（独立环境，无专用数据库）                              2026-06-08  已安装
-#   [✓] §10.4 PHAROKKA 1.9.1（独立环境 + 数据库 1.9G，命令：pharokka.py）        2026-06-08  已安装
-#   [✓] §10.5 PHOLD 1.2.5（独立环境 + 数据库）                                   2026-06-08  已安装
-#   [✓] §10.6 BACPHLIP 0.9.6（独立环境 + hmmer 3.4）                             2026-06-08  已安装
-#   [✓] §10.7 iPHoP 1.4.2（独立环境 + 数据库软链接 → Virus_Apptainer_pipline）   2026-06-08  已安装
-#   [✓] §10.8 vConTACT3 3.1.6（独立环境 + 数据库 v230）                          2026-06-08  已安装
-#   [✓] §10.9 CheckV 1.1.1（数据库 genome_db + hmm_db 就绪）                     2026-06-08  已安装
-#   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv）  2026-06-08  已安装
-#   [✓] §14.1 PhaBox2 2.1.12（envs/phabox2，db/phabox2_db/ 1.7G）                2026-06-16  已安装测试通过（70_vir_phabox2.sh）
-#   [✓] §14.2 PhaGCN3 3.1（envs/phagcn3，db/phagcn3_db/ 275M）                  2026-06-16  已安装测试通过（72_vir_phagcn3.sh）
-#   [✓] §14.3 DRAM 1.5.0（envs/dram，db/dram_db/ rsync 完成，180G）             2026-06-16  安装完成，测试通过（71_vir_dram.sh）
-#   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建）        2026-06-11  已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
-#   [✓] §11.6 WGS 融入模块（mlst 2.11 + roary 3.12.0 in envs/prokaWGS；snippy 4.0.2 in envs/snippy）  2026-06-11  已安装
-#   [✓] §12.1 CGF catalog 760 真菌基因组（db/cgf/genomes/）              2026-06-15  已下载（709条，51条NCBI已撤回）
-#   [✓] §12.2 MetaEuk 真核宏基因组基因预测（envs/metaeuk）                   2026-06-15  已安装
-#   [✓] §12.3 PHF 肠道真菌数据库（db/gut_fungi_db/，760基因组基因集）    2026-06-15  已部署（Yan et al. 2024 Cell 187，Bowtie2索引构建中）
-#   [✓] §12.4 PHF 流程脚本（74a/74e/74f，Bowtie2+Singular/Escrow）      2026-06-15  已创建（论文原方法，替代原74b/74c/74d DIAMOND方案）
-#   [✓] §9   MCP / RAG 服务   ← 最终步骤                                                        2026-06-10  已完成
-#   [✓] §15.1 UniProt Swiss-Prot（243 MB .dmnd + blast/mmseqs 索引，已从参考项目复制）          2026-06-30  就绪
-#   [✓] §15.2 Pfam-A HMM 数据库（~2.4 GB，全部 hmmpress 文件，已从参考项目复制）               2026-06-30  就绪
-#   [✓] §15.3 MGE 数据库组（ISfinder/ICEberg/integrall/transposase-db，已从参考项目复制）       2026-06-30  就绪
+#   [✓] §0   初始化（Miniforge3 + 通道 + activate.sh + Rscript）测试通过
+#   [✓] §1.1 fastp 0.22.0 测试通过
+#   [✓] §1.2 kneaddata v0.12.4 + bowtie2 测试通过
+#   [✓] §1.3 KneadData 数据库（human/mouse/rat，各 6 个 bt2）测试通过
+#   [✓] §2.1 humann v3.9 + MetaPhlAn4 v4.2.4 + diamond 2.0.15 测试通过（端到端输出 3 个 tsv）
+#   [✓] §2.2 HUMAnN4 数据库（chocophlan 12773 + uniref 34G + mapping 20）测试通过
+#   [✓] §2.3 MetaPhlAn4 数据库（mpa_vOct22_CHOCOPhlAnSGB_202212，已识别）测试通过
+#   [✓] §2.4 LEfSe（biobakery channel）测试通过
+#   [✓] §2.5 Kraken2 2.1.3 + Bracken 3.1 测试通过
+#   [✓] §2.6 Kraken2 数据库（pluspf_20240112，hash 77G，classify 正常）测试通过
+#   [✓] §3.1 assembly（MEGAHIT 1.2.9 / SPAdes 3.15.5 / QUAST 5.0.2 / Prodigal 2.6.3 / CD-HIT 4.8.1 / salmon 1.2.0）测试通过（MEGAHIT 端到端）
+#   [✓] §3.2 eggNOG-mapper 2.1.13（pip 安装，Python 3.9）测试通过
+#   [✓] §3.3 eggNOG 数据库（5.0.2，39G+8.7G，--data_dir 参数指定，无软链接）测试通过（DB version 5.0.2 识别）
+#   [✓] §4.1 MetaWRAP 1.3.2（--no-channel-priority 安装）测试通过
+#   [✓] §4.2 CheckM 数据库（10 个文件，~/.checkm/DATA_CONFIG 配置）测试通过
+#   [✓] §4.3 dRep 3.6.2 + CheckM 1.2.5（pip 安装 + networkx）测试通过
+#   [✓] §4.4 CoverM 0.7.0 测试通过
+#   [✓] §4.5 GTDB-Tk 2.5.2（tqdm=4.66.4 先固定）测试通过
+#   [✓] §4.6 GTDB-Tk 数据库（160 GB，13 个目录/文件）测试通过
+#   [✓] §4.7 CheckM2（Python 3.8 + scikit-learn=0.23.2 + numpy<1.24）测试通过
+#   [✓] §4.8 CheckM2 数据库（uniref100.KO.1.dmnd 2.9 GB）测试通过
+#   [✓] §5.1 VIBRANT 1.2.1（envs/vibrant）+ CheckV（envs/checkv）测试通过（zlib冲突已拆分独立环境）
+#   [✓] §5.2 AMRFinderPlus 3.10.1 + RGI 4.0.3 + CARD 数据库 测试通过
+#   [✓] §5.3 dbCAN3 + 数据库（3.5 GB）测试通过
+#   [✓] §5.4 StrainPhlAn4 4.2.4（复用 humann4 环境）测试通过（补装 samtools/mafft/fasttree）
+#   [✓] §5.5 antiSMASH 7.1.0（--no-channel-priority 安装）测试通过
+#   [✓] §5.6 FastSpar（SparCC）测试通过
+#   [✓] §6.2 CRAN 包（vegan 2.7.5 / ggplot2 4.0.3 / dplyr 等 16 个）测试通过
+#   [✓] §6.3 Bioconductor 包（phyloseq / DESeq2 / edgeR / microbiome / treeio / Maaslin2）测试通过
+#   [✓] §6.4 ANCOMBC 2.12.0 + ggtree 4.0.4（conda bioconda 安装）测试通过
+#   [✓] §6.5 统计 R 包 (SIAMCAT / curatedMGD / MMUPHin / ConQuR / MBECS / sva / BatchQC) 测试通过
+#   [✓] §7.1 assembly 环境扩充（centrifuger 1.0.5 / mmseqs2 13.45 / seqtk 1.4）测试通过
+#   [✓] §7.3 genomad 1.12.0（独立环境，--no-channel-priority）测试通过
+#   [✓] §7.5 功能注释数据库（vfdb/bacmet/merops/sarg/phi/mvirdb/tcdb/ncyc/pcyc/amrfinder/genomad）测试通过
+#   [✓] §7.4 centrifuger 数据库（166 GB，7 个文件）测试通过
+#   [✓] §7.5 KEGG 数据库（48 GB）测试通过
+#   [✓] §8.1 MetaBAT2 2.12.1 + MaxBin2 2.2.6（追加进 metawrap）+ SemiBin2 1.5.0 测试通过
+#   [✓] §8.2 DAS_Tool 1.1.7（独立环境） 测试通过
+#   [✓] §8.3 Bakta 1.12.0（独立环境 + 数据库 3.8 GB） 测试通过
+#   [✓] §8.4 Defense-Finder 3.0.0（独立环境 + 数据库 320 MB） 测试通过
+#   [✓] §8.5 MobileOG 数据库（19 GB，diamond 搜索） 测试通过
+#   [✓] §8.6 CCyc 12G + MCyc 638M + SCyc 642M 数据库（各含1个子目录） 测试通过
+#   [✓] §8.7 VIBRANT 数据库（11G，KEGG 9995 + VOG 19182 + Pfam，hmmpress 完成） 测试通过
+#   [✓] §8.8 antiSMASH 数据库（从 Apptainer 项目解压，9.4 GB） 测试通过（10 个模块目录）
+#   [✓] §8.9 Snakemake 9.22.0（snakemake-minimal，miniforge3 base）                  测试通过（dry-run DAG 构建正常）
+#   [✓] §10.1 VirSorter2 2.2.4（独立环境 + 数据库） 已安装
+#   [✓] §10.2 vclust 1.3.1（独立环境，无专用数据库） 已安装
+#   [✓] §10.3 vRhyme 1.1.0（独立环境，无专用数据库） 已安装
+#   [✓] §10.4 PHAROKKA 1.9.1（独立环境 + 数据库 1.9G，命令：pharokka.py） 已安装
+#   [✓] §10.5 PHOLD 1.2.5（独立环境 + 数据库） 已安装
+#   [✓] §10.6 BACPHLIP 0.9.6（独立环境 + hmmer 3.4） 已安装
+#   [✓] §10.7 iPHoP 1.4.2（独立环境 + 数据库软链接 → Virus_Apptainer_pipline） 已安装
+#   [✓] §10.8 vConTACT3 3.1.6（独立环境 + 数据库 v230） 已安装
+#   [✓] §10.9 CheckV 1.1.1（数据库 genome_db + hmm_db 就绪） 已安装
+#   [✓] §10.10 VOG 数据库（VOG.hmm 已解压，vog.dmnd 就绪，vog_annotations.tsv） 已安装
+#   [✓] §14.1 PhaBox2 2.1.12（envs/phabox2，db/phabox2_db/ 1.7G） 已安装测试通过（70_vir_phabox2.sh）
+#   [✓] §14.2 PhaGCN3 3.1（envs/phagcn3，db/phagcn3_db/ 275M） 已安装测试通过（72_vir_phagcn3.sh）
+#   [✓] §14.3 DRAM 1.5.0（envs/dram，db/dram_db/ rsync 完成，180G） 安装完成，测试通过（71_vir_dram.sh）
+#   [✓] §11.4 FunOMIC（db/funomic/P + db/funomic/T；envs/funomic 已创建） 已安装（GitHub 包不可用，脚本走 DIAMOND 回退）
+#   [✓] §11.6 WGS 融入模块（mlst 2.11 + roary 3.12.0 in envs/prokaWGS；snippy 4.0.2 in envs/snippy） 已安装
+#   [✓] §12.1 CGF catalog 760 真菌基因组（db/cgf/genomes/） 已下载（709条，51条NCBI已撤回）
+#   [✓] §12.2 MetaEuk 真核宏基因组基因预测（envs/metaeuk） 已安装
+#   [✓] §12.3 PHF 肠道真菌数据库（db/gut_fungi_db/，760基因组基因集） 已部署（Yan et al. 2024 Cell 187，Bowtie2索引构建中）
+#   [✓] §12.4 PHF 流程脚本（74a/74e/74f，Bowtie2+Singular/Escrow） 已创建（论文原方法，替代原74b/74c/74d DIAMOND方案）
+#   [✓] §9   MCP / RAG 服务   ← 最终步骤 已完成
+#   [✓] §15.1 UniProt Swiss-Prot（243 MB .dmnd + blast/mmseqs 索引，已从参考项目复制） 就绪
+#   [✓] §15.2 Pfam-A HMM 数据库（~2.4 GB，全部 hmmpress 文件，已从参考项目复制） 就绪
+#   [✓] §15.3 MGE 数据库组（ISfinder/ICEberg/integrall/transposase-db，已从参考项目复制） 就绪
 #   [✗] §15.4 FeGenie（铁代谢基因预测）— 见下方 Apptainer/conda 安装说明
 #   [✗] §15.5 recombinase-kit（重组酶注释）— 见下方 Apptainer/conda 安装说明
-#   [✓] §15.6 PlasmidFinder 2.1.6（envs/plasmidfinder，DB 内置，exit 0 验证通过）           2026-06-30  已安装
+#   [✓] §15.6 PlasmidFinder 2.1.6（envs/plasmidfinder，DB 内置，exit 0 验证通过） 已安装
 # ==============================================================================
 
 
 # ==============================================================================
-# 0. 初始化  ——  每次安装前必须先运行本节  [✓ 2026/06/01]
+# 0. 初始化  ——  每次安装前必须先运行本节  [✓]
 # ==============================================================================
 
 # --- 0.1 项目路径 ---
@@ -151,7 +149,7 @@
 
 
 # ==============================================================================
-# 1. 数据预处理工具  [✓ 2026/06/01]
+# 1. 数据预处理工具  [✓]
 # ==============================================================================
 
 # --- 1.1 fastp 质量控制  [✓ fastp 0.22.0] ---
@@ -244,7 +242,7 @@
     conda run --prefix ${envs}/humann4 pip install humann
     conda run --prefix ${envs}/humann4 pip install metaphlan
 
-    # 安装 StrainPhlAn4 运行时必须依赖（2026-06-03 补充，mamba 求解更稳定）
+    # 安装 StrainPhlAn4 运行时必须依赖（ 补充，mamba 求解更稳定）
     # 注意：不能用 conda install ncurses=5（会破坏 python 3.9 环境），samtools 必须 >=1.15
     mamba install --prefix ${envs}/humann4 -y \
         "samtools=1.15.1" mafft fasttree \
@@ -405,7 +403,7 @@
 
 
 # ==============================================================================
-# 3. 组装分析工具  [✓ 2026/06/01]
+# 3. 组装分析工具  [✓]
 # ==============================================================================
 
 # --- 3.1 组装和定量工具  [✓ MEGAHIT 1.2.9 / SPAdes 3.15.5 / QUAST 5.0.2 / Prodigal 2.6.3 / CD-HIT 4.8.1 / salmon 1.2.0] ---
@@ -473,7 +471,7 @@
 # ==============================================================================
 
 # ==============================================================================
-# 4. Binning 工具  [✓ 2026/06/01]
+# 4. Binning 工具  [✓]
 # ==============================================================================
 
 # --- 4.1 MetaWRAP 分箱  [✓ MetaWRAP 1.3.2] ---
@@ -625,7 +623,7 @@ CHECKM_CFG
     ls ${db}/checkm2/CheckM2_database/
 
 # ==============================================================================
-# 5. 深度挖掘工具  [✓ 2026/06/01]
+# 5. 深度挖掘工具  [✓]
 # ==============================================================================
 
 # --- 5.1 宏病毒组：VIBRANT 1.2.1 + CheckV  [✓ 独立环境 envs/vibrant + envs/checkv] ---
@@ -1229,7 +1227,7 @@ CHECKM_CFG
 
 
 # ==============================================================================
-# §9 MCP / RAG 服务（已完成 2026-06-10）
+# §9 MCP / RAG 服务（已完成）
 # ==============================================================================
 
 
@@ -1286,7 +1284,7 @@ echo "§9 MCP / RAG 服务安装完成"
 VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
 
-# --- 10.1 VirSorter2 2.2.4  [✓ 已完成 2026-06-08] ---
+# --- 10.1 VirSorter2 2.2.4  [✓ 已完成] ---
 # 说明：virsorter2 需要先安装再通过 `virsorter setup` 下载数据库（约 1.5 GB）
 
     conda create --prefix ${envs}/virsorter2 -y
@@ -1309,7 +1307,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "VirSorter2 数据库就绪: ${db}/virsorter2/"
 
 
-# --- 10.2 vclust 1.3.1  [✓ 已完成 2026-06-08] ---
+# --- 10.2 vclust 1.3.1  [✓ 已完成] ---
 # 说明：vclust 仅用于序列聚类（vOTU 生成），无需独立数据库
 
     conda create --prefix ${envs}/vclust -y
@@ -1318,7 +1316,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "vclust 环境就绪: ${envs}/vclust/"
 
 
-# --- 10.3 vRhyme 1.1.0  [✓ 已完成 2026-06-08] ---
+# --- 10.3 vRhyme 1.1.0  [✓ 已完成] ---
 # 说明：vRhyme 用于病毒 MAG 聚合（61_vir_vmag.sh），无需独立数据库
 
     conda create --prefix ${envs}/vrhyme -y
@@ -1327,7 +1325,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "vRhyme 环境就绪: ${envs}/vrhyme/"
 
 
-# --- 10.4 PHAROKKA 1.9.1  [✓ 已完成 2026-06-08] ---
+# --- 10.4 PHAROKKA 1.9.1  [✓ 已完成] ---
 # 说明：病毒基因组端到端注释工具，数据库 550 MB
 
     conda create --prefix ${envs}/pharokka -y
@@ -1350,7 +1348,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "PHAROKKA 数据库就绪: ${db}/pharokka/"
 
 
-# --- 10.5 PHOLD 1.2.5  [✓ 已完成 2026-06-08] ---
+# --- 10.5 PHOLD 1.2.5  [✓ 已完成] ---
 # 说明：病毒 ORF 结构注释（补充 PHAROKKA），数据库 32 GB（Virus 项目有压缩包）
 
     conda create --prefix ${envs}/phold -y
@@ -1373,7 +1371,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "PHOLD 数据库就绪: ${db}/phold/"
 
 
-# --- 10.6 BACPHLIP 0.9.6  [✓ 已完成 2026-06-08] ---
+# --- 10.6 BACPHLIP 0.9.6  [✓ 已完成] ---
 # 说明：噬菌体生活方式预测（裂解/溶原），无需独立数据库（内置 HMM 模型）
 
     conda create --prefix ${envs}/bacphlip -y
@@ -1387,7 +1385,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "BACPHLIP 环境就绪: ${envs}/bacphlip/"
 
 
-# --- 10.7 iPHoP 1.4.2  [✓ 已完成 2026-06-08] ---
+# --- 10.7 iPHoP 1.4.2  [✓ 已完成] ---
 # 说明：病毒-宿主关联预测，数据库 294 GB（Virus 项目已解压，直接引用）
 
     conda create --prefix ${envs}/iphop -y
@@ -1411,7 +1409,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "iPHoP 数据库就绪: ${db}/iphop/"
 
 
-# --- 10.8 vConTACT3 3.1.6  [✓ 已完成 2026-06-08] ---
+# --- 10.8 vConTACT3 3.1.6  [✓ 已完成] ---
 # 说明：病毒分类基因共享网络，数据库 3.4 GB
 
     conda create --prefix ${envs}/vcontact3 -y
@@ -1435,7 +1433,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "vConTACT3 数据库就绪: ${db}/vcontact3/"
 
 
-# --- 10.9 CheckV 数据库  [✓ 已完成 2026-06-08] ---
+# --- 10.9 CheckV 数据库  [✓ 已完成] ---
 # 说明：envs/checkv 已安装（§5.1），仅缺数据库（2 GB）
 
     mkdir -p ${db}/checkv
@@ -1453,7 +1451,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # conda run --prefix ${envs}/checkv checkv download_database ${db}/checkv
 
 
-# --- 10.10 VOG 数据库  [✓ 已完成 2026-06-08] ---
+# --- 10.10 VOG 数据库  [✓ 已完成] ---
 # 说明：VOG HMM 数据库（2.4 GB），供 66_vir_vog.sh 使用
 
     mkdir -p ${db}/vogdb
@@ -1479,7 +1477,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # ==============================================================================
 
 
-# --- 11.1 肠道真菌参考数据库（gut_fungi DIAMOND DB） [✓ 已完成 2026-06-10] ---
+# --- 11.1 肠道真菌参考数据库（gut_fungi DIAMOND DB） [✓ 已完成] ---
 # 说明：供 74_fun_blast_gutdb.sh 使用，基于 NCBI 肠道真菌基因组（19G fasta）
 #       使用 diamond blastn 模式比对 reads → 鉴定真菌物种
 # 数据源：/data/mydirectory/db/fungi_human_gut_reference/combined.fasta
@@ -1509,7 +1507,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     ls -lh ${db}/fungi/gut_fungi.dmnd 2>/dev/null
 
 
-# --- 11.2 MEROPS 蛋白酶 DIAMOND 索引 [✓ 已完成 2026-06-10] ---
+# --- 11.2 MEROPS 蛋白酶 DIAMOND 索引 [✓ 已完成] ---
 # 说明：供 86_fun_merops.sh 使用，从 peptidases.fasta.gz 构建 DIAMOND 蛋白索引
 #       1,227,939 条序列，287M 氨基酸，308M .dmnd
 
@@ -1525,7 +1523,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     ls -lh ${db}/merops/peptidases.dmnd 2>/dev/null
 
 
-# --- 11.3 Eukfinder 真核生物 MAG 回收工具 [✓ 已完成 2026-06-10] ---
+# --- 11.3 Eukfinder 真核生物 MAG 回收工具 [✓ 已完成] ---
 # 说明：供 79_fun_eukfinder.sh 使用，已安装至 envs/assembly
 #       版本：1.2.4（bioconda），Python 3.6+
 #       功能：从宏基因组中回收真核生物基因组（真菌、原生动物等）
@@ -1537,7 +1535,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     conda run --prefix ${envs}/assembly eukfinder -h 2>&1 | head -3
 
 
-# --- 11.4 FunOMIC 真菌专用 WGS 流程 [✓ 已完成 2026-06-11] ---
+# --- 11.4 FunOMIC 真菌专用 WGS 流程 [✓ 已完成] ---
 # 说明：供 75_fun_funomics.sh 使用
 #       脚本含自动回退：未检测到 funomic 命令时 → 使用 DIAMOND blastx 标记基因分类
 # 数据源：本地 tarball
@@ -1572,7 +1570,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
 
 
-# --- 11.6 WGS 融入模块：MLST / 泛基因组 / SNP 变异检测 [✓ 已完成 2026-06-11] ---
+# --- 11.6 WGS 融入模块：MLST / 泛基因组 / SNP 变异检测 [✓ 已完成] ---
 # 说明：供 41b_bac_mlst.sh、41c_bac_pangenome.sh、41d_bac_snippy.sh 使用
 #       工具均安装在项目内 conda 环境（envs/prokaWGS、envs/snippy）
 #
@@ -1604,7 +1602,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # §12. 真菌精准定量增强（PHF 数据库 + MetaEuk + CGF catalog）
 # ==============================================================================
 
-# --- §12.1 CGF catalog 基因组（PRJNA833221）[✓ 已下载 2026-06-15] ---
+# --- §12.1 CGF catalog 基因组（PRJNA833221）[✓ 已下载] ---
 # 说明：Yan et al. 2024 Cell 187 发布的肠道真菌培养基因组
 #       用途：参考基因组存档（db/cgf/genomes/），不直接用于分析流程
 #       当前状态：709 个 .fna 文件（51 个 NCBI 已撤回，跳过）
@@ -1617,7 +1615,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # ls ${db}/cgf/genomes/ | wc -l   # 应约为 709
 
 
-# --- §12.2 MetaEuk 真菌宏基因组真核基因预测 [✓ 已安装 2026-06-15] ---
+# --- §12.2 MetaEuk 真菌宏基因组真核基因预测 [✓ 已安装] ---
 # 说明：供 80b_fun_metaeuk.sh --method metaeuk 使用（默认为 Prodigal，MetaEuk 为可选增强）
 #       MetaEuk 专为宏基因组真核生物 ORF 预测设计，支持含内含子的真菌基因组
 #       数据库：db/metaeuk_db/fungi_refseq_mmseqs（MMseqs2 格式，由 NCBI RefSeq 真菌蛋白构建）
@@ -1628,7 +1626,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # conda run --prefix ${envs}/metaeuk metaeuk --version
 
 
-# --- §12.3 PHF 肠道真菌数据库 [✓ 已部署 2026-06-15] ---
+# --- §12.3 PHF 肠道真菌数据库 [✓ 已部署] ---
 # 说明：Yan et al. 2024 Cell 187 完整实现（Bowtie2 + Singular/Escrow 算法）
 #       数据库来源：来自论文作者百度网盘资源（Reference/Gut_Fungi_DB/）
 #       包含：760 基因组核酸基因集 + 人类/细菌/rRNA 过滤库 + GPA.py
@@ -1650,7 +1648,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # ls db/gut_fungi_db/bwt.index.human_chm13v2.*.bt2
 
 
-# --- §12.4 PHF 流程脚本 [✓ 已创建 2026-06-15] ---
+# --- §12.4 PHF 流程脚本 [✓ 已创建] ---
 # 脚本：74a_fun_gut_db_build.sh  — 一次性 Bowtie2 建索引
 #       74e_fun_phf_profiler.sh   — per-sample：5步过滤+Singular/Escrow（论文原方法）
 #       74f_fun_phf_aggregate.sh  — 多样本 .rc 聚合 + taxonomy join
@@ -1680,10 +1678,10 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 #     最终 DB 体积：~15-20 GB
 #
 # 安装状态：
-#   [✓ 完成 2026-06-16] PLAST DB  — PlastDB.fasta 6.7G + PlastDB_map.txt 10M
-#   [✓ 完成 2026-06-16] 本地 Centrifuge DB — 628个真菌基因组（553成功+75跳过，39失败为含空格路径）
+#   [✓ 完成] PLAST DB  — PlastDB.fasta 6.7G + PlastDB_map.txt 10M
+#   [✓ 完成] 本地 Centrifuge DB — 628个真菌基因组（553成功+75跳过，39失败为含空格路径）
 #     下载完成: db/eukfinder_db/centrifuge_db/raw_genomes/fungi_ftp/ (628 .gz)
-#     构建中: centrifuge-build PID 759441，EukDB.{1,2,3,4}.cf 写入中（预计完成 2026-06-16）
+#     构建中: centrifuge-build PID 759441，EukDB.{1,2,3,4}.cf 写入中（预计完成）
 #     完成后验证: ls -lh ${db}/eukfinder_db/centrifuge_db/EukDB.*.cf
 
 # --- §13.1 PLAST 数据库（已完成）---
@@ -1729,7 +1727,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # done
 
 # ==============================================================================
-# §13 状态：PLAST [✓] | 本地CentrifugeDB [↓ HTTPS下载中 2026-06-16, PID 3918944]
+# §13 状态：PLAST [✓] | 本地CentrifugeDB [↓ HTTPS下载中, PID 3918944]
 # ==============================================================================
 
 
@@ -1746,7 +1744,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 #   PhaGCN3 DB ← /home/labuser/Course/Virus_Apptainer_pipline/db/phagcn3-db/ (已复制)
 #   DRAM DB    ← /home/labuser/Course/ViOTUcluster/db/DRAM/ (rsync 中，180G)
 
-# --- §14.1 PhaBox2 [✓ 已完成 2026-06-16] ---
+# --- §14.1 PhaBox2 [✓ 已完成] ---
 # 安装：conda install -c bioconda phabox=2.1.12 (Python 3.10)
 # 验证：conda run --prefix ${envs}/phabox2 phabox2 --version
     # conda create --prefix ${envs}/phabox2 python=3.10 -y
@@ -1754,14 +1752,14 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # cp -r /home/labuser/Course/Virus_Apptainer_pipline/db/phabox2-db ${db}/phabox2_db
     # bash scripts/70_vir_phabox2.sh -t 8 -w Project/Project_example -r ${PROJ_DIR}
 
-# --- §14.2 PhaGCN3 [✓ 已完成 2026-06-16] ---
+# --- §14.2 PhaGCN3 [✓ 已完成] ---
 # 安装：conda + pytorch (CPU) + diamond + MCL + 上游源码适配
 # 验证：conda run --prefix ${envs}/phagcn3 python -c "import phagcn3; print('ok')"
     # conda create --prefix ${envs}/phagcn3 python=3.10 pytorch cpuonly diamond mcl seqkit blast -y
     # cp -r /home/labuser/Course/Virus_Apptainer_pipline/db/phagcn3-db ${db}/phagcn3_db
     # bash scripts/72_vir_phagcn3.sh -t 8 -w Project/Project_example -r ${PROJ_DIR}
 
-# --- §14.3 DRAM 1.5.0 [✓ 完成 2026-06-16] ---
+# --- §14.3 DRAM 1.5.0 [✓ 完成] ---
 # 安装：conda-forge dram=1.5.0 + setuptools<81（pinned，规避 pkg_resources 移除）
 # DB: db/dram_db/（180G，refseq_viral + peptidases + kofam + genome_summary_form 等）
 # 测试验证：
@@ -1769,14 +1767,14 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # 输出：result/virus/dram/DRAM_annotations.tsv + DRAM_amg_summary.tsv ✓
 
 # ==============================================================================
-# §14 状态：PhaBox2 [✓] | PhaGCN3 [✓] | DRAM [✓ 2026-06-16]
+# §14 状态：PhaBox2 [✓] | PhaGCN3 [✓] | DRAM [✓]
 # ==============================================================================
 
 
 # ==============================================================================
 # §15. 补充功能注释数据库（UniProt Swiss-Prot / Pfam / MGE 数据库组 / FeGenie / recombinase）
 # ==============================================================================
-# 背景：上一轮数据库梳理（2026-06-30）发现以下数据库在 db/ 中缺失：
+# 背景：上一轮数据库梳理（）发现以下数据库在 db/ 中缺失：
 #   UniProt Swiss-Prot — 高质量人工注释蛋白，DIAMOND 搜索
 #   Pfam-A             — 蛋白功能域 HMM 数据库，HMMER 搜索
 #   ISfinder           — 插入序列数据库（MGE 可移动遗传元素）
@@ -1790,7 +1788,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 #   §15.1-15.3 均从 /home/labuser/Course/Metagenomics_Apptainer_pipline/db/ 复制 ✓
 #   §15.4-15.5 原参考项目使用 Apptainer 容器（DB 内嵌），本项目改用 conda 安装
 
-# --- §15.1 UniProt Swiss-Prot [✓ 已完成 2026-06-30] ---
+# --- §15.1 UniProt Swiss-Prot [✓ 已完成] ---
 # 用途：高可信度全功能蛋白注释（全长比对），补充 eggNOG/KEGG 未注释条目
 # 工具：DIAMOND blastp（envs/assembly 已有 diamond 2.0.15）
 # 大小：~564 MB（.dmnd 243M + .fasta 234M + .fasta.gz 87M + blast/mmseqs 索引）
@@ -1812,7 +1810,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     #     --threads 16
     ls -lh ${db}/uniprot_sprot/
 
-# --- §15.2 Pfam-A HMM 数据库 [✓ 已完成 2026-06-30] ---
+# --- §15.2 Pfam-A HMM 数据库 [✓ 已完成] ---
 # 用途：蛋白功能域注释（已在 VIBRANT §8.7 中使用，此处为独立注释脚本提供）
 # 工具：HMMER hmmscan（envs/assembly 或 hmmer 相关环境）
 # 大小：~2.4 GB（Pfam-A.hmm.gz 332M + hmmpress 4 文件共 ~2.0G）
@@ -1831,7 +1829,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # conda run --prefix ${envs}/assembly hmmpress ${db}/pfam/Pfam-A.hmm
     ls -lh ${db}/pfam/
 
-# --- §15.3 MGE 可移动遗传元素数据库组 [✓ 已完成 2026-06-30] ---
+# --- §15.3 MGE 可移动遗传元素数据库组 [✓ 已完成] ---
 # 用途：移动遗传元素（插入序列/整合接合元件/整合子/转座酶）注释
 # 工具：DIAMOND blastp（ISfinder/ICEberg/integrall）+ HMMER hmmscan（transposase-db）
 
@@ -1879,7 +1877,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # conda run --prefix ${envs}/assembly hmmpress ${db}/transposase-db/transposase.hmm
     ls -lh ${db}/transposase-db/
 
-# --- §15.4 FeGenie（铁代谢基因预测）[✓ 已完成 2026-07-01] ---
+# --- §15.4 FeGenie（铁代谢基因预测）[✓ 已完成] ---
 # 用途：预测铁获取（iron uptake）/ 储存 / 循环相关基因，宏基因组铁代谢功能分析
 # 方法：conda 安装（bioconda fegenie 1.2，HMM 数据库随包安装）
 # 大小：~50 MB（HMM 数据库内嵌于 envs/fegenie/share/fegenie-1.2/hmms/iron/）
@@ -1921,7 +1919,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     echo "[INFO] recombinase-kit 尚未安装，可用 §15.2 Pfam-A HMM 通过 hmmscan 覆盖核心重组酶家族"
     echo "       Apptainer 容器方案：参见上方注释"
 
-# --- §15.6 PlasmidFinder 2.1.6 [✓ 已完成 2026-06-30] ---
+# --- §15.6 PlasmidFinder 2.1.6 [✓ 已完成] ---
 # 用途：质粒识别（contig 层面），识别复制子类型和不相容群（Inc group）
 # DB：conda 包内置（share/plasmidfinder-2.1.6/database/）— 无需单独下载
 # 验证：exit 0，S02 测试通过（空结果为预期行为，测试样本深度不足）
