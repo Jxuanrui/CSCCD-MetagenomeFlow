@@ -65,6 +65,30 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 ---
 
+## 最近更新（v1.0） | Recent Updates
+
+**🎉 CSCCD-MetagenomeFlow v1.0 released (July 2026)** — formerly MaxMetagenome, now officially under the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases.
+
+### 分析能力 | Analysis Capacity
+- **125 scripts** (113 analysis workflows + 12 utilities) spanning three kingdoms — bacteria (11–42b), virome (51–72), and mycobiome (71–86)
+- **Virome expanded to 72**: added PhaBox2, DRAM, and PhaGCN3 for comprehensive phage lifestyle prediction (lytic/temperate/chronic)
+- **Bacteria WGS module (42b)**: MLST typing, pan-genome (Roary), and SNP calling (Snippy) for strain-level tracking
+- **Fungi PHF database**: 760 human gut fungal genomes (Yan et al. 2024 *Cell* 187) indexed with Bowtie2 for high-sensitivity profiling
+- **Integration tables auto-generated**: 11 tables per dimension (raw/relab/CLR) ready for LEfSe/ANCOM-BC2/MaAsLin2/SIAMCAT without manual wrangling
+
+### AI 基础设施 | AI-Assisted Infrastructure
+- **RAG hybrid retrieval** (BM25 + dense vector + reciprocal rank fusion): 11,988 chunks across 4 collections — `experience_kb` (1,634), `literature_kb` (5,392), `skill_design_kb` (102), and `mechanism_kb` (4,860)
+- **Mechanism_kb**: microbe → metabolite → host gene causal chains from GutMGene v2.0 + OmniPath downstream PPI, enabling queries like "*which microbes produce butyrate to activate FFAR2 in CVD?*"
+- **Incremental indexing**: `--incremental` mode reduces reindex time from 2-3 min to 2-14 sec during rapid iteration
+- **MCP protocol compliance**: official Model Context Protocol implementation, registered with Claude Code & Codex CLI for native slash-command integration
+
+### 平台成熟度 | Platform Maturity
+- **Snakemake full validation**: 99 rules across 10 modules, end-to-end tested from raw reads to statistics (bacteria/virome/fungi + 91-98 stats pipelines)
+- **43 conda environments**: all tools self-contained under project root, ~1.1 TB databases (GTDB R226, VOGDB, ChocoPhlAn, UniRef90, EukDB, etc.)
+- **Three run modes**: step-by-step (debugging), Bash pipeline (lightweight), or Snakemake DAG (HPC-ready with native resume)
+
+---
+
 ## Platform
 
 | Component | Details |
