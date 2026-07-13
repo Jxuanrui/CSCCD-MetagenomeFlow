@@ -35,14 +35,24 @@ dir.create(opt$output_dir, recursive=TRUE, showWarnings=FALSE)
 
 has_data_table <- requireNamespace("data.table", quietly=TRUE)
 read_delimited <- function(path) {
-  first_line <- readLines(path, n=1, warn=FALSE)
+  # Skip comment lines (starting with #)
+  all_lines <- readLines(path, warn=FALSE)
+  data_lines <- all_lines[!grepl("^#", all_lines)]
+  if(length(data_lines) == 0) stop("File contains only comment lines: ", path)
+
+  first_line <- data_lines[1]
   separator <- if(grepl("\t", first_line, fixed=TRUE)) "\t" else ","
   quote_character <- if(separator == ",") "\"" else ""
+
+  # Write cleaned data to temp connection
+  tmp <- textConnection(data_lines)
+  on.exit(close(tmp), add=TRUE)
+
   if(has_data_table) {
-    data.table::fread(path, sep=separator, header=TRUE, data.table=FALSE,
-                      check.names=FALSE, quote=quote_character, fill=TRUE)
+    data.table::fread(text=paste(data_lines, collapse="\n"), sep=separator, header=TRUE,
+                      data.table=FALSE, check.names=FALSE, quote=quote_character, fill=TRUE)
   } else {
-    read.table(path, sep=separator, header=TRUE, check.names=FALSE, quote=quote_character,
+    read.table(tmp, sep=separator, header=TRUE, check.names=FALSE, quote=quote_character,
                comment.char="", stringsAsFactors=FALSE, fill=TRUE)
   }
 }
