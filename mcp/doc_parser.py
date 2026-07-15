@@ -510,3 +510,42 @@ def parse_snakemake_rule(filepath):
     except Exception as exc:
         _warn(filepath, f"failed to parse snakemake rule file: {exc}")
         return []
+
+
+def parse_agent_skill_doc(filepath):
+    """Parse native Agent Skill markdown docs into section-aware chunks."""
+    try:
+        raw_text = _safe_read(filepath)
+        match = re.match(r"^\s*---\s*\n(.*?)\n---\s*\n?(.*)$", raw_text, re.S)
+        if not match:
+            _warn(filepath, "missing YAML frontmatter")
+            return []
+
+        frontmatter = yaml.safe_load(match.group(1)) or {}
+        if not isinstance(frontmatter, dict):
+            _warn(filepath, "malformed YAML frontmatter")
+            return []
+
+        body = match.group(2)
+        skill_name = _normalize_scalar(frontmatter.get("name")) or Path(filepath).stem
+        description = _normalize_scalar(frontmatter.get("description"))
+        sections = _split_markdown_sections(body)
+        if not sections:
+            sections = [("Overview", body.strip())]
+
+        parsed_chunks = []
+        for section_name, section_text in sections:
+            for section_chunk in chunk_text(section_text):
+                chunk_body = f"# {skill_name}\n## {section_name}\n\n{section_chunk}".strip()
+                metadata = {
+                    "doc_type": "agent_skill",
+                    "skill_name": skill_name,
+                    "description": description,
+                    "section": section_name,
+                    "source_path": str(Path(filepath)),
+                }
+                parsed_chunks.append((chunk_body, metadata))
+        return parsed_chunks
+    except Exception as exc:
+        _warn(filepath, f"failed to parse agent skill doc: {exc}")
+        return []

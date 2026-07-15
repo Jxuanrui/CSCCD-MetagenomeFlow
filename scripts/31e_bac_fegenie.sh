@@ -113,6 +113,9 @@ if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] FeGenie 结果已存在，跳过: ${SENTINEL}"; exit 0
 fi
 
+# FeGenie.py 内部只用普通 mkdir 创建输出目录，父目录必须预先存在
+mkdir -p "$(dirname "${RESULT_DIR}")"
+
 # 清理旧输出目录（FeGenie 会交互式询问覆盖，非交互模式需先删除）
 if [ -d "${RESULT_DIR}" ]; then
     echo "[INFO] 清理旧输出目录: ${RESULT_DIR}"

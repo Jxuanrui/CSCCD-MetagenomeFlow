@@ -41,12 +41,21 @@ BINS_DIR="${WORKDIR}/result/binning/dastool"
 REPORT="${WORKDIR}/result/binning/checkm2/quality_report.tsv"
 FILTERED_DIR="${WORKDIR}/result/binning/checkm2/checkm2_filtered"
 DREP_IN="${WORKDIR}/result/binning/checkm2/drep_input"
-DB="${REPO}/db/checkm2"
+DB="${REPO}/db/checkm2/CheckM2_database/uniref100.KO.1.dmnd"
 
-# 收集所有 dastool bins（跨样本）
+# 收集所有 dastool bins（跨样本）；DAS_Tool 输出目录名为 {sample}_DASTool_bins
 BIN_FILES=()
-for d in "${BINS_DIR}"/*/bins; do
-    [ -d "$d" ] && for f in "$d"/*.fa; do [ -f "$f" ] && BIN_FILES+=("$f"); done
+BIN_SAMPLES=()
+for d in "${BINS_DIR}"/*/*_DASTool_bins; do
+    if [ -d "$d" ]; then
+        SAMPLE_NAME=$(basename "$(dirname "$d")")
+        for f in "$d"/*.fa; do
+            if [ -f "$f" ]; then
+                BIN_FILES+=("$f")
+                BIN_SAMPLES+=("$SAMPLE_NAME")
+            fi
+        done
+    fi
 done
 
 if [ ${#BIN_FILES[@]} -eq 0 ]; then
@@ -57,12 +66,15 @@ if [ ${#BIN_FILES[@]} -eq 0 ]; then
     exit 0
 fi
 
-# 为 CheckM2 创建输入目录（符号链）
-INPUT_DIR="${WORKDIR}/result/binning/checkm2/input"
+# 为 CheckM2 创建输入目录（符号链，文件名加样本前缀避免跨样本重名冲突，如 Sample1/0.fa 与 Sample2/0.fa）
+# 注: 必须放在 output-directory 之外，--force 会清空输出目录
+INPUT_DIR="${WORKDIR}/temp/checkm2_input"
 if [ ! -f "${INPUT_DIR}/.done" ]; then
     mkdir -p "${INPUT_DIR}"
-    for f in "${BIN_FILES[@]}"; do
-        ln -sf "$(realpath "$f")" "${INPUT_DIR}/"
+    for i in "${!BIN_FILES[@]}"; do
+        f="${BIN_FILES[$i]}"
+        s="${BIN_SAMPLES[$i]}"
+        ln -sf "$(realpath "$f")" "${INPUT_DIR}/${s}__$(basename "$f")"
     done
     touch "${INPUT_DIR}/.done"
 fi

@@ -2,7 +2,7 @@
 # ==============================================================================
 # Script: 41c_bac_pangenome.sh
 # Purpose: Aggregate pan-genome analysis for MAG annotations with Roary
-# Input  : ${WORKDIR}/result/binning/bakta/*.gff or one-level-deep *.gff
+# Input  : ${WORKDIR}/result/binning/prokka/*.gff or one-level-deep *.gff
 # Output : ${WORKDIR}/result/wgs/pangenome/summary_statistics.txt
 # Env    : ${REPO}/envs/prokaWGS
 # Usage  : bash 41c_bac_pangenome.sh -w WORKDIR -r REPO -t THREADS
@@ -55,7 +55,7 @@ for v in THREADS WORKDIR REPO; do
 done
 
 SECONDS=0
-BAKTA_DIR="${WORKDIR}/result/binning/bakta"
+PROKKA_DIR="${WORKDIR}/result/binning/prokka"
 OUTDIR="${WORKDIR}/result/wgs/pangenome"
 SENTINEL="${OUTDIR}/summary_statistics.txt"
 FAILED_SENTINEL="${OUTDIR}/summary_statistics.txt.FAILED"
@@ -75,14 +75,14 @@ fi
 mkdir -p "${OUTDIR}"
 
 GFF_FILES=()
-if [ -d "${BAKTA_DIR}" ]; then
+if [ -d "${PROKKA_DIR}" ]; then
     while IFS= read -r f; do GFF_FILES+=("$f"); done < <(
-        find "${BAKTA_DIR}" -maxdepth 1 -type f -name "*.gff" | sort
+        find "${PROKKA_DIR}" -maxdepth 1 -type f -name "*.gff" | sort
     )
 fi
-if [ ${#GFF_FILES[@]} -eq 0 ] && [ -d "${BAKTA_DIR}" ]; then
+if [ ${#GFF_FILES[@]} -eq 0 ] && [ -d "${PROKKA_DIR}" ]; then
     while IFS= read -r f; do GFF_FILES+=("$f"); done < <(
-        find "${BAKTA_DIR}" -mindepth 2 -maxdepth 2 -type f -name "*.gff" | sort
+        find "${PROKKA_DIR}" -mindepth 2 -maxdepth 2 -type f -name "*.gff" | sort
     )
 fi
 if [ ${#GFF_FILES[@]} -lt 3 ]; then

@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 # 94_visualization.R — composition plots per dimension (bacteria / virus / fungi)
-# Outputs: result/stat/{dim}/composition/barplot_composition_by_group.pdf
-#                                            barplot_genus_groupmean.pdf
-#                                            heatmap_genus.pdf
+# Outputs: result/stat/{dim}/composition/barplot_composition_by_group.{svg,pdf,tiff}
+#                                            barplot_genus_groupmean.{svg,pdf,tiff}
+#                                            heatmap_genus.{svg,pdf,tiff}
 #                                            {dim}_viz_status.tsv
 
 options(stringsAsFactors = FALSE, warn = 1)
@@ -30,7 +30,8 @@ if (dir.exists(conda_lib)) {
   )))
 }
 
-required_pkgs <- c("microeco", "magrittr", "ggplot2", "cowplot", "dplyr", "RColorBrewer")
+required_pkgs <- c("microeco", "magrittr", "ggplot2", "cowplot", "dplyr", "RColorBrewer", "svglite", "ragg",
+                    "MicrobiotaProcess", "phyloseq", "patchwork", "rlang")
 miss <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
 if (length(miss)) {
   writeLines(format(Sys.time()), sentinel)
@@ -43,14 +44,108 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(cowplot)
   library(dplyr)
+  library(MicrobiotaProcess)
+  library(phyloseq)
+  library(patchwork)
 })
 
-theme_set(theme_bw())
+grDevices::pdf(file = NULL)
+
+mm2in <- function(x) x / 25.4
+
+theme_pub <- function(base_size = 7, base_family = "Arial") {
+  ggplot2::theme_classic(base_size = base_size, base_family = base_family) +
+    ggplot2::theme(
+      axis.line = ggplot2::element_line(linewidth = 0.35, colour = "black"),
+      axis.ticks = ggplot2::element_line(linewidth = 0.35, colour = "black"),
+      axis.title = ggplot2::element_text(size = base_size + 1),
+      axis.text = ggplot2::element_text(size = base_size, colour = "black"),
+      legend.title = ggplot2::element_blank(),
+      legend.text = ggplot2::element_text(size = base_size),
+      legend.background = ggplot2::element_blank(),
+      legend.key = ggplot2::element_blank(),
+      strip.background = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(size = base_size + 1, face = "bold"),
+      plot.title = ggplot2::element_text(size = base_size + 2, face = "bold"),
+      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
+      panel.background = ggplot2::element_rect(fill = "white", colour = NA),
+      panel.grid = ggplot2::element_blank()
+    )
+}
+
+export_pub_figure <- function(plot, path_noext, width_mm, height_mm, dpi = 600) {
+  w <- mm2in(width_mm)
+  h <- mm2in(height_mm)
+
+  write_device <- function(open_device) {
+    open_device()
+    dev_id <- grDevices::dev.cur()
+    on.exit({
+      if (grDevices::dev.cur() == dev_id) {
+        try(grDevices::dev.off(), silent = TRUE)
+      }
+    }, add = TRUE)
+    print(plot)
+    grDevices::dev.off()
+    invisible(TRUE)
+  }
+
+  write_device(function() svglite::svglite(paste0(path_noext, ".svg"), width = w, height = h))
+  write_device(function() grDevices::cairo_pdf(paste0(path_noext, ".pdf"), width = w, height = h, family = "Arial"))
+  write_device(function() ragg::agg_tiff(paste0(path_noext, ".tiff"), width = w, height = h, units = "in", res = dpi))
+  invisible(paste0(path_noext, ".svg"))
+}
+
+theme_set(theme_pub())
 
 npg_base <- c("#E64B35","#4DBBD5","#00A087","#3C5488","#F39B7F",
               "#8491B4","#91D1C2","#DC0000","#7E6148","#B09C85")
 npg_pal <- function(n) {
   if (n <= length(npg_base)) npg_base[seq_len(n)] else grDevices::colorRampPalette(npg_base)(n)
+}
+
+rank_has_values <- function(mt, rank) {
+  if (!rank %in% colnames(mt$tax_table)) return(FALSE)
+  vals <- as.character(mt$tax_table[[rank]])
+  vals <- vals[!is.na(vals) & nzchar(vals) & vals != "NA"]
+  length(unique(vals)) > 1
+}
+
+choose_taxrank <- function(mt, preferred, fallbacks = c("Species", "Genus", "Family", "Phylum", "vOTU")) {
+  if (rank_has_values(mt, preferred)) return(preferred)
+  for (rank in unique(c(fallbacks, colnames(mt$tax_table)))) {
+    if (rank_has_values(mt, rank)) return(rank)
+  }
+  stop("No usable taxonomy rank found for plotting")
+}
+
+rank_subtitle <- function(preferred, selected) {
+  if (identical(preferred, selected)) NULL else paste0("Displayed at ", selected, " level; ", preferred, " unavailable or uninformative")
+}
+
+# Re-colors a mp_plot_abundance() ggplot with the project's ggsci-derived NPG palette,
+# extended via npg_pal() beyond its native 10-color limit, and forces "Others" to the
+# last factor level/legend entry (mp_plot_abundance() sorts fill levels alphabetically,
+# which would otherwise put "Others" first).
+recolor_mpse_plot <- function(p, others_color = "grey70") {
+  fill_var <- rlang::as_name(p$mapping$fill)
+  lv_all <- levels(factor(p$data[[fill_var]]))
+  has_others <- "Others" %in% lv_all
+  lv <- setdiff(lv_all, "Others")
+  cols <- npg_pal(length(lv))
+  names(cols) <- lv
+  if (has_others) cols <- c(cols, Others = others_color)
+  p$data[[fill_var]] <- factor(p$data[[fill_var]], levels = c(lv, if (has_others) "Others"))
+  p + ggplot2::scale_fill_manual(values = cols, breaks = c(lv, if (has_others) "Others")) +
+    theme_pub(base_size = 7)
+}
+
+style_mpse_sample_axis <- function(p, n_samples) {
+  if (n_samples > 40) {
+    p + ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.ticks.x = ggplot2::element_blank())
+  } else {
+    p + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 5))
+  }
 }
 
 write_status <- function(status_log, path) {
@@ -87,7 +182,8 @@ cat("  Stat root:", stat_root, "\n")
 
 for (dim in dims) {
   cat(sprintf("\n[INFO] === Dimension: %s ===\n", dim))
-  rds_path   <- file.path(stat_root, dim, paste0(dim, "_microtable.rds"))
+  rds_path      <- file.path(stat_root, dim, paste0(dim, "_microtable.rds"))
+  phyloseq_path <- file.path(stat_root, dim, "phyloseq", paste0(dim, "_phyloseq.rds"))
   out_dir    <- file.path(stat_root, dim, "composition")
   status_tsv <- file.path(out_dir, paste0(dim, "_viz_status.tsv"))
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
@@ -122,41 +218,103 @@ for (dim in dims) {
   if (is.null(mt_clone)) { write_status(status_log, status_tsv); next }
 
   grp <- if (group_col %in% colnames(mt_clone$sample_table)) group_col else NULL
+  n_samples <- nrow(mt_clone$sample_table)
+  phylum_rank <- choose_taxrank(mt_clone, "Phylum", fallbacks = c("Phylum", "Species", "vOTU"))
+  genus_rank <- choose_taxrank(mt_clone, "Genus", fallbacks = c("Genus", "Species", "Family", "Phylum", "vOTU"))
 
-  run_step(paste0(dim, "_barplot_phylum_genus"), status_log, {
-    tmp_p <- trans_abund$new(dataset = mt_clone, taxrank = "Phylum")
-    g1 <- tmp_p$plot_bar(color_values = npg_pal(30), others_color = "grey70",
-                          xtext_keep = TRUE, barwidth = 0.6)
-    tmp_g <- trans_abund$new(dataset = mt_clone, taxrank = "Genus")
-    g2 <- tmp_g$plot_bar(color_values = npg_pal(30), others_color = "grey70",
-                          xtext_keep = TRUE, barwidth = 0.6)
-    p  <- cowplot::plot_grid(g1, g2, ncol = 1, align = "hv", labels = c("A", "B"))
-    cowplot::save_plot(file.path(out_dir, "barplot_composition_by_group.pdf"),
-                       p, base_aspect_ratio = 1.1, base_height = 10, dpi = 300)
-  })
+  mpse <- NULL
+  if (file.exists(phyloseq_path)) {
+    run_step("load_mpse", status_log, {
+      ps <- readRDS(phyloseq_path)
+      mpse <<- MicrobiotaProcess::as.MPSE(ps)
+    })
+  } else {
+    msg <- paste("phyloseq RDS not found:", phyloseq_path)
+    cat("[WARN]", msg, "\n")
+    status_log[[length(status_log) + 1]] <- data.frame(step = "load_mpse", status = "SKIPPED",
+                                                         message = msg, stringsAsFactors = FALSE)
+  }
 
-  run_step(paste0(dim, "_barplot_groupmean"), status_log, {
-    if (is.null(grp)) stop("group column missing in sample_table")
-    mt_g <- mt_clone$merge_samples(grp)
-    mt_g$cal_abund(rel = TRUE)
-    tmp  <- trans_abund$new(dataset = mt_g, taxrank = "Genus")
-    g3   <- tmp$plot_bar(color_values = npg_pal(30), others_color = "grey70",
-                          bar_full = FALSE, xtext_size = 13, xtext_angle = 30,
-                          barwidth = 0.618) +
-      theme(legend.text = element_text(size = 10))
-    cowplot::save_plot(file.path(out_dir, "barplot_genus_groupmean.pdf"),
-                       g3, base_aspect_ratio = 1.1, base_height = 5.5, dpi = 300)
-  })
+  if (!is.null(mpse)) {
+    run_step(paste0(dim, "_barplot_phylum_genus"), status_log, {
+      grp_sym <- if (!is.null(grp)) rlang::sym(grp) else NULL
+      phylum_sym <- rlang::sym(phylum_rank)
+      genus_sym <- rlang::sym(genus_rank)
+
+      p_phylum <- mpse %>%
+        MicrobiotaProcess::mp_plot_abundance(
+          .abundance = Abundance, .group = !!grp_sym, taxa.class = !!phylum_sym,
+          topn = 10, relative = TRUE, force = TRUE, geom = "bar"
+        ) %>%
+        recolor_mpse_plot() %>%
+        style_mpse_sample_axis(n_samples)
+      p_phylum <- p_phylum + ggplot2::labs(subtitle = rank_subtitle("Phylum", phylum_rank))
+
+      p_genus <- mpse %>%
+        MicrobiotaProcess::mp_plot_abundance(
+          .abundance = Abundance, .group = !!grp_sym, taxa.class = !!genus_sym,
+          topn = 15, relative = TRUE, force = TRUE, geom = "bar"
+        ) %>%
+        recolor_mpse_plot() %>%
+        style_mpse_sample_axis(n_samples)
+      p_genus <- p_genus + ggplot2::labs(subtitle = rank_subtitle("Genus", genus_rank))
+
+      p <- p_phylum / p_genus +
+        patchwork::plot_layout(guides = "collect") +
+        patchwork::plot_annotation(tag_levels = "a")
+      export_pub_figure(p, file.path(out_dir, "barplot_composition_by_group"),
+                        width_mm = 260, height_mm = 170)
+    })
+
+    run_step(paste0(dim, "_barplot_groupmean"), status_log, {
+      if (is.null(grp)) stop("group column missing in sample_table")
+      grp_sym <- rlang::sym(grp)
+      genus_sym <- rlang::sym(genus_rank)
+
+      p_group <- mpse %>%
+        MicrobiotaProcess::mp_plot_abundance(
+          .abundance = Abundance, .group = !!grp_sym, taxa.class = !!genus_sym,
+          topn = 15, relative = TRUE, force = TRUE, geom = "bar", plot.group = TRUE
+        ) %>%
+        recolor_mpse_plot()
+      p_group <- p_group +
+        ggplot2::labs(subtitle = rank_subtitle("Genus", genus_rank)) +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 30, hjust = 1, size = 7),
+                        legend.text = ggplot2::element_text(size = 7))
+      export_pub_figure(p_group, file.path(out_dir, "barplot_genus_groupmean"),
+                        width_mm = 183, height_mm = 90)
+    })
+  } else {
+    status_log[[length(status_log) + 1]] <- data.frame(
+      step = paste0(dim, "_barplot_phylum_genus"), status = "SKIPPED",
+      message = "MPSE unavailable", stringsAsFactors = FALSE)
+    status_log[[length(status_log) + 1]] <- data.frame(
+      step = paste0(dim, "_barplot_groupmean"), status = "SKIPPED",
+      message = "MPSE unavailable", stringsAsFactors = FALSE)
+  }
 
   run_step(paste0(dim, "_heatmap_genus"), status_log, {
-    tmp <- trans_abund$new(dataset = mt_clone, taxrank = "Genus", ntaxa = 30)
+    tmp <- trans_abund$new(dataset = mt_clone, taxrank = genus_rank, ntaxa = 30)
     g4  <- tmp$plot_heatmap(
-      facet = grp, xtext_keep = TRUE, withmargin = FALSE,
+      facet = grp, xtext_keep = n_samples <= 40, xtext_angle = 45, xtext_size = 6,
+      withmargin = FALSE,
       color_values = rev(RColorBrewer::brewer.pal(11, "RdYlBu")),
       plot_colorscale = "identity"
-    )
-    cowplot::save_plot(file.path(out_dir, "heatmap_genus.pdf"),
-                       g4, base_aspect_ratio = 1.3, base_height = 8, dpi = 300)
+    ) +
+      theme_pub(base_size = 7) +
+      ggplot2::labs(subtitle = paste(c(
+        rank_subtitle("Genus", genus_rank),
+        if (n_samples > 40) paste0("n = ", n_samples, " samples; x-axis sample labels omitted for readability")
+      ), collapse = " | "))
+    if (n_samples <= 40) {
+      g4 <- g4 + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 6))
+    } else {
+      # theme_pub() overrides plot_heatmap's xtext_keep=FALSE, so re-blank explicitly
+      g4 <- g4 + ggplot2::theme(axis.text.x = ggplot2::element_blank(),
+                                 axis.ticks.x = ggplot2::element_blank())
+    }
+    export_pub_figure(g4, file.path(out_dir, "heatmap_genus"),
+                      width_mm = 183, height_mm = 130)
   })
 
   write_status(status_log, status_tsv)

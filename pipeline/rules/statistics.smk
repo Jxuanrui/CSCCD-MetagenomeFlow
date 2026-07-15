@@ -139,7 +139,15 @@ rule bac_integration_tables:
             sample=SAMPLES,
         ),
     output:
-        done = touch(WORKDIR + "/result/integration/bacteria/.done")
+        # Track key functional abundance tables (inputs for LEfSe/Core/Redundancy)
+        kegg_ko = WORKDIR + "/result/integration/bacteria/kegg_ko_abundance.tsv",
+        cog = WORKDIR + "/result/integration/bacteria/cog_abundance.tsv",
+        arg = WORKDIR + "/result/integration/bacteria/arg_abundance.tsv",
+        cazyme = WORKDIR + "/result/integration/bacteria/cazyme_abundance.tsv",
+        vfdb = WORKDIR + "/result/integration/bacteria/vfdb_abundance.tsv",
+        ncyc = WORKDIR + "/result/integration/bacteria/ncyc_abundance.tsv",
+        pcyc = WORKDIR + "/result/integration/bacteria/pcyc_abundance.tsv",
+        defense = WORKDIR + "/result/integration/bacteria/defense_abundance.tsv",
     params:
         samples = SAMPLES,
         workdir = config["workdir"],
@@ -158,7 +166,12 @@ rule vir_integration_tables:
         votu_table = WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
         pharokka = WORKDIR + "/result/virus/pharokka/pharokka.gff",
     output:
-        done = touch(WORKDIR + "/result/integration/virus/.done")
+        # Track key viral functional abundance tables
+        vog = WORKDIR + "/result/integration/virus/vog_abundance.tsv",
+        phrog = WORKDIR + "/result/integration/virus/phrog_category_abundance.tsv",
+        lifestyle = WORKDIR + "/result/integration/virus/lifestyle_abundance.tsv",
+        host = WORKDIR + "/result/integration/virus/host_genus_abundance.tsv",
+        family = WORKDIR + "/result/integration/virus/viral_family_abundance.tsv",
     params:
         samples = SAMPLES,
         workdir = config["workdir"],
@@ -180,7 +193,13 @@ rule fun_integration_tables:
         ),
         eggnog = WORKDIR + "/result/fungi/eggnog/eggnog.emapper.annotations",
     output:
-        done = touch(WORKDIR + "/result/integration/fungi/.done")
+        # Track key fungal functional abundance tables
+        kegg_ko = WORKDIR + "/result/integration/fungi/kegg_ko_gene_count.tsv",
+        cog = WORKDIR + "/result/integration/fungi/cog_gene_count.tsv",
+        cazyme = WORKDIR + "/result/integration/fungi/cazyme_gene_count.tsv",
+        vfdb = WORKDIR + "/result/integration/fungi/vfdb_gene_count.tsv",
+        amr = WORKDIR + "/result/integration/fungi/amr_gene_count.tsv",
+        merops = WORKDIR + "/result/integration/fungi/merops_family_gene_count.tsv",
     params:
         samples = SAMPLES,
         workdir = config["workdir"],
@@ -191,3 +210,188 @@ rule fun_integration_tables:
         "bash {REPO}/scripts/98d_fun_integration_tables.sh "
         "-t {threads} -w {params.workdir} -r {REPO} "
         "> {log} 2>&1"
+
+
+# ==============================================================================
+# New Downstream Analysis Modules (Phase 3: 4-module completion)
+# Integrated: 2026-07-13
+# ==============================================================================
+
+rule stat_lefse:
+    """LEfSe biomarker discovery across bacteria/fungi/virus functional tables."""
+    input:
+        bac_tables = rules.bac_integration_tables.output,
+        vir_tables = rules.vir_integration_tables.output,
+        fun_tables = rules.fun_integration_tables.output,
+    output:
+        bac_done = touch(WORKDIR + "/result/stat/bacteria/lefse/.done"),
+        vir_done = touch(WORKDIR + "/result/stat/virus/lefse/.done"),
+        fun_done = touch(WORKDIR + "/result/stat/fungi/lefse/.done"),
+    params:
+        meta = meta_file,
+        group = "group",
+        lda_threshold = 2.0,
+    threads: CPUS
+    shell:
+        """
+        # Bacteria (8 functional tables)
+        for type in kegg_ko cog arg cazyme vfdb ncyc pcyc defense; do
+            if [ -f {WORKDIR}/result/integration/bacteria/${{type}}_abundance.tsv ]; then
+                bash {REPO}/scripts/99b_lefse.sh \
+                    -i {WORKDIR}/result/integration/bacteria/${{type}}_abundance.tsv \
+                    -m {params.meta} \
+                    -o {WORKDIR}/result/stat/bacteria/lefse/$type \
+                    -d bacteria -y $type \
+                    --lda-threshold {params.lda_threshold} || echo "LEfSe failed for bacteria/$type"
+            fi
+        done
+        touch {output.bac_done}
+        
+        # Virus (5 functional tables)
+        for type in vog phrog_category lifestyle host_genus viral_family; do
+            if [ -f {WORKDIR}/result/integration/virus/${{type}}_abundance.tsv ]; then
+                bash {REPO}/scripts/99b_lefse.sh \
+                    -i {WORKDIR}/result/integration/virus/${{type}}_abundance.tsv \
+                    -m {params.meta} \
+                    -o {WORKDIR}/result/stat/virus/lefse/$type \
+                    -d virus -y $type \
+                    --lda-threshold {params.lda_threshold} || echo "LEfSe failed for virus/$type"
+            fi
+        done
+        touch {output.vir_done}
+        
+        # Fungi (6 functional tables - if available)
+        for type in kegg_ko cog cazyme vfdb amr_gene merops_family; do
+            TABLE=$(find {WORKDIR}/result/integration/fungi -name "${{type}}_*.tsv" 2>/dev/null | head -1)
+            if [ -n "$TABLE" ] && [ -f "$TABLE" ]; then
+                bash {REPO}/scripts/99b_lefse.sh \
+                    -i "$TABLE" \
+                    -m {params.meta} \
+                    -o {WORKDIR}/result/stat/fungi/lefse/$type \
+                    -d fungi -y $type \
+                    --lda-threshold {params.lda_threshold} || echo "LEfSe failed for fungi/$type"
+            fi
+        done
+        touch {output.fun_done}
+        """
+
+
+rule stat_core_microbiome:
+    """Core microbiome identification across bacteria/fungi/virus."""
+    input:
+        bac_tax = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
+        vir_abund = WORKDIR + "/result/integration/virus/viral_family_abundance.tsv",
+    output:
+        bac_summary = WORKDIR + "/result/stat/bacteria/core_microbiome/core_microbiome_summary.txt",
+        fun_summary = WORKDIR + "/result/stat/fungi/core_microbiome/core_microbiome_summary.txt",
+        vir_summary = WORKDIR + "/result/stat/virus/core_microbiome/core_microbiome_summary.txt",
+    params:
+        meta = meta_file,
+        prevalence = 0.5,
+        min_abundance = 0.0001,
+    threads: CPUS
+    shell:
+        """
+        # Bacteria
+        bash {REPO}/scripts/99a_core_microbiome.sh \
+            -i {input.bac_tax} \
+            -m {params.meta} \
+            -o {WORKDIR}/result/stat/bacteria/core_microbiome \
+            -d bacteria \
+            --prevalence-threshold {params.prevalence} \
+            --min-abundance {params.min_abundance}
+
+        # Fungi (conditional on merged taxonomy availability)
+        FUN_TAX="{WORKDIR}/result/fungi/metaphlan4/merged/taxonomy.tsv"
+        if [ -f "$FUN_TAX" ]; then
+            bash {REPO}/scripts/99a_core_microbiome.sh \
+                -i "$FUN_TAX" \
+                -m {params.meta} \
+                -o {WORKDIR}/result/stat/fungi/core_microbiome \
+                -d fungi \
+                --prevalence-threshold {params.prevalence} \
+                --min-abundance {params.min_abundance}
+        else
+            mkdir -p {WORKDIR}/result/stat/fungi/core_microbiome
+            echo "Fungi taxonomy not available, skipping" > {output.fun_summary}
+        fi
+
+        # Virus (use viral_family abundance as taxonomy proxy)
+        bash {REPO}/scripts/99a_core_microbiome.sh \
+            -i {input.vir_abund} \
+            -m {params.meta} \
+            -o {WORKDIR}/result/stat/virus/core_microbiome \
+            -d virus \
+            --prevalence-threshold {params.prevalence} \
+            --min-abundance {params.min_abundance}
+        """
+
+
+rule stat_functional_redundancy:
+    """Functional redundancy analysis (FDI) across bacteria/fungi/virus."""
+    input:
+        bac_func = WORKDIR + "/result/integration/bacteria/kegg_ko_abundance.tsv",
+        bac_tax = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
+        vir_func = WORKDIR + "/result/integration/virus/vog_abundance.tsv",
+        vir_tax = WORKDIR + "/result/integration/virus/viral_family_abundance.tsv",
+    output:
+        bac_summary = WORKDIR + "/result/stat/bacteria/functional_redundancy/functional_redundancy_summary.txt",
+        fun_summary = WORKDIR + "/result/stat/fungi/functional_redundancy/functional_redundancy_summary.txt",
+        vir_summary = WORKDIR + "/result/stat/virus/functional_redundancy/functional_redundancy_summary.txt",
+    threads: CPUS
+    shell:
+        """
+        # Bacteria
+        bash {REPO}/scripts/96c_functional_redundancy.sh \
+            -f {input.bac_func} \
+            -t {input.bac_tax} \
+            -o {WORKDIR}/result/stat/bacteria/functional_redundancy \
+            -d bacteria -y kegg_ko
+
+        # Fungi (conditional on functional table availability)
+        FUN_FUNC=$(find {WORKDIR}/result/integration/fungi -name "kegg_ko*.tsv" 2>/dev/null | head -1)
+        FUN_TAX="{WORKDIR}/result/fungi/metaphlan4/merged/taxonomy.tsv"
+        if [ -n "$FUN_FUNC" ] && [ -f "$FUN_FUNC" ] && [ -f "$FUN_TAX" ]; then
+            bash {REPO}/scripts/96c_functional_redundancy.sh \
+                -f "$FUN_FUNC" \
+                -t "$FUN_TAX" \
+                -o {WORKDIR}/result/stat/fungi/functional_redundancy \
+                -d fungi -y kegg_ko
+        else
+            mkdir -p {WORKDIR}/result/stat/fungi/functional_redundancy
+            echo "Fungi functional or taxonomy data not available, skipping" > {output.fun_summary}
+        fi
+
+        # Virus (use viral_family as taxonomy proxy)
+        bash {REPO}/scripts/96c_functional_redundancy.sh \
+            -f {input.vir_func} \
+            -t {input.vir_tax} \
+            -o {WORKDIR}/result/stat/virus/functional_redundancy \
+            -d virus -y vog
+        """
+
+
+rule stat_pathway_activity:
+    """Pathway activity estimation from HUMAnN3 stratified output."""
+    input:
+        humann3_done = expand(
+            WORKDIR + "/result/humann3/{sample}/{sample}_pathabundance.tsv",
+            sample=SAMPLES
+        ),
+    output:
+        summary = WORKDIR + "/result/stat/bacteria/pathway_activity/pathway_activity_summary.txt",
+    params:
+        meta = meta_file,
+        min_coverage = 0.5,
+        top_n = 5,
+    threads: CPUS
+    shell:
+        """
+        bash {REPO}/scripts/96b_pathway_activity.sh \
+            -w {WORKDIR} \
+            -m {params.meta} \
+            -o {WORKDIR}/result/stat/bacteria/pathway_activity \
+            -d bacteria \
+            --min-coverage {params.min_coverage} \
+            --top-n-contributors {params.top_n} || echo "Pathway activity analysis failed (likely missing HUMAnN3 stratified output)"
+        """

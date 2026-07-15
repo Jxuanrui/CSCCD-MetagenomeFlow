@@ -35,10 +35,10 @@ echo "  fungi: [SKIPPED] Already completed"
 # Virus - use abundance table instead of taxonomy
 echo "  Processing virus (using viral_family abundance)..."
 if [ -f "${INTEGRATION}/virus/viral_family_abundance.tsv" ]; then
-  bash scripts/92_core_microbiome.sh \
+  bash scripts/99a_core_microbiome.sh \
     -i "${INTEGRATION}/virus/viral_family_abundance.tsv" \
     -m "${METADATA}" \
-    -o "${RESULT}/92_core_microbiome/virus" \
+    -o "${RESULT}/99a_core_microbiome/virus" \
     -d virus && SUCCESS=$((SUCCESS+1)) || FAILED=$((FAILED+1))
   echo "    ✓ Virus core microbiome completed"
 else
@@ -110,8 +110,8 @@ echo "Failed: $FAILED"
 echo ""
 
 echo "Final file counts:"
-echo "  LEfSe: $(find ${RESULT}/95b_lefse -type f 2>/dev/null | wc -l)"
-echo "  Core microbiome: $(find ${RESULT}/92_core_microbiome -type f 2>/dev/null | wc -l)"
+echo "  LEfSe: $(find ${RESULT}/99b_lefse -type f 2>/dev/null | wc -l)"
+echo "  Core microbiome: $(find ${RESULT}/99a_core_microbiome -type f 2>/dev/null | wc -l)"
 echo "  Functional redundancy: $(find ${RESULT}/96c_functional_redundancy -type f 2>/dev/null | wc -l)"
 echo ""
 

@@ -47,9 +47,11 @@ done
 
 SECONDS=0
 INPUT_DIR="${WORKDIR}/result/binning/checkm2/drep_input"
+FILTERED_REPORT="${WORKDIR}/result/binning/checkm2/checkm2_filtered/filtered_report.tsv"
 OUTDIR="${WORKDIR}/result/binning/drep"
 SENTINEL="${OUTDIR}/dereplicated_genomes"
 SENTINEL_FILE="${OUTDIR}/.done"
+GENOME_INFO="${OUTDIR}/checkm2_genomeInfo.csv"
 
 N_INPUT_MAGS=0
 if [ -d "${INPUT_DIR}" ]; then
@@ -66,6 +68,14 @@ if [ -f "${SENTINEL_FILE}" ]; then echo "[drep] 结果已存在，跳过"; exit 
 
 mkdir -p "${OUTDIR}"
 
+# 复用 CheckM2（37）已算好的 completeness/contamination，避免 dRep 内部重跑 checkm1 lineage_wf
+GENOME_INFO_ARGS=()
+if [ -f "${FILTERED_REPORT}" ]; then
+    echo "genome,completeness,contamination" > "${GENOME_INFO}"
+    awk -F'\t' 'NR>1 {print $1".fa,"$2","$3}' "${FILTERED_REPORT}" >> "${GENOME_INFO}"
+    GENOME_INFO_ARGS=(--genomeInfo "${GENOME_INFO}")
+fi
+
 echo "[drep] 去冗余 | ANI: ${ANI} | 线程: ${CPUS}"
 conda run --prefix "${REPO}/envs/drep" --no-capture-output \
     dRep dereplicate \
@@ -74,7 +84,8 @@ conda run --prefix "${REPO}/envs/drep" --no-capture-output \
         -sa "${ANI}" \
         -pa 0.9 \
         -nc 0.30 \
-        -p "${CPUS}"
+        -p "${CPUS}" \
+        "${GENOME_INFO_ARGS[@]}"
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] dRep 失败"; exit ${EXIT_CODE}; fi

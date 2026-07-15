@@ -43,7 +43,7 @@ SECONDS=0
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/binning/dastool/${SAMPLE}"
 SENTINEL="${OUTDIR}/${SAMPLE}_DASTool_contig2bin.tsv"
-BINS_DIR="${OUTDIR}/bins"
+BINS_DIR="${OUTDIR}/${SAMPLE}_DASTool_bins"
 
 METABAT2_TSV="${WORKDIR}/result/binning/metabat2/${SAMPLE}/${SAMPLE}.tsv"
 MAXBIN2_TSV="${WORKDIR}/result/binning/maxbin2/${SAMPLE}/${SAMPLE}.maxbin2.tsv"
@@ -94,15 +94,21 @@ fi
 
 mkdir -p "${OUTDIR}"
 
+# DAS_Tool 要求 contig2bin 表无表头、两列 tab 分隔；33/35 的输出带表头，需清洗后再传入
+CLEAN_DIR="${OUTDIR}/input_clean"
+mkdir -p "${CLEAN_DIR}"
+
 # 构建标识列表和输入文件列表
 LABELS=""; INPUTS=""
 for entry in "${BINNERS[@]}"; do
     L="${entry%%:*}"
     F="${entry#*:}"
+    CLEAN_F="${CLEAN_DIR}/${L}.tsv"
+    awk 'BEGIN{FS=OFS="\t"} NR==1 && ($1=="contig_id" || $1=="contig") {next} NF>=2 {print $1,$2}' "${F}" > "${CLEAN_F}"
     [ -n "${LABELS}" ] && LABELS="${LABELS},"
     LABELS="${LABELS}${L}"
     [ -n "${INPUTS}" ] && INPUTS="${INPUTS},"
-    INPUTS="${INPUTS}${F}"
+    INPUTS="${INPUTS}${CLEAN_F}"
 done
 
 echo "[dastool] ${SAMPLE} | binner: ${LABELS} | 整合分箱 ..."
@@ -114,7 +120,7 @@ conda run --prefix "${REPO}/envs/dastool" --no-capture-output \
         -c "${CONTIGS}" \
         -o "${OUTDIR}/${SAMPLE}" \
         --score_threshold 0.3 \
-        --write_bins 1
+        --write_bins
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] DAS_Tool 失败"; exit ${EXIT_CODE}; fi

@@ -2,11 +2,11 @@
 # Executor: CC (single rules file, deterministic)
 #
 # Per-sample rules: coverm_depth, metabat2, maxbin2, semibin2, dastool
-# Aggregate rules: checkm2, drep, coverm_quant(per-sample), gtdbtk, bakta
+# Aggregate rules: checkm2, drep, coverm_quant(per-sample), gtdbtk, prokka
 #
 # DAG flow:
 #   megahit → coverm_depth → [metabat2, maxbin2, semibin2] → dastool
-#   dastool → checkm2 → drep → [coverm_quant, gtdbtk, bakta]
+#   dastool → checkm2 → drep → [coverm_quant, gtdbtk, prokka]
 
 BINNING = WORKDIR + "/result/binning"
 
@@ -128,15 +128,15 @@ rule gtdbtk:
         "bash {REPO}/scripts/40_bac_gtdbtk.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
 
 
-# ─── 41: Bakta MAG annotation (aggregate batch) ─────────────────────────────
+# ─── 41: Prokka MAG annotation (aggregate batch) ────────────────────────────
 
-rule bakta:
+rule prokka:
     input:
         drep_done = BINNING + "/drep/.done",
     output:
-        summary = BINNING + "/bakta/bakta_summary.tsv",
+        summary = BINNING + "/prokka/prokka_summary.tsv",
     shell:
-        "bash {REPO}/scripts/41_bac_bakta.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/41_bac_prokka.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
 
 
 # ─── 41b: MLST typing of dereplicated MAGs (aggregate) ──────────────────────
@@ -154,7 +154,7 @@ rule bac_mlst:
 
 rule bac_pangenome:
     input:
-        bakta_summary = BINNING + "/bakta/bakta_summary.tsv",
+        prokka_summary = BINNING + "/prokka/prokka_summary.tsv",
     output:
         summary = WORKDIR + "/result/wgs/pangenome/summary_statistics.txt",
     shell:
@@ -176,9 +176,9 @@ rule bac_snippy:
 
 rule bac_mge:
     input:
-        contigs = ASSEMBLY + "/megahit/{sample}/{sample}.contigs.fa",
-        proteins = ASSEMBLY + "/prodigal/{sample}/{sample}.faa",
-        nr_proteins = ASSEMBLY + "/cdhit/protein_nr.fa",
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+        proteins = WORKDIR + "/result/assembly/prodigal/{sample}/{sample}.faa",
+        nr_proteins = WORKDIR + "/result/assembly/cdhit/protein_nr.fa",
     output:
         isfinder = WORKDIR + "/result/mge/isfinder/{sample}/isfinder_hits.tsv",
         iceberg = WORKDIR + "/result/mge/iceberg/{sample}/iceberg_hits.tsv",
@@ -195,7 +195,7 @@ rule bac_mge:
 
 rule bac_plasmidfinder:
     input:
-        contigs = ASSEMBLY + "/megahit/{sample}/{sample}.contigs.fa",
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
     output:
         results = WORKDIR + "/result/mge/plasmidfinder/{sample}/results_tab.tsv",
     log:

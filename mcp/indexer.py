@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -30,8 +31,12 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Build the MaxMetagenome experience KB index.")
     parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
     parser.add_argument("--force", action="store_true", help="Delete and rebuild the experience_kb collection.")
+    parser.add_argument("--incremental", action="store_true", help="Only rebuild changed source files.")
     parser.add_argument("--batch-size", type=int, default=32, help="Embedding batch size.")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.force and args.incremental:
+        parser.error("cannot use --force and --incremental together")
+    return args
 
 
 def sanitize_metadata(metadata):
@@ -48,25 +53,151 @@ def sanitize_metadata(metadata):
     return sanitized
 
 
-def load_registry_chunk(registry_path):
+def load_registry_chunk(registry_path, source_mtime=None):
     try:
         import yaml
 
         registry_data = yaml.safe_load(registry_path.read_text(encoding="utf-8")) or {}
+        metadata = {
+            "doc_type": "registry",
+            "source_path": str(registry_path),
+            "last_updated": str(registry_data.get("last_updated", "")),
+        }
+        if source_mtime is not None:
+            metadata["source_mtime"] = source_mtime
         chunk_text = json.dumps(registry_data, ensure_ascii=False, indent=2)
-        return [
-            (
-                chunk_text,
-                {
-                    "doc_type": "registry",
-                    "source_path": str(registry_path),
-                    "last_updated": str(registry_data.get("last_updated", "")),
-                },
-            )
-        ]
+        return [(chunk_text, metadata)]
     except Exception as exc:
         warn(f"failed to read registry {registry_path}: {exc}")
         return []
+
+
+def get_existing_sources(collection):
+    try:
+        payload = collection.get(include=["metadatas"])
+    except Exception as exc:
+        warn(f"failed to read existing metadata for incremental indexing: {exc}")
+        return {}
+
+    existing_sources = {}
+    for metadata in payload.get("metadatas") or []:
+        if not metadata:
+            continue
+        source_path = metadata.get("source_path")
+        if not source_path:
+            continue
+        existing_sources[source_path] = metadata.get("source_mtime", 0)
+    return existing_sources
+
+
+def delete_source_chunks(collection, source_path):
+    try:
+        collection.delete(where={"source_path": source_path})
+    except Exception as exc:
+        warn(f"failed to delete chunks for {source_path}: {exc}")
+
+
+def stable_chunk_id(prefix, source_path, chunk_index):
+    digest = hashlib.sha1(str(source_path).encode("utf-8")).hexdigest()
+    return f"{prefix}_{digest}_{chunk_index}"
+
+
+def stable_chunk_ids(prefix, chunks):
+    source_counts = {}
+    ids = []
+    for index, item in enumerate(chunks):
+        metadata = item[1] if len(item) > 1 else {}
+        source_path = metadata.get("source_path", index)
+        chunk_index = source_counts.get(source_path, 0)
+        source_counts[source_path] = chunk_index + 1
+        ids.append(stable_chunk_id(prefix, source_path, chunk_index))
+    return ids
+
+
+def collect_existing_documents(collection):
+    documents = []
+    offset = 0
+    page_size = 1000
+    while True:
+        try:
+            page = collection.get(include=["documents"], limit=page_size, offset=offset)
+        except Exception as exc:
+            warn(f"failed to read collection documents for BM25 rebuild: {exc}")
+            return documents
+        ids = page.get("ids") or []
+        texts = page.get("documents") or []
+        if not ids:
+            break
+        for index, doc_id in enumerate(ids):
+            text = texts[index] if index < len(texts) else ""
+            if text:
+                documents.append((doc_id, text))
+        if len(ids) < page_size:
+            break
+        offset += len(ids)
+    return documents
+
+
+def rebuild_bm25(collection, bm25_path):
+    from bm25_index import BM25Index
+
+    bm25_documents = collect_existing_documents(collection)
+    bm25_idx = BM25Index()
+    if bm25_documents:
+        bm25_idx.build(bm25_documents)
+    bm25_idx.save(bm25_path)
+    print(f"BM25 index saved: {len(bm25_documents)} docs -> {bm25_path}")
+
+
+def load_embedding_model(set_tokenizer):
+    try:
+        from sentence_transformers import SentenceTransformer
+
+        import os
+        os.environ['HF_HUB_OFFLINE'] = '1'
+        model = SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
+        if hasattr(model, "tokenizer"):
+            set_tokenizer(model.tokenizer)
+        else:
+            set_tokenizer(None)
+        return model
+    except Exception:
+        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
+
+        set_tokenizer(None)
+        return ONNXMiniLM_L6_V2()
+
+
+def source_unchanged(filepath, existing_sources):
+    source_path = str(filepath)
+    if source_path not in existing_sources:
+        return False
+    try:
+        indexed_mtime = float(existing_sources[source_path])
+    except Exception:
+        return False
+    return abs(indexed_mtime - filepath.stat().st_mtime) < 0.000001
+
+
+def add_source_mtime(chunks, mtime):
+    updated_chunks = []
+    for text, metadata in chunks:
+        metadata = dict(metadata or {})
+        metadata["source_mtime"] = mtime
+        updated_chunks.append((text, metadata))
+    return updated_chunks
+
+
+def collect_file_chunks(filepath, parser, existing_sources, seen_sources, skipped_sources, changed_sources, scan_only):
+    seen_sources.add(str(filepath))
+    mtime = filepath.stat().st_mtime
+    if source_unchanged(filepath, existing_sources):
+        skipped_sources.add(str(filepath))
+        return []
+    changed_sources.add(str(filepath))
+    if scan_only:
+        return []
+    return add_source_mtime(parser(filepath), mtime)
 
 
 def collect_chunks(
@@ -76,15 +207,32 @@ def collect_chunks(
     parse_script_header,
     parse_skill_card,
     parse_snakemake_rule,
+    existing_sources=None,
+    return_tracking=False,
+    scan_only=False,
 ):
     all_chunks = []
+    existing_sources = existing_sources or {}
+    seen_sources = set()
+    skipped_sources = set()
+    changed_sources = set()
 
     experience_dir = repo / "docs" / "experience"
     if experience_dir.is_dir():
         for filepath in sorted(experience_dir.glob("*.md")):
             if filepath.name == "TEMPLATE.md":
                 continue
-            all_chunks.extend(parse_experience_doc(filepath))
+            all_chunks.extend(
+                collect_file_chunks(
+                    filepath,
+                    parse_experience_doc,
+                    existing_sources,
+                    seen_sources,
+                    skipped_sources,
+                    changed_sources,
+                    scan_only,
+                )
+            )
     else:
         warn(f"missing directory: {experience_dir}")
 
@@ -93,14 +241,34 @@ def collect_chunks(
         for filepath in sorted(docs_dir.rglob("*.md")):
             if "experience" in filepath.parts:
                 continue
-            all_chunks.extend(parse_tool_doc(filepath))
+            all_chunks.extend(
+                collect_file_chunks(
+                    filepath,
+                    parse_tool_doc,
+                    existing_sources,
+                    seen_sources,
+                    skipped_sources,
+                    changed_sources,
+                    scan_only,
+                )
+            )
     else:
         warn(f"missing directory: {docs_dir}")
 
     scripts_dir = repo / "scripts"
     if scripts_dir.is_dir():
         for filepath in sorted(scripts_dir.glob("*.sh")):
-            all_chunks.extend(parse_script_header(filepath))
+            all_chunks.extend(
+                collect_file_chunks(
+                    filepath,
+                    parse_script_header,
+                    existing_sources,
+                    seen_sources,
+                    skipped_sources,
+                    changed_sources,
+                    scan_only,
+                )
+            )
     else:
         warn(f"missing directory: {scripts_dir}")
 
@@ -109,20 +277,47 @@ def collect_chunks(
         for filepath in sorted(skills_dir.glob("*.yaml")):
             if filepath.name.startswith("_"):
                 continue
-            all_chunks.extend(parse_skill_card(filepath))
+            all_chunks.extend(
+                collect_file_chunks(
+                    filepath,
+                    parse_skill_card,
+                    existing_sources,
+                    seen_sources,
+                    skipped_sources,
+                    changed_sources,
+                    scan_only,
+                )
+            )
     else:
         warn(f"missing directory: {skills_dir}")
 
     rules_dir = repo / "pipeline" / "rules"
     if rules_dir.is_dir():
         for filepath in sorted(rules_dir.glob("*.smk")):
-            all_chunks.extend(parse_snakemake_rule(filepath))
+            all_chunks.extend(
+                collect_file_chunks(
+                    filepath,
+                    parse_snakemake_rule,
+                    existing_sources,
+                    seen_sources,
+                    skipped_sources,
+                    changed_sources,
+                    scan_only,
+                )
+            )
     else:
         warn(f"missing directory: {rules_dir}")
 
     registry_path = repo / "agents" / "registry.yaml"
     if registry_path.is_file():
-        all_chunks.extend(load_registry_chunk(registry_path))
+        seen_sources.add(str(registry_path))
+        registry_mtime = registry_path.stat().st_mtime
+        if source_unchanged(registry_path, existing_sources):
+            skipped_sources.add(str(registry_path))
+        else:
+            changed_sources.add(str(registry_path))
+            if not scan_only:
+                all_chunks.extend(load_registry_chunk(registry_path, registry_mtime))
     else:
         warn(f"missing registry: {registry_path}")
 
@@ -130,8 +325,26 @@ def collect_chunks(
     replications_dir = repo / "skills" / "replications"
     if replications_dir.is_dir():
         for filepath in sorted(replications_dir.rglob("README.md")):
-            all_chunks.extend(parse_tool_doc(filepath))
+            all_chunks.extend(
+                collect_file_chunks(
+                    filepath,
+                    parse_tool_doc,
+                    existing_sources,
+                    seen_sources,
+                    skipped_sources,
+                    changed_sources,
+                    scan_only,
+                )
+            )
         for filepath in sorted(replications_dir.rglob("params.yaml")):
+            seen_sources.add(str(filepath))
+            mtime = filepath.stat().st_mtime
+            if source_unchanged(filepath, existing_sources):
+                skipped_sources.add(str(filepath))
+                continue
+            changed_sources.add(str(filepath))
+            if scan_only:
+                continue
             try:
                 import yaml as _yaml
                 data = _yaml.safe_load(filepath.read_text(encoding="utf-8")) or {}
@@ -143,6 +356,7 @@ def collect_chunks(
                             "doc_type": "replication_params",
                             "source_path": str(filepath),
                             "replication_id": filepath.parent.name,
+                            "source_mtime": mtime,
                         },
                     ))
             except Exception as exc:
@@ -159,6 +373,8 @@ def collect_chunks(
         metadata = sanitize_metadata(metadata or {})
         metadata.setdefault("source_type", metadata.get("doc_type", "unknown"))
         normalized_chunks.append((str(text).strip(), metadata))
+    if return_tracking:
+        return normalized_chunks, seen_sources, skipped_sources, changed_sources
     return normalized_chunks
 
 
@@ -219,22 +435,6 @@ def main():
         )
         sys.exit(1)
 
-    try:
-        from sentence_transformers import SentenceTransformer
-
-        import os
-        os.environ['HF_HUB_OFFLINE'] = '1'
-        model = SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
-        if hasattr(model, "tokenizer"):
-            set_tokenizer(model.tokenizer)
-        else:
-            set_tokenizer(None)
-    except Exception:
-        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
-
-        model = ONNXMiniLM_L6_V2()
-        set_tokenizer(None)
-
     chroma_dir = repo / "mcp" / "chromadb_data"
     chroma_dir.mkdir(parents=True, exist_ok=True)
     client = chromadb.PersistentClient(str(chroma_dir))
@@ -250,24 +450,71 @@ def main():
         metadata={"hnsw:space": "cosine"},
     )
 
-    all_chunks = collect_chunks(
-        repo,
-        parse_experience_doc,
-        parse_tool_doc,
-        parse_script_header,
-        parse_skill_card,
-        parse_snakemake_rule,
-    )
+    if args.incremental:
+        existing_sources = get_existing_sources(collection)
+    else:
+        existing_sources = {}
 
-    if not all_chunks:
+    if args.incremental:
+        all_chunks, seen_sources, skipped_sources, changed_sources = collect_chunks(
+            repo,
+            parse_experience_doc,
+            parse_tool_doc,
+            parse_script_header,
+            parse_skill_card,
+            parse_snakemake_rule,
+            existing_sources,
+            return_tracking=True,
+            scan_only=True,
+        )
+        deleted_sources = set(existing_sources.keys()) - seen_sources
+        for deleted_source in sorted(deleted_sources):
+            delete_source_chunks(collection, deleted_source)
+        for source_path in sorted(changed_sources):
+            delete_source_chunks(collection, source_path)
+        print(
+            f"Incremental experience_kb: skipped {len(skipped_sources)} files, "
+            f"reindexed {len(changed_sources)} files, deleted {len(deleted_sources)} files"
+        )
+        if changed_sources:
+            model = load_embedding_model(set_tokenizer)
+            all_chunks, _, _, _ = collect_chunks(
+                repo,
+                parse_experience_doc,
+                parse_tool_doc,
+                parse_script_header,
+                parse_skill_card,
+                parse_snakemake_rule,
+                existing_sources,
+                return_tracking=True,
+            )
+    else:
+        model = load_embedding_model(set_tokenizer)
+        all_chunks, seen_sources, skipped_sources, changed_sources = collect_chunks(
+            repo,
+            parse_experience_doc,
+            parse_tool_doc,
+            parse_script_header,
+            parse_skill_card,
+            parse_snakemake_rule,
+            existing_sources,
+            return_tracking=True,
+        )
+
+    if not all_chunks and not args.incremental:
         print("Indexed 0 chunks into experience_kb")
         return
 
-    clear_collection(collection)
+    if not args.incremental:
+        clear_collection(collection)
 
+    all_ids = stable_chunk_ids("exp", all_chunks) if args.incremental else []
     for batch_start in range(0, len(all_chunks), max(1, args.batch_size)):
         batch = all_chunks[batch_start:batch_start + max(1, args.batch_size)]
-        ids = [f"exp_{index}" for index in range(batch_start, batch_start + len(batch))]
+        if args.incremental:
+            ids = all_ids[batch_start:batch_start + len(batch)]
+        else:
+            ids = [f"exp_{index}" for index in range(batch_start, batch_start + len(batch))]
         texts = [item[0] for item in batch]
         metadatas = [item[1] for item in batch]
         if hasattr(model, "encode"):
@@ -281,17 +528,8 @@ def main():
             metadatas=metadatas,
         )
 
-    from bm25_index import BM25Index
-
     bm25_path = repo / "mcp" / "bm25_data" / "experience_kb.pkl"
-    bm25_documents = [
-        (f"exp_{index}", text)
-        for index, (text, _) in enumerate(all_chunks)
-    ]
-    bm25_idx = BM25Index()
-    bm25_idx.build(bm25_documents)
-    bm25_idx.save(bm25_path)
-    print(f"BM25 index saved: {len(bm25_documents)} docs -> {bm25_path}")
+    rebuild_bm25(collection, bm25_path)
 
     print(f"Indexed {len(all_chunks)} chunks into experience_kb")
 

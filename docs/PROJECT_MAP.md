@@ -286,8 +286,12 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 95a | `scripts/95a_stat_batch_correct.sh` | 多中心批次校正 Top10 方法（**Phase 2b 验证**：包依赖齐全，ComBat-seq 正常；其他方法因 API 变更需修复） | MBECS/ConQuR/MMUPHin (R) |
 | 95b | `scripts/95b_stat_batch_evaluate.sh` | 批次校正评估报告（**Phase 2b**：存在 vegan::adonis2 公式拼接 bug，待 Phase 3 修复） | MBECS (R) |
 | 96 | `scripts/96_stat_ml_siamcat.sh` | ML筛选+ROC评估（lasso/RF/SVM/enet 10折交叉验证，Top10特征+AUC对比），输出至 result/stat/ml/ | SIAMCAT (R) |
+| 96b | `scripts/96b_pathway_activity.sh` | **Pathway Activity（通路活性分析）**：整合 HUMAnN3 分层通路丰度与覆盖度，评估通路完整性、主要物种贡献者及通路活性与群落组成的相关性，适用于定位驱动功能变化的关键物种。依赖：15；Snakemake rule：`stat_pathway_activity` | HUMAnN3 + R |
+| 96c | `scripts/96c_functional_redundancy.sh` | **Functional Redundancy（功能冗余度分析）**：联合功能与物种丰度矩阵计算功能分散指数（FDI）和物种功能多样性，识别低冗余、潜在脆弱的关键功能，并可结合 ML 重要性筛选候选功能。依赖：98b、98c、98d、11；Snakemake rule：`stat_functional_redundancy` | R |
 | 97 | `scripts/97_stat_crosscohort.sh` | **跨队列验证（Phase 2a 统一）**：本地多队列 ML 迁移验证（8 个可视化 + meta-analysis）。输出到 `result/viz_crosscohort/`。旧的 `statistics.smk::stat_curatedMGD` 规则已删除避免冲突。 | SIAMCAT/MMUPHin (R) |
 | 98 | `scripts/98_stat_report.sh` | 按需生成带时间戳的分析结果 Markdown 快照报告 | bash + Rscript |
+| 99a | `scripts/99a_core_microbiome.sh` | **Core Microbiome（核心微生物组识别）**：按流行率和最低丰度阈值识别全局及 case/control 组特异核心特征，输出核心成员表、共享关系、流行率曲线和核心丰度占比图，用于发现稳定定植成员。依赖：11、98b；Snakemake rule：`stat_core_microbiome` | microbiome + R |
+| 99b | `scripts/99b_lefse.sh` | **LEfSe Analysis（生物标志物发现）**：对细菌、病毒和真菌的分类或功能丰度表执行组间检验与 LDA 效应量排序，输出显著生物标志物、LDA 条形图及分类层级图，用于病例-对照标志物筛选。依赖：98b、98c、98d；Snakemake rule：`stat_lefse` | LEfSe-like + R |
 
 ### 🔄 串联流程脚本
 

@@ -4,7 +4,8 @@
 # 功  能: 结构暗物质 ORF 注释（PHOLD，PHAROKKA 补充）
 #         工具版本：PHOLD 1.0+（conda env: phold）
 # 依  赖: 64_vir_pharokka.sh 的输出
-# 输  入: ${WORKDIR}/result/virus/votu/contigs/virus.fasta
+# 输  入: ${WORKDIR}/result/virus/pharokka/pharokka.gbk（64的输出，非virus.fasta；
+#         保证gene坐标/ID与64一致，并复用Pharokka的tRNA/tmRNA/CRISPR注释）
 # 输  出: ${WORKDIR}/result/virus/phold/
 #           vOTU_phold.tsv     — PHOLD 注释表
 #
@@ -36,12 +37,12 @@ for v in CPUS WORKDIR REPO; do
 done
 
 SECONDS=0
-VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
+VOTU_GBK="${WORKDIR}/result/virus/pharokka/pharokka.gbk"
 OUTDIR="${WORKDIR}/result/virus/phold"
 SENTINEL="${OUTDIR}/vOTU_phold.tsv"
 PHOLD_DB="${REPO}/db/phold"
 
-if [ ! -f "${VOTU_FA}" ] || [ ! -s "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在"; exit 1; fi
+if [ ! -f "${VOTU_GBK}" ] || [ ! -s "${VOTU_GBK}" ]; then echo "[ERROR] pharokka.gbk 不存在，请先完成步骤64"; exit 1; fi
 if [ -f "${SENTINEL}" ]; then echo "[phold] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
@@ -49,7 +50,7 @@ mkdir -p "${OUTDIR}"
 echo "[phold] 结构暗物质 ORF 注释 ..."
 conda run --prefix "${REPO}/envs/phold" --no-capture-output \
     phold run \
-        -i "${VOTU_FA}" \
+        -i "${VOTU_GBK}" \
         -o "${OUTDIR}" \
         -d "${PHOLD_DB}" \
         -t "${CPUS}" \

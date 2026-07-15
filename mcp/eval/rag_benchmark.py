@@ -140,7 +140,102 @@ GOLDEN_QUESTIONS: list[dict[str, Any]] = [
         "expected_doc_prefixes": ["snippy-snp-detection", "pangenome-roary"],
         "dimension": "bacteria",
     },
+
+    # ─── Harder questions (added for RAG collection-routing evaluation) ───
+    # These stress-test cases the original 18 golden questions cannot detect
+    # because dense+BM25 hybrid already saturates them (R@5 = 1.00).
+    # Categories: (a) same-tool cross-dimension confusion (bacteria vs
+    # mycobiome docs sharing a tool name), (b) near-duplicate-scope docs
+    # that require picking the correct one among close competitors, and
+    # (c) implicit Chinese scenario queries with no tool name at all.
+    {
+        "id": "kegg_fungi_vs_bacteria",
+        "query": "真菌基因组 KEGG KO 通路注释，用哪个数据库和比对工具",
+        "expected_doc_prefixes": ["fungi-kegg-annotation", "tools_ref/kegg"],
+        "dimension": "mycobiome",
+    },
+    {
+        "id": "eggnog_fungi_vs_bacteria",
+        "query": "真菌蛋白集 eggNOG 注释 COG KO GO EC CAZy 输出文件",
+        "expected_doc_prefixes": ["fungi-eggnog-annotation"],
+        "dimension": "mycobiome",
+    },
+    {
+        "id": "metaphlan4_fungi_ignore_bacteria",
+        "query": "MetaPhlAn4 只保留真核真菌信号，忽略细菌古菌，用什么参数",
+        "expected_doc_prefixes": ["metaphlan4-fungi-eukaryote"],
+        "dimension": "mycobiome",
+    },
+    {
+        "id": "kraken2_fungi_quick_screen",
+        "query": "在跑完整 FunOMIC 之前，先用 Kraken2 快速判断肠道样本有没有真菌信号",
+        "expected_doc_prefixes": ["kraken2-fungi-database"],
+        "dimension": "mycobiome",
+    },
+    {
+        "id": "dbcan_bacteria_vs_fungi",
+        "query": "细菌 CAZyme 三工具投票注释，overview.txt 里 GH GT family 汇总",
+        "expected_doc_prefixes": ["dbcan-cazyme-annotation"],
+        "dimension": "bacteria",
+    },
+    {
+        "id": "amr_primary_vs_card_supplement",
+        "query": "耐药基因分析应该以哪个工具的结果作为发表用的主表，另一个工具做什么补充",
+        "expected_doc_prefixes": ["amrfinder-resistance-genes"],
+        "dimension": "bacteria",
+    },
+    {
+        "id": "drep_strain_tracking_097",
+        "query": "如果我想追踪同一个物种内部不同菌株的差异，dRep 的 ANI 阈值该调到多少",
+        "expected_doc_prefixes": ["drep-ani-threshold"],
+        "dimension": "bacteria",
+    },
+    {
+        "id": "gtdbtk_bac_vs_ar_summary",
+        "query": "MAG 分类结果里细菌和古菌应该分别看哪个 summary 表，为什么不能混着看",
+        "expected_doc_prefixes": ["gtdbtk-classification", "gtdbtk-mag-taxonomy"],
+        "dimension": "bacteria",
+    },
+    {
+        "id": "eukfinder_low_completeness",
+        "query": "真核 MAG 回收出来完整度只有百分之四十，是不是流程哪里错了",
+        "expected_doc_prefixes": ["eukfinder-fungi-mag", "tools_ref/eukfinder"],
+        "dimension": "mycobiome",
+    },
+    {
+        "id": "votu_vclust_species_level",
+        "query": "把多个样本的病毒序列合并去冗余，得到物种级别的代表序列集合，该用什么方法",
+        "expected_doc_prefixes": ["votu-clustering-vclust"],
+        "dimension": "virome",
+    },
+    {
+        "id": "binning_why_multi_algorithm",
+        "query": "只跑一个分箱工具是不是不够，为什么要同时跑好几个再整合",
+        "expected_doc_prefixes": ["binning-multi-algorithm", "dastool-bin-refinement"],
+        "dimension": "bacteria",
+    },
+    {
+        "id": "batch_correction_which_first",
+        "query": "多中心菌群数据校正批次效应，跑了好几种方法，应该优先看哪几个结果",
+        "expected_doc_prefixes": ["batch-correction-strategy", "05_stats/batch_correct", "08_statistics/batch_correct"],
+        "dimension": "statistics",
+    },
 ]
+
+HARD_QUESTION_IDS: set[str] = {
+    "kegg_fungi_vs_bacteria",
+    "eggnog_fungi_vs_bacteria",
+    "metaphlan4_fungi_ignore_bacteria",
+    "kraken2_fungi_quick_screen",
+    "dbcan_bacteria_vs_fungi",
+    "amr_primary_vs_card_supplement",
+    "drep_strain_tracking_097",
+    "gtdbtk_bac_vs_ar_summary",
+    "eukfinder_low_completeness",
+    "votu_vclust_species_level",
+    "binning_why_multi_algorithm",
+    "batch_correction_which_first",
+}
 
 
 @dataclass(slots=True)
@@ -373,30 +468,59 @@ def compute_metrics(results: list[SearchResult], expected_doc_prefixes: list[str
     }
 
 
-def aggregate_mode(per_query: list[dict[str, Any]]) -> dict[str, Any]:
+def _aggregate_subset(per_query: list[dict[str, Any]]) -> dict[str, Any]:
     count = len(per_query)
+    if count == 0:
+        return {
+            "recall_at_1": 0.0,
+            "recall_at_3": 0.0,
+            "recall_at_5": 0.0,
+            "mrr_at_5": 0.0,
+            "mean_latency_ms": 0.0,
+            "n": 0,
+        }
     return {
         "recall_at_1": sum(item["recall_at_1"] for item in per_query) / count,
         "recall_at_3": sum(item["recall_at_3"] for item in per_query) / count,
         "recall_at_5": sum(item["recall_at_5"] for item in per_query) / count,
         "mrr_at_5": sum(item["mrr_at_5"] for item in per_query) / count,
         "mean_latency_ms": sum(item["latency_ms"] for item in per_query) / count,
+        "n": count,
+    }
+
+
+def aggregate_mode(per_query: list[dict[str, Any]]) -> dict[str, Any]:
+    count = len(per_query)
+    hard_subset = [item for item in per_query if item["id"] in HARD_QUESTION_IDS]
+    easy_subset = [item for item in per_query if item["id"] not in HARD_QUESTION_IDS]
+    return {
+        "recall_at_1": sum(item["recall_at_1"] for item in per_query) / count,
+        "recall_at_3": sum(item["recall_at_3"] for item in per_query) / count,
+        "recall_at_5": sum(item["recall_at_5"] for item in per_query) / count,
+        "mrr_at_5": sum(item["mrr_at_5"] for item in per_query) / count,
+        "mean_latency_ms": sum(item["latency_ms"] for item in per_query) / count,
+        "hard_subset": _aggregate_subset(hard_subset),
+        "easy_subset": _aggregate_subset(easy_subset),
         "per_query": per_query,
     }
 
 
 def print_markdown_table(mode_results: dict[str, dict[str, Any]], mode_order: list[str]) -> None:
-    print("| Mode    | R@1  | R@3  | R@5  | MRR@5 | Latency(ms) |")
-    print("|---------|------|------|------|-------|-------------|")
+    print("| Mode    | R@1  | R@3  | R@5  | MRR@5 | Latency(ms) | Hard R@1 | Hard R@5 | Hard MRR@5 |")
+    print("|---------|------|------|------|-------|-------------|----------|----------|------------|")
     for mode in mode_order:
         summary = mode_results[mode]
+        hard = summary["hard_subset"]
         print(
             f"| {mode:<7} | "
             f"{summary['recall_at_1']:.2f} | "
             f"{summary['recall_at_3']:.2f} | "
             f"{summary['recall_at_5']:.2f} | "
             f"{summary['mrr_at_5']:.3f} | "
-            f"{summary['mean_latency_ms']:.1f}ms |"
+            f"{summary['mean_latency_ms']:.1f}ms | "
+            f"{hard['recall_at_1']:.2f} | "
+            f"{hard['recall_at_5']:.2f} | "
+            f"{hard['mrr_at_5']:.3f} |"
         )
 
 

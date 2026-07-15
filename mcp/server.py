@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
 import argparse
+import asyncio
 import json
 import os
 import sys
 from pathlib import Path
+
+import mcp.types as types
+from mcp.server.lowlevel import NotificationOptions, Server
+from mcp.server.stdio import stdio_server
 
 
 _CLIENT = None
@@ -90,7 +95,7 @@ def _trim_document(text, limit=500):
 
 
 def _get_collections(collection_name):
-    if collection_name not in {"experience_kb", "literature_kb", "all"}:
+    if collection_name not in {"experience_kb", "literature_kb", "skill_design_kb", "mechanism_kb", "all"}:
         raise ValueError(f"unsupported collection: {collection_name}")
 
     collections = []
@@ -261,46 +266,86 @@ def _handle_search(repo, params):
     return {"results": rows, "retrieval_mode": retrieval_mode}
 
 
-def _write_response(payload):
-    sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
-    sys.stdout.flush()
+server = Server("meta-servergenome-rag")
 
 
-def main():
+async def main():
     args = parse_args()
     repo = resolve_repo(args.repo)
 
-    for raw_line in sys.stdin:
-        line = raw_line.strip()
-        if not line:
-            continue
-
-        request_id = None
-        try:
-            request = json.loads(line)
-            request_id = request.get("id")
-            method = request.get("method")
-
-            if method == "meta-server_rag_search":
-                result = _handle_search(repo, request.get("params") or {})
-                _write_response({"id": request_id, "result": result})
-                continue
-
-            if method in {"ping", "initialize"}:
-                _write_response({"id": request_id, "result": {"ok": True}})
-                continue
-
-            raise ValueError(f"unsupported method: {method}")
-        except Exception as exc:
-            _write_response(
-                {
-                    "id": request_id,
-                    "error": {
-                        "message": str(exc),
+    @server.list_tools()
+    async def list_tools():
+        return [
+            types.Tool(
+                name="meta-server_rag_search",
+                description=(
+                    "Hybrid BM25+dense retrieval over the MaxMetagenome RAG knowledge "
+                    "base(s): experience_kb, literature_kb, skill_design_kb, mechanism_kb, or all."
+                ),
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query text.",
+                        },
+                        "retrieval_mode": {
+                            "type": "string",
+                            "enum": ["hybrid", "dense", "sparse"],
+                            "default": "hybrid",
+                            "description": "Retrieval strategy.",
+                        },
+                        "collection": {
+                            "type": "string",
+                            "enum": ["experience_kb", "literature_kb", "skill_design_kb", "mechanism_kb", "all"],
+                            "default": "experience_kb",
+                            "description": "Knowledge base collection to search.",
+                        },
+                        "n_results": {
+                            "type": "integer",
+                            "default": 5,
+                            "description": "Maximum number of ranked results to return.",
+                        },
+                        "filters": {
+                            "type": "object",
+                            "description": "Optional Chroma metadata where filter.",
+                        },
                     },
-                }
+                    "required": ["query"],
+                },
             )
+        ]
+
+    @server.call_tool()
+    async def call_tool(name, arguments):
+        if name != "meta-server_rag_search":
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=f"unsupported tool: {name}")],
+                isError=True,
+            )
+
+        try:
+            result = _handle_search(repo, arguments or {})
+        except Exception as exc:
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=str(exc))],
+                isError=True,
+            )
+
+        return [
+            types.TextContent(
+                type="text",
+                text=json.dumps(result, ensure_ascii=False),
+            )
+        ]
+
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(
+            read_stream,
+            write_stream,
+            server.create_initialization_options(NotificationOptions()),
+        )
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

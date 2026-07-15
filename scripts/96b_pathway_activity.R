@@ -341,4 +341,24 @@ cat(sprintf("[INFO] Pathways: %d; completeness high/medium/low: %d/%d/%d\n",
 cat(sprintf("[INFO] Contributor rows retained: %d (top %d per pathway)\n",
             nrow(contributors), opt$top_n_contributors))
 cat(sprintf("[INFO] Low-correlation pathways (rho < 0.3): %d\n", anomaly_count))
+
+mean_completeness <- if(nrow(completeness) > 0) mean(completeness$mean_coverage, na.rm=TRUE) else NA_real_
+summary_lines <- c(
+  "Pathway Activity Analysis Summary",
+  "==================================",
+  paste("Dimension:", opt$dimension),
+  paste("HUMAnN3 directory:", normalizePath(opt$humann3_dir, mustWork=FALSE)),
+  paste("Metadata file:", normalizePath(opt$metadata_file, mustWork=FALSE)),
+  paste("Samples analyzed:", length(analysis_samples)),
+  paste("Pathways analyzed:", nrow(completeness)),
+  paste("Mean pathway coverage:", ifelse(is.finite(mean_completeness), sprintf("%.4f", mean_completeness), "NA")),
+  paste("High-completeness pathways (coverage >= 0.8):", category_counts[["high"]]),
+  paste("Medium-completeness pathways:", category_counts[["medium"]]),
+  paste("Low-completeness pathways (coverage <", opt$min_coverage, "):", category_counts[["low"]]),
+  paste("Contributor rows retained (top", opt$top_n_contributors, "per pathway):", nrow(contributors)),
+  paste("Low-correlation pathways (rho < 0.3):", anomaly_count),
+  "Interpretation: high completeness pathways with low activity-composition correlation may indicate functional redundancy across species."
+)
+writeLines(summary_lines, file.path(opt$output_dir, "pathway_activity_summary.txt"))
+
 cat("[INFO] Pathway activity analysis completed\n")

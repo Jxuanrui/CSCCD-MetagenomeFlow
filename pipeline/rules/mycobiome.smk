@@ -37,6 +37,23 @@ rule fun_metaphlan4:
         "> {log} 2>&1"
 
 
+rule fun_metaphlan4_merge:
+    """Merge per-sample fungal MetaPhlAn4 profiles into a community matrix."""
+    input:
+        profiles = expand(
+            WORKDIR + "/result/fungi/metaphlan4/{sample}/{sample}_profile.txt",
+            sample=SAMPLES,
+        ),
+    output:
+        merged = WORKDIR + "/result/fungi/metaphlan4/merged/taxonomy.tsv",
+    log:
+        WORKDIR + "/logs/fungi/metaphlan4_merge/merge.log",
+    shell:
+        "bash {REPO}/scripts/72b_fun_metaphlan4_merge.sh "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
 rule fun_humann4:
     """Extract k__Eukaryota pathway contributions from HUMAnN3 per-sample output.
     Depends on humann3 per-sample pathabundance (not the stratified merge output)

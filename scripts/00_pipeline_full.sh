@@ -188,7 +188,7 @@
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
     bash ${PROJ_DIR}/scripts/40_bac_gtdbtk.sh \
         -t ${t} -w ${wd} -r ${PROJ_DIR}
-    bash ${PROJ_DIR}/scripts/41_bac_bakta.sh \
+    bash ${PROJ_DIR}/scripts/41_bac_prokka.sh \
         -t ${t} -w ${wd} -r ${PROJ_DIR}
     # 结果：${wd}/result/binning/
 

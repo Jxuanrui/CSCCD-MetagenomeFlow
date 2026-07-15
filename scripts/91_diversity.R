@@ -11,8 +11,8 @@ if (dir.exists(conda_lib)) {
   )))
 }
 
-core_required_pkgs <- c("microeco", "magrittr", "dplyr", "tidyr", "vegan")
-plot_pkgs <- c("ggplot2", "ggpubr")
+core_required_pkgs <- c("microeco", "magrittr", "dplyr", "tidyr", "vegan", "MicrobiotaProcess")
+plot_pkgs <- c("ggplot2", "ggpubr", "rstatix", "svglite", "ragg")
 required_pkgs <- c(core_required_pkgs, plot_pkgs)
 missing_pkgs <- core_required_pkgs[!vapply(core_required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing_pkgs)) stop("Missing packages: ", paste(missing_pkgs, collapse = ", "))
@@ -24,11 +24,66 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
   library(vegan)
+  library(MicrobiotaProcess)
+  if (isTRUE(plot_pkgs_available[["ggplot2"]])) library(ggplot2)
+  if (isTRUE(plot_pkgs_available[["ggpubr"]])) library(ggpubr)
+  if (isTRUE(plot_pkgs_available[["rstatix"]])) library(rstatix)
 })
 
+grDevices::pdf(file = NULL)
+
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
-npg_pal <- c("#E64B35", "#4DBBD5", "#00A087", "#3C5488", "#F39B7F",
-             "#8491B4", "#91D1C2", "#DC0000", "#7E6148", "#B09C85")
+
+mm2in <- function(x) x / 25.4
+
+theme_pub <- function(base_size = 7, base_family = "Arial") {
+  ggplot2::theme_classic(base_size = base_size, base_family = base_family) +
+    ggplot2::theme(
+      axis.line = ggplot2::element_line(linewidth = 0.35, colour = "black"),
+      axis.ticks = ggplot2::element_line(linewidth = 0.35, colour = "black"),
+      axis.title = ggplot2::element_text(size = base_size + 1),
+      axis.text = ggplot2::element_text(size = base_size, colour = "black"),
+      legend.title = ggplot2::element_blank(),
+      legend.text = ggplot2::element_text(size = base_size),
+      legend.background = ggplot2::element_blank(),
+      legend.key = ggplot2::element_blank(),
+      strip.background = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(size = base_size + 1, face = "bold"),
+      plot.title = ggplot2::element_text(size = base_size + 2, face = "bold"),
+      panel.grid = ggplot2::element_blank()
+    )
+}
+
+pub_pal2 <- c("#3182BD", "#D24B40")
+
+export_pub_figure <- function(plot, path_noext, width_mm, height_mm, dpi = 600) {
+  w <- mm2in(width_mm)
+  h <- mm2in(height_mm)
+
+  write_device <- function(open_device) {
+    open_device()
+    dev_id <- grDevices::dev.cur()
+    on.exit({
+      if (grDevices::dev.cur() == dev_id) {
+        try(grDevices::dev.off(), silent = TRUE)
+      }
+    }, add = TRUE)
+    print(plot)
+    grDevices::dev.off()
+    invisible(TRUE)
+  }
+
+  write_device(function() svglite::svglite(paste0(path_noext, ".svg"), width = w, height = h))
+  write_device(function() grDevices::cairo_pdf(paste0(path_noext, ".pdf"), width = w, height = h, family = "Arial"))
+  write_device(function() ragg::agg_tiff(paste0(path_noext, ".tiff"), width = w, height = h, units = "in", res = dpi))
+  invisible(paste0(path_noext, ".svg"))
+}
+
+npg_base <- c("#E64B35", "#4DBBD5", "#00A087", "#3C5488", "#F39B7F",
+              "#8491B4", "#91D1C2", "#DC0000", "#7E6148", "#B09C85")
+npg_pal <- function(n) {
+  if (n <= length(npg_base)) npg_base[seq_len(n)] else grDevices::colorRampPalette(npg_base)(n)
+}
 
 workdir <- Sys.getenv("WORKDIR")
 metadata_csv <- Sys.getenv("METADATA_CSV")
@@ -533,45 +588,144 @@ plot_packages_ready <- function(dimension, plot_name) {
   TRUE
 }
 
+load_mpse_for_plot <- function(dimension) {
+  phyloseq_rds_path <- file.path(stat_root, dimension, "phyloseq", paste0(dimension, "_phyloseq.rds"))
+  if (!file.exists(phyloseq_rds_path)) stop("phyloseq RDS not found: ", phyloseq_rds_path)
+  ps <- readRDS(phyloseq_rds_path)
+  MicrobiotaProcess::as.MPSE(ps)
+}
+
+fallback_pcoa_variance <- function(diversity_dir) {
+  pcoa_path <- file.path(diversity_dir, "pcoa_coordinates.tsv")
+  if (!file.exists(pcoa_path)) return(c(NA_real_, NA_real_))
+  pcoa_df <- tryCatch(
+    read.table(pcoa_path, header = TRUE, row.names = 1, sep = "\t", check.names = FALSE),
+    error = function(e) NULL
+  )
+  if (is.null(pcoa_df) || !"variance_explained" %in% rownames(pcoa_df)) return(c(NA_real_, NA_real_))
+  c(
+    suppressWarnings(as.numeric(pcoa_df["variance_explained", "PC1"])) * 100,
+    suppressWarnings(as.numeric(pcoa_df["variance_explained", "PC2"])) * 100
+  )
+}
+
+extract_mpse_pcoa_variance <- function(mpse, diversity_dir) {
+  pcoa_obj <- tryCatch(
+    MicrobiotaProcess::mp_extract_internal_attr(mpse, name = "PCoA"),
+    error = function(e) NULL
+  )
+  eig <- NULL
+  if (is.list(pcoa_obj)) {
+    eig <- pcoa_obj$eig %||% pcoa_obj$eigenvalues %||% pcoa_obj$values
+    if (is.data.frame(eig)) {
+      eig_col <- intersect(c("Eigenvalues", "eigenvalues", "eig", "values"), names(eig))[1]
+      eig <- if (!is.na(eig_col)) eig[[eig_col]] else eig[[1]]
+    }
+  } else if (is.numeric(pcoa_obj)) {
+    eig <- pcoa_obj
+  }
+  eig <- suppressWarnings(as.numeric(eig))
+  eig <- eig[is.finite(eig) & eig > 0]
+  if (length(eig) >= 2 && sum(eig) > 0) return(eig[1:2] / sum(eig) * 100)
+  fallback_pcoa_variance(diversity_dir)
+}
+
+parse_pcoa_percent <- function(label) {
+  if (!grepl("\\([0-9.]+%\\)", label)) return(NA_real_)
+  suppressWarnings(as.numeric(sub(".*\\(([0-9.]+)%\\).*", "\\1", label)))
+}
+
 export_alpha_boxplot <- function(alpha_df, sample_table, dimension, diversity_dir, group_col) {
   if (!plot_packages_ready(dimension, "alpha_boxplot")) return(invisible(FALSE))
 
-  plot_path <- file.path(diversity_dir, "alpha_diversity_boxplot.pdf")
+  plot_path_noext <- file.path(diversity_dir, "alpha_diversity_boxplot")
+  plot_path <- paste0(plot_path_noext, ".svg")
   safe_write(paste0(dimension, "_alpha_boxplot"), plot_path, {
-    if (is.null(alpha_df) || !nrow(alpha_df)) stop("alpha diversity table is empty")
-    if (!"Shannon" %in% colnames(alpha_df)) stop("Shannon column not found")
-    if (!group_col %in% colnames(sample_table)) stop("Group column not found: ", group_col)
+    mpse <- load_mpse_for_plot(dimension)
+    mpse %<>% MicrobiotaProcess::mp_cal_alpha(.abundance = Abundance)
+    alpha_tbl <- as.data.frame(MicrobiotaProcess::mp_extract_sample(mpse), stringsAsFactors = FALSE)
+    if (!group_col %in% colnames(alpha_tbl)) stop("Group column not found: ", group_col)
 
-    plot_df <- data.frame(
-      sample_id = rownames(alpha_df),
-      Shannon = suppressWarnings(as.numeric(alpha_df$Shannon)),
-      stringsAsFactors = FALSE
-    )
-    group_df <- data.frame(
-      sample_id = rownames(sample_table),
-      group = as.factor(sample_table[[group_col]]),
-      stringsAsFactors = FALSE
-    )
-    plot_df <- merge(plot_df, group_df, by = "sample_id", all.x = TRUE)
-    plot_df <- plot_df[!is.na(plot_df$Shannon) & !is.na(plot_df$group), , drop = FALSE]
-    if (nrow(plot_df) < 2) stop("Need at least 2 samples for alpha boxplot")
-
-    n_groups <- length(levels(droplevels(plot_df$group)))
-    pal <- npg_pal[seq_len(min(length(npg_pal), max(1L, n_groups)))]
-    p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = group, y = Shannon, fill = group, color = group)) +
-      ggplot2::geom_boxplot(width = 0.65, outlier.shape = NA, alpha = 0.35) +
-      ggplot2::geom_jitter(width = 0.16, size = 1.8, alpha = 0.8) +
-      ggplot2::scale_fill_manual(values = pal) +
-      ggplot2::scale_color_manual(values = pal) +
-      ggplot2::labs(x = group_col, y = "Shannon diversity", title = paste(dimension, "alpha diversity")) +
-      ggplot2::theme_bw(base_size = 12) +
-      ggplot2::theme(legend.position = "none")
-
-    if (n_groups == 2) {
-      p <- p + ggpubr::stat_compare_means(method = "wilcox.test")
+    alpha_metrics <- c("Observe", "Chao1", "ACE", "Shannon", "Simpson", "Pielou")
+    missing_metrics <- setdiff(alpha_metrics, colnames(alpha_tbl))
+    if (length(missing_metrics)) stop("Missing alpha columns: ", paste(missing_metrics, collapse = ", "))
+    if (!"Sample" %in% colnames(alpha_tbl)) {
+      alpha_tbl$Sample <- alpha_tbl$sample_id %||% rownames(alpha_tbl)
     }
 
-    ggplot2::ggsave(plot_path, p, width = 5, height = 5, units = "in")
+    alpha_tbl[[group_col]] <- as.factor(alpha_tbl[[group_col]])
+    long_df <- alpha_tbl %>%
+      dplyr::select(dplyr::all_of(c("Sample", group_col, alpha_metrics))) %>%
+      tidyr::pivot_longer(
+        cols = dplyr::all_of(alpha_metrics),
+        names_to = "Measure",
+        values_to = "Alpha"
+      ) %>%
+      dplyr::mutate(
+        Measure = factor(Measure, levels = alpha_metrics),
+        Alpha = suppressWarnings(as.numeric(Alpha))
+      ) %>%
+      dplyr::filter(!is.na(Alpha), !is.na(.data[[group_col]]))
+    if (nrow(long_df) < 2) stop("Need at least 2 samples for alpha plot")
+
+    group_levels <- levels(droplevels(long_df[[group_col]]))
+    n_groups <- length(unique(stats::na.omit(long_df[[group_col]])))
+
+    pal <- if (n_groups == 2) {
+      pub_pal2
+    } else {
+      npg_pal(max(1L, n_groups))
+    }
+    pal <- stats::setNames(pal, group_levels)
+
+    p <- ggplot2::ggplot(long_df, ggplot2::aes(x = .data[[group_col]], y = Alpha, fill = .data[[group_col]])) +
+      ggplot2::geom_boxplot(
+        width = 0.6,
+        outlier.shape = NA,
+        linewidth = 0.35,
+        colour = "black",
+        alpha = 0.85
+      ) +
+      ggplot2::geom_jitter(width = 0.12, size = 0.7, alpha = 0.45, colour = "#333333") +
+      ggplot2::facet_wrap(ggplot2::vars(Measure), scales = "free_y", nrow = 1) +
+      ggplot2::scale_fill_manual(values = pal) +
+      ggplot2::labs(x = NULL, y = "Alpha diversity index value", title = paste(dimension, "Alpha Diversity")) +
+      theme_pub(base_size = 7) +
+      ggplot2::theme(
+        legend.position = if (n_groups == 2) "top" else "none",
+        legend.title = ggplot2::element_blank(),
+        strip.text = ggplot2::element_text(face = "bold")
+      )
+
+    if (n_groups == 2) {
+      p <- tryCatch({
+        pwc <- long_df %>%
+          dplyr::group_by(Measure) %>%
+          rstatix::pairwise_wilcox_test(
+            stats::as.formula(paste("Alpha ~", group_col)),
+            p.adjust.method = "BH"
+          ) %>%
+          rstatix::add_significance("p.adj")
+        stats_out <- as.data.frame(pwc, stringsAsFactors = FALSE)
+        for (col in c("Measure", "group1", "group2", "n1", "n2", "statistic", "p", "p.adj", "p.adj.signif")) {
+          if (!col %in% colnames(stats_out)) stats_out[[col]] <- NA
+        }
+        stats_out$method <- "Wilcoxon rank-sum, BH-adjusted"
+        stats_out <- stats_out[, c("Measure", "group1", "group2", "n1", "n2", "statistic", "p", "p.adj", "p.adj.signif", "method")]
+        write.table(
+          stats_out,
+          file.path(diversity_dir, "alpha_diversity_stats.tsv"),
+          sep = "\t",
+          quote = FALSE,
+          row.names = FALSE,
+          na = ""
+        )
+        pwc <- rstatix::add_xy_position(pwc, x = group_col)
+        p + ggpubr::stat_pvalue_manual(pwc, label = "p.adj.signif", tip.length = 0.01)
+      }, error = function(e) p)
+    }
+
+    export_pub_figure(p, plot_path_noext, width_mm = 183, height_mm = 100)
   })
 }
 
@@ -606,51 +760,88 @@ export_beta_outputs <- function(mt, dimension, diversity_dir) {
 export_pcoa_scatter <- function(pcoa_df, sample_table, dimension, diversity_dir, group_col) {
   if (!plot_packages_ready(dimension, "pcoa_scatter")) return(invisible(FALSE))
 
-  plot_path <- file.path(diversity_dir, "pcoa_beta_scatter.pdf")
+  plot_path_noext <- file.path(diversity_dir, "pcoa_beta_scatter")
+  plot_path <- paste0(plot_path_noext, ".svg")
   safe_write(paste0(dimension, "_pcoa_scatter"), plot_path, {
-    if (is.null(pcoa_df) || !nrow(pcoa_df)) stop("PCoA table is empty")
-    if (!all(c("PC1", "PC2") %in% colnames(pcoa_df))) stop("PC1/PC2 columns not found")
-    if (!group_col %in% colnames(sample_table)) stop("Group column not found: ", group_col)
+    mpse <- load_mpse_for_plot(dimension)
+    mpse %<>% MicrobiotaProcess::mp_cal_pcoa(.abundance = Abundance, distmethod = "bray", .dim = 3)
+    mpse %<>% MicrobiotaProcess::mp_adonis(
+      .abundance = Abundance,
+      .formula = stats::reformulate(group_col),
+      distmethod = "bray",
+      action = "add"
+    )
+    pcoa_tbl <- as.data.frame(MicrobiotaProcess::mp_extract_sample(mpse), stringsAsFactors = FALSE)
+    if (!group_col %in% colnames(pcoa_tbl)) stop("Group column not found: ", group_col)
 
-    var_exp <- if ("variance_explained" %in% rownames(pcoa_df)) pcoa_df["variance_explained", , drop = FALSE] else NULL
-    point_df <- pcoa_df[rownames(pcoa_df) != "variance_explained", , drop = FALSE]
-    point_df <- data.frame(
-      sample_id = rownames(point_df),
-      PC1 = suppressWarnings(as.numeric(point_df$PC1)),
-      PC2 = suppressWarnings(as.numeric(point_df$PC2)),
+    pc_cols <- grep("^(PC|PCo)[0-9]+", colnames(pcoa_tbl), value = TRUE)
+    if (length(pc_cols) < 2) stop("PCoA coordinate columns not found")
+
+    pcoa_tbl[[group_col]] <- as.factor(pcoa_tbl[[group_col]])
+    plot_df <- data.frame(
+      PC1 = suppressWarnings(as.numeric(pcoa_tbl[[pc_cols[1]]])),
+      PC2 = suppressWarnings(as.numeric(pcoa_tbl[[pc_cols[2]]])),
+      group = pcoa_tbl[[group_col]],
       stringsAsFactors = FALSE
     )
-    group_df <- data.frame(
-      sample_id = rownames(sample_table),
-      group = as.factor(sample_table[[group_col]]),
-      stringsAsFactors = FALSE
-    )
-    point_df <- merge(point_df, group_df, by = "sample_id", all.x = TRUE)
-    point_df <- point_df[!is.na(point_df$PC1) & !is.na(point_df$PC2) & !is.na(point_df$group), , drop = FALSE]
-    if (nrow(point_df) < 2) stop("Need at least 2 samples for PCoA scatter")
+    plot_df <- plot_df[!is.na(plot_df$PC1) & !is.na(plot_df$PC2) & !is.na(plot_df$group), , drop = FALSE]
+    if (nrow(plot_df) < 2) stop("Need at least 2 samples for PCoA scatter")
 
-    pc1_pct <- suppressWarnings(as.numeric(var_exp$PC1[1])) * 100
-    pc2_pct <- suppressWarnings(as.numeric(var_exp$PC2[1])) * 100
-    x_lab <- if (is.finite(pc1_pct)) sprintf("PC1 (%.1f%%)", pc1_pct) else "PC1"
-    y_lab <- if (is.finite(pc2_pct)) sprintf("PC2 (%.1f%%)", pc2_pct) else "PC2"
-    n_groups <- length(levels(droplevels(point_df$group)))
-    pal <- npg_pal[seq_len(min(length(npg_pal), max(1L, n_groups)))]
+    var_pct <- c(parse_pcoa_percent(pc_cols[1]), parse_pcoa_percent(pc_cols[2]))
+    if (!all(is.finite(var_pct))) var_pct <- extract_mpse_pcoa_variance(mpse, diversity_dir)
+    x_lab <- if (is.finite(var_pct[1])) sprintf("PC1 (%.1f%%)", var_pct[1]) else "PC1"
+    y_lab <- if (is.finite(var_pct[2])) sprintf("PC2 (%.1f%%)", var_pct[2]) else "PC2"
+    n_groups <- length(levels(droplevels(plot_df$group)))
+    group_levels <- levels(droplevels(plot_df$group))
+    pal <- if (n_groups == 2) pub_pal2 else npg_pal(max(1L, n_groups))
+    pal <- stats::setNames(pal, group_levels)
 
-    p <- ggplot2::ggplot(point_df, ggplot2::aes(x = PC1, y = PC2, color = group)) +
-      ggplot2::geom_point(size = 2.4, alpha = 0.85) +
+    p <- ggplot2::ggplot(
+      plot_df,
+      ggplot2::aes(x = PC1, y = PC2, color = group, fill = group)
+    ) +
+      ggplot2::geom_point(size = 2.5, alpha = 0.8) +
       ggplot2::scale_color_manual(values = pal) +
-      ggplot2::labs(x = x_lab, y = y_lab, color = group_col, title = paste(dimension, "PCoA")) +
-      ggplot2::theme_bw(base_size = 12)
-
-    ellipse_ok <- all(vapply(split(point_df, point_df$group), nrow, integer(1)) >= 3)
-    if (ellipse_ok) {
-      p <- tryCatch(
-        p + ggplot2::stat_ellipse(ggplot2::aes(group = group), linewidth = 0.5, show.legend = FALSE),
-        error = function(e) p
+      ggplot2::scale_fill_manual(values = pal) +
+      ggplot2::labs(x = x_lab, y = y_lab, title = paste(dimension, "PCoA (Bray-Curtis)")) +
+      theme_pub(base_size = 7) +
+      ggplot2::theme(
+        axis.line = ggplot2::element_line(colour = "black"),
+        axis.title = ggplot2::element_text(face = "bold"),
+        legend.title = ggplot2::element_blank()
       )
+
+    ellipse_ok <- all(vapply(split(plot_df, plot_df$group), nrow, integer(1)) >= 3)
+    if (ellipse_ok) {
+      p_try <- ggplot2::ggplot(
+        plot_df,
+        ggplot2::aes(x = PC1, y = PC2, color = group, fill = group)
+      ) +
+        ggplot2::stat_ellipse(
+          ggplot2::aes(fill = group),
+          geom = "polygon",
+          level = 0.95,
+          alpha = 0.15,
+          show.legend = FALSE
+        ) +
+        ggplot2::stat_ellipse(level = 0.95, linetype = 2, linewidth = 0.4, show.legend = FALSE) +
+        ggplot2::geom_point(size = 2.5, alpha = 0.8) +
+        ggplot2::scale_color_manual(values = pal) +
+        ggplot2::scale_fill_manual(values = pal) +
+        ggplot2::labs(x = x_lab, y = y_lab, title = paste(dimension, "PCoA (Bray-Curtis)")) +
+        theme_pub(base_size = 7) +
+        ggplot2::theme(
+          axis.line = ggplot2::element_line(colour = "black"),
+          axis.title = ggplot2::element_text(face = "bold"),
+          legend.title = ggplot2::element_blank()
+        )
+      p <- tryCatch({
+        ggplot2::ggplot_build(p_try)
+        p_try
+      }, error = function(e) p)
     }
 
-    ggplot2::ggsave(plot_path, p, width = 5.5, height = 5, units = "in")
+    export_pub_figure(p, plot_path_noext, width_mm = 100, height_mm = 90)
   })
 }
 

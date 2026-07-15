@@ -23,8 +23,8 @@
 **执行者**: Codex (conversationId: 019f5945-d8be-73d0-96cd-64bb52667936)
 
 **新增文件**:
-- `scripts/95b_stat_lefse.sh` — Bash包装器（137行）
-- `scripts/95b_lefse.R` — R核心脚本（387行）
+- `scripts/99b_lefse.sh` — Bash包装器（137行）
+- `scripts/99b_lefse.R` — R核心脚本（387行）
 
 **核心功能**:
 1. 实现LEfSe完整流程：
@@ -56,8 +56,8 @@
 **执行者**: Codex (conversationId: 019f595e-35aa-7f72-9fde-75210a00f2db)
 
 **新增文件**:
-- `scripts/92_core_microbiome.sh` — Bash包装器（123行）
-- `scripts/92_core_microbiome.R` — R核心脚本（468行）
+- `scripts/99a_core_microbiome.sh` — Bash包装器（123行）
+- `scripts/99a_core_microbiome.R` — R核心脚本（468行）
 
 **核心功能**:
 1. 计算prevalence（每个特征在多少样本中存在）
@@ -381,7 +381,7 @@
 
 1. **Git提交新增脚本**:
    ```bash
-   git add scripts/92_core_microbiome.{sh,R}
+   git add scripts/99a_core_microbiome.{sh,R}
    git add scripts/95b_{stat_lefse.sh,lefse.R}
    git add scripts/96b_pathway_activity.{sh,R}
    git add scripts/96c_functional_redundancy.{sh,R}
@@ -394,13 +394,13 @@
    # LEfSe: 22个表
    for dim in bacteria fungi virus; do
      for tsv in result/integration/${dim}/*_abundance.tsv; do
-       bash scripts/95b_stat_lefse.sh -i $tsv -m metadata.csv -o result/95b_lefse/${dim}/$(basename $tsv .tsv)
+       bash scripts/99b_lefse.sh -i $tsv -m metadata.csv -o result/99b_lefse/${dim}/$(basename $tsv .tsv)
      done
    done
    
    # 核心微生物组: 3维度
    for dim in bacteria fungi virus; do
-     bash scripts/92_core_microbiome.sh -i result/integration/${dim}/taxonomy_abundance.tsv -m metadata.csv -o result/92_core_microbiome/${dim}
+     bash scripts/99a_core_microbiome.sh -i result/integration/${dim}/taxonomy_abundance.tsv -m metadata.csv -o result/99a_core_microbiome/${dim}
    done
    
    # 功能冗余度: 3个大表

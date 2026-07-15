@@ -64,22 +64,35 @@ species_names <- if (nrow(ref_species) > 0) {
 
 # Simulate abundance with Dirichlet-multinomial (gut microbiome has few dominant + many rare)
 alpha_base <- rexp(n_species, rate = 2)  # Long-tail distribution
-alpha_base <- alpha_base / sum(alpha_base) * 10  # Scale to reasonable alpha
+alpha_base <- alpha_base / sum(alpha_base) * 20  # Scale to reasonable alpha
+bacteria_module_id <- ((seq_len(n_species) - 1) %% 5) + 1
+bacteria_loading <- runif(n_species, 0.8, 1.6)
 
 mpa_matrix <- matrix(0, nrow = n_species, ncol = n_samples)
 for (i in 1:n_samples) {
+  module_factor <- rnorm(5, 0, 1.2)
+  module_multiplier <- exp(
+    bacteria_loading * module_factor[bacteria_module_id] +
+      rnorm(n_species, 0, 0.08)
+  )
+  module_multiplier <- pmin(pmax(module_multiplier, 0.1), 10)
+  alpha <- alpha_base * module_multiplier
+
   # Case group: perturb alpha to simulate differential abundance
-  alpha <- if (metadata$group[i] == "case") {
-    alpha_perturb <- alpha_base * exp(rnorm(n_species, 0, 0.3))
-    alpha_perturb[1:10] <- alpha_perturb[1:10] * 1.5  # Top 10 species enriched in case
-    alpha_perturb
-  } else {
-    alpha_base
+  if (metadata$group[i] == "case") {
+    alpha <- alpha * exp(rnorm(n_species, 0, 0.3))
+    alpha[1:10] <- alpha[1:10] * 1.5  # Top 10 species enriched in case
   }
   alpha <- pmax(alpha, 0.01)  # Floor to avoid zeros
 
   # Draw from Dirichlet
   counts <- rgamma(n_species, shape = alpha, rate = 1)
+  counts_raw <- counts
+  drop_cutoff <- stats::quantile(counts, probs = runif(1, 0.45, 0.55), names = FALSE)
+  counts[counts <= drop_cutoff] <- 0
+  if (sum(counts) == 0) {
+    counts[which.max(counts_raw)] <- counts_raw[which.max(counts_raw)]
+  }
   rel_abund <- (counts / sum(counts)) * 100
   mpa_matrix[, i] <- rel_abund
 }
@@ -419,6 +432,22 @@ taxonomy_choices <- c(
   "Viruses;Duplodnaviria;Heunggongvirae;Uroviricota;Caudoviricetes",
   "Viruses;Monodnaviria;Shotokuvirae;Cressdnaviricota;Repensiviricetes"
 )
+votu_module_id <- ((seq_len(n_votu) - 1) %% 4) + 1
+votu_loading <- runif(n_votu, 0.8, 1.6)
+votu_module_factors <- matrix(rnorm(4 * n_samples, 0, 1.2), nrow = 4, ncol = n_samples)
+votu_tpm_shape <- matrix(0, nrow = n_votu, ncol = n_samples)
+for (i in seq_len(n_votu)) {
+  module_multiplier <- exp(
+    votu_loading[i] * votu_module_factors[votu_module_id[i], ] +
+      rnorm(n_samples, 0, 0.08)
+  )
+  module_multiplier <- pmin(pmax(module_multiplier, 0.1), 10)
+  tpm_shape <- rep(1.5, n_samples) * module_multiplier
+  if (i <= 10) {
+    tpm_shape[metadata$group == "case"] <- tpm_shape[metadata$group == "case"] * 1.5
+  }
+  votu_tpm_shape[i, ] <- pmax(tpm_shape, 0.05)
+}
 
 for (i in 1:n_votu) {
   votu_rep <- paste0("k127_", 100000 + i * 10)
@@ -428,7 +457,7 @@ for (i in 1:n_votu) {
     cluster_object <- paste0(contig_base, "||full")
     length_bp <- sample(300:5000, 1)
 
-    tpm <- rgamma(n_samples, shape = 1.5, scale = 60)
+    tpm <- rgamma(n_samples, shape = votu_tpm_shape[i, ], scale = 60)
     tpm[runif(n_samples) < 0.35] <- 0
     if (all(tpm == 0)) {
       tpm[sample(1:n_samples, 1)] <- runif(1, 20, 200)
@@ -471,15 +500,49 @@ writeLines("##gff-version 3\n# PHAROKKA placeholder", file.path(pharokka_dir, "p
 # 7. Fungi: MetaPhlAn4 per-sample profiles
 # ==============================================================================
 n_fungi_species <- 50
-fungi_species_names <- paste0("k__Fungi|p__Phylum", 1:n_fungi_species, "|s__Species", 1:n_fungi_species)
+fungi_phyla <- paste0("Phylum", ((seq_len(n_fungi_species) - 1) %% 5) + 1)
+fungi_classes <- paste0("Class", ((seq_len(n_fungi_species) - 1) %% 10) + 1)
+fungi_orders <- paste0("Order", ((seq_len(n_fungi_species) - 1) %% 15) + 1)
+fungi_families <- paste0("Family", ((seq_len(n_fungi_species) - 1) %% 20) + 1)
+fungi_genera <- paste0("Genus", ((seq_len(n_fungi_species) - 1) %/% 2) + 1)
+fungi_species_names <- paste0(
+  "k__Fungi|p__", fungi_phyla,
+  "|c__", fungi_classes,
+  "|o__", fungi_orders,
+  "|f__", fungi_families,
+  "|g__", fungi_genera,
+  "|s__Species", seq_len(n_fungi_species)
+)
+fungi_base_prob <- rexp(n_fungi_species, rate = 1)
+fungi_module_id <- ((seq_len(n_fungi_species) - 1) %% 5) + 1
+fungi_loading <- runif(n_fungi_species, 0.25, 0.6)
+fungi_count_matrix <- matrix(0, nrow = n_fungi_species, ncol = n_samples)
 
-for (sid in metadata$sample_id) {
+for (sample_idx in seq_along(metadata$sample_id)) {
+  sid <- metadata$sample_id[sample_idx]
   fungi_dir <- file.path(outdir, "result/fungi/metaphlan4", sid)
   dir.create(fungi_dir, recursive = TRUE, showWarnings = FALSE)
 
-  fungi_prob <- rexp(n_fungi_species, rate = 1)
+  module_factor <- rnorm(5, 0, 0.4)
+  module_multiplier <- exp(
+    fungi_loading * module_factor[fungi_module_id] +
+      rnorm(n_fungi_species, 0, 0.15)
+  )
+  module_multiplier <- pmin(pmax(module_multiplier, 0.1), 10)
+  fungi_prob <- fungi_base_prob * module_multiplier
+  if (metadata$group[sample_idx] == "case") {
+    fungi_prob[1:5] <- fungi_prob[1:5] * 1.5
+  }
+  fungi_prob <- fungi_prob / sum(fungi_prob)
+  fungi_prob_raw <- fungi_prob
+  drop_cutoff <- stats::quantile(fungi_prob, probs = runif(1, 0.42, 0.52), names = FALSE)
+  fungi_prob[fungi_prob <= drop_cutoff] <- 0
+  if (sum(fungi_prob) == 0) {
+    fungi_prob[which.max(fungi_prob_raw)] <- fungi_prob_raw[which.max(fungi_prob_raw)]
+  }
   fungi_prob <- fungi_prob / sum(fungi_prob)
   fungi_abund <- as.vector(rmultinom(1, size = 10000, prob = fungi_prob))
+  fungi_count_matrix[, sample_idx] <- fungi_abund
 
   fungi_profile <- data.frame(
     clade_name = fungi_species_names,
@@ -495,7 +558,7 @@ for (sid in metadata$sample_id) {
 cat("[INFO] Generated Fungi MetaPhlAn4 profiles:", n_samples, "samples x", n_fungi_species, "species\n")
 
 # Fungi FunOMIC aggregate table
-funomic_matrix <- matrix(rpois(n_fungi_species * n_samples, lambda = 10), nrow = n_fungi_species, ncol = n_samples)
+funomic_matrix <- fungi_count_matrix
 funomic_df <- data.frame(
   species = paste0("Fungi_species_", 1:n_fungi_species),
   funomic_matrix,

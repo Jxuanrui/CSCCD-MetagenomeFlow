@@ -70,18 +70,39 @@ elif [ "${GTDBTK_DATA_PATH}" != "${GTDB_PATH}" ]; then
     echo "[gtdbtk] NOTE: 当前 GTDBTK_DATA_PATH=${GTDBTK_DATA_PATH}"
 fi
 
-echo "[gtdbtk] MAG 分类 | 线程: ${CPUS}"
+echo "[gtdbtk] MAG 分类（分步执行，避开 classify_wf 的 skani 依赖）| 线程: ${CPUS}"
+# Step 1: identify markers
 conda run --prefix "${REPO}/envs/gtdbtk" --no-capture-output \
-    gtdbtk classify_wf \
+    gtdbtk identify \
         --genome_dir "${MAGS_DIR}" \
         --out_dir "${OUTDIR}" \
         -x fa \
-        --cpus "${CPUS}" \
-        --skip_ani_screen \
-        --force
+        --cpus "${CPUS}"
 
 EXIT_CODE=$?
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] gtdbtk 失败"; exit ${EXIT_CODE}; fi
+if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] gtdbtk identify 失败"; exit ${EXIT_CODE}; fi
+
+# Step 2: align
+conda run --prefix "${REPO}/envs/gtdbtk" --no-capture-output \
+    gtdbtk align \
+        --identify_dir "${OUTDIR}" \
+        --out_dir "${OUTDIR}" \
+        --cpus "${CPUS}"
+
+EXIT_CODE=$?
+if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] gtdbtk align 失败"; exit ${EXIT_CODE}; fi
+
+# Step 3: classify
+conda run --prefix "${REPO}/envs/gtdbtk" --no-capture-output \
+    gtdbtk classify \
+        --genome_dir "${MAGS_DIR}" \
+        --align_dir "${OUTDIR}" \
+        --out_dir "${OUTDIR}" \
+        -x fa \
+        --cpus "${CPUS}"
+
+EXIT_CODE=$?
+if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] gtdbtk classify 失败"; exit ${EXIT_CODE}; fi
 
 N_CLASSIFIED=$(awk 'NR>1' "${SENTINEL}" 2>/dev/null | wc -l || echo 0)
 echo "[gtdbtk] 完成，耗时 ${SECONDS}s | 分类 MAGs: ${N_CLASSIFIED}"

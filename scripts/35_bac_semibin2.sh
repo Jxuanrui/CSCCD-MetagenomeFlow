@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 35_bac_semibin2.sh
-# 功  能: SemiBin2 自监督 ML 分箱（基于 BAM + contig 特征）
-#         工具版本：SemiBin2 2.x（conda env: semibin）
-# 依  赖: 32_bac_coverm_depth.sh 的输出（BAM）
+# 功  能: SemiBin2 分箱（肠道样本预训练模型，human_gut）
+#         工具版本：SemiBin2 1.5.0（conda env: semibin）
+# 依  赖: 32_bac_coverm_depth.sh 的输出（depth.txt）
 # 输  入: ${WORKDIR}/result/assembly/megahit/{sample}/{sample}.contigs.fa
-#         ${WORKDIR}/result/binning/coverm/{sample}/{sample}.bam
+#         ${WORKDIR}/result/binning/coverm/{sample}/depth.txt
 # 输  出: ${WORKDIR}/result/binning/semibin2/{sample}/
 #           output/bin/  — SemiBin2 输出目录
 #           ${SAMPLE}.semibin2.tsv  — contig2bin 表
 #
-# 特  点: 自监督学习，无需参考基因组；需要原始 BAM（非深度表）
+# 说  明: SemiBin2 1.5.0 --self-supervised 模式需要直接访问 BAM 进行 coverage 计算，
+#         在某些 BAM 格式下会失败（"Generating coverage file fail"）。
+#         改用 --depth-metabat2 + --environment human_gut 预训练模型，
+#         肠道菌群样本效果更好且无 BAM 依赖。
 #
 # 参  考: Pan et al. 2023 Nature Comms (SemiBin2)
 # 用  法: bash 35_bac_semibin2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -43,12 +46,12 @@ done
 
 SECONDS=0
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
-BAM="${WORKDIR}/result/binning/coverm/${SAMPLE}/${SAMPLE}.bam"
+DEPTH="${WORKDIR}/result/binning/coverm/${SAMPLE}/depth.txt"
 OUTDIR="${WORKDIR}/result/binning/semibin2/${SAMPLE}"
 SENTINEL="${OUTDIR}/${SAMPLE}.semibin2.tsv"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing"; exit 1; fi
-if [ ! -f "${BAM}" ]; then echo "[ERROR] BAM missing: ${BAM}"; exit 1; fi
+if [ ! -f "${DEPTH}" ]; then echo "[ERROR] depth.txt missing: ${DEPTH}"; exit 1; fi
 
 if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[semibin2] 结果已存在，跳过"; exit 0; fi
 
@@ -74,13 +77,13 @@ if [ "${LONG_CONTIGS}" -lt 2 ]; then
     exit 0
 fi
 
-echo "[semibin2] ${SAMPLE} | 自监督分箱 ..."
+echo "[semibin2] ${SAMPLE} | 预训练模型分箱（human_gut）..."
 conda run --prefix "${REPO}/envs/semibin" --no-capture-output \
     SemiBin2 single_easy_bin \
         -t "${CPUS}" \
-        --self-supervised \
+        --environment human_gut \
         --input-fasta "${CONTIGS}" \
-        --input-bam "${BAM}" \
+        --depth-metabat2 "${DEPTH}" \
         -o "${OUTDIR}"
 
 EXIT_CODE=$?
@@ -91,15 +94,16 @@ if [ ${EXIT_CODE} -ne 0 ]; then
 fi
 
 # 构建 contig2bin 表
-BIN_TSV="${OUTDIR}/output_bins.tsv"
-if [ -f "${OUTDIR}/output/contig_bins.tsv" ]; then
+# 注: SemiBin2 1.5.0 将 contig_bins.tsv 直接输出到 OUTDIR 根目录，
+#     bin FASTA（.fa.gz）位于 OUTDIR/output_bins/
+if [ -f "${OUTDIR}/contig_bins.tsv" ]; then
+    cp "${OUTDIR}/contig_bins.tsv" "${SENTINEL}"
+elif [ -f "${OUTDIR}/output/contig_bins.tsv" ]; then
     cp "${OUTDIR}/output/contig_bins.tsv" "${SENTINEL}"
-elif [ -f "${BIN_TSV}" ]; then
-    cp "${BIN_TSV}" "${SENTINEL}"
 else
     echo "[semibin2] WARNING: contig_bins.tsv not found, check ${OUTDIR}/"
     touch "${SENTINEL}"
 fi
 
-N_BINS=$(find "${OUTDIR}" -name "*.fa" 2>/dev/null | wc -l || echo 0)
+N_BINS=$(find "${OUTDIR}/output_bins" -name "*.fa*" 2>/dev/null | wc -l || echo 0)
 echo "[semibin2] 完成，耗时 ${SECONDS}s | bins: ${N_BINS}"

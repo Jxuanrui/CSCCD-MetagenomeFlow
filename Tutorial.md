@@ -1451,7 +1451,347 @@ bash scripts/37_bac_checkm2.sh        -t 32 -w [WORKDIR] -r ~/Course/Maxmetageno
 > 612 个 bin 中 488 个（79.7%）通过高质量过滤，比例正常（宏基因组 binning 典型高质量 MAG 占比 60-85%，与测序深度、样本复杂度相关）。
 
 ---
+## 病毒维度分析
 
+### 步骤 51-55：病毒序列鉴定与基因预测（per-sample 策略）
+
+**步骤名称**：病毒宏基因组上游分析流程（组装 → 病毒鉴定 → 质量评估 → 基因预测）
+
+**目的**：从宏基因组测序数据中识别病毒序列，评估质量，预测病毒基因，为后续 vOTU 聚类、功能注释、宿主关联分析奠定基础。病毒组装参数优化（meta-large，≥1.5kb contig）确保捕获完整病毒基因组。
+
+**依赖**：步骤 2（kneaddata 去宿主 reads）
+
+**流程链**：51 MEGAHIT（virus-optimized assembly）→ 52 geNomad（neural network virus identification）→ 53 VirSorter2（complementary virus prediction）→ 54 CheckV（quality assessment + provirus extraction）→ 54b CheckV filter（MIUVIG quality standards）→ 55 Prodigal-gv（viral gene prediction with code 15）
+
+**执行方式**：
+
+*模式一（本教程）— 单样本，手动执行（Sample1 示例）：*
+```bash
+bash ~/Course/Maxmetagenome/scripts/51_vir_megahit.sh \
+  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+bash ~/Course/Maxmetagenome/scripts/52_vir_genomad.sh \
+  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+bash ~/Course/Maxmetagenome/scripts/53_vir_virsorter2.sh \
+  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+bash ~/Course/Maxmetagenome/scripts/54_vir_checkv_contig.sh \
+  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+bash ~/Course/Maxmetagenome/scripts/54b_vir_checkv_filter.sh \
+  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+bash ~/Course/Maxmetagenome/scripts/55_vir_prodigal_gv.sh \
+  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+*模式二 — rush 并行剩余9样本（单样本审核通过后执行，补齐10样本验证集）：*
+
+```bash
+cd ~/Course/Maxmetagenome/Project/Project01
+echo -e "Sample2\nSample3\nSample4\nSample10\nSample11\nSample12\nSample13\nSample14\nSample15" > temp/virus_test9_samples.txt
+
+# 步骤51：MEGAHIT（内存密集，rush -j 2）
+~/Course/Maxmetagenome/miniforge3/bin/rush -j 2 -k \
+  'bash ~/Course/Maxmetagenome/scripts/51_vir_megahit.sh -s {} -t 16 \
+   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
+   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/51_vir_megahit_{}.log 2>&1' \
+  :::: temp/virus_test9_samples.txt
+
+# 步骤52：geNomad（神经网络推理，rush -j 3）
+~/Course/Maxmetagenome/miniforge3/bin/rush -j 3 -k \
+  'bash ~/Course/Maxmetagenome/scripts/52_vir_genomad.sh -s {} -t 16 \
+   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
+   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/52_vir_genomad_{}.log 2>&1' \
+  :::: temp/virus_test9_samples.txt
+
+# 步骤53：VirSorter2（HMM扫描耗时长，rush -j 2）
+~/Course/Maxmetagenome/miniforge3/bin/rush -j 2 -k \
+  'bash ~/Course/Maxmetagenome/scripts/53_vir_virsorter2.sh -s {} -t 16 \
+   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
+   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/53_vir_virsorter2_{}.log 2>&1' \
+  :::: temp/virus_test9_samples.txt
+
+# 步骤54-55：CheckV + Prodigal（快速，rush -j 6）
+~/Course/Maxmetagenome/miniforge3/bin/rush -j 6 -k \
+  'bash ~/Course/Maxmetagenome/scripts/54_vir_checkv_contig.sh -s {} -t 16 \
+   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
+   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/54_vir_checkv_contig_{}.log 2>&1' \
+  :::: temp/virus_test9_samples.txt
+
+~/Course/Maxmetagenome/miniforge3/bin/rush -j 6 -k \
+  'bash ~/Course/Maxmetagenome/scripts/54b_vir_checkv_filter.sh -s {} -t 16 \
+   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
+   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/54b_vir_checkv_filter_{}.log 2>&1' \
+  :::: temp/virus_test9_samples.txt
+
+~/Course/Maxmetagenome/miniforge3/bin/rush -j 6 -k \
+  'bash ~/Course/Maxmetagenome/scripts/55_vir_prodigal_gv.sh -s {} -t 16 \
+   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
+   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/55_vir_prodigal_gv_{}.log 2>&1' \
+  :::: temp/virus_test9_samples.txt
+```
+
+> **10样本验证完成后**：全量50样本通过 Snakemake 执行（见后续"批量运行"章节），不再用 rush 跑全量。
+> **log 路径**：所有 rush 并行的日志统一写入 `temp/logs/virus/` 子目录，避免 temp/ 根目录散乱。
+
+**输出结果**：
+```
+Project/Project01/result/virus/
+  ├── assembly/Sample1/Sample1.contigs.fa              ← 步骤51：病毒优化组装（≥1.5kb）
+  ├── genomad/Sample1/Sample1.contigs_summary/
+  │   └── Sample1.contigs_virus_summary.tsv            ← 步骤52：geNomad病毒预测
+  ├── virsorter2/Sample1/
+  │   ├── final-viral-boundary.tsv                     ← 步骤53：VirSorter2病毒边界
+  │   └── final-viral-combined.fa                      ← VirSorter2提取的病毒序列
+  ├── checkv/Sample1/
+  │   ├── quality_summary.tsv                          ← 步骤54：CheckV质量评估
+  │   ├── viruses.fna                                  ← 去重后病毒contigs
+  │   └── viruses_filtered.fna                         ← 步骤54b：MIUVIG质量过滤
+  └── prodigal/Sample1/
+      ├── Sample1.faa                                  ← 步骤55：病毒蛋白序列
+      ├── Sample1.fna                                  ← 病毒CDS核苷酸序列
+      └── Sample1.gff                                  ← 基因坐标
+```
+
+**Sample1 实测结果**（2026-07-05，各步骤耗时）：
+
+| 步骤 | 工具 | 耗时 | 输出统计 |
+|------|------|------|---------|
+| 51 | MEGAHIT | ~2.5 小时 | 30,965 contigs（≥1.5kb），总长197MB |
+| 52 | geNomad | ~45 分钟 | 932 个病毒contigs预测 |
+| 53 | VirSorter2 | ~3.5 小时 | 3,169 个病毒边界预测 |
+| 54 | CheckV | ~5.4 分钟 | 4,094 个病毒contigs质量评估 → 去重后 3,911 个 |
+| 54b | CheckV filter | ~3 秒 | MIUVIG标准过滤 → 1,526 个高质量序列（Complete/HQ/MQ/LQ + ≥2kb + viral_genes≥1）|
+| 55 | Prodigal-gv | ~1.7 分钟 | 27,356 个病毒基因（遗传密码表15）|
+
+**审核要点**：
+
+| 指标 | 正常范围 | Sample1 实测值 | 判断 | 说明 |
+|------|---------|--------------|------|------|
+| 步骤51 contig数 | 10,000–100,000 | **30,965** | ✅ | 病毒优化组装（≥1.5kb），比细菌组装（≥500bp）contig数更少 |
+| 步骤52 病毒预测数 | 100–5,000 | **932** | ✅ | geNomad神经网络预测，保守策略 |
+| 步骤53 病毒预测数 | 500–10,000 | **3,169** | ✅ | VirSorter2 HMM扫描，覆盖面更广 |
+| 步骤54 去重后病毒数 | 1,000–10,000 | **3,911** | ✅ | 合并geNomad+VirSorter2后去重 |
+| 步骤54b 高质量过滤数 | 100–3,000 | **1,526** | ✅ | MIUVIG标准（39%通过率正常，严格过滤）|
+| 步骤55 病毒基因数 | 5,000–50,000 | **27,356** | ✅ | 病毒基因密度高（~18 genes/contig）|
+
+> **步骤54b过滤率39%（1,526/3,911）**：MIUVIG标准严格（Complete/HQ/MQ/LQ + ≥2kb + viral_genes≥1），
+> 排除了Not-determined且无病毒基因的序列、长度<2kb的片段。这是正常的质量控制，确保下游vOTU聚类的可靠性。
+
+**已知问题与修复**：
+
+| 脚本 | 问题 | 修复 |
+|------|------|------|
+| 52_vir_genomad.sh | **步骤52 sentinel路径修正**（2026-07-06发现）：原监控路径 `genomad/$s/${s}_summary/${s}_virus_summary.tsv` 错误，实际输出路径为 `genomad/$s/${s}.contigs_summary/${s}.contigs_virus_summary.tsv`（geNomad自动添加`.contigs`后缀）。建议用 `aggregated_classification.tsv` 作为sentinel，更可靠。| 已确认实际路径，所有样本geNomad均正常完成（时间戳2026-07-05），进度监控已修正 |
+| 53_vir_virsorter2.sh | VirSorter2 在 Snakemake ~300步工作流中，**hmmsearch阶段会长时间无日志输出**（尤其71%-95%区间的NCLDV/provirus阶段），表现为日志"卡"在某个百分比数十分钟。这是**正常现象**，hmmsearch子进程仍在后台消耗CPU（可通过 `ps -eo pid,time,pcpu,cmd | grep hmmsearch` 确认CPU时间持续增长）| 监控进程而非日志：若 `ps aux | grep hmmsearch` 显示进程存活且%CPU>0，则继续等待；仅当进程消失或CPU=0.0超1小时才视为卡死。单样本耗时：5-7小时正常（Sample13: 6.8h, Sample14: 6.4h观测值）|
+| 54_vir_checkv_contig.sh | CheckV 1.0.3 若 geNomad 和 VirSorter2 均无有效病毒输出（罕见，测序深度极低样本），脚本会创建空的 quality_summary.tsv（仅表头）防止下游中断 | 无需修复，符合预期（空样本正常通过）|
+| 54b_vir_checkv_filter.sh | 过滤逻辑：保留 (checkv_quality in Complete/High/Medium/Low-quality) OR (checkv_quality=Not-determined AND viral_genes≥1)；同时要求 contig_length≥2000 | 2026-06-18 已实现，参考 MIUVIG 最小报告标准 |
+
+**Project01 执行进度（病毒上游分析，10 样本）**：
+
+| 阶段 | 执行方式 | 完成样本 | 状态 |
+|------|---------|---------|------|
+| ① 单样本测试 | 模式一，手动 | Sample1 | ✅ 审核通过（51-55全部完成，1,526个高质量病毒序列，27,356个基因）|
+| ② rush 并行9样本 51-55 | 模式二，rush -j 2/3/6 | Sample2-4, Sample10-15 | 🔄 进行中（2026-07-06 23:40 UTC，51✅9/9 52✅9/9 53🔄8/9 Sample15运行中71% 54-55⏳待启动）|
+| ③ 剩余40样本 | Snakemake | Sample16-51 | ⏳ 10样本所有步骤通过后启动 |
+
+**② 阶段详细进度快照**（2026-07-07 02:05 UTC，Task B监控中）：
+
+| 步骤 | 工具 | 9样本进度 | 备注 |
+|------|------|----------|------|
+| 51 | MEGAHIT | 9/9 ✅ | 全部完成（2026-07-05 18:48-19:29 UTC） |
+| 52 | geNomad | 9/9 ✅ | 全部完成（2026-07-05 19:24-21:59 UTC，aggregated_classification.tsv已验证） |
+| 53 | VirSorter2 | 8/9 🔄 | Sample2-4/10-14已完成（行数2226-4283），**Sample15运行中**（94% 314/335 steps，已运行7h25m，provirus阶段60分钟，仍在计算中） |
+| 54 | CheckV | 0/9 ⏳ | 等待53达9/9后自动启动 |
+| 54b | Filter | 0/9 ⏳ | 依赖54完成 |
+| 55 | Prodigal-gv | 0/9 ⏳ | 依赖54b完成 |
+
+**VirSorter2运行特征观测**（基于Sample13/14/15）：
+- 单样本耗时：**5-7小时**（Sample13: 6.8h, Sample14: 6.4h实测值；Sample15: 7h25m+仍在运行）
+- **正常"停滞"阶段**：71%-95%区间（NCLDV组hmmsearch + provirus边界预测），日志可能20-40分钟无新输出，但 `ps` 显示hmmsearch子进程CPU时间持续增长（227-231% CPU占用正常）
+- **异常卡死判断**：仅当 `ps aux | grep hmmsearch` 显示所有子进程%CPU=0.0持续超1小时，且日志完全无更新时，才视为卡死需人工干预
+- **极端复杂样本案例（Sample15）**：provirus阶段持续60分钟（远超正常10-25分钟），但进程保持99.8% CPU占用且输出文件持续更新（最后修改时间02:04-02:05 UTC），判断为**异常复杂的provirus边界预测**（2784行dsDNAphage + 1582行lavidaviridae + 934行RNA + 1296行ssDNA）。继续等待完成。
+
+> **rush 并发策略**：步骤51/53（MEGAHIT/VirSorter2，内存/CPU密集）用 -j 2；步骤52（geNomad，GPU友好）用 -j 3；步骤54/54b/55（快速）用 -j 6。
+> 预计9样本总耗时：步骤51 ~5小时 + 步骤52 ~3.5小时 + 步骤53 ~16小时 + 步骤54-55 ~2小时 = **~26.5小时**。
+
+---
+
+### 步骤 56-60：vOTU 聚类与丰度定量（cross-sample 策略）
+
+**步骤名称**：病毒操作分类单元（vOTU）生成与定量
+
+**目的**：跨样本聚类病毒序列为 vOTU（95% ANI，类似细菌OTU概念），每个 vOTU 代表一个病毒"物种"。对 vOTU 进行分类学注释和丰度定量，生成病毒丰度矩阵用于下游统计分析。
+
+**依赖**：步骤 54b（所有样本的 viruses_filtered.fna）+ 步骤 55（所有样本的 Prodigal-gv CDS）
+
+**流程链**：56 vclust（95% ANI clustering, Leiden algorithm）→ 57 geNomad taxonomy（vOTU representatives）→ 58 Salmon build（vOTU + per-sample CDS index）→ 59 Salmon quant（per-sample abundance）→ 60 vOTU table（merge + taxonomy annotation）
+
+**执行方式（跨样本一次性执行）**：
+
+```bash
+# 步骤56：vOTU聚类（需等待所有样本54b完成）
+bash ~/Course/Maxmetagenome/scripts/56_vir_votu_gen.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤57：vOTU分类学注释
+bash ~/Course/Maxmetagenome/scripts/57_vir_votu_genomad.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤58：Salmon索引构建（需等待所有样本55完成）
+bash ~/Course/Maxmetagenome/scripts/58_vir_salmon_build.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤59：Salmon逐样本定量（per-sample，rush并行）
+~/Course/Maxmetagenome/miniforge3/bin/rush -j 3 -k \
+  'bash ~/Course/Maxmetagenome/scripts/59_vir_salmon_quant.sh -s {} -t 16 \
+   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
+   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/59_vir_salmon_quant_{}.log 2>&1' \
+  :::: samplesheet_test10.csv
+
+# 步骤60：vOTU丰度矩阵生成
+bash ~/Course/Maxmetagenome/scripts/60_vir_votu_table.sh \
+  -m temp/virus_test10_samples.txt \
+  -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+```
+Project/Project01/result/virus/
+  ├── votu/
+  │   ├── contigs/virus.fasta                          ← 步骤56：vOTU代表序列
+  │   ├── votu_representatives.tsv                     ← vOTU聚类结果
+  │   ├── genomad/virus_taxonomy.tsv                   ← 步骤57：vOTU分类学
+  │   └── table/vOTU_table_ann.txt                     ← 步骤60：vOTU丰度矩阵（带分类）
+  └── salmon/
+      ├── index/info.json                              ← 步骤58：Salmon索引
+      └── Sample1/report.tsv                           ← 步骤59：单样本定量
+```
+
+**Project01 执行进度（vOTU链，10 样本）**：
+
+| 步骤 | 工具 | 内容 | 状态 |
+|------|------|------|------|
+| 56 | vclust | vOTU聚类（95% ANI, 0.85 qcov）→ **17,300个vOTU** | ✅ 完成（2026-07-07） |
+| 57 | geNomad | vOTU分类学注释 → 14,776行 | ✅ 完成 |
+| 58 | Salmon | 构建vOTU定量索引（366M bp, 176.9M keys）| ✅ 完成（耗时265s） |
+| 59 | Salmon | 逐样本vOTU丰度定量（10/10样本）| ✅ 完成 |
+| 60 | Python | vOTU丰度矩阵生成（vOTU_table_ann.txt, 317,869行）| ✅ 完成 |
+
+---
+
+### 步骤 61-63：vMAG 生成与定量（可选，测序深度充足时）
+
+**步骤名称**：病毒宏基因组组装基因组（vMAG）回收
+
+**目的**：从 vOTU 中通过多样本覆盖度信息 binning 出完整病毒基因组（vMAG），用于菌株级分析和宿主关联预测。**注意**：vMAG 生成对测序深度要求极高（每个病毒≥50× coverage），小规模测试集（如 Project01）通常无 vMAG 产出。
+
+**依赖**：步骤 56（vOTU代表序列）+ 步骤 2（所有样本的去宿主 reads）
+
+**流程链**：61 vRhyme（multi-sample binning）→ 62 CheckV（vMAG质量评估）→ 63 CoverM（vMAG丰度定量）
+
+**执行方式（跨样本）**：
+
+```bash
+# 步骤61：vMAG binning（需等待56完成）
+bash ~/Course/Maxmetagenome/scripts/61_vir_vmag.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤62：vMAG质量评估
+bash ~/Course/Maxmetagenome/scripts/62_vir_checkv_mag.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤63：vMAG丰度定量（per-sample，rush并行）
+~/Course/Maxmetagenome/miniforge3/bin/rush -j 3 -k \
+  'bash ~/Course/Maxmetagenome/scripts/63_vir_coverm_quant.sh -s {} -t 16 \
+   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
+   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/63_vir_coverm_quant_{}.log 2>&1' \
+  :::: samplesheet_test10.csv
+```
+
+**Project01 执行进度（vMAG链，10 样本）**：
+
+| 步骤 | 工具 | 内容 | 状态 |
+|------|------|------|------|
+| 61 | vRhyme | vMAG binning（17,300 vOTU + 10样本覆盖度）| ✅ 完成（0个vMAG产出，符合预期） |
+| 62 | CheckV | vMAG质量评估 | ⏳ 跳过（61无vMAG输出，无需评估） |
+| 63 | CoverM | vMAG丰度定量 | ⏳ 跳过（无vMAG可定量） |
+
+> **实测结果确认**：Project01（10样本×10-15Gb）vRhyme binning 完成后 `bins/vMAG/` 和 `bins/pseudo/` 均为空目录，**0个vMAG产出**，与预期一致（测序深度不足以支持≥50×覆盖度的vMAG binning）。62-63因无vMAG输入自动跳过，与 Project_example（6样本0个vMAG）观测一致。全量50样本数据集有望产出高质量 vMAG。
+
+---
+
+### 步骤 64-72：vOTU 功能与宿主关联注释（基于 vOTU 代表序列）
+
+**步骤名称**：病毒功能注释与宿主预测
+
+**目的**：对 vOTU 代表序列进行端到端注释，包括：功能基因（PHROG/VOG/AMG）、生活方式（裂解/溶原）、分类学（多算法整合）、宿主关联（iPHoP）。
+
+**依赖**：步骤 56（vOTU代表序列 virus.fasta）+ 步骤 55（Sample1-15 的 Prodigal-gv 输出用于训练，仅部分工具需要）
+
+**流程链**：64 PHAROKKA（PHROG注释）→ 65 PHOLD（PDB结构暗物质）→ 66 VOG（跨界HMM）→ 67 BACPHLIP（生活方式）→ 68 iPHoP（宿主预测）→ 69 vConTACT3（基因共享网络分类）→ 70 PhaBox2（深度学习分类+宿主）→ 71 DRAM-v（AMG辅助代谢基因）→ 72 PhaGCN3（图卷积分类）
+
+**执行方式（跨样本一次性执行，所有工具输入均为 virus.fasta）**：
+
+```bash
+# 步骤64：PHAROKKA端到端注释
+bash ~/Course/Maxmetagenome/scripts/64_vir_pharokka.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤65：PHOLD结构暗物质ORF
+bash ~/Course/Maxmetagenome/scripts/65_vir_phold.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤66：VOG HMM扫描
+bash ~/Course/Maxmetagenome/scripts/66_vir_vog.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤67：BACPHLIP生活方式预测
+bash ~/Course/Maxmetagenome/scripts/67_vir_bacphlip.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤68：iPHoP宿主关联
+bash ~/Course/Maxmetagenome/scripts/68_vir_iphop.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤69：vConTACT3基因共享网络
+bash ~/Course/Maxmetagenome/scripts/69_vir_vcontact3.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤70：PhaBox2深度学习分类
+bash ~/Course/Maxmetagenome/scripts/70_vir_phabox2.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤71：DRAM-v AMG预测
+bash ~/Course/Maxmetagenome/scripts/71_vir_dram.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤72：PhaGCN3图卷积分类
+bash ~/Course/Maxmetagenome/scripts/72_vir_phagcn3.sh \
+  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**Project01 执行进度（vOTU注释链，基于10样本vOTU）**：
+
+| 步骤 | 工具 | 内容 | 状态 |
+|------|------|------|------|
+| 64 | PHAROKKA | PHROG功能注释（17,300 vOTU） | ✅ 完成（2026-07-10 11:15，耗时28.2h） |
+| 65 | PHOLD | 结构暗物质ORF | ✅ 完成（2026-07-12 23:11，耗时38h，输入修正为pharokka.gbk，见附录A3） |
+| 66 | VOG | 跨界HMM扫描 | ✅ 完成（2026-07-13 07:39，耗时7.7h，183,369条VOG命中） |
+| 67 | BACPHLIP | 生活方式预测 | ✅ 完成（2026-07-13 20:xx，耗时12.9h，17,300个vOTU全部预测） |
+| 68 | iPHoP | 宿主关联预测 | 🔄 进行中（RaFAH阶段，已历经blastn/CRISPR/WIsH/VHM/PHP子步骤，运行超49h） |
+| 69 | vConTACT3 | 基因共享网络 | ✅ 完成（2026-07-14 01:23，耗时45min） |
+| 70 | PhaBox2 | 深度学习分类+宿主 | ⏳ 待56完成 |
+| 71 | DRAM-v | AMG辅助代谢基因 | ⏳ 待56完成 |
+| 72 | PhaGCN3 | 图卷积分类 | ⏳ 待56完成 |
+
+> **步骤64 Pharokka 执行注意事项**（2026-07-09发现）：单次运行中 Phanotate 基因预测（FASTA + Tabular 两阶段）耗时可能长达12-13小时（17,300条vOTU序列，262,149个预测基因），随后 MMseqs2/VFDB/CARD 比对注释阶段还需额外数小时。**首次尝试因进程在等待期挂起被判定失败并重启**（备份于 `pharokka_backup_20260709_070455`），重启后于 07:04:55 启动、11:15:55 完成，总耗时101,467秒（28.2小时）。监控建议：检查 `phanotate_out_tmp.fasta`/`phanotate_out.txt` 文件大小是否持续增长而非仅看日志时间戳，`ps` 确认进程CPU占用（应稳定在90%左右）；仅当进程CPU=0且文件长时间无变化时才判定为卡死。
+
+> **注释工具并行策略**：步骤64-72 中，64/65/67/68/70/71/72 可并行执行（均只依赖 virus.fasta）；步骤66/69 依赖64的输出，需串行。
+
+---
 ## 附录：LLM 辅助宏基因组分析最佳实践
 
 > 按发现时间顺序追加。凡是在执行过程中遇到的有价值的 LLM 交互模式，均同步记录于此。
@@ -1558,6 +1898,36 @@ humann3_speed_mode: "balanced"
 ```
 
 Snakemake rule 会读取此参数并自动传入 `--speed-mode balanced`（`pipeline/rules/bacteria_taxonomy.smk` 已支持）。
+
+---
+
+### A3. Phold（65）必须以 Pharokka（64）的 `.gbk` 作为输入，而非 vOTU FASTA
+
+**背景（2026-07-11 发现并修复）**：`scripts/65_vir_phold.sh` 脚本头部注释声明"依赖 64_vir_pharokka.sh 的输出"，但原实现直接把 `votu/contigs/virus.fasta` 传给 `phold run`，与依赖声明不一致。运行时 Phold 日志会打印：
+```
+WARNING - virus.fasta was not a Genbank format file
+WARNING - pyrodigal-gv will be used to predict CDS
+WARNING - Phold will not predict tRNAs, tmRNAs or CRISPR repeats
+WARNING - Please use pharokka output pharokka.gbk as --input for phold
+```
+
+**为什么这是个真问题而不是可接受的独立设计**：
+1. Phold 会用自己的 pyrodigal-gv 重新预测基因坐标，与 Pharokka（64）产出的基因坐标/gene ID **不一致**，导致下游 66（VOG）、69（vConTACT3）等依赖 64 输出做整合的步骤对不上 gene ID。
+2. 丢失 Pharokka 已经预测好的 tRNA / tmRNA / CRISPR repeats 注释能力（Phold 用 FASTA 输入时明确不预测这些）。
+3. 3Di 结构预测（ProstT5，CPU 模式）是 Phold 真正的耗时大头，无论输入是 FASTA 还是 GBK 都要重跑一次；用错误输入跑完只会导致后续步骤发现坐标不对齐后被迫重跑，等于双重浪费算力。
+
+**修复**：将 `65_vir_phold.sh` 的输入从 `${WORKDIR}/result/virus/votu/contigs/virus.fasta` 改为 `${WORKDIR}/result/virus/pharokka/pharokka.gbk`，并在脚本头部检查该文件存在（若步骤64未完成则报错退出，而非静默用错误输入跑完）。
+
+**判断依据（可用于类似"脚本声明依赖但实现里没真正用到"的排查）**：
+- 运行日志里出现 `was not a Genbank format file` / `pyrodigal-gv will be used` 这类警告，同时脚本文档写着依赖上游注释工具的输出 → 大概率是输入路径写错了，而非工具本身的正常行为。
+- 发现此类不一致时，若已投入较长计算（如本例已跑 8.5 小时进入 3Di 阶段），**立即停止重启优于让它跑完**：耗时瓶颈通常在后段（此处是 ProstT5/3Di 预测），提前止损的成本远低于跑完后因下游整合失败被迫重跑。
+
+**LLM 调用方式（Prompt）**：
+```
+检查 scripts/65_vir_phold.sh 的输入是否为 pharokka.gbk（而非 votu/contigs/virus.fasta）。
+若发现依赖声明与实际输入不符，先停止正在运行的进程，修正脚本后再重启，
+不要让明知输入错误的任务跑完。
+```
 
 ---
 

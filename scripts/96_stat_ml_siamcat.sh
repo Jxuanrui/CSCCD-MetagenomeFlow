@@ -61,12 +61,13 @@ fi
 
 # Ensure absolute paths so R sub-processes receive them correctly
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
+REPO="$(cd "${REPO}" && pwd)"
 [ -n "${METADATA_CSV}" ] && METADATA_CSV="$(cd "$(dirname "${METADATA_CSV}")" && pwd)/$(basename "${METADATA_CSV}")"
 
 SECONDS=0
 
-BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
-VIR_TABLE="${WORKDIR}/result/virus/votu/table/vOTU_table_ann.txt"
+BACT_TABLE="${WORKDIR}/result/bacteria/metaphlan4/merged_abundance_table.txt"
+VIR_TABLE="${WORKDIR}/result/virus/votu/votu_table.tsv"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 PHF_FUNGI_TABLE="${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv"
 FUNOMIC_FUNGI_TABLE="${WORKDIR}/result/integration/fungi/funomic_species_relab.tsv"
@@ -125,7 +126,7 @@ case "${FUNGI_METHOD}" in
             FUNGI_ABUND_TABLE="${FUNOMIC_FUNGI_TABLE}"
         else
             FUNGI_METHOD="metaphlan4"
-            FUNGI_ABUND_TABLE=""
+            FUNGI_ABUND_TABLE="${WORKDIR}/result/fungi/metaphlan4/merged_abundance_table.txt"
         fi
         ;;
     phf)
@@ -143,7 +144,11 @@ case "${FUNGI_METHOD}" in
         fi
         ;;
     metaphlan4)
-        FUNGI_ABUND_TABLE=""
+        FUNGI_ABUND_TABLE="${WORKDIR}/result/fungi/metaphlan4/merged_abundance_table.txt"
+        if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
+            echo "[ERROR] MetaPhlAn4 fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
+            exit 1
+        fi
         ;;
     *)
         echo "[ERROR] Invalid fungi method: ${FUNGI_METHOD}"
@@ -171,6 +176,12 @@ export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VI
 
 (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
+# Fix: Ensure working directory is WORKDIR (conda run may reset it)
+workdir <- Sys.getenv("WORKDIR")
+if (nzchar(workdir)) {
+  message("[FIX] Setting working directory to: ", workdir)
+  setwd(workdir)
+}
 options(warn = 1)
 
 conda_r_lib <- file.path(R.home("home"), "library")
@@ -237,6 +248,9 @@ read_metadata <- function(path, group_col) {
   meta <- meta %>%
     dplyr::mutate(sample_id = as.character(sample_id), label = as.factor(.data[[group_col]])) %>%
     dplyr::filter(!is.na(sample_id), !is.na(label))
+
+  # Convert tibble to data.frame with rownames for SIAMCAT compatibility
+  meta <- as.data.frame(meta)
   rownames(meta) <- meta$sample_id
   meta
 }
@@ -320,8 +334,6 @@ meta <- meta[common, , drop = FALSE]
 meta$label <- droplevels(as.factor(meta$label))
 if (nlevels(meta$label) < 2) stop("Need at least two classes")
 positive_level <- levels(meta$label)[2]
-label_vec <- ifelse(meta$label == positive_level, 1, -1)
-names(label_vec) <- rownames(meta)
 
 filtered <- mat[rowMeans(mat > 0) >= 0.05 & rowMeans(mat / pmax(colSums(mat)[col(mat)], 1)) >= 1e-4, , drop = FALSE]
 if (nrow(filtered) < 5) stop("Too few features after filtering")
@@ -330,21 +342,21 @@ siamcat_obj <- NULL
 run_step("siamcat_init", {
   siamcat_obj <<- SIAMCAT::siamcat(
     feat = filtered,
-    label = label_vec,
-    meta = meta
+    meta = meta,
+    label = group_col,
+    case = positive_level
   )
 })
 
 run_step("check_confounders", {
-  pdf(file.path(result_dir, "siamcat_confounders.pdf"), width = 10, height = 8)
-  print(SIAMCAT::check.confounders(siamcat_obj, fn.plot = NULL))
-  dev.off()
+  conf_plot <- file.path(result_dir, "siamcat_confounders.pdf")
+  SIAMCAT::check.confounders(siamcat_obj, fn.plot = conf_plot)
 })
 
 run_step("normalize_filter_split", {
-  siamcat_obj <<- SIAMCAT::normalize.features(siamcat_obj, norm.method = "log.std", norm.param = list(log.n0 = 1e-06))
   siamcat_obj <<- SIAMCAT::filter.features(siamcat_obj, filter.method = "abundance", cutoff = 1e-04)
-  siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds, num.resample = 1, inseparable = meta[[group_col]])
+  siamcat_obj <<- SIAMCAT::normalize.features(siamcat_obj, norm.method = "log.std", norm.param = list(log.n0 = 1e-06, sd.min.q = 0.1))
+  siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds, num.resample = 1)
 })
 
 models <- list(
@@ -356,7 +368,7 @@ models <- list(
 aucs <- list()
 
 for (nm in names(models)) {
-  run_step(paste0("train_", nm), {
+  success <- run_step(paste0("train_", nm), {
     model_obj <- SIAMCAT::train.model(siamcat_obj, method = models[[nm]])
     model_obj <- SIAMCAT::make.predictions(model_obj)
     model_obj <- SIAMCAT::evaluate.predictions(model_obj)
@@ -365,12 +377,21 @@ for (nm in names(models)) {
     SIAMCAT::model.evaluation.plot(model_obj)
     dev.off()
     pdf(file.path(result_dir, paste0("siamcat_", nm, "_interpretation.pdf")), width = 10, height = 8)
-    SIAMCAT::model.interpretation.plot(model_obj, fn.plot = NULL, consens.thres = 0.5, n.feat = 20)
+    SIAMCAT::model.interpretation.plot(model_obj, consens.thres = 0.5, limits = c(0, 20))
     dev.off()
     eval_obj <- SIAMCAT::eval_data(model_obj)
     auc_val <- eval_obj$auroc %||% eval_obj$auc %||% NA_real_
-    aucs[[nm]] <<- tibble(model = nm, auc = auc_val)
+    list(model = nm, auc = auc_val)
   })
+  if (isTRUE(success)) {
+    result_file <- file.path(result_dir, paste0("siamcat_", nm, ".rds"))
+    if (file.exists(result_file)) {
+      model_obj <- readRDS(result_file)
+      eval_obj <- SIAMCAT::eval_data(model_obj)
+      auc_val <- eval_obj$auroc %||% eval_obj$auc %||% NA_real_
+      aucs[[nm]] <- tibble(model = nm, auc = as.numeric(auc_val))
+    }
+  }
 }
 
 auc_df <- bind_rows(aucs)
