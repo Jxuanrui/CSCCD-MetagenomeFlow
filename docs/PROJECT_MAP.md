@@ -281,7 +281,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 |------|------|------|------|
 | 01(stat) | `scripts/01_metadata_qc.sh` | **Metadata QC**：校验并标准化 `metadata.csv`（group/sample-id 一致性），生成 QC 报告与状态表，供下游全部统计模块消费。Snakemake rule：`stat_metadata_qc` | R (tidyverse) |
 | 91 | `scripts/91_stat_diversity.sh` | Alpha/Beta 多样性计算与可视化。**新增（Phase 1）**：自动导出标准 phyloseq RDS 到 `result/stat/{dimension}/phyloseq/` 供下游所有 R 包使用 | vegan/phyloseq/microeco/file2meco (R) |
-| 92 | `scripts/92_stat_differential.sh` | 差异分析（LEfSe/ANCOM-BC2/DESeq2/edgeR/MaAsLin2）。**2026-07-16**：从已废弃的 `04_differential_abundance.R` 移植补充 DESeq2/MaAsLin2 方法实现 | R |
+| 92 | `scripts/92_stat_differential.sh` | 差异分析（LEfSe/ANCOM-BC2/DESeq2/edgeR/MaAsLin2）。**2026-07-16**：从已废弃的 `04_differential_abundance.R` 移植补充 DESeq2/MaAsLin2 方法实现；同时接入 `scripts/R/plot_differential.R`（Nature风格火山图函数库，此前无人引用），为DESeq2结果生成 `volcano_deseq2.pdf`（依赖ggplot2/ggrepel/ggtext，缺失时优雅跳过） | R |
 | 93 | `scripts/93_stat_cooccurrence.sh` | 跨维度共现网络 | FastSpar/SparCC |
 | 94 | `scripts/94_stat_visualization.sh` | 统一可视化（热图/PCoA/桑基图/UpSet）。Snakemake rule：`stat_visualization`（**2026-07-16 修正**：registry 曾误报此 rule 自2026-06-08已集成，实际直到2026-07-16才真正接入 `rule all`） | ggplot2 (R) |
 | 95a | `scripts/95a_stat_batch_correct.sh` | 多中心批次校正 Top10 方法（**Phase 2b 验证**：包依赖齐全，ComBat-seq 正常；其他方法因 API 变更需修复） | MBECS/ConQuR/MMUPHin (R) |
@@ -482,7 +482,7 @@ bash scripts/97_stat_crosscohort.sh \
 **输出目录**：`${WORKDIR}/result/viz_crosscohort/`（8个PDF + 2个TSV + sentinel）
 
 **详细文档**：`docs/97_crosscohort_usage.md`
-**测试脚本**：`scripts/test_97_crosscohort.sh`（使用 mock 数据验证框架）
+**测试脚本**：`scripts/tests/test_97_crosscohort.sh`（使用 mock 数据验证框架；2026-07-16 从 `scripts/` 根目录移至 `scripts/tests/`）
 
 ## 1.9 文献技能包存放规范
 
@@ -517,3 +517,34 @@ skills/replications/
 - `graphify query "metaphlan4 connects to humann3"` — 图路径查询
 - `graphify --mcp`                                  — 启动 MCP stdio 服务（与 RAG MCP 并联）
 - `graphify --update`                               — 增量更新（新脚本集成后使用）
+
+## 1.11 Claude Code 可调用技能完整索引
+
+`.claude/skills/` 下 18 个 `/mgx-*` 技能（不含根目录 `/graphify`，见 §1.10）：
+
+| 技能 | 触发词/场景 | 用途 |
+|------|-----------|------|
+| `/mgx-welcome` | "欢迎"/"介绍一下"/"怎么用" | 项目欢迎页，首次打开项目时展示 |
+| `/mgx-status` | "分析进度"/"跑到哪了" | 查看当前项目各维度脚本执行进度 |
+| `/mgx-plan` | "怎么做分析"/"分析计划" | 根据数据类型规划分析路径 |
+| `/mgx-run` | "运行XX脚本"/"启动分析" | 执行指定分析步骤（走Codex执行） |
+| `/mgx-review` | 脚本作者说"XX脚本ready了" | 审查新脚本质量，见 `/mgx-integrate` 前置步骤 |
+| `/mgx-integrate` | 脚本作者说"XX脚本ready了" | 将审查通过的脚本集成进Snakemake+registry+skills |
+| `/mgx-learn` | 分析运行完成后 | 记录provenance，供未来复用参数经验 |
+| `/mgx-ask` | 询问某工具参数/用法 | 查询本地文档或WebSearch动态学习并缓存 |
+| `/mgx-tune` | "推荐参数"/"调参"/"硬件配置" | 根据样本量/硬件推荐分析参数与profile |
+| `/mgx-core` | 核心概念咨询 | 项目架构/维度/运行模式速查 |
+| `/mgx-index` | "更新知识库"/"重建索引"/"整进RAG" | 重建 experience/literature/mechanism/skill_design 4个RAG collection索引 |
+| `/mgx-replicate` | "把这篇文献整进项目/复现" + DOI/PMID/PDF | 文献复现技能包生成（见 §1.9） |
+| `/mgx-lefse` | LEfSe生物标志物分析咨询 | `99b_lefse` 工具卡片与参数说明 |
+| `/mgx-pathway` | 代谢通路活性分析咨询 | `96b_pathway_activity` 工具卡片与参数说明 |
+| `/mgx-redundancy` | 功能冗余度分析咨询 | `96c_functional_redundancy` 工具卡片与参数说明 |
+| `/mgx-plot-composition` | 物种/功能组成可视化 | 堆叠柱图/桑基图生成 |
+| `/mgx-plot-diversity` | 多样性可视化 | Alpha/Beta多样性图生成 |
+| `/mgx-plot-heatmap` | 热图可视化 | 丰度/差异热图生成 |
+| `/mgx-plot-network` | 共现网络可视化 | 跨维度共现网络图生成 |
+| `/mgx-plot-ordination` | 排序图可视化 | PCoA/NMDS排序图生成 |
+| `/mgx-plot-phylotree` | 系统发育树可视化 | 菌株/物种进化树图生成 |
+| `/mgx-plot-volcano` | 火山图可视化 | 差异分析火山图生成（2026-07-16起 `92_stat_differential` 也会自动生成，见该脚本条目） |
+
+> 本索引由 2026-07-16 头脑风暴发现补齐：此前 CLAUDE.md 声称"完整技能索引见 §1.9-1.10"，但那两节实际是文献技能包规范和Graphify，并非技能列表。
