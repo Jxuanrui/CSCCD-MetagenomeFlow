@@ -1,3 +1,4 @@
+# Deprecated 2026-07-16: dead code — 41_bac_prokka.sh already loops over all MAGs itself; no repo-wide reference found to this wrapper.
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 41_bac_prokka_parallel.sh
