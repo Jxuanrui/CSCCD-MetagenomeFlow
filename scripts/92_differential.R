@@ -117,6 +117,7 @@ count_sig <- function(res) {
   if (is.null(res) || !nrow(res)) return(0L)
   if ("diff" %in% names(res)) return(sum(!is.na(res$diff) & res$diff, na.rm = TRUE))
   if ("P.adj" %in% names(res)) return(sum(!is.na(res$P.adj) & res$P.adj < 0.05, na.rm = TRUE))
+  if ("padj" %in% names(res)) return(sum(!is.na(res$padj) & res$padj < 0.05, na.rm = TRUE))
   if ("qvalue" %in% names(res)) return(sum(!is.na(res$qvalue) & res$qvalue < 0.05, na.rm = TRUE))
   if ("Significance" %in% names(res)) return(sum(!is.na(res$Significance) & nzchar(res$Significance) & res$Significance != "ns"))
   nrow(res)
@@ -132,6 +133,9 @@ top_feature <- function(res) {
   } else if ("qvalue" %in% names(res)) {
     x <- res[!is.na(res$qvalue) & res$qvalue < 0.05, , drop = FALSE]
     if (nrow(x)) x <- x[order(x$qvalue), , drop = FALSE]
+  } else if ("padj" %in% names(res)) {
+    x <- res[!is.na(res$padj) & res$padj < 0.05, , drop = FALSE]
+    if (nrow(x)) x <- x[order(x$padj), , drop = FALSE]
   } else {
     x <- res
   }
@@ -241,6 +245,52 @@ choose_bacteria_level <- function(mt, output_path) {
 
 has_file2meco <- function() {
   requireNamespace("file2meco", quietly = TRUE)
+}
+
+run_deseq2 <- function(mt) {
+  if (!requireNamespace("DESeq2", quietly = TRUE)) return(NULL)
+  counts <- round(as.matrix(mt$otu_table))
+  samples <- intersect(colnames(counts), rownames(mt$sample_table))
+  counts <- counts[, samples, drop = FALSE]
+  metadata <- mt$sample_table[samples, , drop = FALSE]
+  metadata[[group_col]] <- factor(metadata[[group_col]])
+  if (nlevels(metadata[[group_col]]) != 2L) stop("DESeq2 requires exactly two groups")
+  design <- stats::as.formula(paste("~", group_col))
+  dds <- DESeq2::DESeqDataSetFromMatrix(countData = counts, colData = metadata, design = design)
+  dds <- DESeq2::DESeq(dds, quiet = TRUE)
+  res <- as.data.frame(DESeq2::results(dds), stringsAsFactors = FALSE)
+  res$Taxa <- rownames(res)
+  res[, c("Taxa", "log2FoldChange", "pvalue", "padj"), drop = FALSE]
+}
+
+run_maaslin2 <- function(mt, output_dir) {
+  if (!requireNamespace("Maaslin2", quietly = TRUE)) return(NULL)
+  abundance <- as.data.frame(t(as.matrix(mt$otu_table)), check.names = FALSE)
+  metadata <- data.frame(row.names = rownames(mt$sample_table), stringsAsFactors = FALSE)
+  metadata[[group_col]] <- as.character(mt$sample_table[[group_col]])
+  samples <- intersect(rownames(abundance), rownames(metadata))
+  fit <- Maaslin2::Maaslin2(
+    input_data = abundance[samples, , drop = FALSE],
+    input_metadata = metadata[samples, , drop = FALSE],
+    output = output_dir,
+    fixed_effects = group_col,
+    transform = "AST",
+    normalization = "TSS",
+    standardize = FALSE,
+    plot_heatmap = FALSE,
+    plot_scatter = FALSE,
+    min_abundance = 0,
+    min_prevalence = 0.1
+  )
+  res <- as.data.frame(fit$results, stringsAsFactors = FALSE)
+  if ("metadata" %in% names(res)) res <- res[res$metadata == group_col, , drop = FALSE]
+  data.frame(
+    Taxa = res$feature,
+    coefficient = res$coef,
+    pvalue = res$pval,
+    qvalue = res$qval,
+    stringsAsFactors = FALSE
+  )
 }
 
 extract_group_means <- function(obj) {
@@ -397,6 +447,8 @@ for (dim in selected_dims) {
   lefse_path <- file.path(dim_dir, "lefse_results.tsv")
   wilcox_path <- file.path(dim_dir, "wilcox_results.tsv")
   ancombc_path <- file.path(dim_dir, "ancombc2_results.tsv")
+  deseq2_path <- file.path(dim_dir, "deseq2_results.tsv")
+  maaslin2_path <- file.path(dim_dir, "maaslin2_results.tsv")
 
   lefse_res <- if (dim == "bacteria") {
     choose_bacteria_level(mt, lefse_path)
@@ -429,6 +481,32 @@ for (dim in selected_dims) {
       write_tsv(format_wilcox_results(wilcox_res$obj), wilcox_path)
     })
     add_summary(dim, "wilcox", wilcox_res$n_sig, wilcox_res$top_feature %||% "", wilcox_path)
+  }
+
+  if (!requireNamespace("DESeq2", quietly = TRUE)) {
+    add_status(dim, "diff", "deseq2", taxa_level, "WARN", "DESeq2 missing; skipped", deseq2_path)
+  } else {
+    deseq2_res <- tryCatch(run_deseq2(mt_raw), error = function(e) {
+      add_status(dim, "diff", "deseq2", taxa_level, "FAILED", conditionMessage(e), deseq2_path)
+      NULL
+    })
+    if (!is.null(deseq2_res)) {
+      safe_write(dim, "export", "deseq2", taxa_level, deseq2_path, write_tsv(deseq2_res, deseq2_path))
+      add_summary(dim, "deseq2", count_sig(deseq2_res), top_feature(deseq2_res), deseq2_path)
+    }
+  }
+
+  if (!requireNamespace("Maaslin2", quietly = TRUE)) {
+    add_status(dim, "diff", "maaslin2", taxa_level, "WARN", "Maaslin2 missing; skipped", maaslin2_path)
+  } else {
+    maaslin2_res <- tryCatch(run_maaslin2(mt_raw, file.path(dim_dir, "maaslin2_output")), error = function(e) {
+      add_status(dim, "diff", "maaslin2", taxa_level, "FAILED", conditionMessage(e), maaslin2_path)
+      NULL
+    })
+    if (!is.null(maaslin2_res)) {
+      safe_write(dim, "export", "maaslin2", taxa_level, maaslin2_path, write_tsv(maaslin2_res, maaslin2_path))
+      add_summary(dim, "maaslin2", count_sig(maaslin2_res), top_feature(maaslin2_res), maaslin2_path)
+    }
   }
 
   if (!has_file2meco()) {

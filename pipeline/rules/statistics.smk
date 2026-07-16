@@ -1,11 +1,27 @@
-# NOTE: Statistics pipeline (91-98) outputs TSV data tables only.
-# Visualization PDFs are generated on-demand; run scripts 94/96 manually after the pipeline.
-# Only 4 TSV sentinels are tracked by rule all: diversity, differential, ml, network.
+# NOTE: Statistics pipeline rules track tabular summaries and completion sentinels.
+# Visualization and functional-analysis sentinels are included in rule all.
 # MaxMetagenome — Statistics pipeline rules (scripts 91-98)
 # ==============================================================================
 
 # Users should edit this placeholder to point at their runtime metadata file.
 meta_file = WORKDIR + "/metadata.csv"
+
+
+rule stat_metadata_qc:
+    """Validate and standardize project metadata for statistical analyses."""
+    input:
+        meta_file,
+    output:
+        metadata = WORKDIR + "/result/stat/metadata.tsv",
+        report = WORKDIR + "/result/stat/metadata_qc_report.txt",
+        status = WORKDIR + "/result/stat/metadata_status.tsv",
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+    threads: 1
+    shell:
+        "bash {REPO}/scripts/01_metadata_qc.sh "
+        "-w {params.workdir} -r {params.repo} -t {threads}"
 
 
 rule stat_diversity:
@@ -111,6 +127,121 @@ rule stat_ml_siamcat:
         "-m {params.meta} -g {params.group}"
 
 
+rule stat_visualization:
+    """Generate unified composition visualizations across all dimensions."""
+    input:
+        bact = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
+        vir = WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
+        fungi = WORKDIR + "/result/fungi/metaphlan4/merged/taxonomy.tsv",
+        metadata = WORKDIR + "/result/stat/metadata.tsv",
+    output:
+        sentinel = WORKDIR + "/result/stat/composition_done.txt",
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+        meta = meta_file,
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/94_stat_visualization.sh "
+        "-w {params.workdir} -r {params.repo} -m {params.meta}"
+
+
+rule stat_functional:
+    """Run functional differential analysis for all supported dimension/type pairs."""
+    input:
+        metadata = WORKDIR + "/result/stat/metadata.tsv",
+        humann = WORKDIR + "/result/humann3/merged/pathabundance_relab.tsv",
+        bac_tables = expand(WORKDIR + "/result/integration/bacteria/{func_type}_abundance.tsv",
+                            func_type=["kegg_ko", "cog", "arg", "cazyme", "vfdb", "ncyc", "pcyc", "defense"]),
+        vir_tables = expand(WORKDIR + "/result/integration/virus/{func_type}_abundance.tsv",
+                            func_type=["vog", "phrog_category", "lifestyle", "host_genus", "viral_family"]),
+        fun_tables = expand(WORKDIR + "/result/integration/fungi/{func_type}_gene_count.tsv",
+                            func_type=["kegg_ko", "cog", "cazyme", "vfdb", "amr", "merops_family"]),
+    output:
+        expand(
+            WORKDIR + "/result/stat/{dimension}/functional/{func_type}/{dimension}_functional_{func_type}_done.txt",
+            zip,
+            dimension=["bacteria"] * 9 + ["fungi"] * 6 + ["virus"] * 5,
+            func_type=["pathway", "kegg_ko", "cog", "cazyme", "arg", "vfdb", "defense", "ncyc", "pcyc",
+                       "kegg_ko", "cog", "cazyme", "vfdb", "amr", "merops",
+                       "phrog", "vog", "lifestyle", "host_genus", "viral_family"],
+        ),
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+        meta = meta_file,
+    threads: CPUS
+    shell:
+        r"""
+        for pair in \
+            bacteria:pathway bacteria:kegg_ko bacteria:cog bacteria:cazyme bacteria:arg bacteria:vfdb bacteria:defense bacteria:ncyc bacteria:pcyc \
+            fungi:kegg_ko fungi:cog fungi:cazyme fungi:vfdb fungi:amr fungi:merops \
+            virus:phrog virus:vog virus:lifestyle virus:host_genus virus:viral_family; do
+            dimension=${{pair%%:*}}
+            func_type=${{pair#*:}}
+            bash {REPO}/scripts/96_stat_functional.sh \
+                -w {params.workdir} -r {params.repo} -m {params.meta} \
+                -d "$dimension" -t "$func_type"
+        done
+        """
+
+
+rule stat_functional_permanova:
+    """Run functional PERMANOVA across bacteria, fungi, and virus."""
+    input:
+        rules.stat_functional.output,
+    output:
+        expand(WORKDIR + "/result/stat/{dimension}/functional/{dimension}_permanova_done.txt",
+               dimension=["bacteria", "fungi", "virus"]),
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+        meta = meta_file,
+        group = "group",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/96_functional_permanova.sh "
+        "-w {params.workdir} -r {params.repo} -m {params.meta} -g {params.group}"
+
+
+rule stat_functional_integrated:
+    """Create per-dimension integrated functional summaries."""
+    input:
+        rules.stat_functional.output,
+    output:
+        expand(WORKDIR + "/result/stat/{dimension}/functional/00_summary/{dimension}_summary_done.txt",
+               dimension=["bacteria", "fungi", "virus"]),
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+        meta = meta_file,
+        group = "group",
+    threads: CPUS
+    shell:
+        r"""
+        for dimension in bacteria fungi virus; do
+            bash {REPO}/scripts/96_functional_integrated.sh \
+                -w {params.workdir} -r {params.repo} -m {params.meta} \
+                -g {params.group} -d "$dimension" -c {threads}
+        done
+        """
+
+
+rule stat_functional_cross_dimension:
+    """Compare significant functional signals across dimensions."""
+    input:
+        rules.stat_functional.output,
+    output:
+        sentinel = WORKDIR + "/result/stat/cross_dimension/functional/cross_dimension_functional_done.txt",
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/96_functional_cross_dimension.sh "
+        "-w {params.workdir} -r {params.repo}"
+
+
 # NOTE: Cross-cohort validation is now handled by pipeline/rules/crosscohort.smk
 # The old stat_curatedMGD rule has been removed to avoid conflict (Phase 2a)
 # Use crosscohort.smk::crosscohort_validation instead
@@ -212,6 +343,43 @@ rule fun_integration_tables:
         "> {log} 2>&1"
 
 
+rule bac_mge_summary:
+    """Summarize bacterial MGE and plasmid calls across samples."""
+    input:
+        mge = expand(WORKDIR + "/result/mge/isfinder/{sample}/isfinder_hits.tsv", sample=SAMPLES) +
+              expand(WORKDIR + "/result/mge/iceberg/{sample}/iceberg_hits.tsv", sample=SAMPLES) +
+              expand(WORKDIR + "/result/mge/integrall/{sample}/integrall_hits.tsv", sample=SAMPLES) +
+              expand(WORKDIR + "/result/mge/transposase/{sample}/transposase_hits.tsv", sample=SAMPLES),
+        plasmid = expand(WORKDIR + "/result/mge/plasmidfinder/{sample}/results_tab.tsv", sample=SAMPLES),
+    output:
+        summary = WORKDIR + "/result/integration/bacteria/mge_plasmid_summary.tsv",
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/98c_bac_mge_summary.sh "
+        "-w {params.workdir} -r {params.repo} -t {threads}"
+
+
+rule bac_mag_integration:
+    """Integrate bacterial MAG taxonomy, quality, clustering, and abundance."""
+    input:
+        drep = WORKDIR + "/result/binning/drep/.done",
+        gtdb = WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
+        checkm2 = WORKDIR + "/result/binning/checkm2/quality_report.tsv",
+        coverm = expand(WORKDIR + "/result/binning/coverm_quant/{sample}.tsv", sample=SAMPLES),
+    output:
+        table = WORKDIR + "/result/integration/bacteria/mag_integration_table.tsv",
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/98d_bac_mag_integration.sh "
+        "-w {params.workdir} -r {params.repo} -t {threads}"
+
+
 # ==============================================================================
 # New Downstream Analysis Modules (Phase 3: 4-module completion)
 # Integrated: 2026-07-13
@@ -280,6 +448,7 @@ rule stat_core_microbiome:
     """Core microbiome identification across bacteria/fungi/virus."""
     input:
         bac_tax = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
+        fun_tax = WORKDIR + "/result/fungi/metaphlan4/merged/taxonomy.tsv",
         vir_abund = WORKDIR + "/result/integration/virus/viral_family_abundance.tsv",
     output:
         bac_summary = WORKDIR + "/result/stat/bacteria/core_microbiome/core_microbiome_summary.txt",
@@ -302,7 +471,7 @@ rule stat_core_microbiome:
             --min-abundance {params.min_abundance}
 
         # Fungi (conditional on merged taxonomy availability)
-        FUN_TAX="{WORKDIR}/result/fungi/metaphlan4/merged/taxonomy.tsv"
+        FUN_TAX="{input.fun_tax}"
         if [ -f "$FUN_TAX" ]; then
             bash {REPO}/scripts/99a_core_microbiome.sh \
                 -i "$FUN_TAX" \
@@ -332,6 +501,8 @@ rule stat_functional_redundancy:
     input:
         bac_func = WORKDIR + "/result/integration/bacteria/kegg_ko_abundance.tsv",
         bac_tax = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
+        fun_func = WORKDIR + "/result/integration/fungi/kegg_ko_gene_count.tsv",
+        fun_tax = WORKDIR + "/result/fungi/metaphlan4/merged/taxonomy.tsv",
         vir_func = WORKDIR + "/result/integration/virus/vog_abundance.tsv",
         vir_tax = WORKDIR + "/result/integration/virus/viral_family_abundance.tsv",
     output:
@@ -349,8 +520,8 @@ rule stat_functional_redundancy:
             -d bacteria -y kegg_ko
 
         # Fungi (conditional on functional table availability)
-        FUN_FUNC=$(find {WORKDIR}/result/integration/fungi -name "kegg_ko*.tsv" 2>/dev/null | head -1)
-        FUN_TAX="{WORKDIR}/result/fungi/metaphlan4/merged/taxonomy.tsv"
+        FUN_FUNC="{input.fun_func}"
+        FUN_TAX="{input.fun_tax}"
         if [ -n "$FUN_FUNC" ] && [ -f "$FUN_FUNC" ] && [ -f "$FUN_TAX" ]; then
             bash {REPO}/scripts/96c_functional_redundancy.sh \
                 -f "$FUN_FUNC" \
@@ -394,4 +565,39 @@ rule stat_pathway_activity:
             -d bacteria \
             --min-coverage {params.min_coverage} \
             --top-n-contributors {params.top_n} || echo "Pathway activity analysis failed (likely missing HUMAnN3 stratified output)"
+        """
+
+
+rule downstream_summary:
+    """Summarize completion status of integrated downstream modules."""
+    input:
+        bac_core = WORKDIR + "/result/stat/bacteria/core_microbiome/core_microbiome_summary.txt",
+        fun_core = WORKDIR + "/result/stat/fungi/core_microbiome/core_microbiome_summary.txt",
+        vir_core = WORKDIR + "/result/stat/virus/core_microbiome/core_microbiome_summary.txt",
+        bac_redundancy = WORKDIR + "/result/stat/bacteria/functional_redundancy/functional_redundancy_summary.txt",
+        fun_redundancy = WORKDIR + "/result/stat/fungi/functional_redundancy/functional_redundancy_summary.txt",
+        vir_redundancy = WORKDIR + "/result/stat/virus/functional_redundancy/functional_redundancy_summary.txt",
+        pathway = WORKDIR + "/result/stat/bacteria/pathway_activity/pathway_activity_summary.txt",
+    output:
+        summary = WORKDIR + "/result/stat/downstream_summary.tsv",
+    threads: 1
+    shell:
+        r"""
+        mkdir -p "$(dirname {output.summary})"
+        printf 'dimension\tmodule\tstatus\tfile\n' > {output.summary}
+        for item in \
+            bacteria:core_microbiome:{input.bac_core} \
+            fungi:core_microbiome:{input.fun_core} \
+            virus:core_microbiome:{input.vir_core} \
+            bacteria:functional_redundancy:{input.bac_redundancy} \
+            fungi:functional_redundancy:{input.fun_redundancy} \
+            virus:functional_redundancy:{input.vir_redundancy} \
+            bacteria:pathway_activity:{input.pathway}; do
+            dimension=${{item%%:*}}
+            rest=${{item#*:}}
+            module=${{rest%%:*}}
+            path=${{rest#*:}}
+            if [ -s "$path" ]; then status=SUCCEEDED; else status=FAILED; fi
+            printf '%s\t%s\t%s\t%s\n' "$dimension" "$module" "$status" "$path" >> {output.summary}
+        done
         """

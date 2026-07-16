@@ -1,3 +1,4 @@
+# Deprecated 2026-07-16: superseded by 97_stat_crosscohort.sh due to cross-cohort architecture duplication.
 #!/usr/bin/env bash
 # ==============================================================================
 # Script: 97_stat_curatedMGD.sh

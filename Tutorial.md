@@ -1781,15 +1781,68 @@ bash ~/Course/Maxmetagenome/scripts/72_vir_phagcn3.sh \
 | 65 | PHOLD | 结构暗物质ORF | ✅ 完成（2026-07-12 23:11，耗时38h，输入修正为pharokka.gbk，见附录A3） |
 | 66 | VOG | 跨界HMM扫描 | ✅ 完成（2026-07-13 07:39，耗时7.7h，183,369条VOG命中） |
 | 67 | BACPHLIP | 生活方式预测 | ✅ 完成（2026-07-13 20:xx，耗时12.9h，17,300个vOTU全部预测） |
-| 68 | iPHoP | 宿主关联预测 | 🔄 进行中（RaFAH阶段，已历经blastn/CRISPR/WIsH/VHM/PHP子步骤，运行超49h） |
+| 68 | iPHoP | 宿主关联预测 | ✅ 完成（2026-07-15 18:28，耗时239,410s/66.5h，14,187条宿主关联预测，genus水平） |
 | 69 | vConTACT3 | 基因共享网络 | ✅ 完成（2026-07-14 01:23，耗时45min） |
-| 70 | PhaBox2 | 深度学习分类+宿主 | ⏳ 待56完成 |
-| 71 | DRAM-v | AMG辅助代谢基因 | ⏳ 待56完成 |
-| 72 | PhaGCN3 | 图卷积分类 | ⏳ 待56完成 |
+| 70 | PhaBox2 | 深度学习分类+宿主 | ✅ 完成（2026-07-15 04:29，17,300条vOTU全部分类） |
+| 71 | DRAM-v | AMG辅助代谢基因 | ✅ 完成（2026-07-15 10:57，129,241条ORF注释；本批次AMG summary为空，即未检出potential AMG，属正常生物学结果非异常） |
+| 72 | PhaGCN3 | 图卷积分类 | ✅ 完成（2026-07-15 05:27，15,505条分类预测） |
 
 > **步骤64 Pharokka 执行注意事项**（2026-07-09发现）：单次运行中 Phanotate 基因预测（FASTA + Tabular 两阶段）耗时可能长达12-13小时（17,300条vOTU序列，262,149个预测基因），随后 MMseqs2/VFDB/CARD 比对注释阶段还需额外数小时。**首次尝试因进程在等待期挂起被判定失败并重启**（备份于 `pharokka_backup_20260709_070455`），重启后于 07:04:55 启动、11:15:55 完成，总耗时101,467秒（28.2小时）。监控建议：检查 `phanotate_out_tmp.fasta`/`phanotate_out.txt` 文件大小是否持续增长而非仅看日志时间戳，`ps` 确认进程CPU占用（应稳定在90%左右）；仅当进程CPU=0且文件长时间无变化时才判定为卡死。
 
+> **步骤68 iPHoP 执行注意事项**（2026-07-15完成后总结）：iPHoP 采用多方法集成宿主预测策略，单次运行需依次跑完6类子方法（按耗时占比从小到大排列：BLAST比对基因组/CRISPR → WIsH k-mer相似度 → VHM s2相似度特征 → PHP → RaFAH随机森林 → 卷积/密集神经网络分类器融合 → 最终聚合模型），17,300个vOTU全流程总耗时约66.5小时（239,410秒）。**各子步骤特征差异很大，不能用统一标准判断是否卡死**：
+> - 前段（BLAST/CRISPR/WIsH/VHM/PHP）：中间文件持续增长可见（如 `feature_values_s2star.csv` 可达20GB+），适合用文件大小/mtime监控
+> - RaFAH的 hmmsearch 子步骤：单个输出文件 `Full_CDSxClusters_Prediction` 会稳定增长至3GB+，可用文件大小变化判断是否卡死；随后 Random Forest 汇总阶段耗时但无中间文件增长，需改用 `/proc/PID/io` 的 rchar/read_bytes 计数变化来确认进程是否仍在读取处理
+> - 神经网络分类器阶段（日志前缀 `[8]`）：会依次遍历 blast/CRISPR/WIsH/VHM/PHP 五组特征各自的 Conv/Dense 模型，逐行日志推进较快，是判断"卡住 vs 正常"最直观的阶段
+> - 最终聚合阶段（`[9]`-`[10]`，日志前缀 Aggregating/Combining/Preparing）：曾出现约2小时无日志行更新且 `io` 计数短暂停滞的情况，事后证实是正常的CPU计算密集型无IO输出阶段，并非卡死——**监控建议：优先看 `/proc/PID/io` 的 rchar 是否在扩大的时间窗口内（如1小时）有任何增长，而非单纯看日志最后一行是否变化**；同时可用 `ps --ppid <主PID>` 找到当前真正在计算的子进程（如 hmmsearch/perl RaFAH 脚本），避免被主进程的空闲等待状态误导。
+> - 完成标志：`${WORKDIR}/result/virus/iphop/Host_prediction_to_genus_m90.csv` 生成即为完成（非通用的`.done`文件）。
+
 > **注释工具并行策略**：步骤64-72 中，64/65/67/68/70/71/72 可并行执行（均只依赖 virus.fasta）；步骤66/69 依赖64的输出，需串行。
+
+---
+## 真菌维度分析
+
+### 步骤 71-73：真菌物种组成与功能通路（Kraken2 + MetaPhlAn4 双算法）
+
+**步骤名称**：真菌（Mycobiome）物种分类与功能定量
+
+**目的**：从去宿主后的宏基因组 reads 中识别真菌物种组成，交叉验证两套独立算法（Kraken2+Bracken 快速分类 / MetaPhlAn4 精确标记基因分类），并定量真菌功能通路。
+
+**依赖**：步骤2（kneaddata 去宿主 reads）+ 步骤3（细菌维度 MetaPhlAn4 的 bowtie2 `.mapout.bz2` 比对结果，供步骤72复用避免重新比对）
+
+**流程链**：71 Kraken2+Bracken（PlusPF数据库快速分类）→ 72 MetaPhlAn4-euk（复用步骤3比对结果的精确标记基因分类）→ 72b 合并（多样本丰度矩阵）→ 73 HUMAnN4（真菌功能通路定量）
+
+**执行方式（per-sample 策略，71/72 之间无依赖，可并行）**：
+
+```bash
+# 步骤71：Kraken2 + Bracken 真菌快速分类（PlusPF数据库，~77G）
+bash ~/Course/Maxmetagenome/scripts/71_fun_kraken2_fungi.sh \
+  -s Sample1 -t 8 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤72：MetaPhlAn4-euk 精确真菌/真核标记基因分类（复用步骤3比对结果）
+bash ~/Course/Maxmetagenome/scripts/72_fun_metaphlan4_euk.sh \
+  -s Sample1 -t 8 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤72b：合并所有样本的 MetaPhlAn4 真菌丰度表（跨样本一次性执行）
+bash ~/Course/Maxmetagenome/scripts/72b_fun_metaphlan4_merge.sh \
+  -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+# 步骤73：HUMAnN4 真菌功能通路定量
+bash ~/Course/Maxmetagenome/scripts/73_fun_humann4.sh \
+  -s Sample1 -t 8 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**Project01 执行进度（真菌维度，10样本：Sample1/2/3/4/10/11/12/13/14/15）**：
+
+| 步骤 | 工具 | 内容 | 状态 |
+|------|------|------|------|
+| 71 | Kraken2+Bracken | PlusPF快速物种分类 | 🔄 进行中（10样本，`rush -j 2` 并行启动） |
+| 72 | MetaPhlAn4-euk | 精确真菌标记基因分类（复用步骤3比对结果） | 🔄 进行中（10样本，`rush -j 4` 并行启动） |
+| 72b | 合并丰度表 | 项目级真菌丰度矩阵（taxonomy.tsv/species/genus/csv） | ⏳ 待71/72完成 |
+| 73 | HUMAnN4 | 真菌功能通路定量 | ⏳ 待72完成 |
+
+> **步骤72 加速技巧**：`72_fun_metaphlan4_euk.sh` 会优先查找 `${WORKDIR}/temp/metaphlan4/${SAMPLE}/${SAMPLE}.mapout.bz2`（细菌维度步骤3已生成的 bowtie2 比对结果），若存在则直接复用并加 `--ignore_bacteria --ignore_archaea` 重新分类，跳过耗时的 bowtie2 重新比对；若不存在才会回退到基于 reads 的完整比对。因此**务必先完成细菌维度步骤3**，再启动真菌维度步骤72，可节省数小时比对时间。
+
+> **并行策略**：71（Kraken2）与72（MetaPhlAn4-euk）互不依赖，可同时并行启动；72b（合并）需等待所有目标样本的72完成后再执行；73（HUMAnN4）为 per-sample 步骤，可在对应样本72完成后立即启动，无需等待其他样本。
 
 ---
 ## 附录：LLM 辅助宏基因组分析最佳实践

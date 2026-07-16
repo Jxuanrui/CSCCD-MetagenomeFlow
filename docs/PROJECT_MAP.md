@@ -279,19 +279,27 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 
 | 编号 | 脚本 | 功能 | 工具 |
 |------|------|------|------|
+| 01(stat) | `scripts/01_metadata_qc.sh` | **Metadata QC**：校验并标准化 `metadata.csv`（group/sample-id 一致性），生成 QC 报告与状态表，供下游全部统计模块消费。Snakemake rule：`stat_metadata_qc` | R (tidyverse) |
 | 91 | `scripts/91_stat_diversity.sh` | Alpha/Beta 多样性计算与可视化。**新增（Phase 1）**：自动导出标准 phyloseq RDS 到 `result/stat/{dimension}/phyloseq/` 供下游所有 R 包使用 | vegan/phyloseq/microeco/file2meco (R) |
-| 92 | `scripts/92_stat_differential.sh` | 差异分析（LEfSe/ANCOM-BC2/DESeq2/edgeR/MaAsLin2） | R |
+| 92 | `scripts/92_stat_differential.sh` | 差异分析（LEfSe/ANCOM-BC2/DESeq2/edgeR/MaAsLin2）。**2026-07-16**：从已废弃的 `04_differential_abundance.R` 移植补充 DESeq2/MaAsLin2 方法实现 | R |
 | 93 | `scripts/93_stat_cooccurrence.sh` | 跨维度共现网络 | FastSpar/SparCC |
-| 94 | `scripts/94_stat_visualization.sh` | 统一可视化（热图/PCoA/桑基图/UpSet） | ggplot2 (R) |
+| 94 | `scripts/94_stat_visualization.sh` | 统一可视化（热图/PCoA/桑基图/UpSet）。Snakemake rule：`stat_visualization`（**2026-07-16 修正**：registry 曾误报此 rule 自2026-06-08已集成，实际直到2026-07-16才真正接入 `rule all`） | ggplot2 (R) |
 | 95a | `scripts/95a_stat_batch_correct.sh` | 多中心批次校正 Top10 方法（**Phase 2b 验证**：包依赖齐全，ComBat-seq 正常；其他方法因 API 变更需修复） | MBECS/ConQuR/MMUPHin (R) |
 | 95b | `scripts/95b_stat_batch_evaluate.sh` | 批次校正评估报告（**Phase 2b**：存在 vegan::adonis2 公式拼接 bug，待 Phase 3 修复） | MBECS (R) |
 | 96 | `scripts/96_stat_ml_siamcat.sh` | ML筛选+ROC评估（lasso/RF/SVM/enet 10折交叉验证，Top10特征+AUC对比），输出至 result/stat/ml/ | SIAMCAT (R) |
+| 96(func) | `scripts/96_stat_functional.sh` | **功能差异分析**：对细菌/真菌/病毒各类功能表（KEGG-KO/COG/CAZyme/ARG/VFDB等，共20个 dimension×func_type 组合）执行差异分析。配套脚本 `96_stat_functional.R`（2026-07-16 由 `96_functional.R` 改名对齐）。Snakemake rule：`stat_functional` | R |
+| 96(permanova) | `scripts/96_functional_permanova.sh` | 对96_stat_functional的功能组成结果执行 PERMANOVA 检验。Snakemake rule：`stat_functional_permanova` | vegan (R) |
+| 96(integrated) | `scripts/96_functional_integrated.sh` | 多数据库整合可视化，按维度汇总96_stat_functional各func_type结果。Snakemake rule：`stat_functional_integrated` | R |
+| 96(cross_dim) | `scripts/96_functional_cross_dimension.sh` | 三维度（细菌/真菌/病毒）功能显著信号联合对比。Snakemake rule：`stat_functional_cross_dimension` | R |
 | 96b | `scripts/96b_pathway_activity.sh` | **Pathway Activity（通路活性分析）**：整合 HUMAnN3 分层通路丰度与覆盖度，评估通路完整性、主要物种贡献者及通路活性与群落组成的相关性，适用于定位驱动功能变化的关键物种。依赖：15；Snakemake rule：`stat_pathway_activity` | HUMAnN3 + R |
-| 96c | `scripts/96c_functional_redundancy.sh` | **Functional Redundancy（功能冗余度分析）**：联合功能与物种丰度矩阵计算功能分散指数（FDI）和物种功能多样性，识别低冗余、潜在脆弱的关键功能，并可结合 ML 重要性筛选候选功能。依赖：98b、98c、98d、11；Snakemake rule：`stat_functional_redundancy` | R |
-| 97 | `scripts/97_stat_crosscohort.sh` | **跨队列验证（Phase 2a 统一）**：本地多队列 ML 迁移验证（8 个可视化 + meta-analysis）。输出到 `result/viz_crosscohort/`。旧的 `statistics.smk::stat_curatedMGD` 规则已删除避免冲突。 | SIAMCAT/MMUPHin (R) |
+| 96c | `scripts/96c_functional_redundancy.sh` | **Functional Redundancy（功能冗余度分析）**：联合功能与物种丰度矩阵计算功能分散指数（FDI）和物种功能多样性，识别低冗余、潜在脆弱的关键功能，并可结合 ML 重要性筛选候选功能。依赖：98b、98c、98d、11；Snakemake rule：`stat_functional_redundancy`（**2026-07-16**：真菌分支路径由 shell 级 `find`/`if` 判断改为 Snakemake `input:` 声明，DAG 可正确追踪变更） | R |
+| 97 | `scripts/97_stat_crosscohort.sh` | **跨队列验证（Phase 2a 统一）**：本地多队列 ML 迁移验证（8 个可视化 + meta-analysis）。输出到 `result/viz_crosscohort/`。旧的 `statistics.smk::stat_curatedMGD` 规则已删除避免冲突；对应的 `97_stat_curatedMGD.sh` 于 2026-07-16 移至 `scripts/deprecated/` | SIAMCAT/MMUPHin (R) |
 | 98 | `scripts/98_stat_report.sh` | 按需生成带时间戳的分析结果 Markdown 快照报告 | bash + Rscript |
-| 99a | `scripts/99a_core_microbiome.sh` | **Core Microbiome（核心微生物组识别）**：按流行率和最低丰度阈值识别全局及 case/control 组特异核心特征，输出核心成员表、共享关系、流行率曲线和核心丰度占比图，用于发现稳定定植成员。依赖：11、98b；Snakemake rule：`stat_core_microbiome` | microbiome + R |
+| 98c(mge) | `scripts/98c_bac_mge_summary.sh` | 汇总细菌 MGE（ISFinder/ICEberg/IntegAll/transposase）与质粒（PlasmidFinder）检测结果为整合表。Snakemake rule：`bac_mge_summary` | bash + awk |
+| 98d(mag) | `scripts/98d_bac_mag_integration.sh` | 整合细菌 MAG 级分类（GTDB-Tk）、质量（CheckM2）、去冗余聚类（dRep）与丰度（CoverM）为整合表。Snakemake rule：`bac_mag_integration` | bash + awk |
+| 99a | `scripts/99a_core_microbiome.sh` | **Core Microbiome（核心微生物组识别）**：按流行率和最低丰度阈值识别全局及 case/control 组特异核心特征，输出核心成员表、共享关系、流行率曲线和核心丰度占比图，用于发现稳定定植成员。依赖：11、98b；Snakemake rule：`stat_core_microbiome`（**2026-07-16**：真菌分支同96c一并修正为显式 `input:` 依赖） | microbiome + R |
 | 99b | `scripts/99b_lefse.sh` | **LEfSe Analysis（生物标志物发现）**：对细菌、病毒和真菌的分类或功能丰度表执行组间检验与 LDA 效应量排序，输出显著生物标志物、LDA 条形图及分类层级图，用于病例-对照标志物筛选。依赖：98b、98c、98d；Snakemake rule：`stat_lefse` | LEfSe-like + R |
+| — | `downstream_summary`（无独立脚本，直接以 Snakemake inline shell rule 实现） | 汇总 Core Microbiome/Functional Redundancy/Pathway Activity 共7个下游模块的完成状态为单表。**2026-07-16 新增**，替代原 `99c_batch_downstream.sh`/`99d_downstream_summary.R`（与 Snakemake DAG 本身架构性重复，已移至 `scripts/deprecated/`）。Snakemake rule：`downstream_summary` | bash（inline） |
 
 ### 🔄 串联流程脚本
 

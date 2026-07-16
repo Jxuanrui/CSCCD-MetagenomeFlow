@@ -127,7 +127,6 @@ for mag in "${MAGS[@]}"; do
     CMD="$CMD --metagenome"
     CMD="$CMD --mincontiglen 200"
     CMD="$CMD --rfam"
-    CMD="$CMD --compliant"
     CMD="$CMD --force"
 
     # 如果GTDB-Tk提供了属名，加入--genus参数

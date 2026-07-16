@@ -10,7 +10,7 @@
 #
 # 依  赖:
 #   - dRep dereplicated genomes (result/binning/drep/dereplicated_genomes/*.fa)
-#   - GTDB-Tk (result/binning/gtdbtk/gtdbtk.bac120.summary.tsv)
+#   - GTDB-Tk (result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv)
 #   - CheckM2 (result/binning/checkm2/quality_report.tsv)
 #   - dRep Wdb (result/binning/drep/data_tables/Wdb.csv)
 #   - CoverM quant (result/binning/coverm_quant/{sample}.tsv, 可选 per sample)
@@ -56,7 +56,7 @@ SECONDS=0
 # --- 路径定义 ---
 BIN_DIR="${WORKDIR}/result/binning"
 DEREP_DIR="${BIN_DIR}/drep/dereplicated_genomes"
-GTDB_FILE="${BIN_DIR}/gtdbtk/gtdbtk.bac120.summary.tsv"
+GTDB_FILE="${BIN_DIR}/gtdbtk/classify/gtdbtk.bac120.summary.tsv"
 CHECKM2_FILE="${BIN_DIR}/checkm2/quality_report.tsv"
 DREP_WDB="${BIN_DIR}/drep/data_tables/Wdb.csv"
 COVERM_DIR="${BIN_DIR}/coverm_quant"

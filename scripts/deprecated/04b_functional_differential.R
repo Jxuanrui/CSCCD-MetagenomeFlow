@@ -1,3 +1,4 @@
+# Deprecated 2026-07-16: superseded by 96_stat_functional.R due to directory-convention duplication.
 #!/usr/bin/env Rscript
 
 suppressPackageStartupMessages({

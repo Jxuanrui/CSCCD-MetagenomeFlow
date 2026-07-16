@@ -154,7 +154,8 @@ for mag in "${MAG_FILES[@]}"; do
             --cpus "${THREADS}" \
             --ref "${REF}" \
             --ctgs "${mag}" \
-            --outdir "${MAG_OUT}"
+            --outdir "${MAG_OUT}" \
+            --force
 
     EXIT_CODE=$?
     if [ ${EXIT_CODE} -ne 0 ]; then
