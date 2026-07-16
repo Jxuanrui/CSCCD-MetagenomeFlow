@@ -26,6 +26,11 @@ suppressPackageStartupMessages({
 
 workdir <- Sys.getenv("WORKDIR")
 repo <- Sys.getenv("REPO")
+
+plot_fns_available <- all(vapply(c("ggplot2", "ggrepel", "ggtext"), requireNamespace, logical(1), quietly = TRUE))
+if (plot_fns_available) {
+  source(file.path(repo, "scripts", "R", "plot_differential.R"))
+}
 threads <- suppressWarnings(as.integer(Sys.getenv("THREADS", "1")))
 metadata_csv <- Sys.getenv("METADATA_CSV")
 group_col <- Sys.getenv("GROUP_COL")
@@ -493,6 +498,22 @@ for (dim in selected_dims) {
     if (!is.null(deseq2_res)) {
       safe_write(dim, "export", "deseq2", taxa_level, deseq2_path, write_tsv(deseq2_res, deseq2_path))
       add_summary(dim, "deseq2", count_sig(deseq2_res), top_feature(deseq2_res), deseq2_path)
+
+      if (plot_fns_available) {
+        volcano_path <- file.path(dim_dir, "volcano_deseq2.pdf")
+        volcano_df <- deseq2_res %>%
+          rename(feature = Taxa) %>%
+          filter(!is.na(padj), !is.na(log2FoldChange))
+        tryCatch({
+          if (nrow(volcano_df) > 0) {
+            p <- plot_volcano_nature(volcano_df, method = "DESeq2")
+            ggplot2::ggsave(volcano_path, p, width = 7, height = 6)
+            add_status(dim, "plot", "volcano_deseq2", taxa_level, "OK", "", volcano_path)
+          }
+        }, error = function(e) {
+          add_status(dim, "plot", "volcano_deseq2", taxa_level, "FAILED", conditionMessage(e), volcano_path)
+        })
+      }
     }
   }
 
