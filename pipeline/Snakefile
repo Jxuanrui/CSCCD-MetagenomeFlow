@@ -89,6 +89,10 @@ rule all:
         WORKDIR + "/result/annotation/defense_finder/defense_finder_systems.tsv",
         WORKDIR + "/result/annotation/ncyc/ncyc_hits.tsv",
         WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
+        WORKDIR + "/result/annotation/scyc/scyc_hits.tsv",
+        WORKDIR + "/result/annotation/pfam/pfam_hits.tblout",
+        WORKDIR + "/result/annotation/pfam/pfam_hits.domtblout",
+        WORKDIR + "/result/annotation/uniprot_sprot/sprot_hits.tsv",
         expand("{workdir}/result/annotation/antismash/{sample}/.done",
                workdir=WORKDIR, sample=SAMPLES),
         # Binning

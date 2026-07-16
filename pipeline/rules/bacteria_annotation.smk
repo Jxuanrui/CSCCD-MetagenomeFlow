@@ -2,7 +2,8 @@
 # Executor: CC (single rules file, deterministic)
 #
 # Aggregate rules (run once across all samples, depend on protein_nr.fa from cdhit):
-#   eggnog, kegg, amrfinder, card, dbcan, vfdb, bacmet, defense_finder, ncyc, pcyc
+#   eggnog, kegg, amrfinder, card, dbcan, vfdb, bacmet, defense_finder, ncyc, pcyc,
+#   bac_scyc, bac_pfam, bac_uniprot, fegenie
 #
 # Per-sample rules (one job per sample, depend on contigs.fa from megahit):
 #   antismash
@@ -132,6 +133,40 @@ rule pcyc:
         hits = WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
     shell:
         "bash {REPO}/scripts/31_bac_pcyc.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 31b: SCyc sulfur cycling gene annotation ───────────────────────────────
+
+rule bac_scyc:
+    input:
+        protein_nr = PROTEIN_NR_PATH,
+    output:
+        hits = WORKDIR + "/result/annotation/scyc/scyc_hits.tsv",
+    shell:
+        "bash {REPO}/scripts/31b_bac_scyc.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 31c: Pfam-A protein domain annotation ──────────────────────────────────
+
+rule bac_pfam:
+    input:
+        protein_nr = PROTEIN_NR_PATH,
+    output:
+        tblout = WORKDIR + "/result/annotation/pfam/pfam_hits.tblout",
+        domtblout = WORKDIR + "/result/annotation/pfam/pfam_hits.domtblout",
+    shell:
+        "bash {REPO}/scripts/31c_bac_pfam.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 31d: UniProt Swiss-Prot protein annotation ─────────────────────────────
+
+rule bac_uniprot:
+    input:
+        protein_nr = PROTEIN_NR_PATH,
+    output:
+        hits = WORKDIR + "/result/annotation/uniprot_sprot/sprot_hits.tsv",
+    shell:
+        "bash {REPO}/scripts/31d_bac_uniprot.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
 
 
 # ─── 31e: FeGenie iron metabolism gene prediction ───────────────────────────
