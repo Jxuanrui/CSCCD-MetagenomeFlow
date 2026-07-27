@@ -3,8 +3,8 @@
 # 脚本名: 80b_fun_metaeuk.sh
 # 功  能: 真菌蛋白编码基因预测
 #         支持 Prodigal（默认）或 MetaEuk 两种方法
-# 依  赖: 78_fun_megahit.sh 的输出（${SAMPLE}_fungi.contigs.fa）
-# 输  入: ${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}_fungi.contigs.fa
+# 依  赖: 78_fun_megahit.sh 的输出（${SAMPLE}.contigs.fa）
+# 输  入: ${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}.contigs.fa
 # 输  出: ${WORKDIR}/result/fungi/metaeuk/${SAMPLE}/
 #           ${SAMPLE}_metaeuk.faa  — 下游注释兼容蛋白序列
 #           ${SAMPLE}.gff          — Prodigal GFF 输出（使用 Prodigal 时）
@@ -67,7 +67,7 @@ fi
 
 SECONDS=0
 
-INPUT_CONTIGS="${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}_fungi.contigs.fa"
+INPUT_CONTIGS="${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/fungi/metaeuk/${SAMPLE}"
 TMP_DIR="${OUTDIR}/tmp_${SAMPLE}"
 OUT_PREFIX="${OUTDIR}/${SAMPLE}"

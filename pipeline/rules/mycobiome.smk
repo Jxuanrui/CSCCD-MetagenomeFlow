@@ -179,6 +179,7 @@ rule fun_metaeuk:
         "bash {REPO}/scripts/80b_fun_metaeuk.sh "
         "-s {wildcards.sample} -t {threads} "
         "-w {params.workdir} -r {REPO} "
+        "--method metaeuk --db {REPO}/db/metaeuk_db/fungi_refseq_mmseqs "
         "> {log} 2>&1"
 
 
