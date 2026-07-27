@@ -323,6 +323,10 @@ rule fun_integration_tables:
             sample=SAMPLES,
         ),
         eggnog = WORKDIR + "/result/fungi/eggnog/eggnog.emapper.annotations",
+        dbcan = WORKDIR + "/result/fungi/dbcan/overview.txt",
+        vfdb = WORKDIR + "/result/fungi/vfdb/vfdb_hits.tsv",
+        amr = WORKDIR + "/result/fungi/amr/amrfinder_results.tsv",
+        merops = WORKDIR + "/result/fungi/merops/merops_hits.tsv",
     output:
         # Track key fungal functional abundance tables
         kegg_ko = WORKDIR + "/result/integration/fungi/kegg_ko_gene_count.tsv",

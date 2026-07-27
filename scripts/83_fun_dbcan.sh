@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 83_fun_dbcan.sh
-# 功  能: 真菌 CAZyme 注释（run_dbcan, HMMER+DIAMOND+eCAMI 三方法）
+# 功  能: 真菌 CAZyme 注释（run_dbcan, HMMER+DIAMOND 双方法，eCAMI 对超大规模合并蛋白集不可行已禁用）
 #         工具版本：run_dbcan 4.x（conda env: dbcan）
 # 依  赖: 80_fun_prodigal.sh 的输出（各样本 FAA，自动合并）
 # 输  入: ${WORKDIR}/result/fungi/prodigal/*/*.faa（自动搜索合并）
@@ -60,7 +60,9 @@ conda run --prefix "${REPO}/envs/dbcan" --no-capture-output \
     run_dbcan \
         "${COMBINED_FAA}" \
         protein \
-        --tools all \
+        --tools diamond hmmer \
+        --dia_cpu "${CPUS}" \
+        --hmm_cpu "${CPUS}" \
         --db_dir "${DBCAN_DB}" \
         --out_dir "${RESULT_DIR}"
 
