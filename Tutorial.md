@@ -1835,10 +1835,15 @@ bash ~/Course/Maxmetagenome/scripts/73_fun_humann4.sh \
 
 | 步骤 | 工具 | 内容 | 状态 |
 |------|------|------|------|
-| 71 | Kraken2+Bracken | PlusPF快速物种分类 | 🔄 进行中（10样本，`rush -j 2` 并行启动） |
-| 72 | MetaPhlAn4-euk | 精确真菌标记基因分类（复用步骤3比对结果） | 🔄 进行中（10样本，`rush -j 4` 并行启动） |
-| 72b | 合并丰度表 | 项目级真菌丰度矩阵（taxonomy.tsv/species/genus/csv） | ⏳ 待71/72完成 |
-| 73 | HUMAnN4 | 真菌功能通路定量 | ⏳ 待72完成 |
+| 71 | Kraken2+Bracken | PlusPF快速物种分类 | ✅ 完成（10样本） |
+| 72 | MetaPhlAn4-euk | 精确真菌标记基因分类（复用步骤3比对结果） | ✅ 完成（10样本） |
+| 72b | 合并丰度表 | 项目级真菌丰度矩阵（taxonomy.tsv/species/genus/csv） | ✅ 完成 |
+| 73 | HUMAnN4 | 真菌功能通路定量 | ✅ 完成（10样本） |
+| 74-80 | BLAST/FunOMIC/MicroFisher/MEGAHIT/MetaEuk/Eukfinder/Prodigal | 真菌组装、基因预测多方法链 | ✅ 完成（10样本） |
+| 81 | eggNOG-mapper | 真菌蛋白功能注释（252万条基因） | ✅ 完成（耗时 11504s） |
+| 83 | dbCAN CAZyme注释 | `--tools diamond hmmer`（eCAMI 因超大规模不可行已禁用，见 A4） | ✅ 完成（129,669 CAZyme，耗时 90563s） |
+| 84/85/86 | VFDB/AMRFinder/MEROPS | 毒力因子/耐药基因/蛋白酶家族注释 | ✅ 完成 |
+| 98d | 真菌维度整合表 | kegg_ko/cog/cazyme/vfdb/amr/merops 六张基因计数表 + normalized(relab/clr) | ✅ 完成（见 A5/A6 排障记录） |
 
 > **步骤72 加速技巧**：`72_fun_metaphlan4_euk.sh` 会优先查找 `${WORKDIR}/temp/metaphlan4/${SAMPLE}/${SAMPLE}.mapout.bz2`（细菌维度步骤3已生成的 bowtie2 比对结果），若存在则直接复用并加 `--ignore_bacteria --ignore_archaea` 重新分类，跳过耗时的 bowtie2 重新比对；若不存在才会回退到基于 reads 的完整比对。因此**务必先完成细菌维度步骤3**，再启动真菌维度步骤72，可节省数小时比对时间。
 
@@ -1980,6 +1985,159 @@ WARNING - Please use pharokka output pharokka.gbk as --input for phold
 检查 scripts/65_vir_phold.sh 的输入是否为 pharokka.gbk（而非 votu/contigs/virus.fasta）。
 若发现依赖声明与实际输入不符，先停止正在运行的进程，修正脚本后再重启，
 不要让明知输入错误的任务跑完。
+```
+
+---
+
+### A4. Snakemake 规则的 `input` 必须声明全部实际依赖的上游文件，否则下游任务会静默用不完整数据跑完
+
+**背景（2026-07-22 发现并修复，Project01 真菌批次1）**：`pipeline/rules/statistics.smk` 中 `fun_integration_tables` 规则只在 `input` 声明了 `metaeuk` 和 `eggnog` 两项，但其 shell 命令 `scripts/98d_fun_integration_tables.sh` 实际会读取 dbCAN/VFDB/AMRFinder/MEROPS 四个真菌注释规则（`fun_dbcan`/`fun_vfdb`/`fun_amr`/`fun_merops`）的输出。
+
+**为什么这是个真问题**：Snakemake 的调度完全基于 `input` 声明构建 DAG。声明缺失导致这四个规则从未被调度执行，`98d` 脚本在源文件全部缺失的情况下用 `[WARN] 缺少 XXX 文件，跳过 XXX 表` 静默跳过了对应的四张核心表，只生成了 kegg_ko 和 cog 两张。而规则的 `output` 又声明了全部六张表，Snakemake 检测到四个 declared output 缺失后判定 job 失败，删除已生成的两个文件，报错退出。
+
+**修复**：在 `fun_integration_tables` 的 `input` 中补齐 `dbcan`/`vfdb`/`amr`/`merops` 四项依赖，使 Snakemake DAG 正确联动这四个上游规则。
+
+**判断依据（可用于类似"脚本产出不完整但仍报告完成"的排查）**：
+- 若某规则的 shell 脚本内部有 `[WARN] 缺少 XXX，跳过` 之类的容错分支，日志里能看到该警告并不代表任务本身失败——但如果这些被跳过的产物恰好也在 Snakemake 的 `output` 声明里，最终仍会因为 declared output 缺失而报错。此时应先检查 `input` 是否遗漏了产出这些依赖文件的规则，而非直接怀疑脚本本身逻辑错误。
+- Dry-run（`snakemake ... -n`）配合 `reason:` 字段可以验证补齐依赖后 DAG 是否正确联动上游规则，无需真正执行即可确认修复方向正确。
+
+**LLM 调用方式（Prompt）**：
+```
+fun_integration_tables 报错说 output 缺失，但日志显示脚本正常跑完并打印了 [WARN] 跳过某些表。
+检查该规则的 input 是否声明了脚本实际读取的全部上游文件，若遗漏请补齐并用 -n 验证 DAG。
+```
+
+---
+
+### A5. eCAMI 算法对超大规模合并蛋白集（百万级）不可行，dbCAN 默认改用 diamond+hmmer 双工具
+
+**背景（2026-07-22～23 发现并修复，Project01 真菌批次1）**：`scripts/83_fun_dbcan.sh` 硬编码 `run_dbcan --tools all`（DIAMOND+HMMER+eCAMI 三工具投票）。对 10 个真菌样本合并后的 277 万条蛋白序列跑 eCAMI，运行 22 小时仅完成 2.45%，按此速率推算完整跑完需要约 37 天。
+
+**为什么这是个真问题而非"耐心等待即可"**：eCAMI 的核心算法（`envs/dbcan/.../eCAMI/prediction.py`）是逐蛋白扫描 k-mer 与全部 CAZyme 家族聚类库比对，复杂度约为 O(N_protein × N_family × N_kmer)，其设计目标是单基因组/宏基因组规模（几千到几万条蛋白），并非为跨样本合并后的百万级蛋白集合设计。用 CPU 占用率判断"是否在正常计算"会产生误导——8 个 worker 进程全程保持 99.9% CPU，看起来"很忙"，但 22 小时的真实产出只对应 2.45% 的完成度，这是算法复杂度问题，不是资源不足或卡死。
+
+**判断依据（区分"真实但缓慢"与"卡死"，及早识别复杂度不可行）**：
+- 不要只看 CPU 占用率判断任务是否"正常运行"。要看输出文件（本例中 `uniInput_thread_*.txt` 分片）的字节数或行数随时间的增长速率，并按输入总量折算完成百分比与预计总耗时。
+- 若预计总耗时达到"天"甚至"周"的量级，应立即判定为算法/工具在当前数据规模下不可行，转而寻找同类工具中复杂度更低的子集（如本例的 DIAMOND+HMMER 双工具而非三工具投票），而非等待其"最终跑完"。
+- dbCAN 官方文档本身也提示可用 `--tools diamond` 加速，说明多工具投票是精度加成而非强制要求；细菌维度对应脚本 `scripts/25_bac_dbcan.sh` 本来就只用 `--tools diamond` 单工具，可作为"该项目里多工具投票并非硬性要求"的先验证据。
+
+**修复**：`scripts/83_fun_dbcan.sh` 改为 `--tools diamond hmmer`（跳过 eCAMI），同时补上此前遗漏的 `--dia_cpu "${CPUS}" --hmm_cpu "${CPUS}"`（此前线程数从未真正传给 run_dbcan，实际只用了默认的 4 线程）。修复后 DIAMOND 阶段 451 秒完成，HMMER 阶段约 25 小时完成（275 万蛋白 × 875 HMM 模型，仍偏慢但可接受，产出 129,669 条 CAZyme）。
+
+**LLM 调用方式（Prompt）**：
+```
+dbcan/eCAMI 任务已运行超过X小时，CPU占用率很高但看起来没有明显进展。
+检查其输出分片文件的增长速率，折算完成百分比和预计总耗时，
+判断这是否是算法复杂度对当前数据规模不可行，而非单纯的运行缓慢。
+```
+
+---
+
+### A6. 脚本内部的"幂等/跳过"判断文件不应脱离 Snakemake 的 `output` 声明独立存在，否则前次失败的残留文件会让脚本误判"已完成"
+
+**背景（2026-07-27 发现并修复，Project01 真菌批次1）**：`scripts/98d_fun_integration_tables.sh` 以 `gene_annotation_matrix.tsv`（一个不在 Snakemake `output` 声明里的中间产物）是否存在，作为判断"核心表 Step1-5 是否需要重新生成"的依据：若存在则跳过 Step1-5，只补齐 Step6（FunOMIC）。A4 描述的那次失败运行中，`98d` 脚本在跑到一半时生成了这个文件后才因为 declared output（kegg_ko/cog/cazyme/vfdb/amr/merops 六张表）不全被 Snakemake 判定失败、清理 declared output——但 `gene_annotation_matrix.tsv` 因为不在 declared output 里，未被 Snakemake 的失败清理逻辑删除，残留在磁盘上。
+
+**为什么这是个真问题**：A4 的规则依赖修复完成后重新触发任务，`98d` 脚本读到残留的 `gene_annotation_matrix.tsv`，误判"主整合表已存在"，直接跳过了生成六张核心表的全部逻辑，只执行了因缺文件同样被跳过的 Step6。最终日志显示"完成"，但 Snakemake declared output 六张表实际一张也没生成，导致 job 仍然失败——且这次失败的表面现象（"脚本打印完成但表没生成"）与 A4 的失败现象（"脚本打印跳过某些表"）完全不同，容易误诊为新的 bug，实际是同一根因（脚本产物与 Snakemake output 声明脱节）的第二次发作。
+
+**判断依据（识别"脏状态导致的幂等误判"）**：
+- 若一个脚本的"是否已完成"判断依据的文件，与 Snakemake 规则 `output` 声明的文件集合不完全一致（尤其是判断依据文件的生成时间点早于其他 output 文件），失败重跑后残留的判断依据文件会让脚本的幂等逻辑产生误判。
+- 排查方法：对比失败日志中脚本打印的阶段信息（本例中"跳过 Step1-5"）与 Snakemake 的 `output` 声明是否一致；若脚本认为"已完成"但 declared output 缺失，应先检查并清理该脚本用于幂等判断的文件，而非怀疑核心生成逻辑本身有 bug。
+- 更根本的修复方向（本次未做，留作后续改进）：脚本的幂等判断应直接检查全部 Snakemake declared output 文件是否存在，而不是依赖一个独立的中间产物。
+
+**修复**：手动清理 `result/integration/fungi/` 目录下的残留文件（`gene_annotation_matrix.tsv` 及 `normalized/` 下的部分文件）后重新触发任务，脚本正常走完 Step1-6，65 秒内生成全部六张核心表。
+
+**LLM 调用方式（Prompt）**：
+```
+fun_integration_tables 再次报错 output 缺失，但这次日志显示脚本认为"主整合表已存在，跳过 Step1-5"。
+检查该脚本用于幂等判断的文件是否与 Snakemake output 声明的文件集合一致，
+若不一致，清理判断依据文件对应目录后重新触发任务。
+```
+
+---
+
+### A7. `93_stat_cooccurrence.sh` 硬编码的细菌丰度表路径与实际目录结构不符
+
+**背景（2026-07-27 发现并修复，Project01 批次2-6启动首步）**：`scripts/93_stat_cooccurrence.sh` 中 `BACT_TABLE="${WORKDIR}/result/bacteria/metaphlan4/merged_abundance_table.txt"`，但项目实际的 MetaPhlAn4 合并丰度表位于 `${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv`（没有 `bacteria/` 中间目录，文件名也不同）。运行时 R 脚本内部 `read_abundance_table` 读取失败，`datasets$bacteria` 为 `NULL`，导致 `network_bac` 报 `Input unavailable for target: bac`，其余维度因跨维度共享样本不足 5 个被跳过，最终 `Error: No network results generated`。
+
+**为什么这是个真问题而非数据量不足**：报错信息表面上和"样本量不足"（其余 4 个 warning 都是 `Need at least five metadata-matched samples` / `Insufficient shared samples`）看起来像同一类问题，但 `network_bac` 的 `Input unavailable` 实际是完全不同的根因——是路径写死错误导致文件读取失败，而不是真的样本数不够（10 个样本对细菌丰度表而言远超 5 个的门限）。
+
+**判断依据**：
+- 同一次报错里出现多种 warning 时，不要把它们归为同一类问题一并归因为"数据量不足"。逐条核对每个 warning 对应的实际检查逻辑（本例中 `Input unavailable` 和 `Need at least five samples` 是两个不同的 `stop()` 调用点），分别验证其触发条件是否真的成立。
+- 用 `ls`/`find` 直接核对脚本里硬编码路径的文件是否存在，是最快的证伪手段——若不存在，直接定位到脚本本身的路径书写错误，无需深入统计逻辑本身。
+
+**修复**：`BACT_TABLE` 改为 `${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv`。`VIR_TABLE`（`result/virus/votu/votu_table.tsv`）和 `FUNGI_DIR`（`result/fungi/metaphlan4`）两个路径经核对均正确，未修改。
+
+**LLM 调用方式（Prompt）**：
+```
+stat_cooccurrence 报错 "Input unavailable for target: bac"，其他维度报 "Need at least five samples"。
+检查 93_stat_cooccurrence.sh 里 BACT_TABLE/VIR_TABLE/FUNGI_DIR 硬编码路径是否与项目实际目录结构一致，
+不要把不同的报错原因混为一谈。
+```
+
+---
+
+### A8. `96c_functional_redundancy.R` 双循环 `cor.test` 调用在大规模功能表上不可行，改为向量化 Spearman 相关系数+p值计算
+
+**背景（2026-07-27 发现并修复，Project01 批次2-6 `stat_functional_redundancy` 任务）**：`96c_functional_redundancy.R` 用两层 `for` 循环遍历 `functional`（细菌 KEGG KO 丰度表，9088 行）× `taxonomy`（MetaPhlAn4 合并物种表，2392 行）的每一对组合，逐对调用 `stats::cor.test(..., method="spearman", exact=FALSE)`，理论上限达 9088 × 2392 = 21,738,496 次调用。进程以单核 100% CPU 运行超过 12 分钟仍停留在同一阶段（"[INFO] Dimension/type: bacteria/kegg_ko"之后无任何进度输出），`ps` 显示内存稳定在 ~628MB（并非内存泄漏，纯粹是调用开销累积）。
+
+**为什么这是个真问题**：这与之前的 A5（eCAMI 算法复杂度不可行）是同一类问题——CPU 占用率看起来"正常工作"（100%单核），但算法本身在当前数据规模下不可行。区别在于 A5 是第三方工具的固有复杂度，A8 是自己写的 R 脚本里的实现方式选择不当：Spearman 相关系数本质上等价于对两个向量做 rank 变换后计算 Pearson 相关系数，完全可以用矩阵运算一次性算出整张相关系数矩阵，而不必对每一对 (function, species) 单独调用一次 `cor.test`（该函数每次调用都有非线性的 R 层函数分派开销，在千万级调用规模下这个开销本身就成为瓶颍）。
+
+**判断依据**：
+- 单核 CPU 100% 且内存稳定，不代表任务在"合理时间"内会完成——要结合迭代规模（此处 nrow × nrow ≈ 2170 万）和单次迭代的最低理论开销做量级估算，若预计总耗时达到与其他同批次任务（多为几分钟到几十分钟）不成比例的量级（这里之前已跑 12 分钟仍无一次完整输出，且循环体每次迭代还包含函数调用开销、构建 S3 对象等），应判定为实现方式问题而非"数据量偶尔大一点"。
+- 优化方向优先选择保持统计方法学不变的向量化重写（Spearman 相关系数矩阵 = 对 rank 矩阵做 Pearson 相关系数矩阵），而不是为了速度改用不同的统计方法（如降级为 Pearson）——统计方法的选择是科学决策，性能优化不应该反向改变它。
+
+**修复**：将双循环替换为：
+1. 对 `functional`/`taxonomy` 逐行做 `rank(..., ties.method="average")` 得到秩矩阵；
+2. 用 `stats::cor(t(function_ranks), t(taxonomy_ranks))` 一次性算出完整相关系数矩阵（Pearson correlation of ranks = Spearman rho）；
+3. 用与 `stats::cor.test(..., exact=FALSE)` 内部一致的 t 分布近似公式 `t = rho * sqrt(df/(1-rho^2))`, `p = 2 * pt(-abs(t), df=df)` 向量化算出全部 p 值；
+4. 对标准差为 0 的行/列（无法算相关系数）设为 `NA`，与原实现的 `next` 跳过逻辑保持一致。
+
+修复前用模拟数据核对：对 5×4 个特征跑向量化版本与逐对 `cor.test` 循环，相关系数最大差异为 0，p 值最大差异为 2.22e-16（浮点误差量级），确认数值完全一致。修复后 bacteria/kegg_ko 维度从原来卡住 12 分钟以上无法完成，变为几秒内完成（Mean FDI: 14.5771, rho: 0.6222）；fungi/kegg_ko 和 virus/vog 维度同样几秒内完成。
+
+**LLM 调用方式（Prompt）**：
+```
+96c_functional_redundancy.R 里两层 for 循环调用 cor.test 计算 Spearman 相关系数矩阵，
+在 9088×2392 的数据规模上单核跑了 12 分钟以上没有进展。
+请将其改写为向量化实现：对两个矩阵逐行 rank 变换后用 stats::cor() 一次性算出相关系数矩阵，
+再用 t 分布公式向量化计算 p 值（与 cor.test(exact=FALSE) 内部使用的近似公式一致），
+不要改变 Spearman 方法学本身（不要降级为 Pearson）。修改后用小规模模拟数据核对与
+逐对 cor.test 循环结果的数值一致性（相关系数和 p 值的最大绝对差异应在浮点误差量级）。
+```
+
+---
+
+### A9. `96_stat_functional.sh`/`96_stat_ml_siamcat.sh` 缺少对"数据为空"或"样本量不足"的优雅跳过逻辑，导致整批次任务被单个子任务拖垂
+
+**背景（2026-07-27 发现并修复，Project01 批次2-6 `stat_functional`/`stat_ml_siamcat` 任务）**：两个独立问题同时暴露：
+1. `stat_functional` 规则用 shell 循环依次跑 20 个 (dimension, func_type) 组合，其中 `bacteria:defense` 对应的 `defense_abundance.tsv` 只有表头没有数据行（本批次未检出任何防御系统基因）。`96_stat_functional.R` 的 `load_functional_matrix()` 没有对"零特征行"做前置校验，而是让 `t()`/`make.unique()` 等下游调用在空数据上报出不直观的 `'names' must be a character vector`，脚本以 exit 1 终止；由于 shell 循环里对每个 pair 的调用没有失败隔离（没有 `|| ...` 或单独的 sentinel 写入），Snakemake 把整条 `stat_functional` 规则判定为失败，直接导致后面 `bacteria:ncyc`、`bacteria:pcyc` 及全部 6 个 fungi pair、5 个 virus pair（共 13 个 pair）从未被执行。
+2. `96_stat_ml_siamcat.sh` 里 `BACT_TABLE="${WORKDIR}/result/bacteria/metaphlan4/merged_abundance_table.txt"` 是与 A7 完全同源的路径错误（正确路径应为 `result/metaphlan4/merged/taxonomy.tsv`），修复路径后脚本能正确加载数据，但暴露出第二层问题：本批次 metadata 里 case/control 各只有 5 个样本，SIAMCAT 的交叉验证数据切分要求单类别样本数达到其内部阈值，5 v 5 从统计上无法支持模型训练与验证的划分，报 `Data set has only: control 5 treat 5 — This is not enough for SIAMCAT to proceed!`，最终 `Error: No model AUCs generated`。这是真实的样本量限制，不是 bug，但脚本没有区分"真正的错误"与"样本量不足导致的预期跳过"，两者都以 exit 1 终止，导致 Snakemake 判定整条规则失败。
+
+**为什么这是个真问题**：
+- 问题1 是 A6（幂等判断脱离 Snakemake output 声明）的姊妹问题——这里不是幂等判断出错，而是"批量循环内单个子任务失败即让整批全部落空"，本质是缺少子任务级别的失败隔离/降级处理，导致 1 个空表拖累了 19 个本可正常完成的 pair。
+- 问题2 提示：脚本设计上需要区分"工具/环境层面的真实故障"（应该报错并阻塞下游）和"数据规模/统计前提不满足导致方法学上无法进行"（应该记录为已知限制并优雅跳过，而不是当作故障处理）——这类跳过应该写入一个带 `SKIPPED:` 前缀的 sentinel 文件，让下游可以区分"未运行"和"运行了但结果是空"。
+
+**判断依据**：
+- 批处理循环里的每个子步骤都应该假设自己可能会因为数据本身的原因（而非代码错误）失败，因此需要为"数据缺失/为空"这类可预期的失败路径设计专门的探测和优雅退出逻辑，而不是任由异常向上传播炸掉整条批处理。
+- 收到"样本量不足"类报错时，先核实这是否是数据集本身的客观限制（本例 Project01 仅 10 个样本，5v5 分组，用 `wc -l`/查 metadata 分组计数即可确认），若确认是客观限制，应把它记录为已知限制（而不是继续加参数硬调直到"能跑"——那样反而会掩盖真实的统计效力不足问题）。这与本次任务的目标（"测评流程稳定性"而非追求统计显著性）是一致的：流程应该能优雅处理这种情况并继续往下走，而不是因为一个统计上注定拿不到有效结果的子任务而卡死整个批次。
+
+**修复**：
+1. `96_stat_functional.R` 的 `load_functional_matrix()` 增加 `if (nrow(raw) == 0) stop("No functional features present in: ...")` 前置校验，给出清晰可定位的报错信息（替代原来深层调用抛出的 `'names' must be a character vector`）。
+2. `96_stat_functional.sh` 用 `tee` 捕获 R 脚本运行日志，若脚本以非零退出且日志中匹配到 `"zero data rows"`，则写入 `SKIPPED: ...` sentinel 并以 exit 0 返回，让该 pair 的失败不再级联影响循环里的其余 pair。
+3. `96_stat_ml_siamcat.sh` 修正 `BACT_TABLE` 路径（同 A7 根因）；同时对 R 脚本运行日志匹配 `"not enough for SIAMCAT to proceed"` / `"No model AUCs generated"`，命中则写入 `SKIPPED: insufficient samples per class for SIAMCAT model training` sentinel 并以 exit 0 返回。
+4. `pipeline/rules/statistics.smk` 未改动批处理循环结构本身（循环仍按顺序跑），失败隔离完全在两个 `.sh` 脚本内部完成，不改变 Snakemake 规则的 `output` 声明。
+
+修复后重跑受影响的 13 个 pair（bacteria:ncyc/pcyc + 6 个 fungi pair + 5 个 virus pair）全部成功完成；`bacteria:defense` 生成 `SKIPPED` sentinel；`stat_ml_siamcat` 生成 `SKIPPED: insufficient samples per class` sentinel。批次2-6 最终全部 5 个收尾任务（`stat_functional_permanova`/`stat_functional_integrated`/`stat_functional_cross_dimension`/`downstream_summary`/`stat_report`）成功完成。
+
+**LLM 调用方式（Prompt）**：
+```
+Snakemake 的 stat_functional 规则内部用 shell 循环依次跑 20 个 (dimension, func_type) 组合，
+其中 bacteria:defense 对应的功能表只有表头没有数据行，导致 R 脚本以不直观的报错退出，
+进而拖垂了循环里后面 13 个本应正常完成的组合。
+请：1) 在 R 脚本加载功能表的位置增加"零数据行"前置校验，给出清晰报错；
+2) 在对应的 .sh 包装脚本里捕获这种"数据为空"场景，写入带 SKIPPED: 前缀的 sentinel 并
+以 exit 0 返回，不要让单个子任务的数据缺失级联阻塞循环里的其余子任务。
+同样地，96_stat_ml_siamcat.sh 里发现两个问题：一是 BACT_TABLE 路径硬编码错误（同 A7 根因），
+二是本批次 5v5 分组样本量不足以支撑 SIAMCAT 的交叉验证切分——这是真实的样本量限制而非 bug，
+请为这种"方法学前提不满足"的场景同样设计优雅跳过（SKIPPED sentinel + exit 0），
+不要和真正的代码/环境错误混在一起当故障处理。
 ```
 
 ---
