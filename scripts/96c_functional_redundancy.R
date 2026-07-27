@@ -143,21 +143,28 @@ taxonomy <- taxonomy[rowSums(taxonomy, na.rm=TRUE) > 0, , drop=FALSE]
 if(nrow(functional) == 0) stop("No non-zero functional features remain after filtering")
 if(nrow(taxonomy) == 0) stop("No non-zero taxonomy features remain after filtering")
 
-correlation <- matrix(NA_real_, nrow=nrow(functional), ncol=nrow(taxonomy),
-                      dimnames=list(rownames(functional), rownames(taxonomy)))
-pvalue <- correlation
-for(function_index in seq_len(nrow(functional))) {
-  function_values <- functional[function_index, ]
-  if(stats::sd(function_values) == 0) next
-  for(species_index in seq_len(nrow(taxonomy))) {
-    species_values <- taxonomy[species_index, ]
-    if(stats::sd(species_values) == 0) next
-    test <- suppressWarnings(stats::cor.test(function_values, species_values,
-                                              method="spearman", exact=FALSE))
-    correlation[function_index, species_index] <- unname(test$estimate)
-    pvalue[function_index, species_index] <- test$p.value
-  }
-}
+# Vectorized Spearman correlation + p-value (avoids O(nrow(functional)*nrow(taxonomy)) cor.test calls).
+# Spearman rho == Pearson correlation of rank-transformed rows; p-value uses the same
+# t-distribution approximation stats::cor.test(..., exact=FALSE) uses internally.
+n_samples <- ncol(functional)
+function_ranks <- t(apply(functional, 1, rank, ties.method="average"))
+taxonomy_ranks <- t(apply(taxonomy, 1, rank, ties.method="average"))
+rownames(function_ranks) <- rownames(functional)
+rownames(taxonomy_ranks) <- rownames(taxonomy)
+
+correlation <- stats::cor(t(function_ranks), t(taxonomy_ranks))
+dimnames(correlation) <- list(rownames(functional), rownames(taxonomy))
+
+constant_function <- apply(function_ranks, 1, stats::sd) == 0
+constant_species <- apply(taxonomy_ranks, 1, stats::sd) == 0
+correlation[constant_function, ] <- NA_real_
+correlation[, constant_species] <- NA_real_
+
+df <- n_samples - 2
+t_stat <- correlation * sqrt(df / (1 - correlation^2))
+pvalue <- matrix(2 * stats::pt(-abs(t_stat), df=df), nrow=nrow(correlation), ncol=ncol(correlation),
+                 dimnames=dimnames(correlation))
+pvalue[!is.finite(t_stat) & is.finite(correlation)] <- 0
 max_abs_correlation <- apply(abs(correlation), 1, function(values) {
   if(all(!is.finite(values))) NA_real_ else max(values, na.rm=TRUE)
 })
