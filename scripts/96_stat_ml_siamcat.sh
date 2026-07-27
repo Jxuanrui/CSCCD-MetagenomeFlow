@@ -66,7 +66,7 @@ REPO="$(cd "${REPO}" && pwd)"
 
 SECONDS=0
 
-BACT_TABLE="${WORKDIR}/result/bacteria/metaphlan4/merged_abundance_table.txt"
+BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/votu_table.tsv"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 PHF_FUNGI_TABLE="${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv"
@@ -174,7 +174,10 @@ echo "[INFO] Running SIAMCAT ML analysis"
 
 export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE RESULT_DIR
 
-(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
+RUN_LOG="${LOG_DIR:-${RESULT_DIR}}/96_stat_ml_siamcat.run.log"
+mkdir -p "$(dirname "${RUN_LOG}")"
+set -o pipefail
+(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT' 2>&1 | tee "${RUN_LOG}"
 options(stringsAsFactors = FALSE)
 # Fix: Ensure working directory is WORKDIR (conda run may reset it)
 workdir <- Sys.getenv("WORKDIR")
@@ -404,6 +407,11 @@ RSCRIPT
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
+    if grep -q "not enough for SIAMCAT to proceed\|No model AUCs generated" "${RUN_LOG}"; then
+        echo "[WARN] ${DIMENSION}: sample size too small for SIAMCAT cross-validation, writing skip sentinel"
+        echo "SKIPPED: insufficient samples per class for SIAMCAT model training (${DIMENSION})" > "${SENTINEL}"
+        exit 0
+    fi
     echo "[ERROR] 96_stat_ml_siamcat.sh failed with exit code ${EXIT_CODE}"
     exit ${EXIT_CODE}
 fi

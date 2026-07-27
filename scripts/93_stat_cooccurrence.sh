@@ -59,7 +59,7 @@ WORKDIR="$(cd "${WORKDIR}" && pwd)"
 
 SECONDS=0
 
-BACT_TABLE="${WORKDIR}/result/bacteria/metaphlan4/merged_abundance_table.txt"
+BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/votu_table.tsv"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 # PHF (Yan2024 Cell187 method) is the preferred fungi abundance source.
