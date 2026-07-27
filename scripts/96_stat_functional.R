@@ -463,6 +463,11 @@ load_functional_matrix <- function(workdir, dimension, func_type) {
     raw <- raw[!grepl("UNMAPPED|\\|", raw[[source$feature_col]]), , drop = FALSE]
   }
 
+  if (nrow(raw) == 0) {
+    stop("No functional features present in: ", feature_file,
+         " (table has a header but zero data rows)")
+  }
+
   abundance_cols <- setdiff(colnames(raw), source$feature_col)
   if (!length(abundance_cols)) {
     stop("No sample abundance columns found in: ", feature_file)

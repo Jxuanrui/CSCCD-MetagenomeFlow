@@ -120,10 +120,17 @@ echo "[INFO] Output directory: ${OUT_DIR}"
 
 export WORKDIR REPO METADATA_CSV GROUP_COL STAT_ROOT DIMENSION FUNC_TYPE OUT_DIR FORCE SENTINEL
 
-(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_stat_functional.R")
+RUN_LOG="${LOG_DIR}/96_stat_functional.run.log"
+(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_stat_functional.R") 2>&1 | tee "${RUN_LOG}"
 
-EXIT_CODE=$?
+EXIT_CODE=${PIPESTATUS[0]}
 if [ ${EXIT_CODE} -ne 0 ]; then
+    if grep -q "zero data rows" "${RUN_LOG}"; then
+        echo "[WARN] ${DIMENSION}/${FUNC_TYPE}: functional table has no data rows, writing empty-skip sentinel"
+        mkdir -p "${OUT_DIR}"
+        echo "SKIPPED: functional abundance table for ${DIMENSION}/${FUNC_TYPE} has a header but zero data rows" > "${SENTINEL}"
+        exit 0
+    fi
     echo "[ERROR] 96_stat_functional.sh failed with exit code ${EXIT_CODE}"
     exit ${EXIT_CODE}
 fi
