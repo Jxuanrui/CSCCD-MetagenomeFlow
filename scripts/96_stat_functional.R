@@ -542,7 +542,14 @@ legacy_bacteria_skip_prevalence_types <- c("cog", "ncyc", "pcyc")
 skip_prevalence_filter <- FALSE
 prevalence_skip_reason <- ""
 prevalence_threshold <- if (identical(func_type, "kegg_ko")) 0.20 else 0.10
-maaslin_cores <- if (identical(func_type, "kegg_ko")) 4 else 1
+## maaslin3's mirai-based parallelization (cores > 1) is unreliable at this
+## feature scale: the mirai/nanonext task dispatcher can deadlock after
+## spawning daemons, independent of any other concurrent process (reproduced
+## in isolation; not a cross-invocation race). This is a known class of issue
+## in the upstream package (biobakery/maaslin3#25: multi-core runs hang/get
+## killed; README recommends single-core by default). Single core is slower
+## but deterministic, which matters more for pipeline-stability testing.
+maaslin_cores <- 1
 
 remove_stale_visual_outputs <- function(allowed_steps) {
   skipped_steps <- setdiff(names(managed_visual_outputs), allowed_steps)

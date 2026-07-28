@@ -173,16 +173,37 @@ rule stat_functional:
     threads: CPUS
     shell:
         r"""
-        for pair in \
-            bacteria:pathway bacteria:kegg_ko bacteria:cog bacteria:cazyme bacteria:arg bacteria:vfdb bacteria:defense bacteria:ncyc bacteria:pcyc \
-            fungi:kegg_ko fungi:cog fungi:cazyme fungi:vfdb fungi:amr fungi:merops \
-            virus:phrog virus:vog virus:lifestyle virus:host_genus virus:viral_family; do
-            dimension=${{pair%%:*}}
-            func_type=${{pair#*:}}
+        # 96_stat_functional.R now forces maaslin_cores=1 for every func_type
+        # (including kegg_ko): maaslin3's mirai/nanonext-based parallelization
+        # (cores>1) was found to deadlock the task dispatcher at this feature
+        # scale even in complete isolation with no concurrent R process on the
+        # host -- not a race between separate maaslin3 invocations, as earlier
+        # analysis assumed. This is a known instability class in the upstream
+        # package (biobakery/maaslin3#25: multi-core runs hang/get killed;
+        # upstream README recommends single-core by default). With every pair
+        # single-threaded there is no daemon-spawn contention, so all 20 pairs
+        # (including the two kegg_ko ones, which just take longer wall time)
+        # run in one shared pool.
+        run_pair() {{
+            dimension=${{1%%:*}}
+            func_type=${{1#*:}}
             bash {REPO}/scripts/96_stat_functional.sh \
                 -w {params.workdir} -r {params.repo} -m {params.meta} \
                 -d "$dimension" -t "$func_type"
-        done
+        }}
+        export -f run_pair
+
+        printf '%s\n' \
+            bacteria:pathway bacteria:cog bacteria:cazyme bacteria:arg bacteria:vfdb bacteria:defense bacteria:ncyc bacteria:pcyc bacteria:kegg_ko \
+            fungi:cog fungi:cazyme fungi:vfdb fungi:amr fungi:merops fungi:kegg_ko \
+            virus:phrog virus:vog virus:lifestyle virus:host_genus virus:viral_family \
+            | xargs -P 6 -I{{}} bash -c 'run_pair "$1"' _ {{}}
+        ALL_STATUS=$?
+
+        if [ "$ALL_STATUS" -ne 0 ]; then
+            echo "[ERROR] stat_functional: one or more pairs failed (xargs exit=$ALL_STATUS)"
+            exit 1
+        fi
         """
 
 
