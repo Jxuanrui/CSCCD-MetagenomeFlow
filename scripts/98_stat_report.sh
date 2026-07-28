@@ -163,13 +163,13 @@ extract_table_preview() {
 
     echo "## Cross-cohort"
     echo
-    if [ -f "${STAT_DIR}/crosscohort/crosscohort_auc.tsv" ]; then
+    if [ -f "${WORKDIR}/result/viz_crosscohort/auc_summary.tsv" ]; then
         echo '```tsv'
-        extract_table_preview "${STAT_DIR}/crosscohort/crosscohort_auc.tsv" 8
+        extract_table_preview "${WORKDIR}/result/viz_crosscohort/auc_summary.tsv" 8
         echo '```'
-    elif [ -f "${STAT_DIR}/crosscohort/crosscohort_done.txt" ]; then
+    elif [ -f "${WORKDIR}/result/viz_crosscohort/crosscohort_done.txt" ]; then
         echo '```text'
-        sed -n '1,20p' "${STAT_DIR}/crosscohort/crosscohort_done.txt"
+        sed -n '1,20p' "${WORKDIR}/result/viz_crosscohort/crosscohort_done.txt"
         echo '```'
     else
         echo "- Missing cross-cohort outputs"
