@@ -27,6 +27,19 @@ if [ ! -f "${FIXTURE}/result/integration/bacteria/kegg_ko_abundance.tsv" ]; then
         Rscript "${REPO_ROOT}/scripts/tests/level2/generate_fixture_functional_table.R" "${REPO_ROOT}"
 fi
 
+STAT_METADATA="${FIXTURE}/result/stat/metadata.tsv"
+if [ ! -f "${STAT_METADATA}" ]; then
+    echo "[INFO] Generating fixture result/stat/metadata.tsv (post-pipeline processed product)..."
+    mkdir -p "$(dirname "${STAT_METADATA}")"
+    {
+        printf '\tsample_id\tgroup\tsubject_id\tage\tBMI\n'
+        printf 'T01\tT01\tcontrol\tC01\t35\t22.5\n'
+        printf 'T02\tT02\tcontrol\tC02\t41\t24.1\n'
+        printf 'T03\tT03\ttreat\tC03\t38\t23.0\n'
+        printf 'T04\tT04\ttreat\tC04\t44\t25.3\n'
+    } > "${STAT_METADATA}"
+fi
+
 echo "[INFO] Running 96_functional_permanova.sh against Test_CI_fixture (bacteria)..."
 if ! bash "${REPO_ROOT}/scripts/96_functional_permanova.sh" \
         -w "${FIXTURE}" -r "${REPO_ROOT}" -d bacteria --force; then
