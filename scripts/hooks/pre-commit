@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Script: scripts/hooks/pre-commit
+# Purpose: Run shellcheck on staged .sh files before allowing a commit.
+# Installed via: scripts/install_git_hooks.sh (symlinks this file into
+#                .git/hooks/pre-commit)
+#
+# Scope: only files touched by this commit (git diff --cached), not a full
+# repo scan -- this is what lets 126 pre-existing scripts stay untouched
+# by the new check while any file someone actually edits must pass.
+# ==============================================================================
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SHELLCHECK="${REPO_ROOT}/envs/shellcheck/bin/shellcheck"
+
+if [ ! -x "${SHELLCHECK}" ]; then
+    echo "[WARN] envs/shellcheck not found -- skipping shellcheck for this commit."
+    echo "[HINT] Set it up with: mamba create -y --prefix \"${REPO_ROOT}/envs/shellcheck\" -c conda-forge \"shellcheck>=0.9\""
+    exit 0
+fi
+
+mapfile -t STAGED_SH < <(git diff --cached --name-only --diff-filter=ACM -- '*.sh')
+if [ ${#STAGED_SH[@]} -eq 0 ]; then
+    exit 0
+fi
+
+echo "[INFO] Running shellcheck on ${#STAGED_SH[@]} staged script(s)..."
+
+FAILED=0
+for f in "${STAGED_SH[@]}"; do
+    [ -f "${f}" ] || continue
+    if ! "${SHELLCHECK}" --severity=warning "${f}"; then
+        FAILED=1
+    fi
+done
+
+## 2026-07-28: .shellcheckrc exclude list finalized against a full-repo scan
+## (127 scripts, 264 findings; see .shellcheckrc header). Now blocking.
+if [ "${FAILED}" -ne 0 ]; then
+    echo ""
+    echo "[BLOCK] shellcheck 检查未通过，请修复上方问题后重新提交。"
+    echo "[HINT]  临时跳过（不推荐）: git commit --no-verify"
+    exit 1
+fi
+exit 0
