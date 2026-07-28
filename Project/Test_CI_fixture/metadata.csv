@@ -1,0 +1,5 @@
+sample_id,group,subject_id,age,BMI
+T01,control,C01,35,22.5
+T02,control,C02,41,24.1
+T03,treat,C03,38,23.0
+T04,treat,C04,44,25.3

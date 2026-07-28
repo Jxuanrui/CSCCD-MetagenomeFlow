@@ -1,0 +1,5 @@
+sample_id,r1,r2,host_type,project_dir
+T01,Project/Test_CI_fixture/data/T01_1.fastq.gz,Project/Test_CI_fixture/data/T01_2.fastq.gz,human,Project/Test_CI_fixture
+T02,Project/Test_CI_fixture/data/T02_1.fastq.gz,Project/Test_CI_fixture/data/T02_2.fastq.gz,human,Project/Test_CI_fixture
+T03,Project/Test_CI_fixture/data/T03_1.fastq.gz,Project/Test_CI_fixture/data/T03_2.fastq.gz,human,Project/Test_CI_fixture
+T04,Project/Test_CI_fixture/data/T04_1.fastq.gz,Project/Test_CI_fixture/data/T04_2.fastq.gz,human,Project/Test_CI_fixture
