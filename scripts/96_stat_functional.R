@@ -332,6 +332,90 @@ sci_diff_colors <- function() {
   )
 }
 
+## Lazily-loaded lookup tables backed by local reference databases under
+## {repo}/db/. Cached per-session in .functional_annotation_cache so repeated
+## calls (once per plot) don't re-read/re-parse the source files. Falls back
+## to NULL (annotation lookup miss -> raw id is shown) if repo is unset or the
+## source file is missing, so this never hard-fails the analysis.
+.functional_annotation_cache <- new.env(parent = emptyenv())
+
+load_kegg_ko_annotations <- function() {
+  key <- "kegg_ko"
+  if (!is.null(.functional_annotation_cache[[key]])) {
+    return(.functional_annotation_cache[[key]])
+  }
+  path <- file.path(repo, "db", "dram_db", "kofam_ko_list.tsv")
+  result <- NULL
+  if (nzchar(repo) && file.exists(path)) {
+    tryCatch({
+      tbl <- utils::read.delim(path, sep = "\t", quote = "", stringsAsFactors = FALSE)
+      result <- stats::setNames(tbl$definition, tbl$knum)
+    }, error = function(e) NULL)
+  }
+  .functional_annotation_cache[[key]] <- result
+  result
+}
+
+load_vfdb_annotations <- function() {
+  key <- "vfdb"
+  if (!is.null(.functional_annotation_cache[[key]])) {
+    return(.functional_annotation_cache[[key]])
+  }
+  path <- file.path(repo, "db", "vfdb", "misc", "annotation.txt")
+  result <- NULL
+  if (nzchar(repo) && file.exists(path)) {
+    tryCatch({
+      tbl <- utils::read.delim(path, sep = "\t", quote = "", header = FALSE, stringsAsFactors = FALSE)
+      ## column 2 is free text like: (gb|WP_...) (plc1) phospholipase C [Phospholipase C (VF0470) - Exotoxin (VFC0235)] [species]
+      ## keep the gene-name + function part before the first "[" for a compact label
+      desc <- sub("^\\s*\\(gb\\|[^)]*\\)\\s*", "", tbl[[2]])
+      desc <- sub("\\s*\\[.*$", "", desc)
+      result <- stats::setNames(trimws(desc), tbl[[1]])
+    }, error = function(e) NULL)
+  }
+  .functional_annotation_cache[[key]] <- result
+  result
+}
+
+load_merops_annotations <- function() {
+  key <- "merops"
+  if (!is.null(.functional_annotation_cache[[key]])) {
+    return(.functional_annotation_cache[[key]])
+  }
+  path <- file.path(repo, "db", "merops", "misc", "family.txt")
+  result <- NULL
+  if (nzchar(repo) && file.exists(path)) {
+    tryCatch({
+      tbl <- utils::read.delim(path, sep = "\t", quote = "", header = FALSE, stringsAsFactors = FALSE)
+      result <- stats::setNames(tbl[[2]], tbl[[1]])
+    }, error = function(e) NULL)
+  }
+  .functional_annotation_cache[[key]] <- result
+  result
+}
+
+load_cazyme_family_annotations <- function() {
+  key <- "cazyme_family"
+  if (!is.null(.functional_annotation_cache[[key]])) {
+    return(.functional_annotation_cache[[key]])
+  }
+  path <- file.path(repo, "db", "dbcan3", "CAZyDB.08062022.fam-activities.txt")
+  result <- NULL
+  if (nzchar(repo) && file.exists(path)) {
+    tryCatch({
+      lines <- readLines(path, warn = FALSE)
+      lines <- lines[!grepl("^#", lines)]
+      parts <- strsplit(lines, "\t")
+      fam <- vapply(parts, function(p) trimws(p[1]), character(1))
+      desc <- vapply(parts, function(p) if (length(p) >= 2) trimws(p[2]) else "", character(1))
+      keep <- nzchar(fam) & nzchar(desc)
+      result <- stats::setNames(desc[keep], fam[keep])
+    }, error = function(e) NULL)
+  }
+  .functional_annotation_cache[[key]] <- result
+  result
+}
+
 get_functional_annotation <- function(feature_id, func_type) {
   cog_annotations <- c(
     "A" = "RNA processing",
@@ -371,6 +455,11 @@ get_functional_annotation <- function(feature_id, func_type) {
     "CBM" = "Carbohydrate-Binding Module"
   )
 
+  kegg_ko_annotations <- load_kegg_ko_annotations()
+  vfdb_annotations <- load_vfdb_annotations()
+  merops_annotations <- load_merops_annotations()
+  cazyme_family_annotations <- load_cazyme_family_annotations()
+
   phrog_annotations <- c(
     "head and packaging" = "Phage head/packaging",
     "tail" = "Phage tail",
@@ -395,10 +484,41 @@ get_functional_annotation <- function(feature_id, func_type) {
         return(unname(annot))
       }
     } else if (identical(func_type, "cazyme")) {
+      ## try exact family match against CAZyDB (e.g. "GH1", "AA10") first for a
+      ## fine-grained description; fall back to the coarse prefix-level table
+      fam_id <- toupper(sub("\\(.*$", "", id))
+      if (!is.null(cazyme_family_annotations)) {
+        annot <- cazyme_family_annotations[fam_id]
+        if (!is.na(annot) && nzchar(annot)) {
+          return(unname(annot))
+        }
+      }
       prefix <- toupper(sub("^([A-Za-z]+).*", "\\1", id))
       annot <- cazyme_prefix_annotations[prefix]
       if (!is.na(annot)) {
         return(paste0(unname(annot), " family"))
+      }
+    } else if (identical(func_type, "kegg_ko")) {
+      if (!is.null(kegg_ko_annotations)) {
+        annot <- kegg_ko_annotations[toupper(id)]
+        if (!is.na(annot) && nzchar(annot)) {
+          return(unname(annot))
+        }
+      }
+    } else if (identical(func_type, "vfdb")) {
+      if (!is.null(vfdb_annotations)) {
+        annot <- vfdb_annotations[id]
+        if (!is.na(annot) && nzchar(annot)) {
+          return(unname(annot))
+        }
+      }
+    } else if (identical(func_type, "merops")) {
+      fam_id <- toupper(sub("^MEROPS[_ -]?", "", id))
+      if (!is.null(merops_annotations)) {
+        annot <- merops_annotations[fam_id]
+        if (!is.na(annot) && nzchar(annot)) {
+          return(unname(annot))
+        }
       }
     } else if (identical(func_type, "phrog")) {
       annot <- phrog_annotations[tolower(trimws(id))]
