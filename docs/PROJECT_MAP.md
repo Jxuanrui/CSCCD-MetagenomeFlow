@@ -482,7 +482,35 @@ bash scripts/97_stat_crosscohort.sh \
 **输出目录**：`${WORKDIR}/result/viz_crosscohort/`（8个PDF + 2个TSV + sentinel）
 
 **详细文档**：`docs/97_crosscohort_usage.md`
-**测试脚本**：`scripts/tests/test_97_crosscohort.sh`（使用 mock 数据验证框架；2026-07-16 从 `scripts/` 根目录移至 `scripts/tests/`）
+**测试脚本**：`scripts/tests/deprecated_examples/test_97_crosscohort.sh`（依赖已删除的 `Project/Test_100samples`，已失效，2026-07-28 移入 `deprecated_examples/` 仅作参考；跨队列验证的可运行测试已被 `scripts/tests/run_ci_checks.sh` 的层三DAG连通性测试覆盖到规则图层面）
+
+## 1.8.1 测试/CI 体系（三层金字塔）
+
+2026-07-28 搭建，本地伪CI（不依赖远程CI平台，仓库托管在 Gitee 非 GitHub）。
+
+```
+scripts/tests/
+  level1/run_shellcheck_all.sh        — 层一：全量126脚本shellcheck静态检查
+  level2/test_*.sh                    — 层二：抽样代表性脚本集成测试（3个）
+  level2/generate_fixture_*.R         — 层二用的fixture中间产物生成器
+  level3/test_dag_connectivity.sh     — 层三：Snakemake DAG连通性 dry-run
+  run_ci_checks.sh --level {1,2,3,all} — 统一入口，PASS/FAIL汇总表
+  deprecated_examples/                — 依赖已删除 Test_100samples 的3个失效脚本，仅供参考
+
+.shellcheckrc                         — exclude清单（数据驱动定稿，非拍脑袋）
+scripts/hooks/pre-commit + scripts/install_git_hooks.sh — git pre-commit hook（增量检查，阻断模式）
+Project/Test_CI_fixture/              — 专用4样本测试数据集（与Project01物理隔离）
+pipeline/config/config.test_ci.yaml   — 层三DAG测试专用config
+```
+
+**日常使用**：
+```bash
+bash scripts/install_git_hooks.sh          # 一次性：安装pre-commit hook
+bash scripts/tests/run_ci_checks.sh --level all   # 按需：跑全部三层
+bash scripts/tests/run_ci_checks.sh --level 2     # 只跑层二集成测试
+```
+
+**层二/层三均为手动/按需触发，不设 cron**——项目仍在本地开发阶段，样本量和使用频率不足以支撑每日定时跑批的价值。
 
 ## 1.9 文献技能包存放规范
 

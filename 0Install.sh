@@ -1937,3 +1937,21 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # ==============================================================================
 # §15 状态：Swiss-Prot [✓] | Pfam [✓] | MGE 4库 [✓] | FeGenie [✓] | recombinase [✗] | PlasmidFinder [✓]
 # ==============================================================================
+
+# --- §16.1 shellcheck 0.11.0（本地伪CI静态检查层）[✓ 已完成] ---
+# 用途：新增/修改的 .sh 脚本静态语法检查（git pre-commit hook 增量检查，
+#       + scripts/tests/level1/run_shellcheck_all.sh 全量自查）
+# 验证：envs/shellcheck/bin/shellcheck --version → 0.11.0
+# 详见：docs/PROJECT_MAP.md 测试/CI 一节，或 scripts/tests/run_ci_checks.sh --help
+
+    # mamba create -y --prefix ${envs}/shellcheck -c conda-forge "shellcheck>=0.9"
+    # bash scripts/install_git_hooks.sh   # 一次性安装 pre-commit hook（符号链接）
+
+    echo "[INFO] shellcheck 0.11.0 已安装于 envs/shellcheck"
+    echo "       pre-commit hook 安装: bash scripts/install_git_hooks.sh"
+    echo "       全量扫描: bash scripts/tests/level1/run_shellcheck_all.sh"
+    echo "       三层CI统一入口: bash scripts/tests/run_ci_checks.sh --level all"
+
+# ==============================================================================
+# §16 状态：shellcheck [✓] | pre-commit hook [✓] | Test_CI_fixture [✓] | run_ci_checks.sh [✓]
+# ==============================================================================
