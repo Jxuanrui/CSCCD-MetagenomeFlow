@@ -119,6 +119,7 @@ echo "[salmon-quant] 索引: ${INDEX_DIR}/"
 # -1/-2:               双端 reads
 # -o:                  输出目录
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     salmon quant \
         -i "${INDEX_DIR}" \
@@ -131,6 +132,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         -o "${RESULT_DIR}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] salmon quant 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}

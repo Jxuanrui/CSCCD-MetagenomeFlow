@@ -63,6 +63,7 @@ if [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then echo "[coverm_quant] 结果已
 
 mkdir -p "${RESULT_DIR}"
 
+set +e
 echo "[coverm_quant] ${SAMPLE} | MAG 定量 ..."
 conda run --prefix "${REPO}/envs/coverm" --no-capture-output \
     coverm genome \
@@ -76,6 +77,7 @@ conda run --prefix "${REPO}/envs/coverm" --no-capture-output \
         -o "${OUTPUT}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] coverm genome 失败"; exit ${EXIT_CODE}; fi
 
 N_MAGS=$(awk 'NR>1{print $1}' "${OUTPUT}" 2>/dev/null | wc -l || echo 0)

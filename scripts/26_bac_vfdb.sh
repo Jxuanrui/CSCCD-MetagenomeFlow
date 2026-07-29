@@ -65,6 +65,7 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[vfdb] 开始毒力因子注释 | DB: ${DB_FILE} | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     diamond blastp \
         --db     "${DB_FILE}" \
@@ -78,6 +79,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --quiet
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] diamond blastp 失败（exit code: ${EXIT_CODE}）"; rm -f "${OUTPUT}"; exit ${EXIT_CODE}
 fi

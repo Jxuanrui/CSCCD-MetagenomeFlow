@@ -79,6 +79,7 @@ echo "[fastp] 线程: ${CPUS}"
 
 # --- 运行 fastp ---
 
+set +e
 conda run --prefix "${REPO}/envs/fastp" fastp \
     --in1  "${INPUT_R1}" \
     --in2  "${INPUT_R2}" \
@@ -94,6 +95,7 @@ conda run --prefix "${REPO}/envs/fastp" fastp \
     2> "${FASTP_LOG}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] fastp 运行失败（exit code: ${EXIT_CODE}），查看日志: ${FASTP_LOG}"
     exit ${EXIT_CODE}

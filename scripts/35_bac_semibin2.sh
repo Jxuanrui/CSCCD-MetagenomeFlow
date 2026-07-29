@@ -79,6 +79,7 @@ if [ "${LONG_CONTIGS}" -lt 2 ]; then
     exit 0
 fi
 
+set +e
 echo "[semibin2] ${SAMPLE} | 预训练模型分箱（human_gut）..."
 conda run --prefix "${REPO}/envs/semibin" --no-capture-output \
     SemiBin2 single_easy_bin \
@@ -89,6 +90,7 @@ conda run --prefix "${REPO}/envs/semibin" --no-capture-output \
         -o "${OUTDIR}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[semibin2] WARNING: SemiBin2 失败，创建空 sentinel: ${SENTINEL}"
     > "${SENTINEL}"

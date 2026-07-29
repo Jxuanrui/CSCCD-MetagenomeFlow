@@ -60,6 +60,7 @@ fi
 
 mkdir -p "${OUTDIR}"
 
+    set +e
 if [ ! -f "${BAM}" ] || [ ! -s "${BAM}" ]; then
     echo "[coverm] 步骤 1/2: minimap2 比对生成 BAM ..."
     conda run --prefix "${REPO}/envs/coverm" --no-capture-output \
@@ -75,9 +76,11 @@ if [ ! -f "${BAM}" ] || [ ! -s "${BAM}" ]; then
         mv "${GENERATED_BAM}" "${BAM}"
     fi
     EXIT_CODE=$?
+    set -e
     if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] coverm make 失败"; exit ${EXIT_CODE}; fi
 fi
 
+    set +e
 if [ ! -f "${DEPTH}" ] || [ ! -s "${DEPTH}" ]; then
     echo "[coverm] 步骤 2/2: 生成深度表 ..."
     conda run --prefix "${REPO}/envs/coverm" --no-capture-output \
@@ -87,6 +90,7 @@ if [ ! -f "${DEPTH}" ] || [ ! -s "${DEPTH}" ]; then
             --bam-files "${BAM}" \
             -o "${DEPTH}"
     EXIT_CODE=$?
+    set -e
     if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] coverm contig 失败"; exit ${EXIT_CODE}; fi
 fi
 

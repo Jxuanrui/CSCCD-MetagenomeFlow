@@ -72,6 +72,7 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[dbcan] 开始 CAZyme 注释 | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/dbcan" --no-capture-output \
     run_dbcan \
         "${PROTEIN_NR}" \
@@ -83,6 +84,7 @@ conda run --prefix "${REPO}/envs/dbcan" --no-capture-output \
         --hmm_cpu "${CPUS}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] run_dbcan 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
 fi

@@ -73,6 +73,7 @@ mkdir -p "${RESULT_DIR}"
 # rgi --local reads/writes localDB/ relative to CWD; cd ensures load and main share the same localDB
 cd "${RESULT_DIR}"
 
+set +e
 echo "[card] 加载 CARD 本地数据库..."
 conda run --prefix "${REPO}/envs/amr" --no-capture-output \
     rgi load \
@@ -80,12 +81,14 @@ conda run --prefix "${REPO}/envs/amr" --no-capture-output \
         --local
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] rgi load 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
 fi
 
 echo "[card] 开始 RGI 耐药基因注释 | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/amr" --no-capture-output \
     rgi main \
         --input_sequence "${PROTEIN_NR}" \
@@ -98,6 +101,7 @@ conda run --prefix "${REPO}/envs/amr" --no-capture-output \
         --include_loose
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] rgi main 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
 fi

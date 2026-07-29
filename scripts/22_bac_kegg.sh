@@ -72,6 +72,7 @@ mkdir -p "${RESULT_DIR}"
 echo "[kegg] 开始 KEGG KO 注释: ${DB_FILE}"
 echo "[kegg] 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     diamond blastp \
         --db     "${DB_FILE}" \
@@ -85,6 +86,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --quiet
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] diamond blastp 失败（exit code: ${EXIT_CODE}）"; rm -f "${OUTPUT}"; exit ${EXIT_CODE}
 fi

@@ -113,6 +113,7 @@ for entry in "${BINNERS[@]}"; do
     INPUTS="${INPUTS}${CLEAN_F}"
 done
 
+set +e
 echo "[dastool] ${SAMPLE} | binner: ${LABELS} | 整合分箱 ..."
 conda run --prefix "${REPO}/envs/dastool" --no-capture-output \
     DAS_Tool \
@@ -125,6 +126,7 @@ conda run --prefix "${REPO}/envs/dastool" --no-capture-output \
         --write_bins
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] DAS_Tool 失败"; exit ${EXIT_CODE}; fi
 
 N_BINS=0

@@ -70,6 +70,7 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[amrfinder] 开始耐药基因检测 | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/amr" --no-capture-output \
     amrfinder \
         --protein "${PROTEIN_NR}" \
@@ -81,6 +82,7 @@ conda run --prefix "${REPO}/envs/amr" --no-capture-output \
         --plus
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] amrfinder 失败（exit code: ${EXIT_CODE}）"; rm -f "${OUTPUT}"; exit ${EXIT_CODE}
 fi

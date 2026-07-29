@@ -146,6 +146,7 @@ TMP_BIN_DIR="${WORKDIR}/temp/fegenie/${SAMPLE}"
 mkdir -p "${TMP_BIN_DIR}"
 cp "${PROTEINS}" "${TMP_BIN_DIR}/${SAMPLE}.faa"
 
+set +e
 conda run --prefix "${REPO}/envs/fegenie" --no-capture-output \
     FeGenie.py \
         -bin_dir "${TMP_BIN_DIR}" \
@@ -155,6 +156,7 @@ conda run --prefix "${REPO}/envs/fegenie" --no-capture-output \
         --orfs
 
 EXIT_CODE=$?
+set -e
 rm -rf "${TMP_BIN_DIR}"
 
 if [ ${EXIT_CODE} -ne 0 ]; then

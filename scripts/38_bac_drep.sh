@@ -78,6 +78,7 @@ if [ -f "${FILTERED_REPORT}" ]; then
     GENOME_INFO_ARGS=(--genomeInfo "${GENOME_INFO}")
 fi
 
+set +e
 echo "[drep] 去冗余 | ANI: ${ANI} | 线程: ${CPUS}"
 conda run --prefix "${REPO}/envs/drep" --no-capture-output \
     dRep dereplicate \
@@ -90,6 +91,7 @@ conda run --prefix "${REPO}/envs/drep" --no-capture-output \
         "${GENOME_INFO_ARGS[@]}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] dRep 失败"; exit ${EXIT_CODE}; fi
 
 N_MAGS=$(ls "${SENTINEL}"/*.fa 2>/dev/null | wc -l || echo 0)

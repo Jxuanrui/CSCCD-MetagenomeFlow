@@ -61,6 +61,7 @@ if [ ! -f "${ABUND}" ]; then
     tail -n +2 "${DEPTH}" | cut -f1,4 > "${ABUND}"
 fi
 
+set +e
 echo "[maxbin2] ${SAMPLE} | 线程: ${CPUS}"
 conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
     run_MaxBin.pl \
@@ -71,6 +72,7 @@ conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
         -out "${OUTDIR}/bin"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[maxbin2] WARNING: MaxBin2 失败，创建空 sentinel: ${SENTINEL}"
     > "${SENTINEL}"

@@ -72,6 +72,7 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[defense_finder] 开始防御系统检测 | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/defense-finder" --no-capture-output \
     defense-finder run \
         --models-dir "${DF_DB}" \
@@ -81,6 +82,7 @@ conda run --prefix "${REPO}/envs/defense-finder" --no-capture-output \
         "${PROTEIN_NR}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] defense-finder 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
 fi

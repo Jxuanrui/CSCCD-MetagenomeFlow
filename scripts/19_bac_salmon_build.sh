@@ -97,6 +97,7 @@ echo "[salmon-index] 线程: ${CPUS}"
 # -p: 线程数
 # Salmon 自动选择最优 word size
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     salmon index \
         -t "${NR_FNA}" \
@@ -104,6 +105,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         -p "${CPUS}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] salmon index 运行失败（exit code: ${EXIT_CODE}）"
     rm -rf "${INDEX_DIR}"

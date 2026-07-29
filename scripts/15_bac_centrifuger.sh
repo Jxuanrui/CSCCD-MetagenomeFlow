@@ -132,6 +132,7 @@ CLASSIF_TMP="${RESULT_DIR}/${SAMPLE}.classifications.tsv"
 
 echo "[centrifuger] Step 1/2: 运行 centrifuger 分类..."
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     bash -c "centrifuger \
         -x    '${DB_INDEX}' \
@@ -141,6 +142,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         > '${CLASSIF_TMP}'"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] centrifuger 运行失败（exit code: ${EXIT_CODE}）"
     rm -f "${CLASSIF_TMP}"
@@ -154,6 +156,7 @@ fi
 
 echo "[centrifuger] Step 2/2: 生成 Kraken2 格式报告..."
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     centrifuger-kreport \
         -x "${DB_INDEX}" \
@@ -161,6 +164,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         > "${KREPORT}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] centrifuger-kreport 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
