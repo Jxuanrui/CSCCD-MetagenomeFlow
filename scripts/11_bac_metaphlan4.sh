@@ -29,8 +29,22 @@ if [ $# -lt 8 ]; then
     echo "  bash 11_bac_metaphlan4.sh -s SRR28210342 -t 16 \\"
     echo "       -w ~/Course/Maxmetagenome/Project/Project_example \\"
     echo "       -r ~/Course/Maxmetagenome"
+    echo ""
+    echo "可选参数:"
+    echo "  --force  强制重新运行（忽略已存在的结果）"
     exit 1
 fi
+
+FORCE=0
+ARGS=()
+for arg in "$@"; do
+    if [ "${arg}" = "--force" ]; then
+        FORCE=1
+    else
+        ARGS+=("${arg}")
+    fi
+done
+set -- "${ARGS[@]}"
 
 while getopts s:t:w:r: option; do
     case "${option}" in
@@ -89,7 +103,7 @@ fi
 
 # --- 幂等性检查 ---
 
-if [ -f "${PROFILE_OUT}" ] && [ -f "${SAM_OUT}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${PROFILE_OUT}" ] && [ -f "${SAM_OUT}" ]; then
     echo "[INFO] 输出已存在，跳过: ${SAMPLE}"
     echo "       ${PROFILE_OUT}"
     echo "       ${SAM_OUT}"

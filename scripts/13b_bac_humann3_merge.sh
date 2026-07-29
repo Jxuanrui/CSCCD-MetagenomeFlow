@@ -23,8 +23,22 @@ if [ $# -lt 4 ]; then
     echo "  bash 13b_bac_humann3_merge.sh \\"
     echo "       -w ~/Course/Maxmetagenome/Project/Project_example \\"
     echo "       -r ~/Course/Maxmetagenome"
+    echo ""
+    echo "可选参数:"
+    echo "  --force  强制重新运行（忽略已存在的结果）"
     exit 1
 fi
+
+FORCE=0
+ARGS=()
+for arg in "$@"; do
+    if [ "${arg}" = "--force" ]; then
+        FORCE=1
+    else
+        ARGS+=("${arg}")
+    fi
+done
+set -- "${ARGS[@]}"
 
 while getopts w:r: option; do
     case "${option}" in
@@ -78,7 +92,7 @@ done
 
 # --- 幂等性检查 ---
 
-if [ -f "${PATHABUNDANCE_TSV}" ] && [ -f "${GENEFAMILIES_TSV}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${PATHABUNDANCE_TSV}" ] && [ -f "${GENEFAMILIES_TSV}" ]; then
     echo "[INFO] 合并结果已存在，跳过。如需重新合并请先删除 ${MERGED_DIR}"
     exit 0
 fi

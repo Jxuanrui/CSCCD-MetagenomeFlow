@@ -26,6 +26,9 @@ cat << EOF
 
 示例:
   bash scripts/02_qc_kneaddata.sh -s S1 -t 16 -w Project/Project_example -r /path/to/Maxmetagenome
+
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
 EOF
 }
 
@@ -33,6 +36,17 @@ SAMPLE=""
 THREADS=""
 WORKDIR=""
 REPO=""
+FORCE=0
+
+ARGS=()
+for arg in "$@"; do
+    if [ "${arg}" = "--force" ]; then
+        FORCE=1
+    else
+        ARGS+=("${arg}")
+    fi
+done
+set -- "${ARGS[@]}"
 
 while getopts "s:t:w:r:h" opt; do
   case ${opt} in
@@ -81,7 +95,7 @@ fi
 # 检查是否已存在结果
 FINAL_R1="${OUTDIR}/${SAMPLE}_1.kneaddata.fastq.gz"
 FINAL_R2="${OUTDIR}/${SAMPLE}_2.kneaddata.fastq.gz"
-if [ -f "$FINAL_R1" ] && [ -f "$FINAL_R2" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "$FINAL_R1" ] && [ -f "$FINAL_R2" ]; then
   echo "[INFO] 输出文件已存在，跳过: ${SAMPLE}"
   exit 0
 fi
