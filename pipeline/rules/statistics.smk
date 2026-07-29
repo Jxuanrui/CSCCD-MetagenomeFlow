@@ -225,6 +225,26 @@ rule stat_functional_permanova:
         "-w {params.workdir} -r {params.repo} -m {params.meta} -g {params.group}"
 
 
+rule stat_functional_network:
+    """Build the functional-functional co-occurrence network (SpiecEasi) per dimension."""
+    input:
+        rules.stat_functional.output,
+    output:
+        expand(WORKDIR + "/result/stat/{dimension}/functional/network/{dimension}_functional_network_done.txt",
+               dimension=["bacteria", "fungi", "virus"]),
+    params:
+        workdir = config["workdir"],
+        repo = config["repo"],
+    threads: CPUS
+    shell:
+        r"""
+        for dimension in bacteria fungi virus; do
+            bash {REPO}/scripts/96_functional_network.sh \
+                -w {params.workdir} -r {params.repo} -d "$dimension"
+        done
+        """
+
+
 rule stat_functional_integrated:
     """Create per-dimension integrated functional summaries."""
     input:

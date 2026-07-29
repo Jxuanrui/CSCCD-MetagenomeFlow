@@ -150,6 +150,8 @@ rule all:
         ),
         expand("{workdir}/result/stat/{dimension}/functional/{dimension}_permanova_done.txt",
                workdir=WORKDIR, dimension=["bacteria", "fungi", "virus"]),
+        expand("{workdir}/result/stat/{dimension}/functional/network/{dimension}_functional_network_done.txt",
+               workdir=WORKDIR, dimension=["bacteria", "fungi", "virus"]),
         expand("{workdir}/result/stat/{dimension}/functional/00_summary/{dimension}_summary_done.txt",
                workdir=WORKDIR, dimension=["bacteria", "fungi", "virus"]),
         WORKDIR + "/result/stat/cross_dimension/functional/cross_dimension_functional_done.txt",
