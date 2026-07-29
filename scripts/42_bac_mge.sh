@@ -49,6 +49,8 @@
 # 用  法: bash 42_bac_mge.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 42_bac_mge.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -133,6 +135,7 @@ if [ "${SKIP_ISFINDER}" = false ]; then
     else
         mkdir -p "$(dirname "${IS_OUT}")" "${IS_TMP}"
         echo "[mge:isfinder] ${SAMPLE}: MMseqs2 搜索插入序列..."
+        set +e
         conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
             mmseqs easy-search \
                 --threads    "${CPUS}" \
@@ -146,6 +149,7 @@ if [ "${SKIP_ISFINDER}" = false ]; then
                 "${IS_OUT}" \
                 "${IS_TMP}"
         EXIT_IS=$?
+        set -e
         rm -rf "${IS_TMP}"
         if [ ${EXIT_IS} -ne 0 ]; then
             echo "[WARN] ISfinder 搜索失败（exit: ${EXIT_IS}），已跳过"
@@ -168,6 +172,7 @@ if [ "${SKIP_ICEBERG}" = false ]; then
     else
         mkdir -p "$(dirname "${ICE_OUT}")"
         echo "[mge:iceberg] ${SAMPLE}: blastn 搜索整合接合元件..."
+        set +e
         conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
             blastn \
                 -task           blastn \
@@ -180,6 +185,7 @@ if [ "${SKIP_ICEBERG}" = false ]; then
                 -max_target_seqs 5 \
                 -out            "${ICE_OUT}"
         EXIT_ICE=$?
+        set -e
         if [ ${EXIT_ICE} -ne 0 ]; then
             echo "[WARN] ICEberg 搜索失败（exit: ${EXIT_ICE}），已跳过"
         else
@@ -202,6 +208,7 @@ if [ "${SKIP_INTEGRALL}" = false ]; then
     else
         mkdir -p "$(dirname "${INT_OUT}")"
         echo "[mge:integrall] ${SAMPLE}: blastn 搜索整合子..."
+        set +e
         conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
             blastn \
                 -task           blastn \
@@ -212,6 +219,7 @@ if [ "${SKIP_INTEGRALL}" = false ]; then
                 -max_target_seqs 1 \
                 -out            "${INT_OUT}"
         EXIT_INT=$?
+        set -e
         if [ ${EXIT_INT} -ne 0 ]; then
             echo "[WARN] integrall 搜索失败（exit: ${EXIT_INT}），已跳过"
         else
@@ -233,6 +241,7 @@ if [ "${SKIP_TRANSPOSASE}" = false ]; then
     else
         mkdir -p "$(dirname "${TN_OUT}")"
         echo "[mge:transposase] ${SAMPLE}: hmmscan 搜索转座酶..."
+        set +e
         conda run --prefix "${REPO}/envs/dbcan" --no-capture-output \
             hmmscan \
                 --cpu     "${CPUS}" \
@@ -241,6 +250,7 @@ if [ "${SKIP_TRANSPOSASE}" = false ]; then
                 "${DB_TRANSPOSASE}" \
                 "${PROTEINS}"
         EXIT_TN=$?
+        set -e
         if [ ${EXIT_TN} -ne 0 ]; then
             echo "[WARN] transposase hmmscan 失败（exit: ${EXIT_TN}），已跳过"
         else
@@ -265,6 +275,7 @@ if [ "${SKIP_MOBILEOG}" = false ]; then
     else
         mkdir -p "$(dirname "${MOG_OUT}")"
         echo "[mge:mobileog] 运行 mobileOG NR 级综合 MGE 注释..."
+        set +e
         conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
             diamond blastp \
                 --db     "${DB_MOBILEOG}" \
@@ -279,6 +290,7 @@ if [ "${SKIP_MOBILEOG}" = false ]; then
                 --threads "${CPUS}" \
                 --quiet
         EXIT_MOG=$?
+        set -e
         if [ ${EXIT_MOG} -ne 0 ]; then
             echo "[WARN] mobileOG 搜索失败（exit: ${EXIT_MOG}），已跳过"
         else

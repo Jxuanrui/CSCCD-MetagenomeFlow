@@ -28,6 +28,8 @@
 # 用  法: bash 31c_bac_pfam.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 31c_bac_pfam.sh -t CPUS -w WORKDIR -r REPO
@@ -138,6 +140,7 @@ rm -rf "${TMP_DIR}"
 mkdir -p "${SPLIT_DIR}"
 
 echo "[pfam] 拆分蛋白 FASTA: ${SPLIT_DIR}"
+set +e
 "${CONDA}" run --prefix "${REPO}/envs/assembly" --no-capture-output \
     seqkit split2 \
         -p "${CHUNKS}" \
@@ -146,6 +149,7 @@ echo "[pfam] 拆分蛋白 FASTA: ${SPLIT_DIR}"
         -1 "${PROTEIN_NR}"
 
 SPLIT_EXIT=$?
+set -e
 if [ ${SPLIT_EXIT} -ne 0 ]; then
     echo "[ERROR] seqkit split2 失败（exit code: ${SPLIT_EXIT}）"
     echo "        临时目录保留用于排查: ${TMP_DIR}"
@@ -163,6 +167,7 @@ THREADS_PER_CHUNK=$((CPUS / CHUNKS))
 if [ "${THREADS_PER_CHUNK}" -lt 1 ]; then THREADS_PER_CHUNK=1; fi
 
 echo "[pfam] 运行 hmmscan: ${CHUNKS} chunks × ${THREADS_PER_CHUNK} threads/chunk | rush -j ${CHUNKS}"
+set +e
 printf "%s\n" "${CHUNK_FILES[@]}" | \
   "${RUSH}" -j "${CHUNKS}" -k \
   "\"${CONDA}\" run --prefix \"${REPO}/envs/dbcan\" --no-capture-output \
@@ -180,6 +185,7 @@ printf "%s\n" "${CHUNK_FILES[@]}" | \
      || { code=\$?; echo \"[pfam] chunk failed: {} (exit code: \${code})\"; exit \${code}; }" \
   2>&1 | tee "${RUSH_LOG}"
 RUSH_EXIT=${PIPESTATUS[1]}
+set -e
 
 FAILED_CHUNKS=()
 for CHUNK in "${CHUNK_FILES[@]}"; do
