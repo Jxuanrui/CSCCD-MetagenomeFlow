@@ -84,6 +84,7 @@ rule all:
         WORKDIR + "/result/annotation/kegg/kegg_diamond.tsv",
         WORKDIR + "/result/annotation/amrfinder/amrfinder_results.tsv",
         WORKDIR + "/result/annotation/card/rgi_results.txt",
+        WORKDIR + "/result/annotation/card/summary/card_summary_report.txt",
         WORKDIR + "/result/annotation/dbcan/overview.txt",
         WORKDIR + "/result/annotation/vfdb/vfdb_hits.tsv",
         WORKDIR + "/result/annotation/bacmet/bacmet_hits.tsv",

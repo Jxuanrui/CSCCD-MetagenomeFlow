@@ -124,6 +124,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 22 | `scripts/22_bac_kegg.sh` | KEGG KO 通路注释 | KEGG diamond |
 | 23 | `scripts/23_bac_amrfinder.sh` | 抗生素耐药基因 | AMRFinder |
 | 24 | `scripts/24_bac_card.sh` | 抗性基因综合 | CARD/RGI |
+| **24b** | **`scripts/24b_bac_card_summary.sh`** | **CARD/RGI置信度分层+药物类别+SNP突变证据汇总（纯统计聚合，无新工具）** | **Python（标准库）** |
 | 25 | `scripts/25_bac_dbcan.sh` | 碳水化合物酶（CAZyme） | dbCAN3 |
 | 26 | `scripts/26_bac_vfdb.sh` | 毒力因子 | VFDB |
 | 27 | `scripts/27_bac_bacmet.sh` | 重金属抗性基因 | BacMet |

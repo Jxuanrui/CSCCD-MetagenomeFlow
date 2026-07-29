@@ -58,6 +58,20 @@ rule card:
         "bash {REPO}/scripts/24_bac_card.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
 
 
+rule card_summary:
+    """Confidence-tier + drug-class + SNP-evidence summary of the CARD/RGI output (no new tool, pure aggregation)."""
+    input:
+        rgi = WORKDIR + "/result/annotation/card/rgi_results.txt",
+    output:
+        report = WORKDIR + "/result/annotation/card/summary/card_summary_report.txt",
+    log:
+        WORKDIR + "/logs/card_summary/summary.log",
+    shell:
+        "bash {REPO}/scripts/24b_bac_card_summary.sh "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
 # ─── 25: dbCAN3 CAZyme annotation ───────────────────────────────────────────
 
 rule dbcan:
