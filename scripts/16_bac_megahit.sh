@@ -46,6 +46,7 @@ cat << EOF
   -r  MaxMetagenome 项目根目录
 
 可选参数:
+  --force  强制重新运行（忽略已存在的结果）
   --min-contig-len  最小 contig 长度（默认 500；MAG 分析建议 1000）
   --presets         MEGAHIT 预设（默认 meta-large；可选 meta-sensitive）
 
@@ -68,6 +69,7 @@ REPO=""
 MIN_CONTIG_LEN="500"
 PRESETS="meta-large"
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";                   shift 2 ;;
@@ -76,6 +78,7 @@ while [[ $# -gt 0 ]]; do
         -r) REPO="$2";                     shift 2 ;;
         --min-contig-len) MIN_CONTIG_LEN="$2"; shift 2 ;;
         --presets)        PRESETS="$2";        shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -111,7 +114,7 @@ fi
 
 # --- 幂等性检查 ---
 
-if [ -f "${CONTIGS}" ] && [ -s "${CONTIGS}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ] && [ -s "${CONTIGS}" ]; then
     echo "[INFO] MEGAHIT 组装结果已存在，跳过: ${SAMPLE}"
     echo "       ${CONTIGS}"
     exit 0

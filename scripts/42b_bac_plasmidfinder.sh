@@ -40,6 +40,7 @@ cat << EOF
   -r  MaxMetagenome 项目根目录
 
 可选参数:
+  --force  强制重新运行（忽略已存在的结果）
   -l  最低覆盖度（默认 0.60，即 60%）
   -T  序列相似度阈值（默认 0.95，即 95%）
 
@@ -57,6 +58,7 @@ REPO=""
 MIN_COV="0.60"
 THRESHOLD="0.95"
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";    shift 2 ;;
@@ -65,6 +67,7 @@ while [[ $# -gt 0 ]]; do
         -r) REPO="$2";      shift 2 ;;
         -l) MIN_COV="$2";   shift 2 ;;
         -T) THRESHOLD="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -87,7 +90,7 @@ if [ ! -f "${CONTIGS}" ] || [ ! -s "${CONTIGS}" ]; then
     exit 1
 fi
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] PlasmidFinder 结果已存在，跳过: ${SENTINEL}"; exit 0
 fi
 

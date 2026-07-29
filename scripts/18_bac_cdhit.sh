@@ -64,6 +64,7 @@ cat << EOF
   -r  MaxMetagenome 项目根目录
 
 可选参数:
+  --force  强制重新运行（忽略已存在的结果）
   --tool cdhit    使用 CD-HIT-EST（默认，≤500万基因推荐）
   --tool mmseqs   使用 MMseqs2 Linclust（>500万基因或追求速度时推荐）
 
@@ -85,12 +86,14 @@ WORKDIR=""
 REPO=""
 TOOL="cdhit"
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t)      CPUS="$2";    shift 2 ;;
         -w)      WORKDIR="$2"; shift 2 ;;
         -r)      REPO="$2";    shift 2 ;;
         --tool)  TOOL="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -133,7 +136,7 @@ echo "[cdhit] 发现 ${N_SAMPLES} 个样本的 .fna 文件，使用后端: ${TOO
 
 # --- 幂等性检查 ---
 
-if [ -f "${NR_FNA}" ] && [ -s "${NR_FNA}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${NR_FNA}" ] && [ -s "${NR_FNA}" ]; then
     echo "[INFO] NR 基因集已存在，跳过（${NR_FNA}）"
     exit 0
 fi

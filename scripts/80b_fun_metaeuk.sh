@@ -27,6 +27,7 @@ cat << EOF
   -r  MaxMetagenome 项目根目录
 
 可选参数:
+  --force  强制重新运行（忽略已存在的结果）
   --method  基因预测方法，可选值: prodigal | metaeuk（默认: prodigal）
   --db      MetaEuk 所需 MMseqs2 数据库前缀，仅在 --method metaeuk 时必需
             例如: db/metaeuk_db/fungi_refseq_mmseqs
@@ -46,6 +47,7 @@ EOF
 
 SAMPLE=""; CPUS="1"; WORKDIR=""; REPO=""; METHOD="prodigal"; DB=""
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";  shift 2 ;;
@@ -54,6 +56,7 @@ while [[ $# -gt 0 ]]; do
         -r) REPO="$2";    shift 2 ;;
         --method) METHOD="$2"; shift 2 ;;
         --db) DB="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -84,7 +87,7 @@ METAEUK_DBTYPE="${DB}.dbtype"
 if [ ! -f "${INPUT_CONTIGS}" ]; then echo "[WARN] 输入不存在，跳过 MetaEuk: ${INPUT_CONTIGS}"; exit 0; fi
 if [ ! -s "${INPUT_CONTIGS}" ]; then echo "[WARN] 输入为空，跳过 MetaEuk: ${INPUT_CONTIGS}"; exit 0; fi
 
-if [ -f "${FAA}" ] && [ -s "${FAA}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${FAA}" ] && [ -s "${FAA}" ]; then
     echo "[INFO] 结果已存在，跳过: ${SAMPLE}"; exit 0
 fi
 

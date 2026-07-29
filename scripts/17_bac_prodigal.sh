@@ -42,6 +42,9 @@ cat << EOF
   -w  工作目录（Project 路径）
   -r  MaxMetagenome 项目根目录
 
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
+
 示例:
   bash 17_bac_prodigal.sh -s SRR28210342 -t 1 \\
        -w ~/Course/Maxmetagenome/Project/Project_example \\
@@ -54,12 +57,14 @@ CPUS="1"
 WORKDIR=""
 REPO=""
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";  shift 2 ;;
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -95,7 +100,7 @@ fi
 
 # --- 幂等性检查 ---
 
-if [ -f "${FAA}" ] && [ -s "${FAA}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${FAA}" ] && [ -s "${FAA}" ]; then
     echo "[INFO] Prodigal 预测结果已存在，跳过: ${SAMPLE}"
     echo "       ${RESULT_DIR}/"
     exit 0

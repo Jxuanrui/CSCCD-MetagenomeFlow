@@ -33,6 +33,9 @@ cat << EOF
   -w  工作目录
   -r  MaxMetagenome 项目根目录
 
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
+
 示例:
   bash scripts/31d_bac_uniprot.sh -t 16 \\
        -w ~/Course/Maxmetagenome/Project/Project_example \\
@@ -44,11 +47,13 @@ CPUS=""
 WORKDIR=""
 REPO=""
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -78,7 +83,7 @@ if [ ! -f "${MMSEQS_DB}.dbtype" ] && [ ! -d "${REPO}/db/uniprot_sprot/mmseqs" ];
     exit 1
 fi
 
-if [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
     echo "[INFO] UniProt Swiss-Prot 注释结果已存在，跳过: ${OUTPUT}"; exit 0
 fi
 

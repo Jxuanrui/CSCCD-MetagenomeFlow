@@ -77,6 +77,7 @@ cat << EOF
   -r  MaxMetagenome 项目根目录
 
 可选参数:
+  --force  强制重新运行（忽略已存在的结果）
   --speed-mode  速度模式（默认 standard）
                 standard  精确，物种阈值 0.01%，双端，8-15h（62M reads）
                 balanced  推荐，物种阈值 1%，双端，1-2h（62M reads）
@@ -95,6 +96,7 @@ WORKDIR=""
 REPO=""
 SPEED_MODE="standard"
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";          shift 2 ;;
@@ -102,6 +104,7 @@ while [[ $# -gt 0 ]]; do
         -w) WORKDIR="$2";         shift 2 ;;
         -r) REPO="$2";            shift 2 ;;
         --speed-mode) SPEED_MODE="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -189,7 +192,7 @@ done
 
 PATHABUNDANCE="${RESULT_DIR}/${SAMPLE}_pathabundance.tsv"
 PATHABUNDANCE_RELAB="${RESULT_DIR}/${SAMPLE}_pathabundance_relab.tsv"
-if [ -f "${PATHABUNDANCE}" ] && [ -f "${PATHABUNDANCE_RELAB}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${PATHABUNDANCE}" ] && [ -f "${PATHABUNDANCE_RELAB}" ]; then
     echo "[INFO] HUMAnN3 结果已存在，跳过: ${SAMPLE}"
     echo "       ${RESULT_DIR}/"
     exit 0

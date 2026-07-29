@@ -58,6 +58,7 @@ cat << EOF
   -r  MaxMetagenome 项目根目录
 
 可选参数:
+  --force  强制重新运行（忽略已存在的结果）
   --confidence  Kraken2 置信度阈值（默认 0.1，范围 0.0-1.0）
   --read-len    测序读长，用于 Bracken（默认 150，可选 100/250）
 
@@ -80,6 +81,7 @@ REPO=""
 CONFIDENCE="0.1"
 READ_LEN="150"
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";       shift 2 ;;
@@ -88,6 +90,7 @@ while [[ $# -gt 0 ]]; do
         -r) REPO="$2";         shift 2 ;;
         --confidence) CONFIDENCE="$2"; shift 2 ;;
         --read-len)   READ_LEN="$2";   shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -133,7 +136,7 @@ fi
 # --- 幂等性检查 ---
 
 BRACKEN_S="${BRACKEN_DIR}/${SAMPLE}_S.bracken"
-if [ -f "${BRACKEN_S}" ] && [ -s "${BRACKEN_S}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${BRACKEN_S}" ] && [ -s "${BRACKEN_S}" ]; then
     echo "[INFO] Kraken2+Bracken 结果已存在，跳过: ${SAMPLE}"
     echo "       ${RESULT_DIR}/"
     exit 0

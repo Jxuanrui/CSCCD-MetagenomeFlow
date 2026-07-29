@@ -52,6 +52,7 @@ cat << EOF
   -r  MaxMetagenome 项目根目录
 
 可选参数:
+  --force  强制重新运行（忽略已存在的结果）
   --input-type  输入蛋白来源（默认 prodigal）
                 prodigal — per-sample 蛋白（result/assembly/prodigal/${SAMPLE}/${SAMPLE}.faa）
                 nr       — NR 蛋白集（result/assembly/cdhit/protein_nr.fa，适合 MAG-level）
@@ -75,6 +76,7 @@ WORKDIR=""
 REPO=""
 INPUT_TYPE="prodigal"
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";    shift 2 ;;
@@ -82,6 +84,7 @@ while [[ $# -gt 0 ]]; do
         -w) WORKDIR="$2";   shift 2 ;;
         -r) REPO="$2";      shift 2 ;;
         --input-type) INPUT_TYPE="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -111,7 +114,7 @@ if [ ! -f "${PROTEINS}" ] || [ ! -s "${PROTEINS}" ]; then
     exit 1
 fi
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] FeGenie 结果已存在，跳过: ${SENTINEL}"; exit 0
 fi
 

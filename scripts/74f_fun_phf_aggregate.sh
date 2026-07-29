@@ -23,14 +23,20 @@ cat << EOF
 输出:
   \${WORKDIR}/result/fungi/phf_profiler/merged_abundance.tsv
   \${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv
+
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
+
 EOF
 }
 
 WORKDIR=""; REPO=""
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -44,7 +50,7 @@ TAXONOMY="${REPO}/db/gut_fungi_db/db.fungi.taxonomy.tsv"
 MERGED="${PROFILER_DIR}/merged_abundance.tsv"
 MERGED_TAX="${PROFILER_DIR}/merged_abundance_with_taxonomy.tsv"
 
-if [ -f "${MERGED}" ] && [ -s "${MERGED}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${MERGED}" ] && [ -s "${MERGED}" ]; then
     echo "[INFO] 结果已存在，跳过: ${MERGED}"; exit 0
 fi
 

@@ -35,6 +35,9 @@ cat << EOF
   -w  工作目录（Project 路径）
   -r  MaxMetagenome 项目根目录
 
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
+
 示例:
   bash 21_bac_eggnog.sh -t 16 \\
        -w ~/Course/Maxmetagenome/Project/Project_example \\
@@ -46,11 +49,13 @@ CPUS=""
 WORKDIR=""
 REPO=""
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -86,7 +91,7 @@ fi
 
 # --- 幂等性检查 ---
 
-if [ -f "${ANNOTATIONS}" ] && [ -s "${ANNOTATIONS}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${ANNOTATIONS}" ] && [ -s "${ANNOTATIONS}" ]; then
     echo "[INFO] eggNOG 注释结果已存在，跳过"
     echo "       ${ANNOTATIONS}"
     exit 0

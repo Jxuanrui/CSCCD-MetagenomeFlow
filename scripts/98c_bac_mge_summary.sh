@@ -26,6 +26,7 @@ cat << EOF
   -r  MaxMetagenome 项目根目录
 
 可选参数:
+  --force  强制重新运行（忽略已存在的结果）
   -t  线程数（默认 4，Python 脚本暂未并行化）
   -h  显示帮助
 EOF
@@ -35,11 +36,13 @@ WORKDIR=""
 REPO=""
 CPUS=4
 
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
         -t) CPUS="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -57,7 +60,7 @@ OUT_DIR="${WORKDIR}/result/integration/bacteria"
 OUT_FILE="${OUT_DIR}/mge_plasmid_summary.tsv"
 
 # 幂等检查
-if [ -f "${OUT_FILE}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${OUT_FILE}" ]; then
     echo "[INFO] MGE/质粒汇总表已存在，跳过。如需重建请先删除 ${OUT_FILE}"
     exit 0
 fi
