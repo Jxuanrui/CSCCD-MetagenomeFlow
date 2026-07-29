@@ -6,7 +6,8 @@
 #
 # DAG flow:
 #   megahit → coverm_depth → [metabat2, maxbin2, semibin2] → dastool
-#   dastool → checkm2 → drep → [coverm_quant, gtdbtk, prokka]
+#   dastool → checkm2 → drep → [coverm_quant, instrain_map] → instrain_profile → instrain_compare
+#   drep → [gtdbtk, prokka]
 
 BINNING = WORKDIR + "/result/binning"
 
@@ -115,6 +116,46 @@ rule coverm_quant:
     shell:
         "bash {REPO}/scripts/39_bac_coverm_quant.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 39b: inStrain read mapping to dereplicated MAGs (per-sample) ───────────
+
+rule instrain_map:
+    input:
+        mags = BINNING + "/drep/drep_done.txt",
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+    output:
+        bam = BINNING + "/instrain_map/{sample}/{sample}.sorted.bam",
+        bai = BINNING + "/instrain_map/{sample}/{sample}.sorted.bam.bai",
+    shell:
+        "bash {REPO}/scripts/39b_bac_instrain_map.sh -s {wildcards.sample}" +
+        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 39c: inStrain microdiversity profiling (per-sample) ────────────────────
+
+rule instrain_profile:
+    input:
+        bam = BINNING + "/instrain_map/{sample}/{sample}.sorted.bam",
+        bai = BINNING + "/instrain_map/{sample}/{sample}.sorted.bam.bai",
+    output:
+        genome_info = BINNING + "/instrain_profile/{sample}/output/{sample}_genome_info.tsv",
+    shell:
+        "bash {REPO}/scripts/39c_bac_instrain_profile.sh -s {wildcards.sample}" +
+        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+
+
+# ─── 39d: inStrain cross-sample popANI comparison (aggregate) ───────────────
+
+rule instrain_compare:
+    input:
+        profiles = expand(BINNING + "/instrain_profile/{sample}/output/{sample}_genome_info.tsv",
+                          sample=SAMPLES),
+    output:
+        compare = BINNING + "/instrain_compare/output/comparisonsTable.tsv",
+    shell:
+        "bash {REPO}/scripts/39d_bac_instrain_compare.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
 
 
 # ─── 40: GTDB-Tk taxonomic classification (aggregate) ───────────────────────

@@ -144,6 +144,9 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 37 | `scripts/37_bac_checkm2.sh` | MAG 质量评估（ML） | CheckM2 |
 | 38 | `scripts/38_bac_drep.sh` | MAG 去冗余（ANI 97%） | dRep |
 | 39 | `scripts/39_bac_coverm_quant.sh` | MAG 丰度定量 | CoverM |
+| 39b | `scripts/39b_bac_instrain_map.sh` | MAG 读段映射（菌株追踪前置） | CoverM (minimap2-sr) |
+| 39c | `scripts/39c_bac_instrain_profile.sh` | 单样本菌株微多样性分析 | inStrain |
+| 39d | `scripts/39d_bac_instrain_compare.sh` | 跨样本 popANI 菌株比较 | inStrain |
 | 40 | `scripts/40_bac_gtdbtk.sh` | MAG 系统发育分类（GTDB R214） | GTDB-Tk |
 | 41 | `scripts/41_bac_bakta.sh` | MAG 全基因组精细注释 | Bakta |
 | 41b | `scripts/41b_bac_mlst.sh` | MAG MLST 多位点序列分型（WGS 融入模块） | mlst | envs/prokaWGS (mlst 2.11) |

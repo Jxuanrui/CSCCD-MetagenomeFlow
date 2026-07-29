@@ -104,6 +104,7 @@ rule all:
         WORKDIR + "/result/binning/drep/drep_done.txt",
         expand("{workdir}/result/binning/coverm_quant/{sample}.tsv",
                workdir=WORKDIR, sample=SAMPLES),
+        WORKDIR + "/result/binning/instrain_compare/output/comparisonsTable.tsv",
         WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
         WORKDIR + "/result/binning/prokka/prokka_summary.tsv",
         # Virome assembly + QC
