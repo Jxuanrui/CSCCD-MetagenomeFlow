@@ -662,6 +662,14 @@ legacy_bacteria_skip_prevalence_types <- c("cog", "ncyc", "pcyc")
 skip_prevalence_filter <- FALSE
 prevalence_skip_reason <- ""
 prevalence_threshold <- if (identical(func_type, "kegg_ko")) 0.20 else 0.10
+## Maaslin3 (>=1.5.3) has a native min_prevalence/max_prevalence parameter,
+## but it only accepts a single fixed fraction - it can't express the
+## conditional logic here (small-feature-set exemption, legacy bacteria
+## type exemption, per-func_type threshold). Filtering is therefore done
+## manually upstream of the maaslin3() call below, which is passed the
+## already-filtered feature set with min_prevalence left at its default
+## (0, i.e. no further filtering). This is an intentional divergence, not
+## an oversight.
 ## maaslin3's mirai-based parallelization (cores > 1) is unreliable at this
 ## feature scale: the mirai/nanonext task dispatcher can deadlock after
 ## spawning daemons, independent of any other concurrent process (reproduced

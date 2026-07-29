@@ -3,7 +3,7 @@
 # Script: 96_stat_ml_siamcat.sh
 # Purpose: SIAMCAT machine-learning biomarker discovery
 # Usage:   bash 96_stat_ml_siamcat.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV
-#                                    -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N] [--force]
+#                                    -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N] [--force] [--skip-shap]
 # ==============================================================================
 
 set -euo pipefail
@@ -11,7 +11,7 @@ set -euo pipefail
 show_help() {
 cat <<'EOF'
 Usage: bash 96_stat_ml_siamcat.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV
-                                  -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N] [--force]
+                                  -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N] [--force] [--skip-shap]
 
 Required:
   -w  Project work directory
@@ -25,6 +25,9 @@ Optional:
   -M  Fungi input method: auto|phf|funomic|metaphlan4 (default: auto)
   --folds  Cross-validation folds (default: 10)
   --force  Re-run even if sentinel exists
+  --skip-shap  Skip SHAP feature attribution for the randomForest model
+               (SHAP is much slower than the other visualizations; skip on
+               large cohorts if runtime matters more than interpretability)
   -h, --help  Show this help message
 EOF
 }
@@ -38,6 +41,7 @@ DIMENSION="bacteria"
 FUNGI_METHOD="auto"
 FOLDS="10"
 FORCE=0
+SKIP_SHAP=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -50,6 +54,7 @@ while [[ $# -gt 0 ]]; do
         -M) FUNGI_METHOD="$2"; shift 2 ;;
         --folds) FOLDS="$2"; shift 2 ;;
         --force) FORCE=1; shift ;;
+        --skip-shap) SKIP_SHAP=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
     esac
@@ -110,7 +115,20 @@ cat("[INFO] Placeholder PDFs written\n")
 PLACEHOLDER_R
         return 0
     fi
+    set +e
     (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_ml_visualization.R")
+    local viz_exit=$?
+    set -e
+    if [ ${viz_exit} -ne 0 ]; then
+        return ${viz_exit}
+    fi
+    if [ ${SKIP_SHAP} -eq 1 ]; then
+        echo "[INFO] --skip-shap set, skipping SHAP feature attribution"
+        return 0
+    fi
+    echo "[INFO] Computing SHAP feature attribution (randomForest only)..."
+    conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_ml_shap.R"
+    return 0
 }
 
 if [ ! -f "${METADATA_CSV}" ]; then
