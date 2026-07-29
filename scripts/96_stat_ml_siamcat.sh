@@ -6,6 +6,8 @@
 #                                    -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 96_stat_ml_siamcat.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV

@@ -6,6 +6,8 @@
 #                                      -g GROUP_COL [-d DIMENSION] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 92_stat_differential.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV

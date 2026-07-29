@@ -6,6 +6,8 @@
 #                                   [-g GROUP_COL] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 91_stat_diversity.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV

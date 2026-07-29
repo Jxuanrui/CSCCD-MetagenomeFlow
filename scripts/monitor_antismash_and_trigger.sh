@@ -5,6 +5,8 @@
 # 运行方式: 后台持续监控，每 5 分钟检查一次
 # ==============================================================================
 
+set -uo pipefail
+
 WORKDIR="/home/labuser/Course/Maxmetagenome/Project/Project01"
 REPO="/home/labuser/Course/Maxmetagenome"
 RUSH_LOG="${WORKDIR}/temp/logs/antismash/rush_batch.log"

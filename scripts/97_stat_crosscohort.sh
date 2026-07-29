@@ -7,6 +7,8 @@
 #                                    [--train-cohort name] [--condition CRC] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 97_stat_crosscohort.sh -w WORKDIR -r REPO -m METADATA_CSV -g GROUP_COL [OPTIONS]

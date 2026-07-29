@@ -6,6 +6,8 @@
 #                                      [-g GROUP_COL] [-n NET_TYPE] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 93_stat_cooccurrence.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV

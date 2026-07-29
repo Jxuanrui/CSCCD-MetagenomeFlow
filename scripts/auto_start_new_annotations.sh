@@ -6,6 +6,8 @@
 # 执行顺序: 批次1（31b/31c/31d 并行）→ 批次2（31e）→ 批次3（42/42b per-sample）
 # ==============================================================================
 
+set -euo pipefail
+
 WORKDIR="/home/labuser/Course/Maxmetagenome/Project/Project01"
 REPO="/home/labuser/Course/Maxmetagenome"
 LOGDIR="${WORKDIR}/temp/logs/auto_annotations"
@@ -48,16 +50,22 @@ echo "[批次1] 三个任务已启动（PID: ${PID_31B}, ${PID_31D}, ${PID_31C}�
 echo "[批次1] 等待全部完成..." | tee -a "${LOGDIR}/batch1.log"
 
 # 等待批次1全部完成
+set +e
 wait ${PID_31B}
 EXIT_31B=$?
+set -e
 echo "[$(date '+%H:%M:%S')] 31b SCyc 完成 (exit: ${EXIT_31B})" | tee -a "${LOGDIR}/batch1.log"
 
+set +e
 wait ${PID_31D}
 EXIT_31D=$?
+set -e
 echo "[$(date '+%H:%M:%S')] 31d UniProt 完成 (exit: ${EXIT_31D})" | tee -a "${LOGDIR}/batch1.log"
 
+set +e
 wait ${PID_31C}
 EXIT_31C=$?
+set -e
 echo "[$(date '+%H:%M:%S')] 31c Pfam-A 完成 (exit: ${EXIT_31C})" | tee -a "${LOGDIR}/batch1.log"
 
 if [ ${EXIT_31B} -ne 0 ] || [ ${EXIT_31D} -ne 0 ] || [ ${EXIT_31C} -ne 0 ]; then
@@ -74,11 +82,13 @@ echo ""
 echo "=== 批次 2: 铁代谢基因预测 (31e FeGenie NR模式) ==="
 echo "[$(date '+%H:%M:%S')] 启动 31e FeGenie..." | tee -a "${LOGDIR}/batch2.log"
 
+set +e
 bash ${REPO}/scripts/31e_bac_fegenie.sh -s NR -t 16 \
   -w ${WORKDIR} -r ${REPO} --input-type nr \
   > ${LOGDIR}/31e_fegenie.log 2>&1
 
 EXIT_31E=$?
+set -e
 if [ ${EXIT_31E} -ne 0 ]; then
     echo "[ERROR] 31e FeGenie 失败 (exit: ${EXIT_31E})" | tee -a "${LOGDIR}/batch2.log"
     exit 1
@@ -121,11 +131,13 @@ echo "[$(date '+%H:%M:%S')] 单样本测试: ${TEST_SAMPLE}" | tee -a "${LOGDIR}
 
 # 42 MGE
 echo "[批次3] 启动 42 MGE (${TEST_SAMPLE})..." | tee -a "${LOGDIR}/batch3.log"
+set +e
 bash ${REPO}/scripts/42_bac_mge.sh -s ${TEST_SAMPLE} -t 16 \
   -w ${WORKDIR} -r ${REPO} \
   > ${LOGDIR}/42_mge_${TEST_SAMPLE}.log 2>&1
 
 EXIT_42=$?
+set -e
 if [ ${EXIT_42} -ne 0 ]; then
     echo "[ERROR] 42 MGE 测试失败 (exit: ${EXIT_42})" | tee -a "${LOGDIR}/batch3.log"
     exit 1
@@ -133,11 +145,13 @@ fi
 
 # 42b 质粒
 echo "[批次3] 启动 42b PlasmidFinder (${TEST_SAMPLE})..." | tee -a "${LOGDIR}/batch3.log"
+set +e
 bash ${REPO}/scripts/42b_bac_plasmidfinder.sh -s ${TEST_SAMPLE} -t 8 \
   -w ${WORKDIR} -r ${REPO} \
   > ${LOGDIR}/42b_plasmidfinder_${TEST_SAMPLE}.log 2>&1
 
 EXIT_42B=$?
+set -e
 if [ ${EXIT_42B} -ne 0 ]; then
     echo "[ERROR] 42b PlasmidFinder 测试失败 (exit: ${EXIT_42B})" | tee -a "${LOGDIR}/batch3.log"
     exit 1
@@ -148,6 +162,7 @@ echo "[$(date '+%H:%M:%S')] [批次3] ✓ 单样本测试完成" | tee -a "${LOG
 # 批量运行（rush 并行）
 echo "[批次3] 启动批量运行（rush -j 2）..." | tee -a "${LOGDIR}/batch3.log"
 
+set +e
 printf "%s\n" "${SAMPLES[@]}" | \
   ${REPO}/miniforge3/bin/rush -j 2 -k \
   "bash ${REPO}/scripts/42_bac_mge.sh -s {} -t 16 \
@@ -158,8 +173,9 @@ printf "%s\n" "${SAMPLES[@]}" | \
      > ${LOGDIR}/42b_plasmidfinder_{}.log 2>&1 && \
    echo '[{}] MGE+Plasmid done'" \
   2>&1 | tee -a "${LOGDIR}/batch3_rush.log"
+set -e
 
-COMPLETED=$(grep "MGE+Plasmid done" "${LOGDIR}/batch3_rush.log" 2>/dev/null | wc -l)
+COMPLETED=$(grep -c "MGE+Plasmid done" "${LOGDIR}/batch3_rush.log" 2>/dev/null || true)
 echo "[$(date '+%H:%M:%S')] [批次3] 完成 ${COMPLETED}/${#SAMPLES[@]} 样本" | tee -a "${LOGDIR}/batch3.log"
 
 if [ ${COMPLETED} -lt ${#SAMPLES[@]} ]; then

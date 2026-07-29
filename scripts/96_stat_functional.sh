@@ -7,6 +7,8 @@
 # Usage:   bash 96_stat_functional.sh -w WORKDIR -r REPO [-m METADATA_CSV] [-d DIMENSION] [-t FUNC_TYPE] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 96_stat_functional.sh -w WORKDIR -r REPO [-m METADATA_CSV] [-d DIMENSION] [-t FUNC_TYPE] [--force]

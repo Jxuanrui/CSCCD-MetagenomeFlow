@@ -5,6 +5,8 @@
 # Usage:   bash 94_stat_visualization.sh -w WORKDIR -r REPO [-m METADATA_CSV] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 94_stat_visualization.sh -w WORKDIR -r REPO [-m METADATA_CSV] [--force]

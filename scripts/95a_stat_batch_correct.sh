@@ -6,6 +6,8 @@
 #                                        -b BATCH_COL [-g GROUP_COL] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 95a_stat_batch_correct.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV
