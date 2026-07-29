@@ -12,6 +12,8 @@
 # 用  法: bash 01_qc_fastp.sh -s SRR28210342 -t 16 -w /path/to/Project_example -r /path/to/MaxMetagenome
 # ==============================================================================
 
+set -euo pipefail
+
 # --- 参数解析 ---
 
 if [ $# -ge 8 ]; then

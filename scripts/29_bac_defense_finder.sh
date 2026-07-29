@@ -17,6 +17,8 @@
 # 用  法: bash 29_bac_defense_finder.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 29_bac_defense_finder.sh -t CPUS -w WORKDIR -r REPO

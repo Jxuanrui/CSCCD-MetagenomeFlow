@@ -26,6 +26,8 @@
 # 用  法: bash 20_bac_salmon_quant.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 20_bac_salmon_quant.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO

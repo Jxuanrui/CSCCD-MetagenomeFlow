@@ -17,6 +17,8 @@
 # 用  法: bash 22_bac_kegg.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 22_bac_kegg.sh -t CPUS -w WORKDIR -r REPO

@@ -37,6 +37,8 @@
 # 用  法: bash 15_bac_centrifuger.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 15_bac_centrifuger.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
