@@ -13,6 +13,8 @@
 # 用  法: bash 53_vir_virsorter2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 53_vir_virsorter2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -48,6 +50,7 @@ if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing: ${CONTIGS}"; exit 
 if [ ! -d "${VS2_DB}" ]; then echo "[ERROR] VirSorter2 数据库不存在: ${VS2_DB}"; exit 1; fi
 if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[virsorter2] 结果已存在，跳过"; exit 0; fi
 
+set +e
 echo "[virsorter2] ${SAMPLE} | VirSorter2 病毒预测 ..."
 # virsorter2 内部会调用 conda info --json 检测 conda 环境
 # 需显式传入 CONDA_EXE 确保找到 conda 可执行文件
@@ -63,6 +66,7 @@ conda run --prefix "${REPO}/envs/virsorter2" --no-capture-output \
         --verbose 2>&1
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] virsorter2 失败"; exit ${EXIT_CODE}; fi
 
 echo "[virsorter2] 完成，耗时 ${SECONDS}s"

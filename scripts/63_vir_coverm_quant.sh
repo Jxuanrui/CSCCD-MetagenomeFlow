@@ -11,6 +11,8 @@
 # 用  法: bash 63_vir_coverm_quant.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 63_vir_coverm_quant.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:

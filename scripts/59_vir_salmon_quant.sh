@@ -12,6 +12,8 @@
 # 用  法: bash 59_vir_salmon_quant.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 59_vir_salmon_quant.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -49,6 +51,7 @@ if [ -f "${REPORT}" ] && [ -s "${REPORT}" ]; then echo "[salmon_quant] 结果已
 
 mkdir -p "${QUANT_DIR}" "$(dirname "${REPORT}")"
 
+set +e
 echo "[salmon_quant] ${SAMPLE} | Salmon vOTU 定量 ..."
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     salmon quant \
@@ -59,6 +62,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         -o "${QUANT_DIR}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] salmon quant 失败"; exit ${EXIT_CODE}; fi
 
 # 生成简化报告（TPM + counts）

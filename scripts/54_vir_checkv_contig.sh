@@ -15,6 +15,8 @@
 # 用  法: bash 54_vir_checkv_contig.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 54_vir_checkv_contig.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -82,6 +84,7 @@ else
     exit 0
 fi
 
+set +e
 # Step 2: CheckV
 echo "[checkv] ${SAMPLE} | CheckV 质量评估 ..."
 conda run --prefix "${REPO}/envs/checkv" --no-capture-output \
@@ -92,6 +95,7 @@ conda run --prefix "${REPO}/envs/checkv" --no-capture-output \
         -t "${CPUS}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] checkv 失败"; exit ${EXIT_CODE}; fi
 
 echo "[checkv] 完成，耗时 ${SECONDS}s | 输出: ${OUTDIR}/quality_summary.tsv"

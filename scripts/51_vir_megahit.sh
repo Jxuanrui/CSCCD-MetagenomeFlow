@@ -11,6 +11,8 @@
 # 用  法: bash 51_vir_megahit.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 51_vir_megahit.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -48,6 +50,7 @@ if [ -f "${CONTIGS}" ] && [ -s "${CONTIGS}" ]; then echo "[vir_megahit] 结果�
 mkdir -p "${OUTDIR}"
 MEGA_TMP="${OUTDIR}/_megahit_tmp"
 
+set +e
 echo "[vir_megahit] ${SAMPLE} | 病毒优化组装 ..."
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     megahit -1 "${R1}" -2 "${R2}" \
@@ -59,6 +62,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --force
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] megahit 失败"; exit ${EXIT_CODE}; fi
 
 mv "${MEGA_TMP}/${SAMPLE}.contigs.fa" "${CONTIGS}"

@@ -16,6 +16,8 @@
 # 用  法: bash 58_vir_salmon_build.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 58_vir_salmon_build.sh -t CPUS -w WORKDIR -r REPO
 必需参数:

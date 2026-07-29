@@ -17,6 +17,8 @@
 # 用  法: bash 68_vir_iphop.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 68_vir_iphop.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -52,6 +54,7 @@ if [ -f "${SENTINEL}" ]; then echo "[iphop] 结果已存在，跳过"; exit 0; f
 
 mkdir -p "${OUTDIR}"
 
+set +e
 echo "[iphop] 病毒-宿主关联预测 ..."
 conda run --prefix "${REPO}/envs/iphop" --no-capture-output \
     iphop predict \
@@ -61,6 +64,7 @@ conda run --prefix "${REPO}/envs/iphop" --no-capture-output \
         --num_threads "${CPUS}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[WARN] iphop 失败（exit: ${EXIT_CODE}）"; touch "${SENTINEL}"; fi
 
 echo "[iphop] 完成，耗时 ${SECONDS}s"

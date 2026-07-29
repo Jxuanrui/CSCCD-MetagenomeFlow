@@ -12,6 +12,8 @@
 # 用  法: bash 72_vir_phagcn3.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 72_vir_phagcn3.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -114,6 +116,7 @@ export NUMEXPR_NUM_THREADS="${CPUS}"
 export VECLIB_MAXIMUM_THREADS="${CPUS}"
 export TORCH_NUM_THREADS="${CPUS}"
 
+set +e
 (
     cd "${RUNDIR}" || exit 1
     conda run --prefix "${REPO}/envs/phagcn3" --no-capture-output \
@@ -123,6 +126,7 @@ export TORCH_NUM_THREADS="${CPUS}"
 )
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] phagcn3 运行失败（exit: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
