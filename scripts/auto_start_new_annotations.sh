@@ -4,12 +4,39 @@
 # 功  能: antiSMASH 完成后自动启动新增功能注释脚本（31b-31e, 42, 42b）
 # 触发条件: antiSMASH 10/10 样本完成
 # 执行顺序: 批次1（31b/31c/31d 并行）→ 批次2（31e）→ 批次3（42/42b per-sample）
+# 用  法: bash auto_start_new_annotations.sh -w WORKDIR [-r REPO]
 # ==============================================================================
 
 set -euo pipefail
 
-WORKDIR="/home/labuser/Course/Maxmetagenome/Project/Project01"
-REPO="/home/labuser/Course/Maxmetagenome"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORKDIR=""
+
+show_help() {
+cat << EOF
+用法: bash auto_start_new_annotations.sh -w WORKDIR [-r REPO]
+
+必需参数:
+  -w  工作目录（项目目录，如 Project/Project01）
+
+可选参数:
+  -r  MaxMetagenome 项目根目录（默认自动检测: ${REPO}）
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -w) WORKDIR="$2"; shift 2 ;;
+        -r) REPO="$2";    shift 2 ;;
+        -h|--help) show_help; exit 0 ;;
+        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
+    esac
+done
+
+if [ -z "${WORKDIR}" ]; then
+    echo "[ERROR] 缺少必需参数 -w"; show_help; exit 1
+fi
+
 LOGDIR="${WORKDIR}/temp/logs/auto_annotations"
 
 mkdir -p "${LOGDIR}"

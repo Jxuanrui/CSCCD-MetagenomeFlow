@@ -3,12 +3,38 @@
 # 脚本名: monitor_antismash_and_trigger.sh
 # 功  能: 监控 antiSMASH 进度，完成后自动启动新增注释脚本
 # 运行方式: 后台持续监控，每 5 分钟检查一次
+# 用  法: bash monitor_antismash_and_trigger.sh -w WORKDIR [-r REPO]
 # ==============================================================================
 
 set -uo pipefail
 
-WORKDIR="/home/labuser/Course/Maxmetagenome/Project/Project01"
-REPO="/home/labuser/Course/Maxmetagenome"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORKDIR=""
+
+show_help() {
+cat << EOF
+用法: bash monitor_antismash_and_trigger.sh -w WORKDIR [-r REPO]
+
+必需参数:
+  -w  工作目录（项目目录，如 Project/Project01）
+
+可选参数:
+  -r  MaxMetagenome 项目根目录（默认自动检测: ${REPO}）
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -w) WORKDIR="$2"; shift 2 ;;
+        -r) REPO="$2";    shift 2 ;;
+        -h|--help) show_help; exit 0 ;;
+        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
+    esac
+done
+
+if [ -z "${WORKDIR}" ]; then
+    echo "[ERROR] 缺少必需参数 -w"; show_help; exit 1
+fi
 RUSH_LOG="${WORKDIR}/temp/logs/antismash/rush_batch.log"
 TRIGGER_SCRIPT="${REPO}/scripts/auto_start_new_annotations.sh"
 SENTINEL="${WORKDIR}/temp/logs/antismash/.auto_triggered"
@@ -49,7 +75,8 @@ while true; do
         touch "${SENTINEL}"
 
         echo "[monitor] 启动自动化注释流程..."
-        nohup bash "${TRIGGER_SCRIPT}" \
+        mkdir -p "${WORKDIR}/temp/logs/auto_annotations"
+        nohup bash "${TRIGGER_SCRIPT}" -w "${WORKDIR}" -r "${REPO}" \
           > "${WORKDIR}/temp/logs/auto_annotations/main.log" 2>&1 &
 
         TRIGGER_PID=$!
