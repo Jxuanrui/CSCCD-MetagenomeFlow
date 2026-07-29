@@ -9,6 +9,8 @@
 # 用  法: bash 83_fun_dbcan.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 83_fun_dbcan.sh -t CPUS -w WORKDIR -r REPO
@@ -56,6 +58,7 @@ cat "${FAA_FILES[@]}" > "${COMBINED_FAA}"
 
 echo "[fun_dbcan] 开始真菌 CAZyme 注释 | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/dbcan" --no-capture-output \
     run_dbcan \
         "${COMBINED_FAA}" \
@@ -67,6 +70,7 @@ conda run --prefix "${REPO}/envs/dbcan" --no-capture-output \
         --out_dir "${RESULT_DIR}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] run_dbcan 失败"; exit ${EXIT_CODE}; fi
 
 N_CAZYMES=$(awk 'NR>1' "${SENTINEL}" 2>/dev/null | wc -l || echo "0")

@@ -12,6 +12,8 @@
 # 用  法: bash 74_fun_blast_gutdb.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 74_fun_blast_gutdb.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -70,6 +72,7 @@ fi
 mkdir -p "${OUTDIR}"
 zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${TMP_FASTQ}"
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     diamond blastx \
         --db "${DB_FILE}" \
@@ -81,6 +84,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --threads "${CPUS}" \
         --sensitive
 EXIT_CODE=$?
+set -e
 rm -f "${TMP_FASTQ}"
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] diamond blastx 失败（exit: ${EXIT_CODE}）"

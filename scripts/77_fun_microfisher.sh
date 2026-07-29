@@ -10,6 +10,8 @@
 # 用  法: bash 77_fun_microfisher.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 77_fun_microfisher.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -62,6 +64,7 @@ if [ ! -f "${KRAKEN_REPORT}" ]; then
         exit 1
     fi
     echo "[WARN] 未找到 71_fun_kraken2_fungi.sh 输出，补跑快速 Kraken2 生成报告"
+    set +e
     conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
         kraken2 \
             --db "${DB_KRAKEN}" \
@@ -72,6 +75,7 @@ if [ ! -f "${KRAKEN_REPORT}" ]; then
             --report "${TMP_REPORT}" \
             --output /dev/null
     EXIT_CODE=$?
+    set -e
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] Kraken2 回退运行失败（exit: ${EXIT_CODE}）"
         rm -f "${TMP_REPORT}"
@@ -80,6 +84,7 @@ if [ ! -f "${KRAKEN_REPORT}" ]; then
     REPORT_TO_USE="${TMP_REPORT}"
 fi
 
+set +e
 awk '
 BEGIN {
     FS = OFS = "\t"
@@ -107,6 +112,7 @@ BEGIN {
 }
 ' "${REPORT_TO_USE}" > "${OUTPUT_TSV}"
 EXIT_CODE=$?
+set -e
 rm -f "${TMP_REPORT}"
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] Kraken2 报告过滤失败（exit: ${EXIT_CODE}）"

@@ -21,6 +21,8 @@
 # 用  法: bash 71_fun_kraken2_fungi.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--confidence 0.1] [--read-len 150]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 71_fun_kraken2_fungi.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -89,6 +91,7 @@ mkdir -p "${RESULT_DIR}" "${BRACKEN_DIR}"
 echo "[fun_kraken2] 开始真菌物种分类: ${SAMPLE}"
 echo "[fun_kraken2] 线程: ${CPUS}，置信度: ${CONFIDENCE}，读长: ${READ_LEN}"
 
+set +e
 conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
     kraken2 \
         --db "${DB_KRAKEN}" \
@@ -102,6 +105,7 @@ conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
     | gzip -c > "${OUTPUT_GZ}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] Kraken2 失败（exit: ${EXIT_CODE}）"; exit ${EXIT_CODE}; fi
 if [ ! -f "${REPORT}" ] || [ ! -s "${REPORT}" ]; then echo "[ERROR] Report 未生成"; exit 1; fi
 

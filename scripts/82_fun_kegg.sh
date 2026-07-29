@@ -9,6 +9,8 @@
 # 用  法: bash 82_fun_kegg.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 82_fun_kegg.sh -t CPUS -w WORKDIR -r REPO
@@ -57,6 +59,7 @@ cat "${FAA_FILES[@]}" > "${COMBINED_FAA}"
 
 echo "[fun_kegg] 开始 KEGG KO 注释 | DB: ${DB_FILE} | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     diamond blastp \
         --db     "${DB_FILE}" \
@@ -70,6 +73,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --quiet
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] diamond blastp 失败"; rm -f "${OUTPUT}"; exit ${EXIT_CODE}; fi
 
 N_HITS=$(wc -l < "${OUTPUT}" 2>/dev/null || echo "0")
