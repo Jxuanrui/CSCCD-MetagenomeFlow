@@ -22,6 +22,8 @@
 # 用  法: bash 41_bac_prokka.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 41_bac_prokka.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -108,7 +110,7 @@ for mag in "${MAGS[@]}"; do
     # 跳过已完成
     if [ -f "${tsv_out}" ] && [ -s "${tsv_out}" ]; then
         echo "[prokka] 跳过已完成: ${mag_name}" | tee -a "${LOG}"
-        ((SKIPPED++))
+        SKIPPED=$((SKIPPED+1))
         continue
     fi
 
@@ -139,16 +141,18 @@ for mag in "${MAGS[@]}"; do
     CMD="$CMD ${mag}"
 
     # 执行
+    set +e
     eval "$CMD" >> "${LOG}" 2>&1
     EXIT_CODE=$?
+    set -e
 
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[prokka] WARNING: ${mag_name} 注释失败（exit code: ${EXIT_CODE}）" | tee -a "${LOG}"
-        ((FAILED++))
+        FAILED=$((FAILED+1))
         continue
     fi
 
-    ((COMPLETED++))
+    COMPLETED=$((COMPLETED+1))
     echo "[prokka] ✓ ${mag_name} 完成" | tee -a "${LOG}"
 done
 

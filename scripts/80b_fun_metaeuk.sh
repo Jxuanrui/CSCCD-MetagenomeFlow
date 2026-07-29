@@ -13,6 +13,8 @@
 # 用  法: bash 80b_fun_metaeuk.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--method METHOD] [--db DB_PATH]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法:
@@ -106,6 +108,7 @@ mkdir -p "${OUTDIR}"
 echo "[fun_metaeuk] 开始真菌基因预测: ${SAMPLE} | 方法: ${METHOD} | 输入: ${INPUT_CONTIGS}"
 
 if [ "${METHOD}" = "prodigal" ]; then
+set +e
     conda run --prefix "${ASSEMBLY_ENV}" --no-capture-output \
         prodigal \
             -i "${INPUT_CONTIGS}" \
@@ -117,6 +120,7 @@ if [ "${METHOD}" = "prodigal" ]; then
             -q
 
     EXIT_CODE=$?
+set -e
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] Prodigal 失败（exit: ${EXIT_CODE}）"
         rm -f "${FAA}" "${GFF}"; exit ${EXIT_CODE}
@@ -127,6 +131,7 @@ if [ "${METHOD}" = "prodigal" ]; then
         rm -f "${FAA}"; exit 1
     fi
 else
+set +e
     conda run --prefix "${METAEUK_ENV}" --no-capture-output \
         metaeuk easy-predict \
             "${INPUT_CONTIGS}" \
@@ -139,6 +144,7 @@ else
             --translation-table 1
 
     EXIT_CODE=$?
+set -e
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] MetaEuk 失败（exit: ${EXIT_CODE}）"
         rm -f "${FAS}" "${CODON_FAS}" "${FAA}"

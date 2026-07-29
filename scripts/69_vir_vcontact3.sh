@@ -19,6 +19,8 @@
 # 用  法: bash 69_vir_vcontact3.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 69_vir_vcontact3.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -84,6 +86,7 @@ if [ ! -f "${LEN}" ]; then
 fi
 
 echo "[vcontact3] 病毒分类基因共享网络分析 ..."
+set +e
 conda run --prefix "${REPO}/envs/vcontact3" --no-capture-output \
     vcontact3 run \
         --nucleotide "${VOTU_FA}" \
@@ -93,6 +96,7 @@ conda run --prefix "${REPO}/envs/vcontact3" --no-capture-output \
         -e graphml cytoscape completeness
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[WARN] vcontact3 失败（exit: ${EXIT_CODE}）"; touch "${SENTINEL}"; fi
 
 echo "[vcontact3] 完成，耗时 ${SECONDS}s | 输出: ${OUTDIR}/"

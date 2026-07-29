@@ -45,6 +45,8 @@
 # 用  法: bash 14_bac_kraken2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--confidence 0.1] [--read-len 150]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 14_bac_kraken2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -150,6 +152,7 @@ echo "[kraken2] 数据库: ${DB_KRAKEN}"
 # output 通过管道压缩，避免大文件占用磁盘（原始 output 可达原 fastq 体积）
 
 echo "[kraken2] 运行 Kraken2..."
+set +e
 conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
     kraken2 \
         --db          "${DB_KRAKEN}" \
@@ -163,6 +166,7 @@ conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
     | gzip -c > "${OUTPUT_GZ}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] Kraken2 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
@@ -191,6 +195,7 @@ for LEVEL in S G P; do
 
     echo "[bracken] 运行 Bracken ${LEVEL_NAME} 级别丰度估计..."
 
+    set +e
     conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
         bracken \
             -d "${DB_KRAKEN}" \
@@ -202,6 +207,7 @@ for LEVEL in S G P; do
             -w "${BRACKEN_DIR}/${SAMPLE}_${LEVEL}.report"
 
     EXIT_CODE=$?
+    set -e
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[WARN] Bracken ${LEVEL_NAME} 级别运行失败（exit code: ${EXIT_CODE}），跳过"
     fi

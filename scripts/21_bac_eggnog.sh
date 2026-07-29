@@ -24,6 +24,8 @@
 # 用  法: bash 21_bac_eggnog.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 21_bac_eggnog.sh -t CPUS -w WORKDIR -r REPO
@@ -104,6 +106,7 @@ echo "[eggnog] 线程: ${CPUS}，预计耗时 30-120 分钟（取决于基因规
 # --dbmem:       内存加载注释数据库（加快注释步骤，需要 ~30G RAM）
 # --temp_dir:    临时文件目录（建议本地 SSD）
 
+set +e
 conda run --prefix "${REPO}/envs/eggnog" --no-capture-output \
     emapper.py \
         -m diamond \
@@ -118,6 +121,7 @@ conda run --prefix "${REPO}/envs/eggnog" --no-capture-output \
         --override
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] emapper.py 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}

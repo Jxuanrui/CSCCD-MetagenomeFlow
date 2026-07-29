@@ -10,6 +10,8 @@
 # 用  法: bash 76_fun_ccmetagen.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 76_fun_ccmetagen.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -60,6 +62,7 @@ fi
 
 mkdir -p "${OUTDIR}" "${TEMPDIR}"
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     kma \
         -ipe "${INPUT_R1}" "${INPUT_R2}" \
@@ -72,6 +75,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         -apm f \
         -ef
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] KMA 比对失败（exit: ${EXIT_CODE}）"
     rm -rf "${TEMPDIR}"
@@ -81,6 +85,7 @@ fi
 CCMETAGEN_CMD=$(conda run --prefix "${REPO}/envs/assembly" --no-capture-output bash -lc 'command -v CCMetagen.py || command -v CCMetagen || true' 2>/dev/null | tail -n 1)
 
 if [ -n "${CCMETAGEN_CMD}" ]; then
+    set +e
     conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         bash -lc '
             set -e
@@ -88,6 +93,7 @@ if [ -n "${CCMETAGEN_CMD}" ]; then
             "${CMD}" -i "$1" -o "$2"
         ' _ "${KMA_PREFIX}.res" "${OUTDIR}"
     EXIT_CODE=$?
+    set -e
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[WARN] CCMetagen 失败，回退到 KMA 结果整理"
     fi

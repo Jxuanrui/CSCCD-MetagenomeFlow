@@ -27,6 +27,8 @@
 # 用  法: bash 42b_bac_plasmidfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 42b_bac_plasmidfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -112,6 +114,7 @@ echo "  Contig 输入: ${CONTIGS}"
 echo "  DB 路径: ${DB_PATH}"
 echo "  覆盖度阈值: ${MIN_COV} | 相似度阈值: ${THRESHOLD}"
 
+set +e
 conda run --prefix "${REPO}/envs/plasmidfinder" --no-capture-output \
     plasmidfinder.py \
         -i  "${CONTIGS}" \
@@ -124,6 +127,7 @@ conda run --prefix "${REPO}/envs/plasmidfinder" --no-capture-output \
         -q
 
 EXIT_CODE=$?
+set -e
 rm -rf "${TMP_DIR}"
 
 if [ ${EXIT_CODE} -ne 0 ]; then

@@ -6,6 +6,8 @@
 #                                        -b BATCH_COL [-g GROUP_COL] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 95b_stat_batch_evaluate.sh -w WORKDIR -r REPO -m METADATA_CSV
@@ -80,6 +82,7 @@ echo "[INFO] Running batch correction evaluation"
 
 export WORKDIR REPO METADATA_CSV BATCH_COL GROUP_COL BACT_TABLE BATCH_DIR RESULT_DIR
 
+set +e
 (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
 options(warn = 1)
@@ -211,6 +214,7 @@ RSCRIPT
 )
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] 95b_stat_batch_evaluate.sh failed with exit code ${EXIT_CODE}"
     exit ${EXIT_CODE}

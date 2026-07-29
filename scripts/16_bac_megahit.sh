@@ -33,6 +33,8 @@
 # 用  法: bash 16_bac_megahit.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 16_bac_megahit.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -143,6 +145,7 @@ echo "[megahit] 预设: ${PRESETS}，最小 contig: ${MIN_CONTIG_LEN} bp，线�
 # --min-contig-len 过滤短 contig（通用 500；binning 推荐 1000-1500）
 # 输出到临时目录，完成后移动 final.contigs.fa 并删除中间文件节省磁盘
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     megahit \
         -1 "${INPUT_R1}" \
@@ -154,6 +157,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --min-contig-len "${MIN_CONTIG_LEN}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] MEGAHIT 运行失败（exit code: ${EXIT_CODE}）"
     rm -rf "${MEGAHIT_TMP}"

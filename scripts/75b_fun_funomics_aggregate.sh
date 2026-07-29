@@ -9,6 +9,8 @@
 # 用  法: bash 75b_fun_funomics_aggregate.sh -w WORKDIR -r REPO [-t CPUS]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 75b_fun_funomics_aggregate.sh -w WORKDIR -r REPO [-t CPUS]
@@ -73,6 +75,7 @@ fi
 
 mkdir -p "${OUTDIR}" "${NORMDIR}"
 
+set +e
 conda run --prefix "${RUN_ENV}" --no-capture-output \
     python3 - "${WORKDIR}" "${REPO}" "${CPUS}" <<'PY'
 import csv
@@ -213,6 +216,7 @@ print(f"[fun_funomics_aggregate] cpus parameter accepted: {cpus}")
 PY
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] FunOMIC 汇总失败（exit: ${EXIT_CODE}）"
     exit ${EXIT_CODE}

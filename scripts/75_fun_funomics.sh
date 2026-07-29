@@ -10,6 +10,8 @@
 # 用  法: bash 75_fun_funomics.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 75_fun_funomics.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -71,6 +73,7 @@ fi
 
 if [ -n "${FUNOMIC_CMD}" ]; then
     if [ ${RUN_WITH_CONDA} -eq 1 ]; then
+        set +e
         conda run --prefix "${RUN_ENV}" --no-capture-output \
             funomic classify \
                 --forward "${INPUT_R1}" \
@@ -78,13 +81,16 @@ if [ -n "${FUNOMIC_CMD}" ]; then
                 --threads "${CPUS}" \
                 --output "${OUTDIR}"
         EXIT_CODE=$?
+        set -e
     else
+        set +e
         "${FUNOMIC_CMD}" classify \
             --forward "${INPUT_R1}" \
             --reverse "${INPUT_R2}" \
             --threads "${CPUS}" \
             --output "${OUTDIR}"
         EXIT_CODE=$?
+        set -e
     fi
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] funomic classify 失败（exit: ${EXIT_CODE}）"
@@ -112,6 +118,7 @@ else
     fi
 
     zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${TMP_FASTQ}"
+    set +e
     conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         diamond blastx \
             --db "${DB_FILE}" \
@@ -123,6 +130,7 @@ else
             --threads "${CPUS}" \
             --sensitive
     EXIT_CODE=$?
+    set -e
     rm -f "${TMP_FASTQ}"
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] DIAMOND 回退分类失败（exit: ${EXIT_CODE}）"

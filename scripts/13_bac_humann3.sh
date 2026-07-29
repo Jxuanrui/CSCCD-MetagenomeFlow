@@ -64,6 +64,8 @@
 # 用  法: bash 13_bac_humann3.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--speed-mode MODE]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 13_bac_humann3.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--speed-mode MODE]
@@ -260,6 +262,7 @@ fi
 # cd to TEMP_DIR so MetaPhlAn4's hardcoded fifo_map.mapout.txt lands here, not in PROJ_DIR
 cd "${TEMP_DIR}"
 
+set +e
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
     humann \
         --input                   "${MERGED_FQ}" \
@@ -277,6 +280,7 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         "${DIAMOND_CMD_ARGS[@]}"
 
 EXIT_CODE=$?
+set -e
 rm -f "${MERGED_FQ}"
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] HUMAnN3 运行失败（exit code: ${EXIT_CODE}）"

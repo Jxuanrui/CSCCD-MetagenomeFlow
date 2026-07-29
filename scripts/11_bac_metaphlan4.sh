@@ -11,6 +11,8 @@
 # 用  法: bash 11_bac_metaphlan4.sh -s SRR28210342 -t 16 -w /path/to/Project_example -r /path/to/MaxMetagenome
 # ==============================================================================
 
+set -euo pipefail
+
 # --- 参数解析 ---
 
 if [ $# -lt 8 ]; then
@@ -119,6 +121,7 @@ MERGED_FASTQ="${TEMP_DIR}/${SAMPLE}_merged.fastq.gz"
 echo "[INFO] 合并双端 reads..."
 zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${MERGED_FASTQ}"
 
+set +e
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
     metaphlan \
         "${MERGED_FASTQ}" \
@@ -132,6 +135,7 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         --offline
 
 EXIT_CODE=$?
+set -e
 rm -f "${MERGED_FASTQ}"
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] metaphlan4 运行失败（exit code: ${EXIT_CODE}）"

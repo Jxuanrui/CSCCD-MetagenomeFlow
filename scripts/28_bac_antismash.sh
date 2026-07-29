@@ -19,6 +19,8 @@
 # 用  法: bash 28_bac_antismash.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 28_bac_antismash.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -72,6 +74,7 @@ mkdir -p "$(dirname "${RESULT_DIR}")"
 
 echo "[antismash] 样本: ${SAMPLE} | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/antismash" --no-capture-output \
     antismash \
         "${CONTIGS}" \
@@ -84,6 +87,7 @@ conda run --prefix "${REPO}/envs/antismash" --no-capture-output \
         --enable-nrps-pks
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[antismash] WARNING: antismash 失败（exit: ${EXIT_CODE}），创建空 sentinel"
     mkdir -p "${RESULT_DIR}"

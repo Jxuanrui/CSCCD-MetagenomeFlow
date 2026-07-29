@@ -9,6 +9,8 @@
 # 用  法: bash 85_fun_amr.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 85_fun_amr.sh -t CPUS -w WORKDIR -r REPO
@@ -63,6 +65,7 @@ echo "[fun_amr] 合并去重完成: ${#FAA_FILES[@]} 个样本, ${N_PROTEINS} �
 
 echo "[fun_amr] 开始耐药基因检测 | 线程: ${CPUS}"
 
+set +e
 conda run --prefix "${REPO}/envs/amr" --no-capture-output \
     amrfinder \
         --protein "${COMBINED_FAA}" \
@@ -74,6 +77,7 @@ conda run --prefix "${REPO}/envs/amr" --no-capture-output \
         --plus
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[fun_amr] WARNING: amrfinder 失败（exit: ${EXIT_CODE}），创建空结果文件"
     echo -e "Protein identifier\tContig id\tStart\tStop\tStrand\tElement symbol\tElement name\tScope\tElement type\tElement subtype\tClass\tSubclass\tMethod\tTarget length\tReference sequence length\t% Coverage of reference sequence\t% Identity to reference sequence\tAlignment length\tAccession of closest sequence\tName of closest sequence\tHMM id\tHMM description" > "${OUTPUT}"

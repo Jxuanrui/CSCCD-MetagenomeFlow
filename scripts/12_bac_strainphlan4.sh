@@ -19,6 +19,8 @@
 # 用  法: bash 12_bac_strainphlan4.sh -w WORKDIR -r REPO [-t CPUS] [-c CLADE]
 # ==============================================================================
 
+set -euo pipefail
+
 # --- 参数解析 ---
 
 show_help() {
@@ -163,6 +165,7 @@ else
     echo "        输出: ${CONSENSUS_DIR}/"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+set +e
     conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         sample2markers.py \
             -i "${DEDUP_SAM_FILES[@]}" \
@@ -172,6 +175,7 @@ else
             -n "${CPUS}"
 
     EXIT_CODE=$?
+set -e
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[strainphlan4] WARNING: sample2markers 失败（exit: ${EXIT_CODE}），跳过 StrainPhlAn4"
         mkdir -p "${CONSENSUS_DIR}"
@@ -252,6 +256,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "[Step3a] extract_markers — 从数据库提取 ${CLADE} 的 clade markers"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+set +e
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
     extract_markers.py \
         -c "${CLADE}" \
@@ -259,6 +264,7 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         -o "${CLADE_MARKER_DIR}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] extract_markers 失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
@@ -279,6 +285,7 @@ echo "[Step3b] strainphlan — 构建 ${CLADE} 系统发育树"
 echo "         样本数: ${N_SAMPLES}，线程: ${CPUS}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+set +e
 conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
     strainphlan \
         -s "${CONSENSUS_DIR}"/*.json.bz2 \
@@ -297,6 +304,7 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         --non_interactive
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] strainphlan 失败（exit code: ${EXIT_CODE}）"
     echo "[HINT]  若因样本过滤后数量不足，可尝试放宽阈值重新运行："

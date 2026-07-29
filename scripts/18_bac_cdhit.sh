@@ -52,6 +52,8 @@
 # 用  法: bash 18_bac_cdhit.sh -t CPUS -w WORKDIR -r REPO [--tool cdhit|mmseqs]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 18_bac_cdhit.sh -t CPUS -w WORKDIR -r REPO [--tool cdhit|mmseqs]
@@ -165,6 +167,7 @@ if [ "${TOOL}" = "cdhit" ]; then
     echo "[cdhit] Step 3/4: 运行 CD-HIT-EST（95% identity，90% coverage）..."
     echo "[cdhit] 线程: ${CPUS}，≤500万基因预计 10-60 分钟"
 
+    set +e
     conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         cd-hit-est \
             -i  "${FILTERED_FNA}" \
@@ -180,6 +183,7 @@ if [ "${TOOL}" = "cdhit" ]; then
             -d  0
 
     EXIT_CODE=$?
+    set -e
 
 else  # mmseqs
 
@@ -190,6 +194,7 @@ else  # mmseqs
     MMSEQS_TMP="${RESULT_DIR}/mmseqs_tmp"
     mkdir -p "${MMSEQS_TMP}"
 
+    set +e
     conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         mmseqs easy-linclust \
             "${FILTERED_FNA}" \
@@ -203,6 +208,7 @@ else  # mmseqs
             -v 1
 
     EXIT_CODE=$?
+    set -e
 
     # easy-linclust 输出 *_rep_seq.fasta，统一重命名为 nucleotide_nr.fa
     if [ ${EXIT_CODE} -eq 0 ] && [ -f "${MMSEQS_PREFIX}_rep_seq.fasta" ]; then
@@ -227,12 +233,14 @@ fi
 # --- Step 4: 翻译蛋白序列 ---
 
 echo "[cdhit] Step 4/4: 翻译蛋白序列（seqkit translate）..."
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     seqkit translate --trim "${NR_FNA}" | \
     conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     seqkit seq -m 1 > "${NR_FAA}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[WARN] seqkit translate 失败（exit code: ${EXIT_CODE}），蛋白序列文件未生成"
 fi

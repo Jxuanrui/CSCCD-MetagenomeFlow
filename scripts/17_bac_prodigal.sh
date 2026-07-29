@@ -30,6 +30,8 @@
 # 用  法: bash 17_bac_prodigal.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 17_bac_prodigal.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -111,6 +113,7 @@ echo "[prodigal] 模式: -p meta（宏基因组），输入: ${INPUT_CONTIGS}"
 # -f gff:   GFF3 格式输出（基因坐标，含 partial/complete 标记）
 # -o ${GFF}: GFF 文件路径
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     prodigal \
         -i "${INPUT_CONTIGS}" \
@@ -121,6 +124,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         -p meta
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] Prodigal 运行失败（exit code: ${EXIT_CODE}）"
     rm -f "${FAA}" "${FNA}" "${GFF}"

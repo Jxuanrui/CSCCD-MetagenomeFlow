@@ -12,6 +12,8 @@
 # 用  法: bash 79_fun_eukfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--cdb CDB_PREFIX]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 79_fun_eukfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--cdb CDB_PREFIX]
@@ -136,6 +138,7 @@ fi
 # ── 运行 Eukfinder long_seqs ─────────────────────────────────────────────────
 # 注意：eukfinder 将日志写入运行时工作目录，需 cd 到 OUTDIR
 cd "${OUTDIR}"
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     bash -lc "
         set -e
@@ -148,6 +151,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
             ${PLAST_FLAGS}
     "
 EXIT_CODE=$?
+set -e
 cd - > /dev/null
 
 if [ ${EXIT_CODE} -ne 0 ]; then

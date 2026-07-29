@@ -9,6 +9,8 @@
 # 用  法: bash 86_fun_merops.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 86_fun_merops.sh -t CPUS -w WORKDIR -r REPO
@@ -54,6 +56,7 @@ mapfile -t FAA_FILES < <(find "${PRODIGAL_DIR}" -name "*.faa" 2>/dev/null | sort
 if [ ${#FAA_FILES[@]} -eq 0 ]; then echo "[ERROR] 未找到 FAA 文件"; exit 1; fi
 cat "${FAA_FILES[@]}" > "${COMBINED_FAA}"
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     diamond blastp \
         --db "${DB_FILE}" \
@@ -65,6 +68,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --sensitive \
         --threads "${CPUS}"
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] diamond blastp 失败（exit: ${EXIT_CODE}）"
     rm -f "${OUTPUT_TSV}"

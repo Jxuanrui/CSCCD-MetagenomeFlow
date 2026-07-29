@@ -18,6 +18,8 @@
 # 用  法: bash 73_fun_humann4_fungi.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 73_fun_humann4_fungi.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -68,12 +70,14 @@ mkdir -p "${OUTDIR}"
 FUNGI_PATTERN="g__(Candida|Aspergillus|Saccharomyces|Malassezia|Cryptococcus|Pichia|Nakaseomyces|Pneumocystis|Clavispora|Lodderomyces|Yarrowia|Cutaneotrichosporon|Trichosporon|Debaryomyces|Kluyveromyces|Rhodotorula|Fusarium|Penicillium|Cladosporium|Alternaria|Mucor|Rhizopus)"
 
 # 提取 header + 真菌物种分层通路行
+set +e
 {
     head -1 "${INPUT_STRATIFIED}"
     grep -E "\|${FUNGI_PATTERN}\." "${INPUT_STRATIFIED}" || true
 } > "${OUTPUT_TSV}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] 真菌 HUMAnN3 后处理失败（exit: ${EXIT_CODE}）"
     rm -f "${OUTPUT_TSV}"
@@ -102,6 +106,7 @@ elif [ ! -f "${FUNOMIC_CLASSIFICATION}" ]; then
     echo "[WARN] FunOMIC classification 文件不存在，跳过: ${FUNOMIC_CLASSIFICATION}"
 else
     mkdir -p "${OUTDIR}"
+    set +e
     conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         python3 - "${FUNOMIC_ANN}" "${FUNOMIC_CLASSIFICATION}" "${FUNOMIC_OUTPUT}" <<'PY'
 import sys
@@ -143,6 +148,7 @@ with open(output_path, "w", encoding="utf-8") as out:
 PY
 
     EXIT_CODE=$?
+    set -e
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] FunOMIC pathway 提取失败（exit: ${EXIT_CODE}）"
         rm -f "${FUNOMIC_OUTPUT}"

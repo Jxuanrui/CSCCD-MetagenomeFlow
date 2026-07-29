@@ -22,6 +22,8 @@
 # 用  法: bash 31d_bac_uniprot.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 31d_bac_uniprot.sh -t CPUS -w WORKDIR -r REPO
@@ -85,6 +87,7 @@ mkdir -p "${RESULT_DIR}" "${TMP_DIR}"
 echo "[uniprot] 开始 Swiss-Prot 注释 | 线程: ${CPUS}"
 echo "[uniprot] DB: ${MMSEQS_DB}"
 
+set +e
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
     mmseqs easy-search \
         --threads    "${CPUS}" \
@@ -98,6 +101,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         "${TMP_DIR}"
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] MMseqs2 easy-search 失败（exit code: ${EXIT_CODE}）"
     rm -f "${OUTPUT}"; exit ${EXIT_CODE}

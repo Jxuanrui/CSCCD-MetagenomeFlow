@@ -15,6 +15,8 @@
 #         参考: https://github.com/biobakery/MetaPhlAn4
 # ==============================================================================
 
+set -euo pipefail
+
 if [ $# -lt 8 ]; then
     echo "用法: bash 72_fun_metaphlan4_euk.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO"
     echo "  -s  样本名"
@@ -73,6 +75,7 @@ if [ -f "${MAPOUT_BZ2}" ]; then
     MAPOUT_TMP="${TEMP_DIR}/${SAMPLE}.mapout"
     bunzip2 -c "${MAPOUT_BZ2}" > "${MAPOUT_TMP}"
 
+set +e
     conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         metaphlan \
             "${MAPOUT_TMP}" \
@@ -86,6 +89,7 @@ if [ -f "${MAPOUT_BZ2}" ]; then
             --offline
 
     EXIT_CODE=$?
+set -e
     rm -f "${MAPOUT_TMP}"
 else
     echo "[fun_metaphlan4] mapout 不存在，从 reads 重新比对: ${SAMPLE}"
@@ -94,6 +98,7 @@ else
     MERGED_FQ="${TEMP_DIR}/${SAMPLE}_merged.fastq.gz"
     zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${MERGED_FQ}"
 
+set +e
     conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         metaphlan \
             "${MERGED_FQ}" \
@@ -107,6 +112,7 @@ else
             --offline
 
     EXIT_CODE=$?
+set -e
     rm -f "${MERGED_FQ}"
 fi
 

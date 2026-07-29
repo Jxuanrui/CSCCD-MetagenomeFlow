@@ -14,6 +14,8 @@
 # 用  法: bash 61_vir_vmag.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 61_vir_vmag.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -71,6 +73,7 @@ if [ ! -d "${BAM_DIR}" ] || [ -z "$(ls "${BAM_DIR}"/*.bam 2>/dev/null)" ]; then
 fi
 
 echo "[vmag] 步骤 1/3: vRhyme 分箱 ..."
+set +e
 conda run --prefix "${REPO}/envs/vrhyme" --no-capture-output \
     vRhyme \
         -i "${VOTU_FA}" \
@@ -81,6 +84,7 @@ conda run --prefix "${REPO}/envs/vrhyme" --no-capture-output \
         --iter 15
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[WARN] vRhyme 分箱失败（exit code: ${EXIT_CODE}），无法生成 vMAGs"
     touch "${SENTINEL}"

@@ -13,6 +13,8 @@
 # 用  法: bash 65_vir_phold.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 65_vir_phold.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -48,6 +50,7 @@ if [ -f "${SENTINEL}" ]; then echo "[phold] 结果已存在，跳过"; exit 0; f
 mkdir -p "${OUTDIR}"
 
 echo "[phold] 结构暗物质 ORF 注释 ..."
+set +e
 conda run --prefix "${REPO}/envs/phold" --no-capture-output \
     phold run \
         -i "${VOTU_GBK}" \
@@ -59,6 +62,7 @@ conda run --prefix "${REPO}/envs/phold" --no-capture-output \
         --cpu
 
 EXIT_CODE=$?
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] phold 失败"; exit ${EXIT_CODE}; fi
 
 # 汇总输出（phold 直接输出到 OUTDIR，不创建 results/ 子目录）
