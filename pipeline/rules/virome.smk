@@ -215,7 +215,7 @@ rule vir_vmag:
     input:
         contigs  = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
     output:
-        vmag_done = WORKDIR + "/result/virus/vmag/bins/.done",
+        vmag_done = WORKDIR + "/result/virus/vmag/bins/vmag_done.txt",
     log:
         WORKDIR + "/logs/virus/vmag/vmag.log",
     threads: CPUS
@@ -228,7 +228,7 @@ rule vir_vmag:
 rule vir_checkv_mag:
     """vMAG quality assessment via CheckV per-bin."""
     input:
-        vmag_done = WORKDIR + "/result/virus/vmag/bins/.done",
+        vmag_done = WORKDIR + "/result/virus/vmag/bins/vmag_done.txt",
     output:
         mag_quality = WORKDIR + "/result/virus/vmag/checkv/quality_summary.tsv",
     log:

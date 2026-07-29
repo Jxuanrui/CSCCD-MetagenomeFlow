@@ -410,7 +410,7 @@ rule bac_mge_summary:
 rule bac_mag_integration:
     """Integrate bacterial MAG taxonomy, quality, clustering, and abundance."""
     input:
-        drep = WORKDIR + "/result/binning/drep/.done",
+        drep = WORKDIR + "/result/binning/drep/drep_done.txt",
         gtdb = WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
         checkm2 = WORKDIR + "/result/binning/checkm2/quality_report.tsv",
         coverm = expand(WORKDIR + "/result/binning/coverm_quant/{sample}.tsv", sample=SAMPLES),

@@ -52,7 +52,7 @@ INPUT_DIR="${WORKDIR}/result/binning/checkm2/drep_input"
 FILTERED_REPORT="${WORKDIR}/result/binning/checkm2/checkm2_filtered/filtered_report.tsv"
 OUTDIR="${WORKDIR}/result/binning/drep"
 SENTINEL="${OUTDIR}/dereplicated_genomes"
-SENTINEL_FILE="${OUTDIR}/.done"
+SENTINEL_FILE="${OUTDIR}/drep_done.txt"
 GENOME_INFO="${OUTDIR}/checkm2_genomeInfo.csv"
 
 N_INPUT_MAGS=0

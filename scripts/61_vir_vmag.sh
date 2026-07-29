@@ -44,7 +44,7 @@ VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
 BAM_DIR="${WORKDIR}/result/virus/votu/bam"
 OUTDIR="${WORKDIR}/result/virus/vmag"
 BINS_DIR="${OUTDIR}/bins"
-SENTINEL="${BINS_DIR}/.done"
+SENTINEL="${BINS_DIR}/vmag_done.txt"
 
 if [ ! -f "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在: ${VOTU_FA}"; exit 1; fi
 if [ -f "${SENTINEL}" ]; then echo "[vmag] 结果已存在，跳过"; exit 0; fi

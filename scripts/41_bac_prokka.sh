@@ -183,7 +183,7 @@ for mag in "${MAGS[@]}"; do
         awk -v mag="${mag_name}" 'BEGIN{OFS="\t"} FNR==1 && NR!=1{next} {print mag, $0}' "${tsv_out}" >> "${SUMMARY}"
     fi
 done
-touch "${OUTDIR}/.done"
+touch "${OUTDIR}/prokka_done.txt"
 echo "[prokka] 汇总表: ${SUMMARY}"
 
 exit 0

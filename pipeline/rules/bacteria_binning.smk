@@ -98,7 +98,7 @@ rule drep:
     input:
         report = BINNING + "/checkm2/quality_report.tsv",
     output:
-        done = BINNING + "/drep/.done",
+        done = BINNING + "/drep/drep_done.txt",
     shell:
         "bash {REPO}/scripts/38_bac_drep.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
 
@@ -107,7 +107,7 @@ rule drep:
 
 rule coverm_quant:
     input:
-        mags = BINNING + "/drep/.done",
+        mags = BINNING + "/drep/drep_done.txt",
         r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
         r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
@@ -121,7 +121,7 @@ rule coverm_quant:
 
 rule gtdbtk:
     input:
-        drep_done = BINNING + "/drep/.done",
+        drep_done = BINNING + "/drep/drep_done.txt",
     output:
         summary = BINNING + "/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
     shell:
@@ -132,7 +132,7 @@ rule gtdbtk:
 
 rule prokka:
     input:
-        drep_done = BINNING + "/drep/.done",
+        drep_done = BINNING + "/drep/drep_done.txt",
     output:
         summary = BINNING + "/prokka/prokka_summary.tsv",
     shell:
@@ -143,7 +143,7 @@ rule prokka:
 
 rule bac_mlst:
     input:
-        drep_done = BINNING + "/drep/.done",
+        drep_done = BINNING + "/drep/drep_done.txt",
     output:
         tsv = WORKDIR + "/result/wgs/mlst/mlst.tsv",
     shell:
@@ -165,7 +165,7 @@ rule bac_pangenome:
 
 rule bac_snippy:
     input:
-        drep_done = BINNING + "/drep/.done",
+        drep_done = BINNING + "/drep/drep_done.txt",
     output:
         core_tsv = WORKDIR + "/result/wgs/snippy/core.tsv",
     shell:

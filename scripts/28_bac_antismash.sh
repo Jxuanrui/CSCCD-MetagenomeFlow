@@ -57,7 +57,7 @@ SECONDS=0
 
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 RESULT_DIR="${WORKDIR}/result/annotation/antismash/${SAMPLE}"
-SENTINEL="${RESULT_DIR}/.done"
+SENTINEL="${RESULT_DIR}/antismash_done.txt"
 ANTISMASH_DB="${REPO}/db/antismash/antismash-db"
 
 if [ ! -f "${CONTIGS}" ] || [ ! -s "${CONTIGS}" ]; then
