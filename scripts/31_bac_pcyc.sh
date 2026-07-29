@@ -11,6 +11,8 @@
 # 用  法: bash 31_bac_pcyc.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 31_bac_pcyc.sh -t CPUS -w WORKDIR -r REPO

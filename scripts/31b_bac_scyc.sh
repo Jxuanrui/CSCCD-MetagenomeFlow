@@ -20,6 +20,8 @@
 # 用  法: bash 31b_bac_scyc.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 31b_bac_scyc.sh -t CPUS -w WORKDIR -r REPO
