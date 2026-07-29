@@ -45,6 +45,7 @@ rule all:
         WORKDIR + "/result/strainphlan4/consensus_markers/.done",
         expand("{workdir}/result/centrifuger/{sample}/{sample}.kreport.tsv",
                workdir=WORKDIR, sample=SAMPLES),
+        WORKDIR + "/result/sylph/merged/sylph_profile_merged.tsv",
         expand("{workdir}/result/humann3/{sample}/{sample}_pathabundance.tsv",
                workdir=WORKDIR, sample=SAMPLES),
         expand("{workdir}/result/fungi/kraken2/{sample}/{sample}.report",

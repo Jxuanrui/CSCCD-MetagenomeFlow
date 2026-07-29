@@ -114,6 +114,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 13 | `scripts/13_bac_humann3.sh` | 功能通路定量（PathwayAbundance） | HUMAnN3（v3.9） | 支持 `--speed-mode balanced/fast` 提速；输出到 `result/humann3/` |
 | 14 | `scripts/14_bac_kraken2.sh` | 快速物种分类（k-mer） | Kraken2+Bracken |
 | 15 | `scripts/15_bac_centrifuger.sh` | 蛋白级精确分类（GTDB R226） | Centrifuger |
+| 15c | `scripts/15c_bac_sylph.sh` | 超快速物种分类（minhash sketch，GTDB-R220），可选快速预筛选，非替代 MetaPhlAn4/Kraken2 | sylph+sylph-tax |
 | 16 | `scripts/16_bac_megahit.sh` | 宏基因组组装 | MEGAHIT |
 | 17 | `scripts/17_bac_prodigal.sh` | 蛋白编码基因预测 | Prodigal |
 | 18 | `scripts/18_bac_cdhit.sh` | 基因去冗余（95% ANI） | CD-HIT |

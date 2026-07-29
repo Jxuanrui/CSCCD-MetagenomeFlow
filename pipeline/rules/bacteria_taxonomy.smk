@@ -136,6 +136,23 @@ rule humann3_merge:
         "> {log} 2>&1"
 
 
+rule sylph:
+    """Fast minhash-sketch taxonomic classification against GTDB-R220 (>50x faster than Kraken2/MetaPhlAn4)."""
+    input:
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+    output:
+        sylphmpa = WORKDIR + "/result/sylph/{sample}/{sample}.sylphmpa",
+    log:
+        WORKDIR + "/logs/sylph/{sample}.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/15c_bac_sylph.sh "
+        "-s {wildcards.sample} -t {threads} "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
 rule kraken2_merge:
     """Merge per-sample Bracken abundance tables into community matrices."""
     input:
@@ -170,5 +187,22 @@ rule centrifuger_merge:
         WORKDIR + "/logs/centrifuger/merge.log",
     shell:
         "bash {REPO}/scripts/15b_bac_centrifuger_merge.sh "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule sylph_merge:
+    """Merge per-sample sylph .sylphmpa profiles into a community matrix."""
+    input:
+        sylphmpas = expand(
+            WORKDIR + "/result/sylph/{sample}/{sample}.sylphmpa",
+            sample=SAMPLES,
+        ),
+    output:
+        merged = WORKDIR + "/result/sylph/merged/sylph_profile_merged.tsv",
+    log:
+        WORKDIR + "/logs/sylph/merge.log",
+    shell:
+        "bash {REPO}/scripts/15d_bac_sylph_merge.sh "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"

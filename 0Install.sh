@@ -1955,3 +1955,33 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # ==============================================================================
 # §16 状态：shellcheck [✓] | pre-commit hook [✓] | Test_CI_fixture [✓] | run_ci_checks.sh [✓]
 # ==============================================================================
+
+# --- §17.1 sylph 快速物种分类器（minhash sketch，GTDB-R220）[✓ 已完成] ---
+# 用途：与 MetaPhlAn4/Kraken2 并列的第三个细菌分类工具，速度更快（官方数据
+#       >50x 于同类工具），对 GTDB-R220 全库分类内存仅需 ~15GB，作为快速
+#       预筛选选项，不替代现有两个工具。
+# 参考：Shaw & Yu, Nature Biotechnology 2024; https://github.com/bluenote-1577/sylph
+
+    mkdir -p ${db}/sylph
+    conda create --prefix ${envs}/sylph -y
+    conda install --prefix ${envs}/sylph -y sylph sylph-tax -c bioconda -c conda-forge
+    conda run --prefix ${envs}/sylph sylph --version
+
+    # 数据库下载（GTDB-R220，113,104 个物种代表基因组，-c200 灵敏版，13.1GB）
+    # 主站较慢时改用 Google Cloud 镜像（实测更快）：
+    # wget -c https://storage.googleapis.com/sylph-stuff/gtdb-r220-c200-dbv1.syldb \
+    #     -O ${db}/sylph/gtdb-r220-c200-dbv1.syldb
+    # wget -c http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r220-c200-dbv1.syldb \
+    #     -O ${db}/sylph/gtdb-r220-c200-dbv1.syldb
+
+    # taxonomy metadata（sylph-tax 用于把 genome ID 转成物种名，含 GTDB_r220/r214/
+    # FungiRefSeq 等全部支持的分类体系，体积小，直接用官方下载子命令即可）：
+    # conda run --prefix ${envs}/sylph sylph-tax download --download-to ${db}/sylph
+
+    echo "[INFO] sylph + sylph-tax 已安装于 envs/sylph"
+    echo "       数据库路径: ${db}/sylph/gtdb-r220-c200-dbv1.syldb"
+    echo "       taxonomy metadata: ${db}/sylph/gtdb_r220_metadata.tsv.gz"
+
+# ==============================================================================
+# §17 状态：sylph [✓] | sylph-tax [✓] | GTDB-R220 sketch DB [✓] | taxonomy metadata [✓]
+# ==============================================================================
