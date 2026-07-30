@@ -18,3 +18,7 @@ humann_speed: "standard"
 # metadata for statistical analysis (91-98)
 metadata: "/home/labuser/Course/Maxmetagenome/Project/Project01/metadata.csv"
 group_col: "group"
+
+# Force re-run all steps ignoring existing outputs
+# Set to true to regenerate all results (123/125 scripts support --force)
+force: false
