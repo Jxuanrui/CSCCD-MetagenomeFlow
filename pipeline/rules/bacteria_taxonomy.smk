@@ -8,11 +8,13 @@ rule metaphlan4:
         sam_bz2 = WORKDIR + "/result/metaphlan4/{sample}/{sample}.sam.bz2",
     log:
         WORKDIR + "/logs/metaphlan4/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/11_bac_metaphlan4.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -27,9 +29,11 @@ rule metaphlan4_merge:
         merged = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
     log:
         WORKDIR + "/logs/metaphlan4_merge/merge.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/11b_bac_metaphlan4_merge.sh "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -44,10 +48,12 @@ rule strainphlan4:
         markers_done = WORKDIR + "/result/strainphlan4/consensus_markers/.done",
     log:
         WORKDIR + "/logs/strainphlan4/strainphlan4.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/12_bac_strainphlan4.sh "
-        "-w {WORKDIR} -r {REPO} -t {threads} "
+        "-w {WORKDIR} -r {REPO} -t {threads} {params.force_flag} "
         "> {log} 2>&1 && "
         "touch {output.markers_done}"
 
@@ -72,11 +78,12 @@ rule humann3:
     threads: CPUS
     params:
         speed = config["humann_speed"],
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/13_bac_humann3.sh "
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
-        "--speed-mode {params.speed} "
+        "--speed-mode {params.speed} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -92,11 +99,13 @@ rule kraken2:
         bracken_phylum  = WORKDIR + "/result/kraken2/{sample}/bracken/{sample}_P.bracken",
     log:
         WORKDIR + "/logs/kraken2/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/14_bac_kraken2.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -110,11 +119,13 @@ rule centrifuger:
         classifications = WORKDIR + "/result/centrifuger/{sample}/{sample}.classifications.tsv.gz",
     log:
         WORKDIR + "/logs/centrifuger/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/15_bac_centrifuger.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -130,9 +141,11 @@ rule humann3_merge:
         genefamilies = WORKDIR + "/result/humann3/merged/genefamilies_relab.tsv",
     log:
         WORKDIR + "/logs/humann3/merge.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/13b_bac_humann3_merge.sh "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -145,11 +158,13 @@ rule sylph:
         sylphmpa = WORKDIR + "/result/sylph/{sample}/{sample}.sylphmpa",
     log:
         WORKDIR + "/logs/sylph/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/15c_bac_sylph.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -166,9 +181,11 @@ rule kraken2_merge:
         bracken_p = WORKDIR + "/result/kraken2/merged/bracken_P.tsv",
     log:
         WORKDIR + "/logs/kraken2/merge.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/14b_bac_kraken2_merge.sh "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -185,9 +202,11 @@ rule centrifuger_merge:
         kreport_p = WORKDIR + "/result/centrifuger/merged/kreport_P.tsv",
     log:
         WORKDIR + "/logs/centrifuger/merge.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/15b_bac_centrifuger_merge.sh "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -202,7 +221,9 @@ rule sylph_merge:
         merged = WORKDIR + "/result/sylph/merged/sylph_profile_merged.tsv",
     log:
         WORKDIR + "/logs/sylph/merge.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/15d_bac_sylph_merge.sh "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"

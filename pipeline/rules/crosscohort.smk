@@ -59,6 +59,8 @@ rule viz_statistics_all:
         crosscohort = "{workdir}/result/viz_crosscohort/crosscohort_done.txt"
     output:
         sentinel = "{workdir}/result/viz_statistics_all_done.txt"
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         """
         echo "All statistics visualizations completed" > {output.sentinel}

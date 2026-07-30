@@ -18,8 +18,10 @@ rule eggnog:
         protein_nr = PROTEIN_NR_PATH,
     output:
         annotations = WORKDIR + "/result/annotation/eggnog/eggnog.emapper.annotations",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/21_bac_eggnog.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/21_bac_eggnog.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 22: KEGG KO annotation ─────────────────────────────────────────────────
@@ -32,8 +34,10 @@ rule kegg:
     log:
         WORKDIR + "/logs/annotation/kegg/kegg.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/22_bac_kegg.sh -t {threads} -w {WORKDIR} -r {REPO} > {log} 2>&1"
+        "bash {REPO}/scripts/22_bac_kegg.sh -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2> > {log} 2>&11"
 
 
 # ─── 23: AMRFinderPlus antibiotic resistance ─────────────────────────────────
@@ -43,8 +47,10 @@ rule amrfinder:
         protein_nr = PROTEIN_NR_PATH,
     output:
         tsv = WORKDIR + "/result/annotation/amrfinder/amrfinder_results.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/23_bac_amrfinder.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/23_bac_amrfinder.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 24: CARD/RGI resistance gene annotation ─────────────────────────────────
@@ -54,8 +60,10 @@ rule card:
         protein_nr = PROTEIN_NR_PATH,
     output:
         txt = WORKDIR + "/result/annotation/card/rgi_results.txt",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/24_bac_card.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/24_bac_card.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 rule card_summary:
@@ -66,8 +74,10 @@ rule card_summary:
         report = WORKDIR + "/result/annotation/card/summary/card_summary_report.txt",
     log:
         WORKDIR + "/logs/card_summary/summary.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/24b_bac_card_summary.sh "
+        "bash {REPO}/scripts/24b_bac_card_summary.sh  {params.force_flag}"
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -79,8 +89,10 @@ rule dbcan:
         protein_nr = PROTEIN_NR_PATH,
     output:
         overview = WORKDIR + "/result/annotation/dbcan/overview.txt",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/25_bac_dbcan.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/25_bac_dbcan.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 26: VFDB virulence factor annotation ───────────────────────────────────
@@ -90,8 +102,10 @@ rule vfdb:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/vfdb/vfdb_hits.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/26_bac_vfdb.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/26_bac_vfdb.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 27: BacMet metal resistance annotation ─────────────────────────────────
@@ -101,8 +115,10 @@ rule bacmet:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/bacmet/bacmet_hits.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/27_bac_bacmet.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/27_bac_bacmet.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 28: antiSMASH BGC prediction (per-sample) ──────────────────────────────
@@ -112,8 +128,10 @@ rule antismash:
         contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
     output:
         index = WORKDIR + "/result/annotation/antismash/{sample}/antismash_done.txt",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/28_bac_antismash.sh -s {wildcards.sample} -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/28_bac_antismash.sh -s {wildcards.sample} -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 29: DefenseFinder bacterial defense systems ────────────────────────────
@@ -123,8 +141,10 @@ rule defense_finder:
         protein_nr = PROTEIN_NR_PATH,
     output:
         systems = WORKDIR + "/result/annotation/defense_finder/defense_finder_systems.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/29_bac_defense_finder.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/29_bac_defense_finder.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 30: NCyc nitrogen cycling gene annotation ──────────────────────────────
@@ -134,8 +154,10 @@ rule ncyc:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/ncyc/ncyc_hits.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/30_bac_ncyc.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/30_bac_ncyc.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 31: PCyc phosphorus cycling gene annotation ────────────────────────────
@@ -145,8 +167,10 @@ rule pcyc:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/31_bac_pcyc.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/31_bac_pcyc.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 31b: SCyc sulfur cycling gene annotation ───────────────────────────────
@@ -156,8 +180,10 @@ rule bac_scyc:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/scyc/scyc_hits.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/31b_bac_scyc.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/31b_bac_scyc.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 31c: Pfam-A protein domain annotation ──────────────────────────────────
@@ -168,8 +194,10 @@ rule bac_pfam:
     output:
         tblout = WORKDIR + "/result/annotation/pfam/pfam_hits.tblout",
         domtblout = WORKDIR + "/result/annotation/pfam/pfam_hits.domtblout",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/31c_bac_pfam.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/31c_bac_pfam.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 31d: UniProt Swiss-Prot protein annotation ─────────────────────────────
@@ -179,8 +207,10 @@ rule bac_uniprot:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/uniprot_sprot/sprot_hits.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/31d_bac_uniprot.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/31d_bac_uniprot.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 31e: FeGenie iron metabolism gene prediction ───────────────────────────
@@ -194,5 +224,7 @@ rule fegenie:
     log:
         WORKDIR + "/temp/logs/fegenie/fegenie.log"
     threads: 8
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/31e_bac_fegenie.sh -s NR -t {threads} -w {WORKDIR} -r {REPO} --input-type nr > {log} 2>&1"
+        "bash {REPO}/scripts/31e_bac_fegenie.sh -s NR -t {threads} -w {WORKDIR} -r {REPO} --input-type nr {params.force_flag} > {log} 2> > {log} 2>&11"

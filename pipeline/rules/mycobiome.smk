@@ -14,8 +14,10 @@ rule fun_kraken2:
     log:
         WORKDIR + "/logs/fungi/kraken2/{sample}.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/71_fun_kraken2_fungi.sh "
+        "bash {REPO}/scripts/71_fun_kraken2_fungi.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -30,8 +32,10 @@ rule fun_metaphlan4:
     log:
         WORKDIR + "/logs/fungi/metaphlan4/{sample}.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/72_fun_metaphlan4_euk.sh "
+        "bash {REPO}/scripts/72_fun_metaphlan4_euk.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -48,8 +52,10 @@ rule fun_metaphlan4_merge:
         merged = WORKDIR + "/result/fungi/metaphlan4/merged/taxonomy.tsv",
     log:
         WORKDIR + "/logs/fungi/metaphlan4_merge/merge.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/72b_fun_metaphlan4_merge.sh "
+        "bash {REPO}/scripts/72b_fun_metaphlan4_merge.sh  {params.force_flag}"
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -67,8 +73,10 @@ rule fun_humann4:
     log:
         WORKDIR + "/logs/fungi/humann4/{sample}.log",
     threads: 1
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/73_fun_humann4_fungi.sh "
+        "bash {REPO}/scripts/73_fun_humann4_fungi.sh  {params.force_flag}"
         "-s {wildcards.sample} -t 1 "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -84,8 +92,10 @@ rule fun_blast_gutdb:
     log:
         WORKDIR + "/logs/fungi/blast_gutdb/{sample}.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/74_fun_blast_gutdb.sh "
+        "bash {REPO}/scripts/74_fun_blast_gutdb.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -101,8 +111,10 @@ rule fun_funomic:
     log:
         WORKDIR + "/logs/fungi/funomic/{sample}.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/75_fun_funomics.sh "
+        "bash {REPO}/scripts/75_fun_funomics.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -124,7 +136,7 @@ rule funomics_aggregate:
         WORKDIR + "/logs/fungi/funomics_aggregate/aggregate.log",
     threads: CPUS
     shell:
-        "bash {REPO}/scripts/75b_fun_funomics_aggregate.sh "
+        "bash {REPO}/scripts/75b_fun_funomics_aggregate.sh  {params.force_flag}"
         "-t {threads} -w {params.workdir} -r {REPO} "
         "> {log} 2>&1"
 
@@ -139,8 +151,10 @@ rule fun_microfisher:
     log:
         WORKDIR + "/logs/fungi/microfisher/{sample}.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/77_fun_microfisher.sh "
+        "bash {REPO}/scripts/77_fun_microfisher.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -156,8 +170,10 @@ rule fun_megahit:
     log:
         WORKDIR + "/logs/fungi/megahit/{sample}.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/78_fun_megahit.sh "
+        "bash {REPO}/scripts/78_fun_megahit.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -176,7 +192,7 @@ rule fun_metaeuk:
         WORKDIR + "/logs/fungi/metaeuk/{sample}.log",
     threads: CPUS
     shell:
-        "bash {REPO}/scripts/80b_fun_metaeuk.sh "
+        "bash {REPO}/scripts/80b_fun_metaeuk.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
         "-w {params.workdir} -r {REPO} "
         "--method metaeuk --db {REPO}/db/metaeuk_db/fungi_refseq_mmseqs "
@@ -195,8 +211,10 @@ rule fun_eukfinder:
     log:
         WORKDIR + "/logs/fungi/eukfinder/{sample}.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/79_fun_eukfinder.sh "
+        "bash {REPO}/scripts/79_fun_eukfinder.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -211,8 +229,10 @@ rule fun_prodigal:
     log:
         WORKDIR + "/logs/fungi/prodigal/{sample}.log",
     threads: 1
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/80_fun_prodigal.sh "
+        "bash {REPO}/scripts/80_fun_prodigal.sh  {params.force_flag}"
         "-s {wildcards.sample} -t 1 "
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
@@ -232,8 +252,10 @@ rule fun_eggnog:
     log:
         WORKDIR + "/logs/fungi/eggnog/eggnog.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/81_fun_eggnog.sh "
+        "bash {REPO}/scripts/81_fun_eggnog.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -250,8 +272,10 @@ rule fun_kegg:
     log:
         WORKDIR + "/logs/fungi/kegg/kegg.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/82_fun_kegg.sh "
+        "bash {REPO}/scripts/82_fun_kegg.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -268,8 +292,10 @@ rule fun_dbcan:
     log:
         WORKDIR + "/logs/fungi/dbcan/dbcan.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/83_fun_dbcan.sh "
+        "bash {REPO}/scripts/83_fun_dbcan.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -286,8 +312,10 @@ rule fun_vfdb:
     log:
         WORKDIR + "/logs/fungi/vfdb/vfdb.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/84_fun_vfdb.sh "
+        "bash {REPO}/scripts/84_fun_vfdb.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -304,8 +332,10 @@ rule fun_amr:
     log:
         WORKDIR + "/logs/fungi/amr/amr.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/85_fun_amr.sh "
+        "bash {REPO}/scripts/85_fun_amr.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -322,8 +352,10 @@ rule fun_merops:
     log:
         WORKDIR + "/logs/fungi/merops/merops.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/86_fun_merops.sh "
+        "bash {REPO}/scripts/86_fun_merops.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -337,8 +369,10 @@ rule fun_phf_profiler:
     log:
         WORKDIR + "/logs/fungi/phf_profiler/{sample}.log",
     threads: config.get("cpus", 8)
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/74e_fun_phf_profiler.sh "
+        "bash {REPO}/scripts/74e_fun_phf_profiler.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
 
@@ -354,7 +388,9 @@ rule fun_phf_aggregate:
         merged_tax=WORKDIR + "/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv",
     log:
         WORKDIR + "/logs/fungi/phf_aggregate/aggregate.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/74f_fun_phf_aggregate.sh "
+        "bash {REPO}/scripts/74f_fun_phf_aggregate.sh  {params.force_flag}"
         "-w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"

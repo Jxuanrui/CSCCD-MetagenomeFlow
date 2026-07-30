@@ -10,11 +10,13 @@ rule fastp_qc:
         html = WORKDIR + "/result/fastp/{sample}/{sample}.html",
     log:
         WORKDIR + "/logs/fastp/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/01_qc_fastp.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -28,9 +30,11 @@ rule kneaddata:
         r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     log:
         WORKDIR + "/logs/kneaddata/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/02_qc_kneaddata.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"

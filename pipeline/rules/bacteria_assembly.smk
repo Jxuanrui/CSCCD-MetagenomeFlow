@@ -7,11 +7,13 @@ rule megahit:
         contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
     log:
         WORKDIR + "/logs/megahit/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/16_bac_megahit.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -25,11 +27,13 @@ rule prodigal:
         gff = WORKDIR + "/result/assembly/prodigal/{sample}/{sample}.gff",
     log:
         WORKDIR + "/logs/prodigal/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: 1
     shell:
         "bash {REPO}/scripts/17_bac_prodigal.sh "
         "-s {wildcards.sample} -t 1 "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -45,11 +49,13 @@ rule cdhit:
         nr_faa = WORKDIR + "/result/assembly/cdhit/protein_nr.fa",
     log:
         WORKDIR + "/logs/cdhit/cdhit.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/18_bac_cdhit.sh "
         "-t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -61,11 +67,13 @@ rule salmon_build:
         index_info = WORKDIR + "/result/assembly/salmon/index/info.json",
     log:
         WORKDIR + "/logs/salmon/build.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/19_bac_salmon_build.sh "
         "-t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
@@ -79,9 +87,11 @@ rule salmon_quant:
         quant_sf = WORKDIR + "/result/assembly/salmon/{sample}/quant.sf",
     log:
         WORKDIR + "/logs/salmon/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
     shell:
         "bash {REPO}/scripts/20_bac_salmon_quant.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"

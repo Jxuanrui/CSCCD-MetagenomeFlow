@@ -21,9 +21,11 @@ rule coverm_depth:
     output:
         bam = BINNING + "/coverm/{sample}/{sample}.bam",
         depth = BINNING + "/coverm/{sample}/depth.txt",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/32_bac_coverm_depth.sh -s {wildcards.sample}" +
-        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 33: MetaBAT2 binning (per-sample) ──────────────────────────────────────
@@ -34,9 +36,11 @@ rule metabat2:
         depth = BINNING + "/coverm/{sample}/depth.txt",
     output:
         tsv = BINNING + "/metabat2/{sample}/{sample}.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/33_bac_metabat2.sh -s {wildcards.sample}" +
-        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 34: MaxBin2 binning (per-sample) ───────────────────────────────────────
@@ -47,9 +51,11 @@ rule maxbin2:
         depth = BINNING + "/coverm/{sample}/depth.txt",
     output:
         tsv = BINNING + "/maxbin2/{sample}/{sample}.maxbin2.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/34_bac_maxbin2.sh -s {wildcards.sample}" +
-        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 35: SemiBin2 binning (per-sample) ──────────────────────────────────────
@@ -60,9 +66,11 @@ rule semibin2:
         bam = BINNING + "/coverm/{sample}/{sample}.bam",
     output:
         tsv = BINNING + "/semibin2/{sample}/{sample}.semibin2.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/35_bac_semibin2.sh -s {wildcards.sample}" +
-        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 36: DAS_Tool bin integration (per-sample) ──────────────────────────────
@@ -75,9 +83,11 @@ rule dastool:
         semibin2 = BINNING + "/semibin2/{sample}/{sample}.semibin2.tsv",
     output:
         contig2bin = BINNING + "/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/36_bac_dastool.sh -s {wildcards.sample}" +
-        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 37: CheckM2 MAG quality assessment (aggregate) ─────────────────────────
@@ -89,8 +99,10 @@ rule checkm2:
                       sample=SAMPLES),
     output:
         report = BINNING + "/checkm2/quality_report.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/37_bac_checkm2.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/37_bac_checkm2.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 38: dRep MAG dereplication (aggregate) ─────────────────────────────────
@@ -100,8 +112,10 @@ rule drep:
         report = BINNING + "/checkm2/quality_report.tsv",
     output:
         done = BINNING + "/drep/drep_done.txt",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/38_bac_drep.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/38_bac_drep.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 39: CoverM genome quantification (per-sample) ──────────────────────────
@@ -113,9 +127,11 @@ rule coverm_quant:
         r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
         tsv = BINNING + "/coverm_quant/{sample}.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/39_bac_coverm_quant.sh -s {wildcards.sample}" +
-        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 39b: inStrain read mapping to dereplicated MAGs (per-sample) ───────────
@@ -128,9 +144,11 @@ rule instrain_map:
     output:
         bam = BINNING + "/instrain_map/{sample}/{sample}.sorted.bam",
         bai = BINNING + "/instrain_map/{sample}/{sample}.sorted.bam.bai",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/39b_bac_instrain_map.sh -s {wildcards.sample}" +
-        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 39c: inStrain microdiversity profiling (per-sample) ────────────────────
@@ -141,9 +159,11 @@ rule instrain_profile:
         bai = BINNING + "/instrain_map/{sample}/{sample}.sorted.bam.bai",
     output:
         genome_info = BINNING + "/instrain_profile/{sample}/output/{sample}_genome_info.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/39c_bac_instrain_profile.sh -s {wildcards.sample}" +
-        " -t {CPUS} -w {WORKDIR} -r {REPO}"
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 39d: inStrain cross-sample popANI comparison (aggregate) ───────────────
@@ -154,8 +174,10 @@ rule instrain_compare:
                           sample=SAMPLES),
     output:
         compare = BINNING + "/instrain_compare/output/comparisonsTable.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/39d_bac_instrain_compare.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/39d_bac_instrain_compare.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 40: GTDB-Tk taxonomic classification (aggregate) ───────────────────────
@@ -165,8 +187,10 @@ rule gtdbtk:
         drep_done = BINNING + "/drep/drep_done.txt",
     output:
         summary = BINNING + "/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/40_bac_gtdbtk.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/40_bac_gtdbtk.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 41: Prokka MAG annotation (aggregate batch) ────────────────────────────
@@ -176,8 +200,10 @@ rule prokka:
         drep_done = BINNING + "/drep/drep_done.txt",
     output:
         summary = BINNING + "/prokka/prokka_summary.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/41_bac_prokka.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/41_bac_prokka.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 41b: MLST typing of dereplicated MAGs (aggregate) ──────────────────────
@@ -187,8 +213,10 @@ rule bac_mlst:
         drep_done = BINNING + "/drep/drep_done.txt",
     output:
         tsv = WORKDIR + "/result/wgs/mlst/mlst.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/41b_bac_mlst.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/41b_bac_mlst.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 41c: Pan-genome analysis of MAG annotations (aggregate) ────────────────
@@ -198,8 +226,10 @@ rule bac_pangenome:
         prokka_summary = BINNING + "/prokka/prokka_summary.tsv",
     output:
         summary = WORKDIR + "/result/wgs/pangenome/summary_statistics.txt",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/41c_bac_pangenome.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/41c_bac_pangenome.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 41d: SNP/InDel analysis of dereplicated MAGs (aggregate) ───────────────
@@ -209,8 +239,10 @@ rule bac_snippy:
         drep_done = BINNING + "/drep/drep_done.txt",
     output:
         core_tsv = WORKDIR + "/result/wgs/snippy/core.tsv",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/41d_bac_snippy.sh -t {CPUS} -w {WORKDIR} -r {REPO}"
+        "bash {REPO}/scripts/41d_bac_snippy.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
 # ─── 42: MGE comprehensive annotation (per-sample) ──────────────────────────
@@ -227,9 +259,11 @@ rule bac_mge:
         transposase = WORKDIR + "/result/mge/transposase/{sample}/transposase_hits.tsv",
     log:
         WORKDIR + "/temp/logs/mge/mge_{sample}.log"
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: 16
     shell:
-        "bash {REPO}/scripts/42_bac_mge.sh -s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} > {log} 2>&1"
+        "bash {REPO}/scripts/42_bac_mge.sh -s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2>&1"
 
 
 # ─── 42b: PlasmidFinder plasmid identification (per-sample) ─────────────────
@@ -241,6 +275,8 @@ rule bac_plasmidfinder:
         results = WORKDIR + "/result/mge/plasmidfinder/{sample}/results_tab.tsv",
     log:
         WORKDIR + "/temp/logs/plasmidfinder/plasmidfinder_{sample}.log"
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     threads: 4
     shell:
-        "bash {REPO}/scripts/42b_bac_plasmidfinder.sh -s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} > {log} 2>&1"
+        "bash {REPO}/scripts/42b_bac_plasmidfinder.sh -s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2>&1"
