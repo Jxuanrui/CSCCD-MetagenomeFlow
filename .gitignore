@@ -20,6 +20,8 @@ miniforge3/
 Project/*/data/
 Project/*/result/
 Project/*/temp/
+/Project/_archive_*/
+# 从项目目录迁移出的归档数据（二进制，体积大，不入库）
 *.pyc
 __pycache__/
 *.pyo
