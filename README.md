@@ -71,6 +71,8 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 ### 分析能力 | Analysis Capacity
 - **125 scripts** (113 analysis workflows + 12 utilities) spanning three kingdoms — bacteria (11–42b), virome (51–72), and mycobiome (71–86)
+- **--force parameter support**: 123/125 scripts (98.4%) now support `--force` flag for idempotent pipeline reruns, automatically propagated by flow orchestrators (00_pipeline_*.sh)
+- **inStrain strain-level microdiversity**: 39b–39d scripts quantify within-species genetic variation via read mapping to MAGs, SNV profiling, and population comparison across samples
 - **Virome expanded to 72**: added PhaBox2, DRAM, and PhaGCN3 for comprehensive phage lifestyle prediction (lytic/temperate/chronic)
 - **Bacteria WGS module (42b)**: MLST typing, pan-genome (Roary), and SNP calling (Snippy) for strain-level tracking
 - **Fungi PHF database**: 760 human gut fungal genomes (Yan et al. 2024 *Cell* 187) indexed with Bowtie2 for high-sensitivity profiling
@@ -147,6 +149,10 @@ bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenom
 
 # Parallel samples (requires rush)
 bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 -j 2
+
+# Force re-run (ignore existing outputs) — supported by 123/125 scripts (98.4%)
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --force
+bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/Maxmetagenome --force
 ```
 
 **Mode 3 — Snakemake** (production, HPC, recommended for large cohorts)
@@ -218,14 +224,17 @@ Raw reads (*.fastq.gz)
             │                                    │  25 dbCAN3         CAZyme families             │  36 DAS_Tool     Multi-binner refinement
             │                                    │  26 VFDB           Virulence factors           │  37 CheckM2      MAG quality (ML)
             │                                    │  27 BacMet         Metal resistance genes      │  38 dRep         De-replication (97% ANI)
-            │                                    │  28 antiSMASH      BGC / secondary metabolites │  39 CoverM       MAG abundance
-            │                                    │  29 Defense-Finder Bacterial defense systems   │  40 GTDB-Tk      Phylogenetic classification
-            │                                    │  30 NCyc           Nitrogen cycling genes      │  41 Bakta        Genome annotation
-            │                                    │  31 PCyc           Phosphorus cycling genes    │  41b mlst        MLST typing
-            │                                    │  31b SCyc          Sulfur cycling genes        │  41c Roary       Pan-genome
-            │                                    │  31c Pfam-A        Protein domain annotation   │  41d Snippy      SNP / InDel calling
-            │                                    │  31d UniProt       Swiss-Prot high-precision   │  42  MGE         Mobile genetic elements
-            │                                    │  31e FeGenie       Iron metabolism genes       │  42b PlasmidFinder Plasmid identification
+            │                                    │  28 antiSMASH      BGC / secondary metabolites │  39  CoverM       MAG abundance
+            │                                    │  29 Defense-Finder Bacterial defense systems   │  39b inStrain map Reads → MAGs mapping
+            │                                    │  30 NCyc           Nitrogen cycling genes      │  39c inStrain profile Strain-level microdiversity
+            │                                    │  31 PCyc           Phosphorus cycling genes    │  39d inStrain compare Population SNV comparison
+            │                                    │  31b SCyc          Sulfur cycling genes        │  40  GTDB-Tk      Phylogenetic classification
+            │                                    │  31c Pfam-A        Protein domain annotation   │  41  Bakta        Genome annotation
+            │                                    │  31d UniProt       Swiss-Prot high-precision   │  41b mlst         MLST typing
+            │                                    │  31e FeGenie       Iron metabolism genes       │  41c Roary        Pan-genome
+            │                                    │                                                │  41d Snippy       SNP / InDel calling
+            │                                    │                                                │  42  MGE          Mobile genetic elements
+            │                                    │                                                │  42b PlasmidFinder Plasmid identification
             │                                    └────────────────────────────┬──────────────────┘
             │                                                                 │
             └─────────────────────────────────────────────────────────────────┘
@@ -564,6 +573,7 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | 31b–31e | Functional annotation supplement (S/N/P cycling · protein domains · high-precision · iron metabolism) | SCyc · Pfam-A · UniProt Swiss-Prot · FeGenie |
 | 42 / 42b | Mobile genetic elements + plasmid identification | ISfinder · ICEberg · integrall · transposase · mobileOG · PlasmidFinder |
 | 32–41 | MAG recovery (binning → refinement → QC → dereplication → abundance → taxonomy → annotation) | CoverM · MetaBAT2 · MaxBin2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta |
+| 39b–39d | Strain-level microdiversity analysis (reads mapping → SNV profiling → population comparison) | inStrain |
 | 41b–41d | WGS integration: MLST · pan-genome · SNP/InDel calling | mlst · Roary · Snippy |
 | 98b | Functional integration tables (11 output files) | Python (pandas-free, stdlib only) |
 
