@@ -34,6 +34,7 @@ while [[ $# -gt 0 ]]; do
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -52,7 +53,7 @@ SENTINEL="${OUTDIR}/${SAMPLE}.maxbin2.tsv"
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing"; exit 1; fi
 if [ ! -f "${DEPTH}" ]; then echo "[ERROR] Depth missing"; exit 1; fi
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[maxbin2] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[maxbin2] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
 
@@ -75,14 +76,14 @@ EXIT_CODE=$?
 set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[maxbin2] WARNING: MaxBin2 失败，创建空 sentinel: ${SENTINEL}"
-    > "${SENTINEL}"
+    : > "${SENTINEL}"
     exit 0
 fi
 
 N_FA=$(find "${OUTDIR}" -maxdepth 1 -type f -name "bin.*.fasta" | wc -l)
 if [ "${N_FA}" -eq 0 ]; then
     echo "[maxbin2] WARNING: 未产生任何 bins，创建空 sentinel: ${SENTINEL}"
-    > "${SENTINEL}"
+    : > "${SENTINEL}"
 else
     # 构建 contig2bin 表
     for f in "${OUTDIR}"/bin.*.fasta; do

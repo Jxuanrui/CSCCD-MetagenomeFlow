@@ -39,6 +39,7 @@ EOF
 }
 
 CPUS=""
+FORCE=0
 WORKDIR=""
 REPO=""
 
@@ -47,6 +48,7 @@ while [[ $# -gt 0 ]]; do
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -74,8 +76,8 @@ if [ ! -f "${DB_FILE}" ]; then
     exit 1
 fi
 
-if [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
-    echo "[INFO] SCyc 注释结果已存在，跳过: ${OUTPUT}"; exit 0
+if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
+    echo "[31b_bac_scyc] 结果已存在，跳过: ${OUTPUT}"; exit 0
 fi
 
 mkdir -p "${RESULT_DIR}"

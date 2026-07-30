@@ -31,6 +31,7 @@ OUTPUT_DIR=""
 DIMENSION=""
 PREVALENCE_THRESHOLD="0.5"
 MIN_ABUNDANCE="0.0001"
+FORCE=0
 
 require_value() {
     if [[ $# -lt 2 || -z "${2:-}" ]]; then
@@ -48,6 +49,7 @@ while [[ $# -gt 0 ]]; do
         -d|--dimension) require_value "$@"; DIMENSION="$2"; shift 2 ;;
         --prevalence-threshold) require_value "$@"; PREVALENCE_THRESHOLD="$2"; shift 2 ;;
         --min-abundance) require_value "$@"; MIN_ABUNDANCE="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] Unknown argument: $1" >&2; show_help >&2; exit 1 ;;
     esac
@@ -75,6 +77,11 @@ R_ENV="${REPO}/envs/r_stat"
 
 [[ -f "${R_SCRIPT}" ]] || { echo "[ERROR] R script not found: ${R_SCRIPT}" >&2; exit 1; }
 mkdir -p "${OUTPUT_DIR}"
+
+OUTPUT_SUMMARY="${OUTPUT_DIR}/core_microbiome_summary.tsv"
+if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT_SUMMARY}" ] && [ -s "${OUTPUT_SUMMARY}" ]; then
+    echo "[INFO] 结果已存在，跳过: ${OUTPUT_SUMMARY}"; exit 0
+fi
 
 echo "[INFO] Running core microbiome analysis"
 echo "[INFO] Input: ${ABUNDANCE_FILE}"

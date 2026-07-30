@@ -32,12 +32,14 @@ EOF
 CPUS=""
 WORKDIR=""
 REPO=""
+FORCE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -62,8 +64,8 @@ if [ ! -d "${AMR_DB}" ]; then
     echo "[ERROR] AMRFinderPlus 数据库目录不存在: ${AMR_DB}"; exit 1
 fi
 
-if [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
-    echo "[INFO] AMRFinder 结果已存在，跳过: ${OUTPUT}"; exit 0
+if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
+    echo "[amrfinder] 结果已存在，跳过: ${OUTPUT}"; exit 0
 fi
 
 mkdir -p "${RESULT_DIR}"

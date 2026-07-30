@@ -39,12 +39,14 @@ EOF
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_REPO="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CPUS="1"
+FORCE=0
 REPO="${DEFAULT_REPO}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2"; shift 2 ;;
         -r) REPO="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -85,7 +87,7 @@ for db_file in "${BUILD_ORDER[@]}"; do
         exit 1
     fi
 
-    if { [ -f "${sentinel_bt2}" ] && [ -s "${sentinel_bt2}" ]; } || { [ -f "${sentinel_bt2l}" ] && [ -s "${sentinel_bt2l}" ]; }; then
+    if [ ${FORCE} -eq 0 ] && { [ -f "${sentinel_bt2}" ] && [ -s "${sentinel_bt2}" ]; } || { [ -f "${sentinel_bt2l}" ] && [ -s "${sentinel_bt2l}" ]; }; then
         echo "[INFO] 索引已存在，跳过: ${idx_name}"
         continue
     fi

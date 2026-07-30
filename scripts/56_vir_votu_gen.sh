@@ -27,11 +27,13 @@ EOF
 }
 
 CPUS=""; WORKDIR=""; REPO=""
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -46,12 +48,12 @@ CONTIGS_DIR="${OUTDIR}/contigs"
 ALL_VIRUS="${CONTIGS_DIR}/virus.fasta"
 SENTINEL="${OUTDIR}/votu_representatives.tsv"
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[votu_gen] vOTU 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[votu_gen] vOTU 结果已存在，跳过"; exit 0; fi
 
 # Step 1: 收集所有样本的病毒 contigs
 echo "[votu_gen] 步骤 1/4: 合并全样本病毒 contigs ..."
 mkdir -p "${CONTIGS_DIR}"
-> "${ALL_VIRUS}"  # 清空
+: > "${ALL_VIRUS}"  # 清空
 for f in "${WORKDIR}"/result/virus/checkv/*/viruses_filtered.fna; do
     [ -f "$f" ] && cat "$f" >> "${ALL_VIRUS}"
 done

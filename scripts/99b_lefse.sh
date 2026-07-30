@@ -34,6 +34,7 @@ TYPE=""
 LDA_THRESHOLD="2.0"
 MIN_PREVALENCE="0.1"
 WILCOXON_ALPHA="0.05"
+FORCE=0
 
 require_value() {
     if [[ $# -lt 2 || -z "${2:-}" ]]; then
@@ -53,6 +54,7 @@ while [[ $# -gt 0 ]]; do
         --lda-threshold) require_value "$@"; LDA_THRESHOLD="$2"; shift 2 ;;
         --min-prevalence) require_value "$@"; MIN_PREVALENCE="$2"; shift 2 ;;
         --wilcoxon-alpha) require_value "$@"; WILCOXON_ALPHA="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] Unknown argument: $1" >&2; show_help >&2; exit 1 ;;
     esac
@@ -75,6 +77,11 @@ R_ENV="${REPO}/envs/r_stat"
 
 [[ -f "${R_SCRIPT}" ]] || { echo "[ERROR] R script not found: ${R_SCRIPT}" >&2; exit 1; }
 mkdir -p "${OUTPUT_DIR}"
+
+OUTPUT_BIOMARKERS="${OUTPUT_DIR}/lefse_biomarkers.tsv"
+if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT_BIOMARKERS}" ] && [ -s "${OUTPUT_BIOMARKERS}" ]; then
+    echo "[INFO] 结果已存在，跳过: ${OUTPUT_BIOMARKERS}"; exit 0
+fi
 
 echo "[INFO] Running LEfSe analysis"
 echo "[INFO] Input: ${ABUNDANCE_FILE}"

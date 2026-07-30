@@ -46,6 +46,7 @@ EOF
 }
 
 WORKDIR=""
+FORCE=0
 REPO=""
 CPUS=4
 
@@ -54,6 +55,7 @@ while [[ $# -gt 0 ]]; do
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
         -t) CPUS="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -101,6 +103,11 @@ fi
 [ ${MISSING} -eq 1 ] && exit 1
 
 mkdir -p "${OUT_DIR}" "${NORM_DIR}"
+
+VOTU_TABLE_OUTPUT="${OUT_DIR}/votu_abundance_matrix.tsv"
+if [ ${FORCE} -eq 0 ] && [ -f "${VOTU_TABLE_OUTPUT}" ] && [ -s "${VOTU_TABLE_OUTPUT}" ]; then
+    echo "[INFO] 结果已存在，跳过: ${VOTU_TABLE_OUTPUT}"; exit 0
+fi
 
 echo "[integration] 开始病毒维度功能整合"
 echo "[integration] 输出目录: ${OUT_DIR}"

@@ -34,6 +34,7 @@ while [[ $# -gt 0 ]]; do
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -52,7 +53,7 @@ VIRAL_CONTIGS="${CONTIGS_DIR}/virus_contigs.fasta"
 SENTINEL="${OUTDIR}/quality_summary.tsv"
 CHK_DB="${REPO}/db/checkv"
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[checkv] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[checkv] 结果已存在，跳过"; exit 0; fi
 
 # Step 1: 合并 geNomad + VirSorter2 病毒序列后去重
 GENOMAD_VIRUS="${GENOMAD_DIR}/${SAMPLE}.contigs_summary/${SAMPLE}.contigs_virus.fna"
@@ -69,7 +70,7 @@ HAS_GENOMAD=false; HAS_VS2=false
 
 if $HAS_GENOMAD || $HAS_VS2; then
     mkdir -p "${CONTIGS_DIR}"
-    > "${CONTIGS_DIR}/_merged.fasta"
+    : > "${CONTIGS_DIR}/_merged.fasta"
     $HAS_GENOMAD && cat "${GENOMAD_VIRUS}" >> "${CONTIGS_DIR}/_merged.fasta"
     $HAS_VS2 && cat "${VS2_VIRUS}" >> "${CONTIGS_DIR}/_merged.fasta"
     conda run --prefix "${REPO}/envs/assembly" --no-capture-output \

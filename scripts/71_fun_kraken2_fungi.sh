@@ -46,6 +46,7 @@ EOF
 
 SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
 CONFIDENCE="0.1"; READ_LEN="150"
+FORCE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -55,6 +56,7 @@ while [[ $# -gt 0 ]]; do
         -r) REPO="$2";         shift 2 ;;
         --confidence) CONFIDENCE="$2"; shift 2 ;;
         --read-len)   READ_LEN="$2";   shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -82,7 +84,7 @@ if [ ! -d "${DB_KRAKEN}" ] || [ -z "$(ls -A "${DB_KRAKEN}" 2>/dev/null)" ]; then
 fi
 
 BRACKEN_S="${BRACKEN_DIR}/${SAMPLE}_S.bracken"
-if [ -f "${BRACKEN_S}" ] && [ -s "${BRACKEN_S}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${BRACKEN_S}" ] && [ -s "${BRACKEN_S}" ]; then
     echo "[INFO] 结果已存在，跳过: ${SAMPLE}"; exit 0
 fi
 

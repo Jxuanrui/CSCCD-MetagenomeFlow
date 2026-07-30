@@ -16,6 +16,18 @@ set -euo pipefail
 
 # --- 参数解析 ---
 
+FORCE=0
+
+ARGS=()
+for arg in "$@"; do
+    if [ "${arg}" = "--force" ]; then
+        FORCE=1
+    else
+        ARGS+=("${arg}")
+    fi
+done
+set -- "${ARGS[@]}"
+
 if [ $# -ge 8 ]; then
     while getopts s:t:w:r: option; do
         case "${option}" in
@@ -67,6 +79,13 @@ fi
 if [ ! -f "${INPUT_R2}" ]; then
     echo "[ERROR] 输入文件不存在: ${INPUT_R2}"
     exit 1
+fi
+
+# --- 输出文件检查（--force 支持）---
+
+if [ ${FORCE} -eq 0 ] && [ -f "${OUT_R1}" ] && [ -s "${OUT_R1}" ] && [ -f "${OUT_R2}" ] && [ -s "${OUT_R2}" ]; then
+    echo "[fastp] 结果已存在，跳过: ${SAMPLE}"
+    exit 0
 fi
 
 # --- 创建输出目录 ---

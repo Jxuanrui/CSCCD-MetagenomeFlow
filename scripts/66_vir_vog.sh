@@ -23,11 +23,13 @@ EOF
 }
 
 CPUS=""; WORKDIR=""; REPO=""
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -68,7 +70,7 @@ conda run --prefix "${REPO}/envs/bacphlip" --no-capture-output \
         "${PROTEINS}"
 
 # 若提供了注释文件，补充功能描述
-if [ -f "${VOG_ANNOT}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${VOG_ANNOT}" ]; then
     python3 -c "
 import sys
 annot = {}

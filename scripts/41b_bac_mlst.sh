@@ -38,6 +38,7 @@ while [[ $# -gt 0 ]]; do
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2"; shift 2 ;;
         --scheme) SCHEME="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
     esac
@@ -57,7 +58,7 @@ SENTINEL="${OUTDIR}/mlst.tsv"
 RAW_OUT="${OUTDIR}/mlst_raw.txt"
 PLACEHOLDER_NOTE="mlst not available in envs/prokaWGS"
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
     echo "[mlst] Result exists, skip: ${SENTINEL}"
     exit 0
 fi

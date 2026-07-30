@@ -42,6 +42,7 @@ while [[ $# -gt 0 ]]; do
         -r) REPO="$2"; shift 2 ;;
         --identity) IDENTITY="$2"; shift 2 ;;
         --core-definition) CORE_DEFINITION="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
     esac
@@ -62,7 +63,7 @@ FAILED_SENTINEL="${OUTDIR}/summary_statistics.txt.FAILED"
 MATRIX_NOTE="${OUTDIR}/presence_absence_matrix.txt"
 PLACEHOLDER_NOTE="roary not available in envs/prokaWGS"
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
     echo "[pangenome] Result exists, skip: ${SENTINEL}"
     exit 0
 fi

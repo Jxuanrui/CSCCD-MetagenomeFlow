@@ -38,6 +38,7 @@ OUTPUT_DIR=""
 DIMENSION="bacteria"
 FUNCTIONAL_TYPE="kegg_ko"
 ML_IMPORTANCE=""
+FORCE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -47,6 +48,7 @@ while [[ $# -gt 0 ]]; do
         -d|--dimension) require_value "$@"; DIMENSION="$2"; shift 2 ;;
         -y|--type) require_value "$@"; FUNCTIONAL_TYPE="$2"; shift 2 ;;
         --ml-importance) require_value "$@"; ML_IMPORTANCE="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] Unknown argument: $1" >&2; show_help; exit 1 ;;
     esac
@@ -77,6 +79,11 @@ else
     RSCRIPT="$(command -v Rscript || true)"
 fi
 if [[ -z "${RSCRIPT}" ]]; then echo "[ERROR] Rscript executable not found" >&2; exit 1; fi
+
+OUTPUT_SUMMARY="${OUTPUT_DIR}/redundancy_summary.tsv"
+if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT_SUMMARY}" ] && [ -s "${OUTPUT_SUMMARY}" ]; then
+    echo "[INFO] 结果已存在，跳过: ${OUTPUT_SUMMARY}"; exit 0
+fi
 
 command=("${RSCRIPT}" "${R_SCRIPT}"
   --functional-file "${FUNCTIONAL_FILE}"

@@ -17,12 +17,21 @@
 
 set -euo pipefail
 
+FORCE=0
+for arg in "$@"; do
+    if [ "$arg" = "--force" ]; then
+        FORCE=1
+        break
+    fi
+done
+
 if [ $# -lt 8 ]; then
-    echo "用法: bash 72_fun_metaphlan4_euk.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO"
+    echo "用法: bash 72_fun_metaphlan4_euk.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--force]"
     echo "  -s  样本名"
     echo "  -t  线程数"
     echo "  -w  工作目录"
     echo "  -r  MaxMetagenome 根目录"
+    echo "  --force  强制重跑"
     exit 1
 fi
 
@@ -57,7 +66,7 @@ if ! ls "${DB_DIR}/${DB_INDEX}"*.bt2l &>/dev/null; then
 fi
 
 # Skip only if output exists AND contains genuine Eukaryota entries
-if [ -f "${RESULT_DIR}/${SAMPLE}_profile.txt" ] && \
+if [ ${FORCE} -eq 0 ] && [ -f "${RESULT_DIR}/${SAMPLE}_profile.txt" ] && \
    grep -q "k__Eukaryota" "${RESULT_DIR}/${SAMPLE}_profile.txt" 2>/dev/null; then
     echo "[INFO] 真核生物 profile 已存在（含 k__Eukaryota），跳过: ${SAMPLE}"
     exit 0

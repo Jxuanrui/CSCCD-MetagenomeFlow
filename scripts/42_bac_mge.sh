@@ -77,6 +77,7 @@ EOF
 
 SAMPLE=""
 CPUS=""
+FORCE=0
 WORKDIR=""
 REPO=""
 SKIP_ISFINDER=false
@@ -96,6 +97,7 @@ while [[ $# -gt 0 ]]; do
         --skip-integrall)   SKIP_INTEGRALL=true;   shift ;;
         --skip-transposase) SKIP_TRANSPOSASE=true; shift ;;
         --skip-mobileog)    SKIP_MOBILEOG=true;    shift ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -128,7 +130,7 @@ IS_OUT="${MGE_BASE}/isfinder/${SAMPLE}/isfinder_hits.tsv"
 IS_TMP="${WORKDIR}/temp/mge/isfinder/${SAMPLE}"
 
 if [ "${SKIP_ISFINDER}" = false ]; then
-    if [ -f "${IS_OUT}" ] && [ -s "${IS_OUT}" ]; then
+    if [ ${FORCE} -eq 0 ] && [ -f "${IS_OUT}" ] && [ -s "${IS_OUT}" ]; then
         echo "[mge:isfinder] 已存在，跳过: ${IS_OUT}"
     elif [ ! -f "${PROTEINS}" ] || [ ! -s "${PROTEINS}" ]; then
         echo "[mge:isfinder] 跳过 ${SAMPLE}：蛋白文件不存在 ${PROTEINS}"

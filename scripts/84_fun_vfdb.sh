@@ -23,12 +23,14 @@ EOF
 }
 
 CPUS=""; WORKDIR=""; REPO=""
+FORCE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -48,7 +50,7 @@ OUTPUT="${RESULT_DIR}/vfdb_hits.tsv"
 DB_FILE=$(find "${REPO}/db/vfdb" -name "*.dmnd" 2>/dev/null | head -1)
 if [ -z "${DB_FILE}" ]; then echo "[ERROR] VFDB DB 未找到: ${REPO}/db/vfdb/*.dmnd"; exit 1; fi
 if [ ! -d "${PRODIGAL_DIR}" ]; then echo "[ERROR] Prodigal 目录不存在"; exit 1; fi
-if [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then echo "[INFO] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then echo "[INFO] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${RESULT_DIR}"
 

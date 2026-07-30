@@ -32,6 +32,7 @@ while [[ $# -gt 0 ]]; do
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -48,7 +49,7 @@ VS2_DB="${REPO}/db/virsorter2"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing: ${CONTIGS}"; exit 1; fi
 if [ ! -d "${VS2_DB}" ]; then echo "[ERROR] VirSorter2 数据库不存在: ${VS2_DB}"; exit 1; fi
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[virsorter2] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[virsorter2] 结果已存在，跳过"; exit 0; fi
 
 set +e
 echo "[virsorter2] ${SAMPLE} | VirSorter2 病毒预测 ..."

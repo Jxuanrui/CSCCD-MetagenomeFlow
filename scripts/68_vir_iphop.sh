@@ -29,11 +29,13 @@ EOF
 }
 
 CPUS=""; WORKDIR=""; REPO=""
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -50,7 +52,7 @@ IPHOP_DB="${REPO}/db/iphop/Jun_2025_pub_rw"
 
 if [ ! -f "${VOTU_FA}" ] || [ ! -s "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在"; exit 1; fi
 if [ ! -d "${IPHOP_DB}" ]; then echo "[WARN] iPHoP 数据库不存在: ${IPHOP_DB}，跳过"; mkdir -p "${OUTDIR}"; touch "${SENTINEL}"; exit 0; fi
-if [ -f "${SENTINEL}" ]; then echo "[iphop] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ]; then echo "[iphop] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
 

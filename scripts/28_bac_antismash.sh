@@ -70,6 +70,10 @@ fi
 
 # antiSMASH 不允许写入已存在目录
 [ -d "${RESULT_DIR}" ] && rm -rf "${RESULT_DIR}"
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
+    echo "[28_bac_antismash] 结果已存在，跳过: ${SENTINEL}"; exit 0
+fi
+
 mkdir -p "$(dirname "${RESULT_DIR}")"
 
 echo "[antismash] 样本: ${SAMPLE} | 线程: ${CPUS}"

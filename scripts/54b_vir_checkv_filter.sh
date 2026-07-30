@@ -30,6 +30,7 @@ while [[ $# -gt 0 ]]; do
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -47,6 +48,10 @@ FILTERED_FASTA="${OUTDIR}/viruses_filtered.fna"
 
 if [ ! -f "${SUMMARY_TSV}" ] || [ ! -s "${SUMMARY_TSV}" ]; then echo "[ERROR] 缺少输入文件: ${SUMMARY_TSV}"; exit 1; fi
 if [ ! -f "${VIRAL_CONTIGS}" ] || [ ! -s "${VIRAL_CONTIGS}" ]; then echo "[ERROR] 缺少输入文件: ${VIRAL_CONTIGS}"; exit 1; fi
+
+if [ ${FORCE} -eq 0 ] && [ -f "${FILTERED_FASTA}" ] && [ -s "${FILTERED_FASTA}" ]; then
+    echo "[54b_checkv_filter] 结果已存在，跳过: ${SAMPLE}"; exit 0
+fi
 
 echo "[54b_checkv_filter] ${SAMPLE} | CheckV 质量过滤 ..."
 

@@ -31,6 +31,7 @@ while [[ $# -gt 0 ]]; do
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -49,7 +50,7 @@ CONTIG2BIN="${SENTINEL}"
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing"; exit 1; fi
 if [ ! -f "${DEPTH}" ]; then echo "[ERROR] Depth missing: ${DEPTH}"; exit 1; fi
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[metabat2] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[metabat2] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
 

@@ -68,6 +68,10 @@ if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] DefenseFinder 结果已存在，跳过: ${RESULT_DIR}/"; exit 0
 fi
 
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
+    echo "[29_bac_defense_finder] 结果已存在，跳过: ${SENTINEL}"; exit 0
+fi
+
 mkdir -p "${RESULT_DIR}"
 
 echo "[defense_finder] 开始防御系统检测 | 线程: ${CPUS}"

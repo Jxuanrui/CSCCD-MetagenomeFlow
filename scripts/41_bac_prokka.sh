@@ -36,12 +36,14 @@ EOF
 }
 
 CPUS=""; WORKDIR=""; REPO=""; MAG_FILTER=""
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
         -m) MAG_FILTER="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -175,7 +177,7 @@ fi
 
 # 汇总所有 MAG 的注释表为单一 summary（供 Snakemake 追踪 + 41c pangenome 消费）
 SUMMARY="${OUTDIR}/prokka_summary.tsv"
-> "${SUMMARY}"
+: > "${SUMMARY}"
 for mag in "${MAGS[@]}"; do
     mag_name=$(basename "$mag" .fa)
     tsv_out="${OUTDIR}/${mag_name}/${mag_name}.tsv"

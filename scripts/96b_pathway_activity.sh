@@ -25,6 +25,7 @@ HELP
 }
 
 WORKDIR=""
+FORCE=0
 METADATA_FILE=""
 OUTPUT_DIR=""
 DIMENSION=""
@@ -47,6 +48,7 @@ while [[ $# -gt 0 ]]; do
         -d|--dimension) require_value "$@"; DIMENSION="$2"; shift 2 ;;
         --min-coverage) require_value "$@"; MIN_COVERAGE="$2"; shift 2 ;;
         --top-n-contributors) require_value "$@"; TOP_N_CONTRIBUTORS="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] Unknown argument: $1" >&2; show_help >&2; exit 1 ;;
     esac
@@ -101,6 +103,11 @@ fi
 
 [[ -f "${R_SCRIPT}" ]] || { echo "[ERROR] R script not found: ${R_SCRIPT}" >&2; exit 1; }
 mkdir -p "${OUTPUT_DIR}"
+
+PATHWAY_SUMMARY="${OUTPUT_DIR}/pathway_completeness_summary.csv"
+if [ ${FORCE} -eq 0 ] && [ -f "${PATHWAY_SUMMARY}" ] && [ -s "${PATHWAY_SUMMARY}" ]; then
+    echo "[INFO] 结果已存在，跳过: ${PATHWAY_SUMMARY}"; exit 0
+fi
 
 printf '[INFO] HUMAnN3 directory: %s\n' "${HUMANN3_DIR}"
 printf '[INFO] Metadata: %s\n' "${METADATA_FILE}"

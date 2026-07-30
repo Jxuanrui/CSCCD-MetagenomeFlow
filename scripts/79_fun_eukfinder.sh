@@ -31,6 +31,7 @@ EOF
 }
 
 SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""; CDB_OVERRIDE=""
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";       shift 2 ;;
@@ -38,6 +39,7 @@ while [[ $# -gt 0 ]]; do
         -w) WORKDIR="$2";      shift 2 ;;
         -r) REPO="$2";         shift 2 ;;
         --cdb) CDB_OVERRIDE="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -56,7 +58,7 @@ if [ ! -f "${INPUT_CONTIGS}" ]; then
 fi
 
 # 检查是否已有真实结果（.out 文件，非占位符）
-if [ -d "${OUTDIR}" ] && ls "${OUTDIR}/"*.out 1>/dev/null 2>&1; then
+if [ ${FORCE} -eq 0 ] && [ -d "${OUTDIR}" ] && ls "${OUTDIR}/"*.out 1>/dev/null 2>&1; then
     echo "[INFO] 真实结果已存在，跳过: ${OUTDIR}/"
     exit 0
 fi

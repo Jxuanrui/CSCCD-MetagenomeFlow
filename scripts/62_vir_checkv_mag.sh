@@ -24,11 +24,13 @@ EOF
 }
 
 CPUS=""; WORKDIR=""; REPO=""
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -51,12 +53,12 @@ if [ ! -d "${VMAGS_DIR}" ] || [ -z "$(ls "${VMAGS_DIR}"/*.fasta 2>/dev/null)" ];
     exit 0
 fi
 
-if [ -f "${SUMMARY}" ] && [ -s "${SUMMARY}" ]; then echo "[checkv_mag] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${SUMMARY}" ] && [ -s "${SUMMARY}" ]; then echo "[checkv_mag] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${CHKV_DIR}" "${FILTERED_DIR}"
 
 echo "[checkv_mag] 批量 vMAG CheckV 评估 ..."
-> "${SUMMARY}"
+: > "${SUMMARY}"
 for fa in "${VMAGS_DIR}"/*.fasta; do
     bname=$(basename "$fa" .fasta)
     bin_out="${CHKV_DIR}/${bname}"

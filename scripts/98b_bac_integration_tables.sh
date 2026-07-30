@@ -59,6 +59,7 @@ EOF
 }
 
 WORKDIR=""
+FORCE=0
 REPO=""
 CPUS=4
 
@@ -67,6 +68,7 @@ while [[ $# -gt 0 ]]; do
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
         -t) CPUS="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -88,7 +90,7 @@ PCYC_MAP="${REPO}/db/pcyc/misc/annotation.txt"
 SCYC_MAP="${REPO}/db/scyc/scyc-db/misc/annotation.txt"
 
 # 幂等检查
-if [ -f "${OUT_DIR}/gene_annotation_matrix.tsv" ] && \
+if [ ${FORCE} -eq 0 ] && [ -f "${OUT_DIR}/gene_annotation_matrix.tsv" ] && \
    [ -f "${OUT_DIR}/kegg_ko_abundance.tsv" ]; then
     echo "[INFO] 整合表已存在，跳过。如需重建请先删除 ${OUT_DIR}"
     exit 0

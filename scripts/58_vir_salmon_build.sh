@@ -28,11 +28,13 @@ EOF
 }
 
 CPUS=""; WORKDIR=""; REPO=""
+FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -48,7 +50,7 @@ SENTINEL="${INDEX_DIR}/info.json"
 SALMON_VERSION_INFO="${INDEX_DIR}/versionInfo.json"
 
 if [ ! -f "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在: ${VOTU_FA}"; exit 1; fi
-if [ -f "${SENTINEL}" ]; then echo "[salmon_build] 索引已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ]; then echo "[salmon_build] 索引已存在，跳过"; exit 0; fi
 if [ -f "${SALMON_VERSION_INFO}" ]; then
     cp "${SALMON_VERSION_INFO}" "${SENTINEL}"
     echo "[salmon_build] 检测到已有 Salmon 索引，已补全 info.json 哨兵文件"
@@ -60,7 +62,7 @@ mkdir -p "${INDEX_DIR}"
 echo "[salmon_build] 准备 gentrome + decoy ..."
 # 收集所有病毒 CDS (ffn)
 ALL_FFN="${INDEX_DIR}/virus_cds.ffn"
-> "${ALL_FFN}"
+: > "${ALL_FFN}"
 for f in "${WORKDIR}"/result/virus/prodigal/*/*.fna; do
     [ -f "$f" ] && cat "$f" >> "${ALL_FFN}"
 done
