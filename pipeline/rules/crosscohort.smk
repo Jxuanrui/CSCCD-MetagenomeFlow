@@ -28,7 +28,8 @@ rule crosscohort_validation:
         source_mode = config.get("crosscohort_source", "local"),
         cohorts = config.get("crosscohort_cohorts", ""),
         train_cohort = config.get("crosscohort_train", ""),
-        meta_analysis = "--meta-analysis" if config.get("crosscohort_meta_analysis", False) else ""
+        meta_analysis = "--meta-analysis" if config.get("crosscohort_meta_analysis", False) else "",
+        force_flag = config.get("force", False) and "--force" or "",
     threads: 1
     log:
         "{workdir}/logs/stat/crosscohort/97_crosscohort.log"
@@ -43,7 +44,7 @@ rule crosscohort_validation:
             {params.cohorts} \
             {params.train_cohort} \
             {params.meta_analysis} \
-            --force
+            {params.force_flag}
         """
 
 # Optional: aggregate rule for statistics module
