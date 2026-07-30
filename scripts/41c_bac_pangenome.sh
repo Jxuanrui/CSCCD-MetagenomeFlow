@@ -33,6 +33,7 @@ env_has_cmd() {
 THREADS=""
 WORKDIR=""
 REPO=""
+FORCE=0
 IDENTITY="95"
 CORE_DEFINITION="99"
 while [[ $# -gt 0 ]]; do
@@ -44,6 +45,9 @@ while [[ $# -gt 0 ]]; do
         --core-definition) CORE_DEFINITION="$2"; shift 2 ;;
         --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
+        -) case "${OPTARG}" in
+               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
+           esac ;;
         *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
     esac
 done
@@ -67,7 +71,7 @@ if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
     echo "[pangenome] Result exists, skip: ${SENTINEL}"
     exit 0
 fi
-if [ -f "${FAILED_SENTINEL}" ] && [ -s "${FAILED_SENTINEL}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${FAILED_SENTINEL}" ]; then
     echo "[pangenome] Previous FAILED sentinel exists, skip: ${FAILED_SENTINEL}"
     cp "${FAILED_SENTINEL}" "${SENTINEL}"
     exit 0

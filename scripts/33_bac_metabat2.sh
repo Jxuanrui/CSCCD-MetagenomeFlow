@@ -24,6 +24,7 @@ show_help() { cat << EOF
 EOF
 }
 
+FORCE=0
 SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
 while [[ $# -gt 0 ]]; do
     case "$1" in

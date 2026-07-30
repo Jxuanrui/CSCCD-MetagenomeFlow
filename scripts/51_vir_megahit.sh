@@ -23,6 +23,7 @@ show_help() { cat << EOF
 EOF
 }
 
+FORCE=0
 SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -46,7 +47,7 @@ OUTDIR="${WORKDIR}/result/virus/assembly/${SAMPLE}"
 CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
 
 if [ ! -f "${R1}" ]; then echo "[ERROR] R1 missing: ${R1}"; exit 1; fi
-if [ -f "${CONTIGS}" ] && [ -s "${CONTIGS}" ]; then echo "[vir_megahit] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ]; then echo "[vir_megahit] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
 MEGA_TMP="${OUTDIR}/_megahit_tmp"

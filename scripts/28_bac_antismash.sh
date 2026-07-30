@@ -37,6 +37,7 @@ SAMPLE=""
 CPUS=""
 WORKDIR=""
 REPO=""
+FORCE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -45,6 +46,10 @@ while [[ $# -gt 0 ]]; do
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
         -h|--help) show_help; exit 0 ;;
+        --force) FORCE=1; shift ;;
+        -) case "${OPTARG}" in
+               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
+           esac ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
 done
@@ -64,7 +69,7 @@ if [ ! -f "${CONTIGS}" ] || [ ! -s "${CONTIGS}" ]; then
     echo "[ERROR] 组装文件不存在: ${CONTIGS}"; exit 1
 fi
 
-if [ -f "${SENTINEL}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ]; then
     echo "[INFO] antiSMASH 结果已存在，跳过: ${RESULT_DIR}/"; exit 0
 fi
 

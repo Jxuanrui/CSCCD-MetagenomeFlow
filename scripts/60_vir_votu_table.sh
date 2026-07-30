@@ -24,15 +24,18 @@ show_help() { cat << EOF
 EOF
 }
 
-SAMPLES_TSV=""; WORKDIR=""; REPO=""; CPUS=""
+SAMPLES_TSV=""; WORKDIR=""; _REPO=""; _CPUS=""; FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -m) SAMPLES_TSV="$2"; shift 2 ;;
-        -t) CPUS="$2";       shift 2 ;;
+        -t) _CPUS="$2";      shift 2 ;;
         -w) WORKDIR="$2";     shift 2 ;;
-        -r) REPO="$2";        shift 2 ;;
+        -r) _REPO="$2";       shift 2 ;;
         --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
+        -) case "${OPTARG}" in
+               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
+           esac ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
 done

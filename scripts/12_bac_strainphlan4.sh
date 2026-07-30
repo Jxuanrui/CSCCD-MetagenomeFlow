@@ -53,14 +53,19 @@ EOF
 
 CPUS=8
 CLADE=""
+FORCE=0
 
-while getopts "w:r:t:c:h" opt; do
+while getopts "w:r:t:c:h-:" opt; do
     case "${opt}" in
         w) WORKDIR=${OPTARG} ;;
         r) REPO=${OPTARG} ;;
         t) CPUS=${OPTARG} ;;
         c) CLADE=${OPTARG} ;;
         h) show_help; exit 0 ;;
+        -) case "${OPTARG}" in
+               force) FORCE=1 ;;
+               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
+           esac ;;
         *) show_help; exit 1 ;;
     esac
 done
@@ -242,7 +247,7 @@ CLADE_MARKER_DIR="${DB_MARKERS_DIR}/${CLADE}"
 TREE_FILE="${CLADE_OUT_DIR}/RAxML_bestTree.${CLADE}.StrainPhlAn4.tre"
 
 # 幂等检查
-if [ -f "${TREE_FILE}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${TREE_FILE}" ]; then
     echo "[INFO] 菌株 ${CLADE} 的系统发育树已存在，跳过"
     echo "       ${TREE_FILE}"
     exit 0
@@ -325,7 +330,7 @@ done
 
 # 提示 .tre 可视化方式
 BEST_TREE="${CLADE_OUT_DIR}/RAxML_bestTree.${CLADE}.StrainPhlAn4.tre"
-if [ -f "${BEST_TREE}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${BEST_TREE}" ]; then
     echo ""
     echo "[INFO] 系统发育树 (Newick): ${BEST_TREE}"
     echo "       可视化工具: iTOL (https://itol.embl.de/)  |  FigTree  |  ggtree (R)"

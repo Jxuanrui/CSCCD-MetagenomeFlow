@@ -34,6 +34,8 @@ PARALLEL_JOBS=1
 SKIP_STEPS=""
 FROM_STEP=""
 ONLY_STEP=""
+FORCE=0
+FORCE=0
 
 show_help() {
 cat << 'EOF'
@@ -67,6 +69,7 @@ while [[ $# -gt 0 ]]; do
         --skip) SKIP_STEPS="$2"; shift 2 ;;
         --from) FROM_STEP="$2";  shift 2 ;;
         --only) ONLY_STEP="$2";  shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -111,8 +114,11 @@ mapfile -t SAMPLES < <(tail -n+2 "${SAMPLESHEET}" | grep -v "^$\|^#")
 # --- 单样本的 per-sample 步骤（01-02 + 51-55 + 59 + 63）---
 run_sample() {
     local line="$1"
-    local SAMPLE_ID R1 R2 HOST_TYPE WORKDIR
-    IFS=',' read -r SAMPLE_ID R1 R2 HOST_TYPE WORKDIR <<< "${line}"
+    local FORCE_FLAG=""
+    [ ${FORCE} -eq 1 ] && FORCE_FLAG="--force"
+    local line="$1"
+    local SAMPLE_ID R1 R2 _HOST_TYPE WORKDIR
+    IFS=',' read -r SAMPLE_ID R1 R2 _HOST_TYPE WORKDIR <<< "${line}"
     SAMPLE_ID=$(echo "${SAMPLE_ID}" | tr -d ' "')
     WORKDIR=$(echo "${WORKDIR}" | tr -d ' "')
 
@@ -129,34 +135,36 @@ run_sample() {
     [ ! -f "${WORKDIR}/data/${SAMPLE_ID}_2.fastq.gz" ] && ln -sf "${R2}" "${WORKDIR}/data/${SAMPLE_ID}_2.fastq.gz"
 
     # 01 质控
-    should_run "qc" && { echo "[${SAMPLE_ID}] Step 01: fastp 质控..."; bash "${SCRIPTS}/01_qc_fastp.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 qc"
+    should_run "qc" && { echo "[${SAMPLE_ID}] Step 01: fastp 质控..."; bash "${SCRIPTS}/01_qc_fastp.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 qc"
 
     # 02 去宿主
-    should_run "kneaddata" && { echo "[${SAMPLE_ID}] Step 02: kneaddata 去宿主..."; bash "${SCRIPTS}/02_qc_kneaddata.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 kneaddata"
+    should_run "kneaddata" && { echo "[${SAMPLE_ID}] Step 02: kneaddata 去宿主..."; bash "${SCRIPTS}/02_qc_kneaddata.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 kneaddata"
 
     # 51 组装
-    should_run "assembly" && { echo "[${SAMPLE_ID}] Step 51: 病毒组装 (MEGAHIT)..."; bash "${SCRIPTS}/51_vir_megahit.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 assembly"
+    should_run "assembly" && { echo "[${SAMPLE_ID}] Step 51: 病毒组装 (MEGAHIT)..."; bash "${SCRIPTS}/51_vir_megahit.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 assembly"
 
     # 52-53 病毒鉴定（geNomad + VirSorter2）
     if should_run "viral_id"; then
         echo "[${SAMPLE_ID}] Step 52: geNomad 病毒鉴定..."
-        bash "${SCRIPTS}/52_vir_genomad.sh"    -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/52_vir_genomad.sh"    -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
         echo "[${SAMPLE_ID}] Step 53: VirSorter2 病毒预测..."
-        bash "${SCRIPTS}/53_vir_virsorter2.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/53_vir_virsorter2.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
     else
         echo "[${SAMPLE_ID}] 跳过 viral_id"
     fi
 
     # 54 CheckV contig 质评
-    should_run "checkv" && { echo "[${SAMPLE_ID}] Step 54: CheckV contig 质评..."; bash "${SCRIPTS}/54_vir_checkv_contig.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 checkv"
+    should_run "checkv" && { echo "[${SAMPLE_ID}] Step 54: CheckV contig 质评..."; bash "${SCRIPTS}/54_vir_checkv_contig.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 checkv"
 
     # 55 蛋白预测
-    should_run "prodigal_gv" && { echo "[${SAMPLE_ID}] Step 55: Prodigal-gv 蛋白预测..."; bash "${SCRIPTS}/55_vir_prodigal_gv.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 prodigal_gv"
+    should_run "prodigal_gv" && { echo "[${SAMPLE_ID}] Step 55: Prodigal-gv 蛋白预测..."; bash "${SCRIPTS}/55_vir_prodigal_gv.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 prodigal_gv"
 
     echo "[pipeline_virome] 样本 ${SAMPLE_ID} per-sample 步骤完成"
 }
 export -f run_sample should_run
-export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP STEPS_ORDER
+export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP FORCE
+export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP FORCE
+export SCRIPTS REPO CPUS FORCE SKIP_STEPS FROM_STEP ONLY_STEP STEPS_ORDER
 
 # --- 执行 per-sample 步骤 ---
 if [ "${PARALLEL_JOBS}" -gt 1 ] && command -v rush &>/dev/null; then
@@ -178,11 +186,11 @@ AGG_WORKDIR=$(echo "${AGG_WORKDIR}" | tr -d ' "')
 # --- 聚合步骤（所有样本完成后运行一次）---
 if should_run "cluster"; then
     echo "[pipeline_virome] Step 56: vOTU 生成 (vclust)..."
-    bash "${SCRIPTS}/56_vir_votu_gen.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/56_vir_votu_gen.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
     echo "[pipeline_virome] Step 57: vOTU 分类注释 (geNomad)..."
-    bash "${SCRIPTS}/57_vir_votu_genomad.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/57_vir_votu_genomad.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
     echo "[pipeline_virome] Step 58: 构建 Salmon 索引..."
-    bash "${SCRIPTS}/58_vir_salmon_build.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/58_vir_salmon_build.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
 fi
 
 if should_run "quantify"; then
@@ -191,36 +199,36 @@ if should_run "quantify"; then
         IFS=',' read -r SID _ _ _ WDIR <<< "${sample_line}"
         SID=$(echo "${SID}" | tr -d ' "')
         WDIR=$(echo "${WDIR}" | tr -d ' "')
-        bash "${SCRIPTS}/59_vir_salmon_quant.sh" -s "${SID}" -t "${CPUS}" -w "${WDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/59_vir_salmon_quant.sh" -s "${SID}" -t "${CPUS}" -w "${WDIR}" -r "${REPO}" ${FORCE_FLAG}
     done
-    bash "${SCRIPTS}/60_vir_votu_table.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/60_vir_votu_table.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
 fi
 
 if should_run "mag"; then
     echo "[pipeline_virome] Step 61-62: vMAG 生成 + CheckV 质评..."
-    bash "${SCRIPTS}/61_vir_vmag.sh"       -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/62_vir_checkv_mag.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/61_vir_vmag.sh"       -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
+    bash "${SCRIPTS}/62_vir_checkv_mag.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
     echo "[pipeline_virome] Step 63: CoverM vMAG 丰度..."
     for sample_line in "${SAMPLES[@]}"; do
         IFS=',' read -r SID _ _ _ WDIR <<< "${sample_line}"
         SID=$(echo "${SID}" | tr -d ' "')
         WDIR=$(echo "${WDIR}" | tr -d ' "')
-        bash "${SCRIPTS}/63_vir_coverm_quant.sh" -s "${SID}" -t "${CPUS}" -w "${WDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/63_vir_coverm_quant.sh" -s "${SID}" -t "${CPUS}" -w "${WDIR}" -r "${REPO}" ${FORCE_FLAG}
     done
 fi
 
 if should_run "annotate"; then
     echo "[pipeline_virome] Step 64-69: 病毒注释..."
-    bash "${SCRIPTS}/64_vir_pharokka.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/65_vir_phold.sh"      -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/66_vir_vog.sh"        -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/67_vir_bacphlip.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/68_vir_iphop.sh"      -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/69_vir_vcontact3.sh"  -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/64_vir_pharokka.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
+    bash "${SCRIPTS}/65_vir_phold.sh"      -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
+    bash "${SCRIPTS}/66_vir_vog.sh"        -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
+    bash "${SCRIPTS}/67_vir_bacphlip.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
+    bash "${SCRIPTS}/68_vir_iphop.sh"      -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
+    bash "${SCRIPTS}/69_vir_vcontact3.sh"  -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
     echo "[pipeline_virome] Step 70-72: 扩展工具（PhaBox2/DRAM-v/PhaGCN3）..."
-    bash "${SCRIPTS}/70_vir_phabox2.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/71_vir_dram.sh"       -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/72_vir_phagcn3.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/70_vir_phabox2.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
+    bash "${SCRIPTS}/71_vir_dram.sh"       -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
+    bash "${SCRIPTS}/72_vir_phagcn3.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
 fi
 
 echo ""

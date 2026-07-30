@@ -23,11 +23,12 @@ show_help() { cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
+FORCE=0
+SAMPLE=""; _CPUS=""; WORKDIR=""; _REPO=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
+        -t) _CPUS="$2";   shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
         --force) FORCE=1; shift ;;

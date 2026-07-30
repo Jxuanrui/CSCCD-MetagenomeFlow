@@ -31,6 +31,7 @@ env_has_cmd() {
 THREADS=""
 WORKDIR=""
 REPO=""
+FORCE=0
 SCHEME="auto"
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -40,6 +41,9 @@ while [[ $# -gt 0 ]]; do
         --scheme) SCHEME="$2"; shift 2 ;;
         --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
+        -) case "${OPTARG}" in
+               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
+           esac ;;
         *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
     esac
 done

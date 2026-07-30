@@ -24,6 +24,7 @@ show_help() { cat << EOF
 EOF
 }
 
+FORCE=0
 SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -48,7 +49,7 @@ QUANT_DIR="${WORKDIR}/result/virus/salmon/${SAMPLE}"
 REPORT="${QUANT_DIR}/report.tsv"
 
 if [ ! -d "${INDEX_DIR}" ]; then echo "[ERROR] Salmon 索引不存在: ${INDEX_DIR}"; exit 1; fi
-if [ -f "${REPORT}" ] && [ -s "${REPORT}" ]; then echo "[salmon_quant] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${REPORT}" ]; then echo "[salmon_quant] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${QUANT_DIR}" "$(dirname "${REPORT}")"
 

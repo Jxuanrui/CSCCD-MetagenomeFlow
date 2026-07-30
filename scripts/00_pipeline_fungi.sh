@@ -33,6 +33,8 @@ PARALLEL_JOBS=1
 SKIP_STEPS=""
 FROM_STEP=""
 ONLY_STEP=""
+FORCE=0
+FORCE=0
 
 show_help() {
 cat << 'EOF'
@@ -65,6 +67,7 @@ while [[ $# -gt 0 ]]; do
         --skip) SKIP_STEPS="$2"; shift 2 ;;
         --from) FROM_STEP="$2";  shift 2 ;;
         --only) ONLY_STEP="$2";  shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -108,8 +111,11 @@ mapfile -t SAMPLES < <(tail -n+2 "${SAMPLESHEET}" | grep -v "^$\|^#")
 # --- 单样本的 per-sample 步骤（01-02 + 71-80）---
 run_sample() {
     local line="$1"
-    local SAMPLE_ID R1 R2 HOST_TYPE WORKDIR
-    IFS=',' read -r SAMPLE_ID R1 R2 HOST_TYPE WORKDIR <<< "${line}"
+    local FORCE_FLAG=""
+    [ ${FORCE} -eq 1 ] && FORCE_FLAG="--force"
+    local line="$1"
+    local SAMPLE_ID R1 R2 _HOST_TYPE WORKDIR
+    IFS=',' read -r SAMPLE_ID R1 R2 _HOST_TYPE WORKDIR <<< "${line}"
     SAMPLE_ID=$(echo "${SAMPLE_ID}" | tr -d ' "')
     WORKDIR=$(echo "${WORKDIR}" | tr -d ' "')
 
@@ -126,45 +132,47 @@ run_sample() {
     [ ! -f "${WORKDIR}/data/${SAMPLE_ID}_2.fastq.gz" ] && ln -sf "${R2}" "${WORKDIR}/data/${SAMPLE_ID}_2.fastq.gz"
 
     # 01 质控
-    should_run "qc" && { echo "[${SAMPLE_ID}] Step 01: fastp 质控..."; bash "${SCRIPTS}/01_qc_fastp.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 qc"
+    should_run "qc" && { echo "[${SAMPLE_ID}] Step 01: fastp 质控..."; bash "${SCRIPTS}/01_qc_fastp.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true; } || echo "[${SAMPLE_ID}] 跳过 qc"
 
     # 02 去宿主
-    should_run "kneaddata" && { echo "[${SAMPLE_ID}] Step 02: kneaddata 去宿主..."; bash "${SCRIPTS}/02_qc_kneaddata.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 kneaddata"
+    should_run "kneaddata" && { echo "[${SAMPLE_ID}] Step 02: kneaddata 去宿主..."; bash "${SCRIPTS}/02_qc_kneaddata.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true; } || echo "[${SAMPLE_ID}] 跳过 kneaddata"
 
     # 71-77 分类（Kraken2 + MetaPhlAn4 + HUMAnN4提取 + BLAST + FunOMIC + CCMetagen + MicroFisher）
     # 并行启动三种互补策略，提速
     if should_run "taxonomy"; then
         echo "[${SAMPLE_ID}] Step 71: Kraken2 真菌分类..."
-        bash "${SCRIPTS}/71_fun_kraken2_fungi.sh"  -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/71_fun_kraken2_fungi.sh"  -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
         echo "[${SAMPLE_ID}] Step 72: MetaPhlAn4 真菌分类..."
-        bash "${SCRIPTS}/72_fun_metaphlan4_euk.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/72_fun_metaphlan4_euk.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
         echo "[${SAMPLE_ID}] Step 73: 提取真菌功能通路..."
-        bash "${SCRIPTS}/73_fun_humann4_fungi.sh"  -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/73_fun_humann4_fungi.sh"  -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
         echo "[${SAMPLE_ID}] Step 74: BLAST 比对肠道真菌库..."
-        bash "${SCRIPTS}/74_fun_blast_gutdb.sh"    -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/74_fun_blast_gutdb.sh"    -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
         echo "[${SAMPLE_ID}] Step 75: FunOMIC 真菌分类..."
-        bash "${SCRIPTS}/75_fun_funomics.sh"       -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/75_fun_funomics.sh"       -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
         echo "[${SAMPLE_ID}] Step 76: CCMetagen 真核分类..."
-        bash "${SCRIPTS}/76_fun_ccmetagen.sh"      -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/76_fun_ccmetagen.sh"      -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
         echo "[${SAMPLE_ID}] Step 77: MicroFisher 多标记提取..."
-        bash "${SCRIPTS}/77_fun_microfisher.sh"    -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"
+        bash "${SCRIPTS}/77_fun_microfisher.sh"    -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
     else
         echo "[${SAMPLE_ID}] 跳过 taxonomy"
     fi
 
     # 78 组装
-    should_run "assembly" && { echo "[${SAMPLE_ID}] Step 78: 真菌组装 (MEGAHIT)..."; bash "${SCRIPTS}/78_fun_megahit.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 assembly"
+    should_run "assembly" && { echo "[${SAMPLE_ID}] Step 78: 真菌组装 (MEGAHIT)..."; bash "${SCRIPTS}/78_fun_megahit.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true; } || echo "[${SAMPLE_ID}] 跳过 assembly"
 
     # 79 Eukfinder MAG 回收
-    should_run "eukfinder" && { echo "[${SAMPLE_ID}] Step 79: Eukfinder MAG 回收..."; bash "${SCRIPTS}/79_fun_eukfinder.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 eukfinder"
+    should_run "eukfinder" && { echo "[${SAMPLE_ID}] Step 79: Eukfinder MAG 回收..."; bash "${SCRIPTS}/79_fun_eukfinder.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true; } || echo "[${SAMPLE_ID}] 跳过 eukfinder"
 
     # 80 基因预测
-    should_run "gene_predict" && { echo "[${SAMPLE_ID}] Step 80: Prodigal 基因预测..."; bash "${SCRIPTS}/80_fun_prodigal.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}"; } || echo "[${SAMPLE_ID}] 跳过 gene_predict"
+    should_run "gene_predict" && { echo "[${SAMPLE_ID}] Step 80: Prodigal 基因预测..."; bash "${SCRIPTS}/80_fun_prodigal.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true; } || echo "[${SAMPLE_ID}] 跳过 gene_predict"
 
     echo "[pipeline_fungi] 样本 ${SAMPLE_ID} per-sample 步骤完成"
 }
 export -f run_sample should_run
-export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP STEPS_ORDER
+export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP FORCE
+export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP FORCE
+export SCRIPTS REPO CPUS FORCE SKIP_STEPS FROM_STEP ONLY_STEP STEPS_ORDER
 
 # --- 执行 per-sample 步骤 ---
 if [ "${PARALLEL_JOBS}" -gt 1 ] && command -v rush &>/dev/null; then
@@ -185,12 +193,12 @@ AGG_WORKDIR=$(echo "${AGG_WORKDIR}" | tr -d ' "')
 # --- 聚合注释（所有样本的 FAA 文件都就绪后）---
 if should_run "annotate"; then
     echo "[pipeline_fungi] Step 81-86: 聚合注释（所有样本合并）..."
-    bash "${SCRIPTS}/81_fun_eggnog.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/82_fun_kegg.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/83_fun_dbcan.sh"  -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/84_fun_vfdb.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/85_fun_amr.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
-    bash "${SCRIPTS}/86_fun_merops.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}"
+    bash "${SCRIPTS}/81_fun_eggnog.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
+    bash "${SCRIPTS}/82_fun_kegg.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
+    bash "${SCRIPTS}/83_fun_dbcan.sh"  -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
+    bash "${SCRIPTS}/84_fun_vfdb.sh"   -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
+    bash "${SCRIPTS}/85_fun_amr.sh"    -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
+    bash "${SCRIPTS}/86_fun_merops.sh" -t "${CPUS}" -w "${AGG_WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
 fi
 
 echo ""

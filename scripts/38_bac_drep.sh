@@ -32,7 +32,7 @@ show_help() { cat << EOF
 EOF
 }
 
-ANI="0.95"; CPUS=""; WORKDIR=""; REPO=""
+ANI="0.95"; CPUS=""; WORKDIR=""; REPO=""; FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -a) ANI="$2";    shift 2 ;;
@@ -41,6 +41,9 @@ while [[ $# -gt 0 ]]; do
         -r) REPO="$2";   shift 2 ;;
         --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
+        -) case "${OPTARG}" in
+               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
+           esac ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
 done

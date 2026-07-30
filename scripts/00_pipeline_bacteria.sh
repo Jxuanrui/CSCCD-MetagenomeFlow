@@ -60,6 +60,8 @@ SKIP_STEPS=""
 FROM_STEP=""
 ONLY_STEP=""
 HUMANN_SPEED="standard"
+FORCE=0
+FORCE=0
 
 show_help() {
 cat << 'EOF'
@@ -98,6 +100,7 @@ while [[ $# -gt 0 ]]; do
         --from) FROM_STEP="$2";  shift 2 ;;
         --only) ONLY_STEP="$2";  shift 2 ;;
         --humann-speed) HUMANN_SPEED="$2"; shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -154,6 +157,9 @@ mapfile -t SAMPLES < <(tail -n+2 "${SAMPLESHEET}" | grep -v "^$\|^#")
 # --- 运行函数：对单个样本运行所有步骤 ---
 run_sample() {
     local line="$1"
+    local FORCE_FLAG=""
+    [ ${FORCE} -eq 1 ] && FORCE_FLAG="--force"
+    local line="$1"
     local SAMPLE_ID R1 R2 HOST_TYPE WORKDIR
 
     IFS=',' read -r SAMPLE_ID R1 R2 HOST_TYPE WORKDIR <<< "${line}"
@@ -185,7 +191,7 @@ run_sample() {
         echo "[${SAMPLE_ID}] Step 01: fastp 质控..."
         bash "${SCRIPTS}/01_qc_fastp.sh" \
             -s "${SAMPLE_ID}" -t "${CPUS}" \
-            -w "${WORKDIR}" -r "${REPO}"
+            -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
     else
         echo "[${SAMPLE_ID}] Step 01: 跳过 fastp 质控"
     fi
@@ -195,7 +201,7 @@ run_sample() {
         echo "[${SAMPLE_ID}] Step 02: kneaddata 去宿主（宿主: ${HOST_TYPE}）..."
         bash "${SCRIPTS}/02_qc_kneaddata.sh" \
             -s "${SAMPLE_ID}" -t "${CPUS}" \
-            -w "${WORKDIR}" -r "${REPO}"
+            -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
     else
         echo "[${SAMPLE_ID}] Step 02: 跳过去宿主"
     fi
@@ -205,7 +211,7 @@ run_sample() {
         echo "[${SAMPLE_ID}] Step 11: MetaPhlAn4 物种组成..."
         bash "${SCRIPTS}/11_bac_metaphlan4.sh" \
             -s "${SAMPLE_ID}" -t "${CPUS}" \
-            -w "${WORKDIR}" -r "${REPO}"
+            -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}
     else
         echo "[${SAMPLE_ID}] Step 11: 跳过 MetaPhlAn4"
     fi
@@ -224,7 +230,7 @@ run_sample() {
     echo "[pipeline] 样本 ${SAMPLE_ID} 完成"
 }
 export -f run_sample should_run
-export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP HUMANN_SPEED
+export SCRIPTS REPO CPUS FORCE SKIP_STEPS FROM_STEP ONLY_STEP HUMANN_SPEED
 
 # --- 执行（支持并行）---
 if [ "${PARALLEL_JOBS}" -gt 1 ] && command -v rush &>/dev/null; then
@@ -243,7 +249,7 @@ fi
 if should_run "merge"; then
     # 按 project_dir 分组合并
     declare -A PROJECTS
-    while IFS=',' read -r sid r1 r2 host wd; do
+    while IFS=',' read -r sid _r1 _r2 _host wd; do
         [[ "${sid}" == "sample_id" ]] && continue
         wd=$(echo "${wd}" | tr -d ' "')
         PROJECTS["${wd}"]=1
