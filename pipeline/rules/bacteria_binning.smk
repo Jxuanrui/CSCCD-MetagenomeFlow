@@ -90,13 +90,30 @@ rule dastool:
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
+# ─── 36b: metaWRAP post-binning reassembly (per-sample) ─────────────────────
+
+rule bin_reassembly:
+    input:
+        contig2bin = BINNING + "/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
+        reads_1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        reads_2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+    output:
+        done = BINNING + "/reassembly/{sample}/{sample}.reassembly_done.txt",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    shell:
+        "bash {REPO}/scripts/36b_bac_bin_reassembly.sh -s {wildcards.sample}" +
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
+
+
 # ─── 37: CheckM2 MAG quality assessment (aggregate) ─────────────────────────
 
 rule checkm2:
     input:
-        # Collect all dastool bins across samples
-        bins = expand(BINNING + "/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
-                      sample=SAMPLES),
+        # Collect all reassembly sentinels across samples (37 reads reassembled
+        # bins when present, falling back to raw dastool bins otherwise)
+        reassembly = expand(BINNING + "/reassembly/{sample}/{sample}.reassembly_done.txt",
+                             sample=SAMPLES),
     output:
         report = BINNING + "/checkm2/quality_report.tsv",
     params:
@@ -173,7 +190,8 @@ rule instrain_compare:
         profiles = expand(BINNING + "/instrain_profile/{sample}/output/{sample}_genome_info.tsv",
                           sample=SAMPLES),
     output:
-        compare = BINNING + "/instrain_compare/output/comparisonsTable.tsv",
+        compare = BINNING + "/instrain_compare/output/instrain_compare_comparisonsTable.tsv",
+        summary = BINNING + "/instrain_compare/output/strain_comparison_summary.tsv",
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:

@@ -134,6 +134,28 @@ rule antismash:
         "bash {REPO}/scripts/28_bac_antismash.sh -s {wildcards.sample} -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
+rule bac_bgc_novelty:
+    """BGC 新颖度评分：对 28 号 antiSMASH 产出的每个 region 提取 CDS 蛋白，
+    DIAMOND 比对 antiSMASH 自带的 MIBiG 3.1 库，按最佳匹配 cluster 的 CDS
+    命中比例计算 novelty_score（复用 clustercompare/mibig 目录下现成 DIAMOND
+    库，不重跑 antiSMASH，不新建数据库/环境）。
+    """
+    input:
+        antismash_done = WORKDIR + "/result/annotation/antismash/{sample}/antismash_done.txt",
+    output:
+        novelty = WORKDIR + "/result/annotation/antismash/{sample}/{sample}.bgc_novelty.tsv",
+    log:
+        WORKDIR + "/logs/annotation/bac_bgc_novelty/{sample}.log",
+    threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    shell:
+        "bash {REPO}/scripts/28b_bac_bgc_novelty.sh  {params.force_flag}"
+        "-s {wildcards.sample} -t {threads} "
+        "-w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
 # ─── 29: DefenseFinder bacterial defense systems ────────────────────────────
 
 rule defense_finder:

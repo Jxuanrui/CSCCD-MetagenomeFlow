@@ -25,6 +25,7 @@ include: "rules/bacteria_taxonomy.smk"
 include: "rules/bacteria_assembly.smk"
 include: "rules/bacteria_annotation.smk"
 include: "rules/bacteria_binning.smk"
+include: "rules/bacteria_gem.smk"
 include: "rules/virome.smk"
 include: "rules/mycobiome.smk"
 include: "rules/statistics.smk"
@@ -70,6 +71,14 @@ rule all:
                workdir=WORKDIR, sample=SAMPLES),
         expand("{workdir}/result/fungi/eukfinder/{sample}/results.txt",
                workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/fungi/veba_qc/{sample}/{sample}.veba_qc.done",
+               workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/fungi/veba_qc/{sample}/euk_mags/{sample}.euk_mags_summary.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/fungi/veba_qc/{sample}/euk_mags/{sample}.metaeuk_done.txt",
+               workdir=WORKDIR, sample=SAMPLES),
+        WORKDIR + "/result/cross_domain/cluster/genome_clusters.tsv",
+        WORKDIR + "/result/cross_domain/orthogroup/orthogroup_table.tsv",
         expand("{workdir}/result/fungi/prodigal/{sample}/{sample}.faa",
                workdir=WORKDIR, sample=SAMPLES),
         WORKDIR + "/result/fungi/eggnog/eggnog.emapper.annotations",
@@ -97,16 +106,23 @@ rule all:
         WORKDIR + "/result/annotation/uniprot_sprot/sprot_hits.tsv",
         expand("{workdir}/result/annotation/antismash/{sample}/antismash_done.txt",
                workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/annotation/antismash/{sample}/{sample}.bgc_novelty.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
         # Binning
         expand("{workdir}/result/binning/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
+               workdir=WORKDIR, sample=SAMPLES),
+        expand("{workdir}/result/binning/reassembly/{sample}/{sample}.reassembly_done.txt",
                workdir=WORKDIR, sample=SAMPLES),
         WORKDIR + "/result/binning/checkm2/quality_report.tsv",
         WORKDIR + "/result/binning/drep/drep_done.txt",
         expand("{workdir}/result/binning/coverm_quant/{sample}.tsv",
                workdir=WORKDIR, sample=SAMPLES),
-        WORKDIR + "/result/binning/instrain_compare/output/comparisonsTable.tsv",
+        WORKDIR + "/result/binning/instrain_compare/output/strain_comparison_summary.tsv",
         WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
         WORKDIR + "/result/binning/prokka/prokka_summary.tsv",
+        # GEM (Genome-Scale Metabolic Models)
+        WORKDIR + "/result/gem/carveme/carveme_done.txt",
+        WORKDIR + "/result/gem/fba/fba_done.txt",
         # Virome assembly + QC
         expand("{workdir}/result/virus/checkv/{sample}/quality_summary.tsv",
                workdir=WORKDIR, sample=SAMPLES),

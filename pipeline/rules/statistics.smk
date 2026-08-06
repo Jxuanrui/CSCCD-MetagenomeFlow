@@ -360,7 +360,7 @@ rule fun_integration_tables:
     """Integrate fungal annotation and abundance outputs into summary tables."""
     input:
         metaeuk = expand(
-            WORKDIR + "/result/fungi/metaeuk/{sample}/{sample}.fas",
+            WORKDIR + "/result/fungi/metaeuk/{sample}/{sample}_metaeuk.faa",
             sample=SAMPLES,
         ),
         eggnog = WORKDIR + "/result/fungi/eggnog/eggnog.emapper.annotations",
@@ -646,3 +646,57 @@ rule downstream_summary:
             printf '%s\t%s\t%s\t%s\n' "$dimension" "$module" "$status" "$path" >> {output.summary}
         done
         """
+
+
+# ── Cross-domain genome clustering (VEBA cluster module methodology reference) ─
+
+rule cross_domain_ani_cluster:
+    """Cross-domain (bacteria/virus/fungi) genome ANI clustering via FastANI +
+    networkx Louvain community detection. VEBA `cluster` module methodology
+    reference, no VEBA source reused. Known limitation: nucleotide ANI across
+    distant domains (e.g. bacteria vs fungi) has little biological meaning at
+    that evolutionary distance — accepted by user as a known constraint of the
+    current design, not a defect to silently work around.
+    """
+    input:
+        drep_done = WORKDIR + "/result/binning/drep/drep_done.txt",
+        euk_mags_summaries = expand(
+            WORKDIR + "/result/fungi/veba_qc/{sample}/euk_mags/{sample}.euk_mags_summary.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        out = WORKDIR + "/result/cross_domain/cluster/genome_clusters.tsv",
+    log:
+        WORKDIR + "/logs/cross_domain/ani_cluster.log",
+    threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    shell:
+        "bash {REPO}/scripts/98e_cross_domain_ani_cluster.sh  {params.force_flag}"
+        "-t {threads} -w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule cross_domain_orthogroup:
+    """Cross-domain protein orthogroup detection via MMseqs2 easy-cluster on
+    merged Prokka (bacteria) / pharokka-prodigal (virus) / MetaEuk (fungi)
+    protein predictions. VEBA `cluster` module methodology reference (SLC/SSPC
+    orthogroup detection), no VEBA source reused.
+    """
+    input:
+        ani_clusters = WORKDIR + "/result/cross_domain/cluster/genome_clusters.tsv",
+        metaeuk_done = expand(
+            WORKDIR + "/result/fungi/veba_qc/{sample}/euk_mags/{sample}.metaeuk_done.txt",
+            sample=SAMPLES,
+        ),
+    output:
+        out = WORKDIR + "/result/cross_domain/orthogroup/orthogroup_table.tsv",
+    log:
+        WORKDIR + "/logs/cross_domain/orthogroup.log",
+    threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    shell:
+        "bash {REPO}/scripts/98f_cross_domain_orthogroup.sh  {params.force_flag}"
+        "-t {threads} -w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
