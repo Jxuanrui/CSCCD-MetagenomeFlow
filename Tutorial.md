@@ -1,7 +1,7 @@
 # MaxMetagenome 分析平台使用教程
 
 > 面向首次使用者的完整流程指南
-> 平台版本：MaxMetagenome v1.0 | 更新日期：2026-06-24
+> 平台版本：CSCCD-MetagenomeFlow v1.1 | 更新日期：2026-08-03
 >
 > **本教程采用逐步审核制**：每个步骤执行完毕后，你必须审核输出结果，确认无误后再继续下一步。
 > 不得提前启动 Snakemake 全流程，待所有关键步骤单样本审核通过后再切换批量模式。
@@ -355,6 +355,38 @@ Project/MyProject/result/kneaddata/Sample1/
 输出：输入reads数（R1+R2合计）、宿主去除reads数、宿主去除率、微生物保留率，
 并判断是否在正常范围（肠道样本宿主污染率通常 <5%，超过 30% 需复查采样）。
 ```
+
+---
+
+### 步骤 2b：R1/R2 严格重新配对（修复 kneaddata 输出顺序错位）
+
+**步骤名称**：FASTQ 配对完整性修复
+
+**目的**：调试步骤36b（post-binning reassembly）时发现，kneaddata 产出的 R1/R2 文件虽然读长 ID 集合完全一致（`sort` + `diff` 验证零差异），但顺序发生了错位（约每80万条中15条位置偏移）。`bwa mem` 等严格要求 R1/R2 按位置一一对应的工具会在此处直接 fatal abort（"paired reads have different names"，退出码非0，非仅警告）；更宽容的工具（如 bowtie2/samtools）可能静默掩盖此问题而不报错，危险性更高。本步骤用 `seqkit pair` 按 ID 强制重新配对，确保下游所有工具拿到的都是严格配对的 FASTQ。
+
+**依赖**：步骤2（kneaddata）的 `_raw` 中间产物（`{sample}_{1,2}.kneaddata_raw.fastq.gz`）
+
+**执行方式**：
+
+```bash
+bash ~/Course/Maxmetagenome/scripts/02b_qc_pair_repair.sh \
+  -s Sample4 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+
+```
+result/kneaddata/Sample4/
+├── Sample4_1.kneaddata.fastq.gz       — 严格配对后的最终产物（下游所有步骤的标准输入）
+├── Sample4_2.kneaddata.fastq.gz
+└── Sample4.pair_repair_done.txt       — sentinel（READS_BEFORE / READS_AFTER 计数）
+```
+
+**实测**（Project01 真实样本 Sample4）：耗时 358 秒，重配对前后 reads 数均为 38,900,065 对，确认是纯粹的顺序修复、无数据丢失。修复后手动重跑 `bwa mem` 验证：由中止时仅产出 8,483 行 SAM，变为完整产出 78,005,192 行 SAM（exit 0）。
+
+**审核要点**：
+- 本步骤是**新增的强制流水线步骤**，不是可选修复——下游所有依赖严格 R1/R2 配对的工具（包括步骤36b）都以本步骤产出为标准输入
+- 中间产物改名为 `_raw` 后缀，Snakemake 层面已同步更新（`rule kneaddata` 输出 `_raw`，新增 `rule pair_repair` 产出最终配对文件），41 处既有下游规则引用无需改动
 
 ---
 
@@ -1277,6 +1309,48 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
 
 ---
 
+### 步骤 28b：BGC 新颖度评分（③biosynthetic novelty 模块）
+
+**步骤名称**：次级代谢产物生物合成基因簇（BGC）新颖度评分
+
+**目的**：28 号 antiSMASH 用 `--minimal` 参数运行以节省耗时，跳过了内置的 KnownClusterBlast（MIBiG 已知簇比对）步骤，现有产出的 `.gbk` 文件里没有任何"该 BGC 与已知代谢产物簇有多相似"的信息。28b 独立对每个 region 的 CDS 蛋白序列做 DIAMOND 比对，复用 antiSMASH 数据库目录下自带的 MIBiG 3.1 蛋白 DIAMOND 库（`db/antismash/antismash-db/clustercompare/mibig/3.1/proteins.dmnd`，41002 条蛋白，antiSMASH 内部 clustercompare 功能用的资源），**不重跑 antiSMASH，不新建数据库**。以 region（一个 BGC）为单位聚合 CDS 命中比例，novelty_score = 1 − 最佳匹配 MIBiG cluster 的 CDS 命中比例（完全无命中记 1.0，即完全新颖）。
+
+**依赖**：步骤28（antiSMASH，`antismash_done.txt` sentinel + `*.region*.gbk`）
+
+**执行方式**：
+
+```bash
+bash ~/Course/Maxmetagenome/scripts/28b_bac_bgc_novelty.sh \
+  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+
+```
+result/annotation/antismash/Sample4/
+└── Sample4.bgc_novelty.tsv
+    列：sample, contig_id, region_id, product, n_cds,
+        best_mibig_cluster, best_mibig_organism, best_mibig_product,
+        best_mibig_hit_fraction, novelty_score
+```
+
+**实测**（Project01 全量 10 个样本，共 2339 个 BGC region）：全部样本跑通，Sample4（167 个 region）验证阶段耗时 21s；novelty_score 呈现真实梯度分布，从 0.0（完全匹配已知簇，如某 NRPS region 与大肠杆菌 BGC0001055 100% CDS 命中）到 1.0（完全新颖，无 MIBiG 命中）均有分布，Sample4 中 novelty_score ≥ 0.9 的 region 占 58/167。
+
+**粒度说明**：输出以 `sample + contig_id + region_id` 为唯一标识，**不强制关联②cluster模块的 dRep MAG**——现有 antiSMASH 是在样本级组装 contig 上跑的，contig 与 dRep MAG 之间需要额外查 contig2bin 表才能建立映射，且相当一部分 contig 未被任何 MAG 收录；若强行只处理能映射到 MAG 的 BGC，会丢弃掉本就难以被分箱算法收录、反而可能更值得关注的新颖候选，因此两个模块保持独立维度，不强耦合。
+
+**审核要点**：
+- DIAMOND 参数 `--sensitive -e 1e-5 --query-cover 50 --subject-cover 50`：`--sensitive` 而非默认 fast 模式，因 MIBiG 库仅 41002 条蛋白，规模小，可承受更高灵敏度换取远缘同源检出率
+- 聚合规则是"按 MIBiG cluster 分组统计 CDS 命中比例，取占比最高的 cluster"，不是"取单条最佳 CDS 比对结果"——避免被单个保守结构域（如常见转运蛋白基因）误导，把功能不同的 BGC 误判为已知
+- **已知局限**：28 号脚本本身对部分样本（如全量验证时发现的 Sample3/Sample10）的 `antismash_done.txt` sentinel 缺失（尽管 `.gbk` 产出已存在），这是 28 号脚本遗留的 sentinel 记录问题，不属于 28b 的缺陷，但会导致 Snakemake DAG 在这些样本上重新调度 28+28b；已确认 28b 自身逻辑对全部 2339 个 region 处理无误（对已产出的 10/10 样本 tsv 逐一核对总数一致）
+
+**LLM 调用方式（Prompt）**：
+```
+请对全部样本运行 28b 脚本，统计各样本 novelty_score ≥ 0.9 的 BGC 占比，
+并解读哪些高新颖度 BGC 的 product 类型（如 Polyketide/NRPS/RiPP）值得优先关注。
+```
+
+---
+
 ### 步骤 22：功能注释补充（SCyc / Pfam-A / UniProt Swiss-Prot / FeGenie）
 
 **新增（2026-06-30）**：补全硫循环维度 + 高精度蛋白功能域注释 + 铁代谢基因预测，覆盖 eggNOG/KEGG 未命中区域。
@@ -1410,7 +1484,7 @@ rush -j 4 'bash scripts/42b_bac_plasmidfinder.sh -s {} -t 8 \
 
 **依赖**：步骤 7（MEGAHIT 组装）输出的 contigs + 步骤 2（去宿主 reads，用于覆盖度计算）
 
-**流程链**：32 CoverM depth → 33/34/35（MetaBAT2 / MaxBin2 / SemiBin2，三算法独立并行）→ 36 DAS_Tool（整合择优）→ 37 CheckM2（ML 质量评估）→ 38 dRep（去冗余）→ 39 CoverM quant（丰度定量）→ 40 GTDB-Tk（系统发育分类）→ 41 Bakta（精细注释）
+**流程链**：32 CoverM depth → 33/34/35（MetaBAT2 / MaxBin2 / SemiBin2，三算法独立并行）→ 36 DAS_Tool（整合择优）→ 36b post-binning reassembly（用原始 reads 逐 bin 精细重组装）→ 37 CheckM2（ML 质量评估）→ 38 dRep（去冗余）→ 39 CoverM quant（丰度定量）→ 40 GTDB-Tk（系统发育分类）→ 41 Bakta（精细注释）
 
 **执行方式（单样本示例，Sample1）**：
 ```bash
@@ -1419,8 +1493,36 @@ bash scripts/33_bac_metabat2.sh       -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/
 bash scripts/34_bac_maxbin2.sh        -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
 bash scripts/35_bac_semibin2.sh       -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
 bash scripts/36_bac_dastool.sh        -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
+bash scripts/36b_bac_bin_reassembly.sh -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome --parallel
 bash scripts/37_bac_checkm2.sh        -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome   # 跨样本汇总，非 per-sample
 ```
+
+#### 步骤 36b：Post-binning Reassembly（metaWRAP，用原始 reads 逐 bin 精细重组装）
+
+**目的**：DAS_Tool 输出的 bin 是从整体组装图中"事后聚类"得到的，本身受限于全局组装参数；用该 bin 已归类的原始 reads 单独重跑一次针对性更强的 SPAdes 组装（`--careful --untrusted-contigs`），常能填补 gap、提升 MAG 完整度。参考 Uritskiy et al. 2018 *Microbiome*（metaWRAP）。
+
+**依赖**：步骤36（DAS_Tool bins）+ 步骤2b（严格配对后的 clean reads）
+
+**关键设计决策**：
+- 用 `--skip-checkm` 跳过 metaWRAP 内建的旧版 CheckM(1.x) 评估与"最优bin"挑选环节，因为下游步骤37已用 CheckM2 统一质控全部 bin，避免重复计算；`--skip-checkm` 模式下 metaWRAP 只产出未合并的 `{bin}.strict.fa` / `{bin}.permissive.fa` 两个变体（不会产出 `{bin}.fa`），脚本自行按**总组装长度**在两者间选优（无 CheckM 时的替代判定指标），仅当两个变体都不存在时才回退原始 bin
+- MEGAHIT contig header 含空格分隔的额外字段（如 `flag=0 multi=144.1 len=63675`），但 SAM 的 RNAME 字段只取第一个空格前的 token；metaWRAP 内部按整行匹配 contig→bin，两者不一致会导致 100% reads 在拆分阶段丢失。脚本喂给 metaWRAP 前用简化 header 的临时拷贝规避，不改动原始 bin 文件
+- `--parallel` 参数让 SPAdes 多个子任务（bin数×2变体）并发跑（各1线程），bin 数多时大幅提速；脚本自身不清空已存在的 metaWRAP 工作目录，超时/中断后直接重跑即可从断点继续（metaWRAP 内部有 scaffolds.fasta 存在性判断的续跑逻辑）
+
+**输出结果**：
+
+```
+result/binning/reassembly/{sample}/
+├── reassembled_bins/
+│   ├── {bin_name}.fa         — 重组装成功用重组装结果，否则回退原始 bin，与输入 bin 集合一一对应
+│   └── ...
+└── {sample}.reassembly_done.txt   — sentinel（N_INPUT_BINS / N_REASSEMBLED / N_FALLBACK_TO_ORIGINAL）
+```
+
+**实测**（Project01 真实样本 Sample4，35 个 DAS_Tool bins，`--parallel -t 16 -m 48`）：耗时 339 分钟，全部 35 个 bin 重组装成功（0 回退），总组装长度均有实质提升（如 bin 20: 3.30Mb → 4.07Mb，bin.24_sub: 2.80Mb → 3.10Mb）。步骤37（CheckM2）的 bin 收集逻辑已验证能正确识别并优先使用 `reassembly/{sample}/reassembled_bins/`（若存在），未跑过 reassembly 的样本正确回退读取原始 DAS_Tool bins。
+
+**审核要点**：
+- `--skip-checkm` 场景下务必用总长度（而非文件是否存在 `{bin}.fa`）判断重组装是否成功——这是本次调试中发现并修复的真实 bug，早期版本因命名假设错误导致误报"0个重组装成功、35个全部回退"，但实际70/70子任务均已成功
+- 若重跑本步骤前发现同一 metaWRAP 工作目录下有多代残留进程（如意外的后台超时重试未彻底清理），务必先 `pkill -9 -f "reassemble_bins.sh\|spades.py\|spades-core"` 并确认无残留，再清空损坏的输出目录重新开始——多进程竞争同一工作目录会产生"None of the bins were successfully reassembled"的假性失败
 
 **已知问题与修复**（本次 10 样本执行中发现并修复，均为工具真实输出结构与脚本假设不一致导致）：
 
@@ -1848,6 +1950,222 @@ bash ~/Course/Maxmetagenome/scripts/73_fun_humann4.sh \
 > **步骤72 加速技巧**：`72_fun_metaphlan4_euk.sh` 会优先查找 `${WORKDIR}/temp/metaphlan4/${SAMPLE}/${SAMPLE}.mapout.bz2`（细菌维度步骤3已生成的 bowtie2 比对结果），若存在则直接复用并加 `--ignore_bacteria --ignore_archaea` 重新分类，跳过耗时的 bowtie2 重新比对；若不存在才会回退到基于 reads 的完整比对。因此**务必先完成细菌维度步骤3**，再启动真菌维度步骤72，可节省数小时比对时间。
 
 > **并行策略**：71（Kraken2）与72（MetaPhlAn4-euk）互不依赖，可同时并行启动；72b（合并）需等待所有目标样本的72完成后再执行；73（HUMAnN4）为 per-sample 步骤，可在对应样本72完成后立即启动，无需等待其他样本。
+
+---
+
+### 步骤 79b：真核候选序列二次质控（Tiara 域确认 + BUSCO 谱系完整度）
+
+**步骤名称**：VEBA 式真核 MAG 质量分层（Tiara + BUSCO）
+
+**目的**：79号 Eukfinder 基于 Centrifuge 分类判定的候选真核序列（`{SAMPLE}.Euk.fasta`）可能包含误判（例如把细菌序列误分为真核），且缺乏基因完整度评估。本步骤参考外部工具 [VEBA](https://github.com/jolespin/veba) `binning-eukaryotic` 模块的质控思路（Tiara 深度学习域预测 + BUSCO 谱系特异完整度评估）重新实现，**不拷贝 VEBA 源码**（VEBA 为 AGPLv3 许可，Tiara/BUSCO 均为 MIT 许可，无许可证污染风险），补齐 79号缺失的质量门禁能力。
+
+**依赖**：步骤79（Eukfinder 的 `results.txt` + `Eukfinder_results/{SAMPLE}.Euk.fasta`）
+
+**流程链**：长度过滤（seqkit，≥1000bp）→ Tiara 域二次确认（剔除误判为真核的序列）→ BUSCO 谱系自动检测与完整度评估 → 质量分级汇总表
+
+**执行方式**：
+
+```bash
+bash ~/Course/Maxmetagenome/scripts/79b_fun_veba_qc.sh \
+  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+
+```
+result/fungi/veba_qc/Sample4/
+├── Sample4.euk_filtered.fasta       — 长度过滤后的候选序列
+├── Sample4.tiara_classification.txt — Tiara 逐序列分类结果
+├── eukarya_Sample4.euk_filtered.fasta — Tiara 二次确认为真核的序列
+├── Sample4.busco/                   — BUSCO 谱系完整度评估原始输出
+└── Sample4.veba_qc_summary.tsv       — 质量分级汇总表
+```
+
+`Sample4.veba_qc_summary.tsv` 实测内容（Project01 真实样本）：
+
+```
+sample    lineage                     complete_pct  duplicated_pct  missing_pct
+Sample4   saccharomycetaceae_odb12.2  73.5          0.4             16.2
+```
+
+**三种可能结果（均为正常退出 exit 0，不视为脚本失败）**：
+
+| 场景 | 触发条件 | 产出 |
+|------|---------|------|
+| 完整质控 | Tiara 确认后有足量真核序列，BUSCO 成功匹配谱系 | `{SAMPLE}.veba_qc_summary.tsv` |
+| 空结果（79号层面） | Eukfinder 的 `.Euk.fasta` 不存在（低测序深度，79号已知的预期行为） | `{SAMPLE}.veba_qc_empty.flag` |
+| 空结果（79b层面） | Tiara 二次确认后 0 条真核序列，或候选序列过少导致 BUSCO 无法匹配任何 marker | `{SAMPLE}.veba_qc_empty.flag` |
+
+**审核要点**：
+- 若产出 `veba_qc_summary.tsv`：检查 `lineage` 是否与预期物种类群相符，`complete_pct` 越高说明候选序列越接近完整基因组（VEBA 原方案建议 completeness ≥50% 视为可用 MAG）
+- 若产出 `veba_qc_empty.flag`：查看文件内容确认是在哪个阶段判空（79号 Eukfinder 层面还是本步骤 Tiara/BUSCO 层面），Project_example 6样本测试中 4个在79号层面判空、2个在 Tiara 层面判空，均属测序深度不足的预期行为，非脚本错误
+- **关键区分**：79号 Eukfinder 完成后总会生成 `results.txt`，即使产出 0 个真核序列。79b 用 `results.txt` 是否存在来判断"79号是否已运行"，不能仅凭 `.Euk.fasta` 是否存在来判断（该文件缺失也可能是 79号已运行但产出为空）
+
+**LLM 调用方式（Prompt）**：
+```
+请对样本 Sample4 运行 79b_fun_veba_qc.sh，检查是否产出 veba_qc_summary.tsv 还是 empty.flag，
+若产出 summary.tsv，请解读其中的 lineage 和 complete_pct 是否合理。
+```
+
+---
+
+### 步骤 79c-79e：真核候选序列真实分箱（覆盖度深度 + MetaBAT2 + 逐 bin BUSCO）
+
+**步骤名称**：真核 MAG 级分箱（VEBA `binning-eukaryotic` 方法参考）
+
+**目的**：79b 的质控是对**全部候选序列作为一个整体**评估完整度，无法回答"这些候选序列里到底是一个真核物种还是多个物种的混合"这个问题（后续跨域 `cluster` 模块要求"一个文件=一个基因组"的粒度，与细菌 dRep MAG 对齐）。本组步骤引入真正的 MetaBAT2 分箱：先用 CoverM 计算 reads 覆盖度深度，再用 MetaBAT2 基于四核苷酸频率+覆盖度信号把候选 contig 聚类成候选基因组（bin），最后对每个 bin 独立做 BUSCO 评估，产出真正意义上的"真核 MAG"。参考 [VEBA](https://github.com/jolespin/veba) `binning-eukaryotic` 模块的方法思路（该模块默认即用 MetaBAT2 做真核分箱），**不拷贝 VEBA 源码**（VEBA 为 AGPLv3 许可，CoverM 为 Apache-2.0、MetaBAT2/BUSCO 均为 MIT/BSD 系许可，无许可证污染风险）。
+
+**依赖**：步骤79b（Tiara 域确认后的 `{SAMPLE}.euk_filtered.fasta` / `eukarya_{SAMPLE}.euk_filtered.fasta`）
+
+**流程链**：79c CoverM 覆盖度深度（minimap2-sr 比对 + metabat 格式深度表）→ 79d MetaBAT2 分箱（四核苷酸频率+覆盖度） → 79e 逐 bin BUSCO 谱系完整度评估
+
+**执行方式**：
+
+```bash
+bash ~/Course/Maxmetagenome/scripts/79c_fun_coverm_depth.sh \
+  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+bash ~/Course/Maxmetagenome/scripts/79d_fun_metabat2.sh \
+  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+bash ~/Course/Maxmetagenome/scripts/79e_fun_euk_qc_per_bin.sh \
+  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+
+```
+result/fungi/veba_qc/Sample4/
+├── coverm/
+│   ├── Sample4.bam       — 排序后的 BAM（MetaBAT2 输入）
+│   └── depth.txt         — MetaBAT2 格式深度表
+├── metabat2/
+│   ├── bin.1.fa          — 分箱产出的候选基因组（0个bin是合法结果）
+│   └── Sample4.tsv       — contig2bin 映射表
+└── euk_mags/
+    ├── bin.1.fa          — 独立拷贝的逐 bin MAG（dRep 风格粒度）
+    ├── bin.1.busco/      — 该 bin 的 BUSCO 原始输出
+    └── Sample4.euk_mags_summary.tsv — 每 bin 一行的完整度/重复度/缺失汇总
+```
+
+`Sample4.euk_mags_summary.tsv` 实测内容（Project01 真实样本，2939条候选 contig 中）：
+
+```
+sample   bin_id  lineage                     complete_pct  duplicated_pct  missing_pct  n_contigs  size_bp
+Sample4  bin.1   saccharomycetaceae_odb12.2  63.8          0.3             28.7         2000       8204577
+```
+
+对比 79b 全候选集整体评估的 73.5%/0.4%/16.2%：MetaBAT2 从 2939 条候选 contig 中聚出 1 个真正的候选基因组（占 68% 的 contig 数、8.2Mb），完整度虽低于全集评估（因为丢弃了约 939 条未入 bin 的低置信度 contig），但证明候选序列集合中确实存在一个可被覆盖度信号真实分箱出来的主导物种，而非纯噪声碎片——这是"真核 binning 路线在当前数据条件下可行"的关键证据。
+
+**三种可能结果（均为正常退出 exit 0，不视为脚本失败）**：
+
+| 场景 | 触发条件 | 产出 |
+|------|---------|------|
+| 完整分箱 | 79b 有候选序列，MetaBAT2 产出 ≥1 个 bin，BUSCO 成功评估 | `{SAMPLE}.euk_mags_summary.tsv`（含真实数值行） |
+| 上游空结果 | 79b/79c 判空（低测序深度） | 79d/79e 均写空表头 TSV，79c 写 `coverm_empty.flag` |
+| 0 bin 结果 | MetaBAT2 因候选序列过于分散/数量不足未能分箱（或 segfault，exit 139） | `{SAMPLE}.tsv` 仅表头，79e 空表头跳过评估 |
+
+**审核要点**：
+- 检查 79d 产出的 bin 数量与 contig 归属占比（可从 `Sample4.tsv` 统计），过低的入 bin 占比可能说明覆盖度信号不足以支撑分箱
+- 检查 79e 逐 bin `complete_pct` 是否明显低于 79b 全候选集评估值：显著下降说明该 bin 只捕获了主导物种的一部分，需结合入 bin contig 数判断是否需要更高测序深度
+- **性能要点**：79b/79e 均已改用共享 lineage 缓存目录 `${REPO}/db/busco_downloads`（而非各样本/各 bin 独立目录），避免多 bin/多样本重复下载同一 BUSCO 数据集；首次运行仍需完整下载（本例耗时约 2.2 小时，含通用 eukaryota + 具体 saccharomycetaceae 两级数据集），后续复用缓存后同一分析仅耗时约 10 分钟
+- **已知局限**：当前全项目仅 Sample4 一个样本的候选序列量足以触发 79d 的非零 bin 分箱；其余样本多在 79b/79c 层面即判空，79c-79e 链路在这些样本上仅验证了空值分支的正确降级，尚未在其他真实非空数据上验证多 bin 场景
+
+**LLM 调用方式（Prompt）**：
+```
+请对样本 Sample4 依次运行 79c/79d/79e 脚本，检查 79d 产出的 bin 数量，
+并解读 79e 逐 bin BUSCO 结果与 79b 全候选集结果的差异说明了什么。
+```
+
+---
+
+### 步骤 79f：真核 MAG 逐 bin 蛋白预测（MetaEuk）
+
+**步骤名称**：真核 MAG 蛋白预测（补齐跨域正交基因组模块所需的真菌侧蛋白输入）
+
+**目的**：79e 产出的 BUSCO 结果只是保守标记基因片段，不是完整蛋白集；跨域正交基因组检测（98f）需要与细菌 Prokka、病毒 pharokka/prodigal 同粒度的"每基因组一套完整蛋白"。79f 对 79e 产出的每个 euk MAG（`bin.*.fa`）独立跑 MetaEuk `easy-predict`，产出结构仿照 Prokka"每 MAG 一子目录"的命名惯例。
+
+**依赖**：步骤79e（`{SAMPLE}.euk_mags_summary.tsv`，0 bin 是合法结果）；MetaEuk 预建库 `db/metaeuk_db/fungi_refseq_mmseqs`（3.2GB）
+
+**执行方式**：
+
+```bash
+bash ~/Course/Maxmetagenome/scripts/79f_fun_metaeuk_per_bin.sh \
+  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+
+```
+result/fungi/veba_qc/Sample4/euk_mags/
+├── bin.1/
+│   └── bin.1.faa              — MetaEuk 预测的完整蛋白集
+└── Sample4.metaeuk_done.txt   — 汇总 sentinel（bin_id, faa_path, n_proteins）
+```
+
+**实测**（Project01 真实样本 Sample4/bin.1）：耗时 834 秒（含约 6 分钟 k-mer 索引构建），产出 4329 条蛋白。0-bin 样本（如 Sample11）走空分支，写表头 sentinel，瞬间 exit 0。
+
+**审核要点**：
+- MetaEuk 首次构建 profile 索引较慢，`Estimated memory consumption: 25G` 是正常提示，非资源不足报错
+- 每个 bin 独立失败不中断其他 bin，失败行记录为 `NA\t0`
+
+---
+
+### 步骤 98e-98f：跨域基因组聚类与正交基因组检测（②cluster 模块）
+
+**步骤名称**：跨域（细菌/病毒/真菌）ANI 聚类 + 蛋白正交基因组检测
+
+**目的**：参考 [VEBA](https://github.com/jolespin/veba) `cluster` 模块的方法思路（FastANI 全基因组 ANI 比对 + 图社区检测；MMseqs2 蛋白层聚类检测正交基因组），**不拷贝 VEBA 源码**（VEBA 为 AGPLv3 许可，FastANI 为 MIT、MMseqs2 为 MIT/GPLv3 双许可、networkx 为 BSD，本项目仅调用其命令行接口，无许可证污染风险）。将细菌 dRep MAG、病毒 vOTU 代表序列、真菌 euk MAG 三域基因组做统一的相似度/同源性分析。
+
+**依赖**：细菌 dRep（38）、病毒 vOTU（56）、真菌 euk MAG（79e）+ 79f 蛋白预测
+
+**流程链**：98e 三域基因组收集 → vOTU 批量拆分（`seqkit split2`）→ FastANI 全体两两比对 → networkx 建图 + Louvain 社区检测 → 98f 三域蛋白收集 → MMseqs2 `easy-cluster` 正交基因组检测
+
+**执行方式**：
+
+```bash
+bash ~/Course/Maxmetagenome/scripts/98e_cross_domain_ani_cluster.sh \
+  -t 40 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+
+bash ~/Course/Maxmetagenome/scripts/98f_cross_domain_orthogroup.sh \
+  -t 40 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+```
+
+**输出结果**：
+
+```
+result/cross_domain/
+├── cluster/
+│   ├── genome_manifest.tsv    — genome_id, domain, fasta_path
+│   ├── all_genomes.list       — FastANI 输入文件列表
+│   ├── ani_matrix.tsv         — FastANI 输出（query, ref, ANI, frag_mapped, frag_total）
+│   └── genome_clusters.tsv    — genome_id, domain, cluster_id（Louvain 社区检测）
+└── orthogroup/
+    ├── merged_proteins.faa        — 三域蛋白合并（ID 前缀 domain###genome_id###）
+    ├── mmseqs_cluster_cluster.tsv — MMseqs2 easy-cluster 原始输出
+    └── orthogroup_table.tsv       — protein_id, genome_id, domain, orthogroup_id
+```
+
+**实测**（Project01 全量：213 细菌 MAG + 10106 病毒 vOTU + 1 真菌 MAG，共 10320 个基因组）：
+
+- 98e：耗时 166 秒，5927 个基因组参与建图（其余为孤立节点无 ANI 边），13479 条边，聚出 2844 个簇；真菌 MAG（`Sample4__bin.1`）被分入 cluster_1
+- 98f：耗时 130 秒，合并 790567 条蛋白（细菌 479524 + 病毒 306714 + 真菌 4329），聚出 191762 个正交基因组，其中 30387 个正交基因组跨越多个域（真实检出跨域蛋白同源关系）
+
+**已知局限（用户知悉后明确选择按此方案执行，非脚本缺陷）**：
+- 98e 的跨"域"（如细菌 vs 真菌）核酸 ANI 比对在演化距离过远时生物学意义有限——FastANI 对无关/远缘基因组对天然不产生输出行（无强制 0% 行），这正是该局限的直接实证
+- 相较之下，98f 的蛋白层比对阈值远比核酸 ANI 宽松（`--min-seq-id 0.3 -c 0.8`），跨域检出的正交基因组（如保守结构域/功能基因）更具生物学意义
+- 全项目真菌侧目前仅 1 个真实 euk MAG（Sample4/bin.1），跨域统计功效有限；98e/98f 均已用该真实单基因组验证通过（非合成/占位数据），但样本量本身的局限仍然存在
+
+**审核要点**：
+- 98e 图中的"孤立节点"（10320 - 5927 = 4393 个）是正常现象：FastANI 对无同源关系的基因组对不产生比对行，这些基因组在 Louvain 阶段各自成为单节点簇
+- 检查 `genome_clusters.tsv` / `orthogroup_table.tsv` 中 domain 列的三域计数是否与上游各模块产出数量一致（细菌 dRep 数、vOTU 代表序列数、真核 MAG 数）
+- **性能要点**：病毒 vOTU 拆分务必用一次性 `seqkit split2 -s 1`（约 6 秒/17300 条），禁止逐 ID 循环调用 `seqkit grep`（会退化为上万次全文件扫描，耗时数小时）
+
+**LLM 调用方式（Prompt）**：
+```
+请依次运行 98e/98f 脚本，检查 genome_clusters.tsv 与 orthogroup_table.tsv
+的三域计数是否与上游模块产出数量一致，并解读跨域正交基因组数量说明了什么。
+```
 
 ---
 ## 附录：LLM 辅助宏基因组分析最佳实践

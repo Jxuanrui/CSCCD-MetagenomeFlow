@@ -154,6 +154,9 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 41d | `scripts/41d_bac_snippy.sh` | MAG SNP/InDel 变异检测（WGS 融入模块） | Snippy | envs/snippy (snippy 4.0.2) |
 | **42** | **`scripts/42_bac_mge.sh`** | **MGE 综合注释（ISfinder/ICEberg/integrall/transposase/mobileOG，HGT 追踪）** | **MMseqs2 + BLAST + HMMER + DIAMOND** |
 | **42b** | **`scripts/42b_bac_plasmidfinder.sh`** | **质粒识别与分类（replicon 类型 + Inc group，conda 内置 DB）** | **PlasmidFinder 2.1.6** |
+| **43** | **`scripts/43_bac_gem_gapseq.sh`** | **MAG 代谢模型重建（gapseq 三步法：find/draft/fill）** | **gapseq (R 包)** |
+| **43b** | **`scripts/43b_bac_gem_carveme.sh`** | **MAG 代谢模型重建（CarveMe 快速通路）** | **CarveMe** |
+| **43c** | **`scripts/43c_bac_gem_cobrapy_fba.sh`** | **代谢模型 FBA 模拟（生长率/通量/必需基因/底物利用）** | **COBRApy** |
 
 ### 🦠 病毒维度（Virome，编号 51-69）
 

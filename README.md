@@ -7,8 +7,8 @@
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
-[![Conda](https://img.shields.io/badge/conda%20envs-43-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-125-blue)]()
+[![Conda](https://img.shields.io/badge/conda%20envs-49-orange)](https://github.com/conda-forge/miniforge)
+[![Scripts](https://img.shields.io/badge/scripts-144-blue)]()
 [![RAG](https://img.shields.io/badge/RAG-11988%20chunks-purple)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
@@ -25,7 +25,7 @@
 ║    MaxMetagenome Platform                                                 ║
 ║    完整宏基因组多维度分析平台  ·  版本 1.0                                   ║
 ║                                                                           ║
-║    125 分析脚本  ·  99 Snakemake 规则  ·  43 conda 环境  ·  ~1.1TB 数据库   ║
+║    144 分析脚本  ·  131 Snakemake 规则  ·  49 conda 环境  ·  ~1.1TB 数据库  ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -58,23 +58,43 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 - **Three kingdoms, one platform.** Bacteria (scripts 11–42b), Virome (51–72), and Mycobiome (71–86) share the same preprocessing steps, project directory layout, and Snakemake configuration — no glue scripts, no format conversion between steps.
 - **Mechanistic discovery built-in.** The `mechanism_kb` RAG collection bridges 4,860 manually-curated gut microbe → metabolite → host gene relationships (sourced from GutMGene v2.0 + OmniPath), enabling direct queries like "which microbial functions produce butyrate and activate FFAR2?" — critical for cardiovascular research where short-chain fatty acids modulate inflammation and blood pressure.
-- **Portable and reproducible.** All 43 conda environments and ~1.1 TB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
+- **Portable and reproducible.** All 49 conda environments and ~1.1 TB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
 - **Three run modes.** Step-by-step (fine-grained debugging), Bash pipeline (lightweight, no extra deps, `--from`/`--skip` checkpointing), or Snakemake DAG (production, HPC-ready, native resume). All three modes call the identical underlying scripts.
 - **Functional integration built-in.** Script `98b` generates 11 integration tables per dimension at the end of each analysis — raw (Σ TPM), relative abundance, and CLR-normalized versions — ready for LEfSe, ANCOM-BC2, MaAsLin2, SIAMCAT, and Aitchison-distance ordination without any manual post-processing.
 - **AI-assisted with MCP protocol.** 18 Claude Code slash commands (`/mgx-*` + `/graphify`) cover pipeline planning, execution, visualization, new-script integration, and knowledge graph construction, backed by a quad-source RAG knowledge base (11,988 chunks: 1,634 experience_kb + 5,392 literature_kb + 102 skill_design_kb + 4,860 mechanism_kb) indexed with `BAAI/bge-small-zh-v1.5`. MCP server implements official Model Context Protocol for seamless integration with Claude Code and Codex CLI, supporting incremental indexing (20-50x faster iteration).
 
 ---
 
-## 最近更新（v1.0） | Recent Updates
+## 最近更新（v1.1） | Recent Updates
+
+**🎉 CSCCD-MetagenomeFlow v1.1 (August 2026)** — first VEBA toolchain integration: eukaryotic candidate QC layer.
+
+### v1.1 新增 | New in v1.1
+- **79b VEBA-style eukaryotic QC** (`scripts/79b_fun_veba_qc.sh`): Tiara deep-learning domain re-confirmation + BUSCO lineage-specific completeness assessment on top of script 79 (Eukfinder) candidate eukaryotic contigs. Methodology referenced from [VEBA](https://github.com/jolespin/veba) `binning-eukaryotic` module — **no VEBA source code reused** (VEBA is AGPLv3; Tiara/BUSCO are both MIT, no license contamination). Validated end-to-end on real data: Sample4 (Project01) resolved to `saccharomycetaceae_odb12.2` at 73.5% completeness; low-depth samples correctly degrade to an `empty.flag` sentinel instead of a false error.
+- **79c-79e real eukaryotic binning** (`scripts/79c_fun_coverm_depth.sh`, `79d_fun_metabat2.sh`, `79e_fun_euk_qc_per_bin.sh`): CoverM coverage depth → MetaBAT2 binning → per-bin BUSCO completeness, producing dRep-style one-genome-per-file eukaryotic MAGs (prerequisite for the upcoming cross-domain `cluster` module). Also VEBA `binning-eukaryotic` methodology reference, no source reused (CoverM Apache-2.0, MetaBAT2/BUSCO MIT/BSD). Validated on Sample4: MetaBAT2 resolved 1 bin (2000/2939 candidate contigs, 8.2Mb) at 63.8% completeness, confirming the candidate pool contains a real dominant species rather than pure noise. 0-bin and upstream-empty branches degrade gracefully (non-error exit 0).
+- 3 new conda envs: `envs/tiara` (Tiara 1.0.3), `envs/busco` (BUSCO 6.1.0), plus reuse of existing `envs/coverm`/`envs/metawrap`
+- Shared BUSCO lineage cache at `db/busco_downloads/` (used by both 79b and 79e) avoids redundant multi-GB downloads across samples/bins — cuts repeat runs from ~2.2h to ~10min
+- Snakemake rules `fun_veba_qc`, `fun_coverm_depth_euk`, `fun_metabat2_euk`, `fun_euk_qc_per_bin` added to `pipeline/rules/mycobiome.smk`, wired into `rule all`
+- See `Tutorial.md` §步骤79b and §步骤79c-79e for full usage, output structure, and normal-exit scenarios
+- **Cross-domain cluster module** (`scripts/79f_fun_metaeuk_per_bin.sh`, `98e_cross_domain_ani_cluster.sh`, `98f_cross_domain_orthogroup.sh`): 79f runs MetaEuk `easy-predict` per eukaryotic MAG to fill the fungal-side protein gap; 98e performs cross-domain (bacteria/virus/fungi) whole-genome ANI comparison via FastANI + networkx Louvain community detection; 98f performs protein-level orthogroup detection via MMseqs2 `easy-cluster`. Methodology referenced from [VEBA](https://github.com/jolespin/veba) `cluster` module — **no VEBA source code reused** (VEBA is AGPLv3; FastANI is MIT, MMseqs2 is MIT/GPLv3 dual-licensed, networkx is BSD — CLI-only invocation, no license contamination). New dedicated conda env `envs/cluster` (fastani, mmseqs2, seqkit, networkx, python-louvain). Validated end-to-end on real production data (213 bacterial dRep MAGs + 10,106 viral vOTU representatives + 1 real fungal euk MAG, no synthetic/placeholder data): 98e resolved 2,844 clusters across 10,320 genomes (166s); 98f clustered 790,567 proteins into 191,762 orthogroups, with 30,387 orthogroups spanning multiple domains (130s). Known accepted limitation: cross-domain nucleotide ANI (98e) has limited biological meaning across large evolutionary distances — a deliberate design choice retained after review; protein-level orthogroup detection (98f, looser `--min-seq-id 0.3` threshold) is the more biologically meaningful cross-domain signal.
+- Snakemake rules `fun_metaeuk_per_bin`, `cross_domain_ani_cluster`, `cross_domain_orthogroup` added to `pipeline/rules/mycobiome.smk` / `statistics.smk`, wired into `rule all`
+- See `Tutorial.md` §步骤79f and §步骤98e-98f for full usage, output structure, and known limitations
+- **BGC novelty scoring module** (`scripts/28b_bac_bgc_novelty.sh` + `28b_bgc_novelty_score.py`): scores each antiSMASH-predicted BGC region for novelty relative to known MIBiG clusters. Reuses the MIBiG 3.1 DIAMOND database already bundled under `db/antismash/antismash-db/clustercompare/mibig/3.1/` (antiSMASH's own internal clustercompare resource, 41,002 proteins) — **no antiSMASH re-run, no new database, no new conda env** (reuses `envs/antismash`, which already bundles Biopython + DIAMOND). For each region, extracts CDS protein translations from the `.gbk`, runs DIAMOND blastp (`--sensitive -e 1e-5 --query-cover 50 --subject-cover 50`), groups hits by MIBiG cluster ID, and computes `novelty_score = 1 - best_cluster_cds_hit_fraction` (regions with zero MIBiG hits score 1.0, i.e. fully novel). Output granularity is `sample + contig_id + region_id` — deliberately **not** coupled to the cross-domain `cluster` module's dRep MAG identity, since assembly-level BGC regions often fall outside any binned MAG. Validated end-to-end on real production data (all 10 samples, 2,339 BGC regions, no synthetic data): novelty_score spans the full 0.0–1.0 range with real biological signal (e.g. an NRPS region scoring 0.0 against a 100%-CDS-match to *E. coli* MIBiG cluster BGC0001055; 58/167 Sample4 regions scoring ≥0.9).
+- Snakemake rule `bac_bgc_novelty` added to `pipeline/rules/bacteria_annotation.smk`, wired into `rule all`
+- See `Tutorial.md` §步骤28b for full usage, output structure, and known limitations
+- **Post-binning reassembly module** (`scripts/36b_bac_bin_reassembly.sh`): reassembles each DAS_Tool bin from its own recruited reads via metaWRAP `reassemble_bins` (SPAdes strict/permissive variants, `--skip-checkm` since downstream CheckM2 already handles QA), fixing an internal MEGAHIT-header/SAM-RNAME mismatch that otherwise causes 100% read loss during bin-read splitting. Between the strict/permissive variants, picks the longer-total-length assembly (CheckM-free proxy for "reassembly filled more gaps"); falls back to the original bin only if neither variant produced output. `37_bac_checkm2.sh`'s bin-collection logic updated to prefer `reassembly/{sample}/reassembled_bins/` over `dastool/{sample}/{sample}_DASTool_bins/` when present, per-sample. New conda-independent `--parallel` flag runs the 2×N SPAdes sub-assemblies concurrently (1 thread each) instead of serially. Also adds `scripts/02b_qc_pair_repair.sh`, a new mandatory pipeline step (after 02) that fixes a genuine kneaddata R1/R2 read-order-mismatch bug (`seqkit pair`, strict re-pairing) discovered while debugging 36b — bwa-based tools abort fatally on this corruption while more tolerant tools may silently mask it. Validated end-to-end on real production data: Sample4, 35 DAS_Tool bins, all 35 successfully reassembled (0 fallbacks) with real length gains (e.g. bin 20: 3.30Mb → 4.07Mb); 37_bac_checkm2.sh confirmed to correctly pick up the reassembled set for Sample4 while other not-yet-reassembled samples correctly fall back to their original DAS_Tool bins.
+- Snakemake rule `bin_reassembly` (36b) added to `pipeline/rules/bacteria_binning.smk` between `dastool` and `checkm2`; new `rule pair_repair` (02b) added to `pipeline/rules/preprocessing.smk`; both wired into `rule all`
+- See `Tutorial.md` §步骤02b and §步骤36b for full usage, output structure, and known limitations
 
 **🎉 CSCCD-MetagenomeFlow v1.0 released (July 2026)** — formerly MaxMetagenome, now officially under the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases.
 
 ### 分析能力 | Analysis Capacity
-- **125 scripts** (113 analysis workflows + 12 utilities) spanning three kingdoms — bacteria (11–42b), virome (51–72), and mycobiome (71–86)
-- **--force parameter support**: 123/125 scripts (98.4%) now support `--force` flag for idempotent pipeline reruns, automatically propagated by flow orchestrators (00_pipeline_*.sh)
-- **inStrain strain-level microdiversity**: 39b–39d scripts quantify within-species genetic variation via read mapping to MAGs, SNV profiling, and population comparison across samples
+- **144 scripts** spanning three kingdoms — bacteria (11–43c), virome (51–72), and mycobiome (71–86)
+- **--force parameter support**: 136/144 scripts (94.4%) now support `--force` flag for idempotent pipeline reruns, automatically propagated by flow orchestrators (00_pipeline_*.sh); both new scripts (02b, 36b) also support `--force`
+- **inStrain strain-level microdiversity**: 39b–39d scripts quantify within-species genetic variation via read mapping to MAGs, SNV profiling, and population comparison across samples; 39d additionally aggregates the pairwise popANI long table into `strain_comparison_summary.tsv`, a per-genome wide matrix with min popANI and same-strain verdict (popANI ≥ 0.99999) across all sample pairs
 - **Virome expanded to 72**: added PhaBox2, DRAM, and PhaGCN3 for comprehensive phage lifestyle prediction (lytic/temperate/chronic)
 - **Bacteria WGS module (42b)**: MLST typing, pan-genome (Roary), and SNP calling (Snippy) for strain-level tracking
+- **GEM metabolic modeling (43–43c)**: gapseq pathway-based reconstruction, CarveMe fast prototyping, and COBRApy FBA simulation for growth rate prediction, essential gene identification, and substrate utilization profiling
 - **Fungi PHF database**: 760 human gut fungal genomes (Yan et al. 2024 *Cell* 187) indexed with Bowtie2 for high-sensitivity profiling
 - **Integration tables auto-generated**: 11 tables per dimension (raw/relab/CLR) ready for LEfSe/ANCOM-BC2/MaAsLin2/SIAMCAT without manual wrangling
 
@@ -85,8 +105,8 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 - **MCP protocol compliance**: official Model Context Protocol implementation, registered with Claude Code & Codex CLI for native slash-command integration
 
 ### 平台成熟度 | Platform Maturity
-- **Snakemake full validation**: 99 rules across 10 modules, end-to-end tested from raw reads to statistics (bacteria/virome/fungi + 91-98 stats pipelines)
-- **43 conda environments**: all tools self-contained under project root, ~1.1 TB databases (GTDB R226, VOGDB, ChocoPhlAn, UniRef90, EukDB, etc.)
+- **Snakemake full validation**: 134 rules across 10 modules, end-to-end tested from raw reads to statistics (bacteria/virome/fungi + 91-98 stats pipelines)
+- **49 conda environments**: all tools self-contained under project root, ~1.1 TB databases (GTDB R226, VOGDB, ChocoPhlAn, UniRef90, EukDB, etc.)
 - **Three run modes**: step-by-step (debugging), Bash pipeline (lightweight), or Snakemake DAG (HPC-ready with native resume)
 
 ---
@@ -98,9 +118,9 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | OS | Linux x86_64 · Ubuntu 22.04 |
 | Environment manager | Miniforge3 (self-contained, under project root) |
 | Workflow engine | Snakemake 9.22.0 |
-| Analysis scripts | 125 (113 analysis workflows 01–98d + 12 utilities) |
-| Snakemake rules | 99 across 10 rule files |
-| Conda environments | 43 isolated tool environments |
+| Analysis scripts | 144 (01–98f + utilities) |
+| Snakemake rules | 131 across 10 rule files |
+| Conda environments | 49 isolated tool environments |
 | Databases | ~1.1 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, UniProt Swiss-Prot, Pfam-A, ISfinder, ICEberg, integrall, transposase-db, etc.) |
 | RAG knowledge base | **11,988 chunks** across 4 collections (ChromaDB + bge-small-zh-v1.5 + BM25 hybrid retrieval) |
 | MCP server | Official Model Context Protocol compliance, registered with Claude Code & Codex CLI |
@@ -150,7 +170,7 @@ bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenom
 # Parallel samples (requires rush)
 bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 -j 2
 
-# Force re-run (ignore existing outputs) — supported by 123/125 scripts (98.4%)
+# Force re-run (ignore existing outputs) — supported by 136/144 scripts (94.4%)
 bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --force
 bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/Maxmetagenome --force
 ```
@@ -235,6 +255,9 @@ Raw reads (*.fastq.gz)
             │                                    │                                                │  41d Snippy       SNP / InDel calling
             │                                    │                                                │  42  MGE          Mobile genetic elements
             │                                    │                                                │  42b PlasmidFinder Plasmid identification
+            │                                    │                                                │  43  gapseq       GEM reconstruction (3-step)
+            │                                    │                                                │  43b CarveMe      GEM reconstruction (fast)
+            │                                    │                                                │  43c COBRApy FBA  Metabolic simulation
             │                                    └────────────────────────────┬──────────────────┘
             │                                                                 │
             └─────────────────────────────────────────────────────────────────┘
@@ -570,8 +593,10 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | 15 / 15b | Protein-level classification + merge | Centrifuger (GTDB R226) |
 | 16–20 | Assembly → gene prediction → catalog → quantification | MEGAHIT · Prodigal · CD-HIT · Salmon |
 | 21–31 | Functional annotation (COG / KEGG / AMR / CAZyme / VF / BGC / defense / nutrient cycling) | eggNOG · KEGG · AMRFinder · CARD · dbCAN3 · VFDB · BacMet · antiSMASH · Defense-Finder · NCyc · PCyc |
+| 28b | BGC novelty scoring (vs. MIBiG 3.1, no antiSMASH re-run) | DIAMOND blastp |
 | 31b–31e | Functional annotation supplement (S/N/P cycling · protein domains · high-precision · iron metabolism) | SCyc · Pfam-A · UniProt Swiss-Prot · FeGenie |
 | 42 / 42b | Mobile genetic elements + plasmid identification | ISfinder · ICEberg · integrall · transposase · mobileOG · PlasmidFinder |
+| 43 / 43b / 43c | GEM reconstruction + FBA simulation | gapseq · CarveMe · COBRApy |
 | 32–41 | MAG recovery (binning → refinement → QC → dereplication → abundance → taxonomy → annotation) | CoverM · MetaBAT2 · MaxBin2 · SemiBin2 · DAS_Tool · CheckM2 · dRep · GTDB-Tk · Bakta |
 | 39b–39d | Strain-level microdiversity analysis (reads mapping → SNV profiling → population comparison) | inStrain |
 | 41b–41d | WGS integration: MLST · pan-genome · SNP/InDel calling | mlst · Roary · Snippy |
@@ -606,6 +631,9 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | 77 | Multi-hypervariable region extraction (ITS/18S/28S) | MicroFisher | ✅ |
 | 78–80b | Fungal assembly → gene prediction (Prodigal on contigs) | MEGAHIT · Prodigal | ✅ |
 | 79 | Eukaryotic MAG recovery | Eukfinder | ✅ EukDB built 2026-06-17 (628/667 genomes, 12.8 GB) |
+| 79b | Eukaryotic candidate QC (Tiara domain re-confirmation + BUSCO completeness) | Tiara + BUSCO | ✅ VEBA `binning-eukaryotic` methodology reference |
+| 79c–79e | Real eukaryotic binning: coverage depth → MetaBAT2 binning → per-bin BUSCO | CoverM · MetaBAT2 · BUSCO | ✅ |
+| 79f | Per-bin eukaryotic MAG protein prediction | MetaEuk | ✅ |
 | 81–86 | Functional annotation (COG / KEGG / CAZyme / VF / AMR / protease) | eggNOG · KEGG · dbCAN3 · VFDB · AMRFinder · MEROPS | ✅ |
 
 ### 📊 Statistics (91–98)
@@ -621,6 +649,8 @@ Generated by `scripts/98d_fun_integration_tables.sh`. Values = **gene count per 
 | 97 | Cross-cohort replication — local multi-cohort mode (meta-analysis + 8 visualizations) | SIAMCAT · R · random effects model | ✅ local mode |
 | 97 (online) | Cross-cohort via curatedMetagenomicData | curatedMetagenomicData · SIAMCAT (R) — requires online Bioconductor access | ⚠ offline only |
 | 98 | Timestamped analysis snapshot report | bash + Rscript |
+| 98e | Cross-domain (bacteria/virus/fungi) genome ANI clustering | FastANI + networkx (Louvain) | ✅ VEBA `cluster` methodology reference |
+| 98f | Cross-domain protein orthogroup detection | MMseqs2 `easy-cluster` | ✅ |
 
 ---
 
@@ -715,7 +745,7 @@ All collections are queryable via `/mgx-ask` slash command or direct MCP tool ca
 
 ```
 CSCCD-MetagenomeFlow/
-├── scripts/                  125 scripts (113 analysis workflows 01–98d + 12 utilities)
+├── scripts/                  144 scripts (01–98f + utilities)
 ├── pipeline/
 │   ├── Snakefile             DAG entry point
 │   ├── config/config.yaml    Per-run parameters (samples / workdir / threads)
