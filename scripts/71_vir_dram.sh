@@ -16,6 +16,8 @@
 # 用  法: bash 71_vir_dram.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 71_vir_dram.sh -t CPUS -w WORKDIR -r REPO
 必需参数:

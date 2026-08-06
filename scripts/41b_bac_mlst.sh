@@ -8,6 +8,8 @@
 # Usage  : bash 41b_bac_mlst.sh -w WORKDIR -r REPO -t THREADS [--scheme SCHEME]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 Usage: bash 41b_bac_mlst.sh -w WORKDIR -r REPO -t THREADS [--scheme SCHEME]
 Required:

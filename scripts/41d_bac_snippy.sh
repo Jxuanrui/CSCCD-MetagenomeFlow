@@ -8,6 +8,8 @@
 # Usage  : bash 41d_bac_snippy.sh -w WORKDIR -r REPO -t THREADS [-R REF]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 Usage: bash 41d_bac_snippy.sh -w WORKDIR -r REPO -t THREADS [-R REF_GENOME]
 Required:
@@ -149,7 +151,7 @@ for mag in "${MAG_FILES[@]}"; do
 
     if [ -f "${MAG_OUT}/snps.tab" ] && [ -s "${MAG_OUT}/snps.tab" ]; then
         SNIPPY_DIRS+=("${MAG_OUT}")
-        ((SKIPPED++))
+        SKIPPED=$((SKIPPED+1))
         continue
     fi
 
@@ -169,7 +171,7 @@ for mag in "${MAG_FILES[@]}"; do
     fi
     if [ -f "${MAG_OUT}/snps.tab" ] && [ -s "${MAG_OUT}/snps.tab" ]; then
         SNIPPY_DIRS+=("${MAG_OUT}")
-        ((COMPLETED++))
+        COMPLETED=$((COMPLETED+1))
     fi
 done
 

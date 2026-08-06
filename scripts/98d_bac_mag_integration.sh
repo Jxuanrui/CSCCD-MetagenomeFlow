@@ -19,6 +19,8 @@
 # 用  法: bash 98d_bac_mag_integration.sh -w WORKDIR -r REPO [-t CPUS]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 98d_bac_mag_integration.sh -w WORKDIR -r REPO [-t CPUS]

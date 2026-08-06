@@ -10,6 +10,8 @@
 # 用  法: bash 15b_bac_centrifuger_merge.sh -w /path/to/Project_example -r /path/to/MaxMetagenome
 # ==============================================================================
 
+set -euo pipefail
+
 # --- 参数解析 ---
 
 if [ $# -lt 4 ]; then

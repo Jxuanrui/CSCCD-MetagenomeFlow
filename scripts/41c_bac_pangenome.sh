@@ -9,6 +9,8 @@
 #          [--identity 95] [--core-definition 99]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 Usage: bash 41c_bac_pangenome.sh -w WORKDIR -r REPO -t THREADS [--identity 95] [--core-definition 99]
 Required:

@@ -9,6 +9,8 @@
 # 用  法: bash 13b_bac_humann3_merge.sh -w /path/to/Project_example -r /path/to/MaxMetagenome
 # ==============================================================================
 
+set -euo pipefail
+
 # --- 参数解析 ---
 
 if [ $# -lt 4 ]; then

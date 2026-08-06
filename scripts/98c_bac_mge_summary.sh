@@ -17,6 +17,8 @@
 # 用  法: bash 98c_bac_mge_summary.sh -w WORKDIR -r REPO [-t CPUS]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 98c_bac_mge_summary.sh -w WORKDIR -r REPO [-t CPUS]

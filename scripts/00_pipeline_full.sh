@@ -69,6 +69,18 @@ set -euo pipefail
         "bash ${PROJ_DIR}/scripts/02_qc_kneaddata.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
 
+    # 结果位置：${wd}/result/kneaddata/{sample}/{sample}_{1,2}.kneaddata_raw.fastq.gz
+
+
+# --- 步骤 02b：R1/R2 严格重新配对（修复 kneaddata 输出顺序错位，见脚本头注释）---
+
+    bash ${PROJ_DIR}/scripts/02b_qc_pair_repair.sh \
+        -s ${i} -w ${wd} -r ${PROJ_DIR}
+
+    cat ${wd}/samples.txt | rush -j ${j} \
+        "bash ${PROJ_DIR}/scripts/02b_qc_pair_repair.sh \
+             -s {} -w ${wd} -r ${PROJ_DIR}"
+
     # 结果位置：${wd}/result/kneaddata/{sample}/
     # 下游输入：${wd}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz (注意文件名含 .kneaddata 后缀)
 
@@ -174,6 +186,11 @@ set -euo pipefail
     # 步骤 36：DAS_Tool 整合优化（依赖步骤 33-35 输出）
     cat ${wd}/samples.txt | rush -j ${j} \
         "bash ${PROJ_DIR}/scripts/36_bac_dastool.sh \
+             -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
+
+    # 步骤 36b：metaWRAP post-binning reassembly（用原始 reads 重组装每个 bin）
+    cat ${wd}/samples.txt | rush -j ${j} \
+        "bash ${PROJ_DIR}/scripts/36b_bac_bin_reassembly.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
 
     # 步骤 37：CheckM2 质量评估

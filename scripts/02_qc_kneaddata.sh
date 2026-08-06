@@ -93,8 +93,10 @@ if [ ! -d "$DB_HOST" ]; then
 fi
 
 # 检查是否已存在结果
-FINAL_R1="${OUTDIR}/${SAMPLE}_1.kneaddata.fastq.gz"
-FINAL_R2="${OUTDIR}/${SAMPLE}_2.kneaddata.fastq.gz"
+# 注: 本脚本输出为中间产物（.kneaddata_raw），最终路径由 02b_qc_pair_repair.sh
+# 严格重新配对后产出，供下游全部引用（详见 02b 脚本头注释）
+FINAL_R1="${OUTDIR}/${SAMPLE}_1.kneaddata_raw.fastq.gz"
+FINAL_R2="${OUTDIR}/${SAMPLE}_2.kneaddata_raw.fastq.gz"
 if [ ${FORCE} -eq 0 ] && [ -f "$FINAL_R1" ] && [ -f "$FINAL_R2" ]; then
   echo "[INFO] 输出文件已存在，跳过: ${SAMPLE}"
   exit 0

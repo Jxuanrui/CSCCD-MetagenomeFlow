@@ -44,6 +44,8 @@
 # 用  法: bash 98b_bac_integration_tables.sh -w WORKDIR -r REPO [-t CPUS]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat << EOF
 用法: bash 98b_bac_integration_tables.sh -w WORKDIR -r REPO [-t CPUS]

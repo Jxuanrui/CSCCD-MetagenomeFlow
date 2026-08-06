@@ -5,6 +5,8 @@
 # Usage:   bash 98_stat_report.sh -w WORKDIR -r REPO [-o OUTPUT_DIR] [--force]
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() {
 cat <<'EOF'
 Usage: bash 98_stat_report.sh -w WORKDIR -r REPO [-o OUTPUT_DIR] [--force]

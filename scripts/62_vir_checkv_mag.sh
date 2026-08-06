@@ -14,6 +14,8 @@
 # 用  法: bash 62_vir_checkv_mag.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 62_vir_checkv_mag.sh -t CPUS -w WORKDIR -r REPO
 必需参数:

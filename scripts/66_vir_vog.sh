@@ -13,6 +13,8 @@
 # 用  法: bash 66_vir_vog.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 66_vir_vog.sh -t CPUS -w WORKDIR -r REPO
 必需参数:

@@ -11,6 +11,8 @@
 # 用  法: bash 11b_bac_metaphlan4_merge.sh -w /path/to/Project_example -r /path/to/MaxMetagenome
 # ==============================================================================
 
+set -euo pipefail
+
 # --- 参数解析 ---
 
 if [ $# -lt 4 ]; then

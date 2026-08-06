@@ -13,6 +13,8 @@
 # 用  法: bash 37_bac_checkm2.sh -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
+set -euo pipefail
+
 show_help() { cat << EOF
 用法: bash 37_bac_checkm2.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -39,25 +41,33 @@ for v in CPUS WORKDIR REPO; do
 done
 
 SECONDS=0
-BINS_DIR="${WORKDIR}/result/binning/dastool"
+REASSEMBLY_DIR="${WORKDIR}/result/binning/reassembly"
+DASTOOL_DIR="${WORKDIR}/result/binning/dastool"
 REPORT="${WORKDIR}/result/binning/checkm2/quality_report.tsv"
 FILTERED_DIR="${WORKDIR}/result/binning/checkm2/checkm2_filtered"
 DREP_IN="${WORKDIR}/result/binning/checkm2/drep_input"
 DB="${REPO}/db/checkm2/CheckM2_database/uniref100.KO.1.dmnd"
 
-# 收集所有 dastool bins（跨样本）；DAS_Tool 输出目录名为 {sample}_DASTool_bins
+# 收集所有 bins（跨样本）：优先取 36b_bac_bin_reassembly.sh 的重组装结果
+# （result/binning/reassembly/{sample}/reassembled_bins/），该目录里每个 bin
+# 要么是重组装成功的版本，要么是回退的原始 DAS_Tool bin，与原始 bin 集合一一对应；
+# 若某样本尚未跑过 reassembly（目录不存在），回退读取该样本的原始 DAS_Tool bins
+# （DAS_Tool 输出目录名为 {sample}_DASTool_bins），保证脚本对新旧项目状态均兼容
 BIN_FILES=()
 BIN_SAMPLES=()
-for d in "${BINS_DIR}"/*/*_DASTool_bins; do
-    if [ -d "$d" ]; then
-        SAMPLE_NAME=$(basename "$(dirname "$d")")
-        for f in "$d"/*.fa; do
-            if [ -f "$f" ]; then
-                BIN_FILES+=("$f")
-                BIN_SAMPLES+=("$SAMPLE_NAME")
-            fi
-        done
+for d in "${DASTOOL_DIR}"/*/*_DASTool_bins; do
+    [ -d "$d" ] || continue
+    SAMPLE_NAME=$(basename "$(dirname "$d")")
+    SRC_DIR="${REASSEMBLY_DIR}/${SAMPLE_NAME}/reassembled_bins"
+    if [ ! -d "${SRC_DIR}" ]; then
+        SRC_DIR="$d"
     fi
+    for f in "${SRC_DIR}"/*.fa; do
+        if [ -f "$f" ]; then
+            BIN_FILES+=("$f")
+            BIN_SAMPLES+=("$SAMPLE_NAME")
+        fi
+    done
 done
 
 if [ ${#BIN_FILES[@]} -eq 0 ]; then
@@ -111,7 +121,7 @@ while IFS=$'\t' read -r name comp cont _; do
     src="${INPUT_DIR}/${name}.fa"
     if [ -f "$src" ]; then
         cp "$src" "${DREP_IN}/"
-        ((N_FILTERED++))
+        N_FILTERED=$((N_FILTERED+1))
     fi
 done < "${FILTERED_DIR}/filtered_report.tsv"
 
