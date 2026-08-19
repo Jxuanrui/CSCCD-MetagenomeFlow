@@ -84,7 +84,7 @@ TOTAL_BINS=$((METABAT2_ROWS + MAXBIN2_ROWS + SEMIBIN2_ROWS))
 if [ "${TOTAL_BINS}" -le 0 ]; then
     echo "[dastool] WARNING: No bins from any binner. Creating empty output."
     mkdir -p "${OUTDIR}" "${BINS_DIR}"
-    > "${SENTINEL}"
+    : > "${SENTINEL}"
     exit 0
 fi
 
@@ -96,7 +96,7 @@ BINNERS=()
 if [ ${#BINNERS[@]} -lt 2 ]; then
     echo "[dastool] WARNING: Need at least 2 non-empty binner outputs, found ${#BINNERS[@]}. Creating empty output."
     mkdir -p "${OUTDIR}" "${BINS_DIR}"
-    > "${SENTINEL}"
+    : > "${SENTINEL}"
     exit 0
 fi
 
@@ -106,13 +106,20 @@ mkdir -p "${OUTDIR}"
 CLEAN_DIR="${OUTDIR}/input_clean"
 mkdir -p "${CLEAN_DIR}"
 
+# 各分箱工具的中间产物可能残留极少数不在当前 assembly 中的 contig ID
+# （如极短 contig 被后续步骤过滤），需据当前 CONTIGS 白名单过滤，否则 DAS_Tool 直接报错退出
+CONTIG_IDS="${CLEAN_DIR}/.contig_ids.txt"
+grep "^>" "${CONTIGS}" | sed 's/^>//;s/[[:space:]].*//' > "${CONTIG_IDS}"
+
 # 构建标识列表和输入文件列表
 LABELS=""; INPUTS=""
 for entry in "${BINNERS[@]}"; do
     L="${entry%%:*}"
     F="${entry#*:}"
     CLEAN_F="${CLEAN_DIR}/${L}.tsv"
-    awk 'BEGIN{FS=OFS="\t"} NR==1 && ($1=="contig_id" || $1=="contig") {next} NF>=2 {print $1,$2}' "${F}" > "${CLEAN_F}"
+    awk 'BEGIN{FS=OFS="\t"} NR==1 && ($1=="contig_id" || $1=="contig") {next} NF>=2 {print $1,$2}' "${F}" \
+        | awk -v ids="${CONTIG_IDS}" 'BEGIN{FS=OFS="\t"; while((getline line < ids) > 0) keep[line]=1} $1 in keep {print}' \
+        > "${CLEAN_F}"
     [ -n "${LABELS}" ] && LABELS="${LABELS},"
     LABELS="${LABELS}${L}"
     [ -n "${INPUTS}" ] && INPUTS="${INPUTS},"
@@ -121,7 +128,9 @@ done
 
 set +e
 echo "[dastool] ${SAMPLE} | binner: ${LABELS} | 整合分箱 ..."
-conda run --prefix "${REPO}/envs/dastool" --no-capture-output \
+# R_LIBS_USER (项目全局 Rlib，R 4.5.3 编译) 与本环境 R 4.4.3 ABI 不兼容，
+# 会覆盖 envs/dastool 自带且兼容的 data.table，导致 DAS_Tool 内部 R 脚本崩溃
+env -u R_LIBS_USER conda run --prefix "${REPO}/envs/dastool" --no-capture-output \
     DAS_Tool \
         --threads "${CPUS}" \
         -i "${INPUTS}" \
