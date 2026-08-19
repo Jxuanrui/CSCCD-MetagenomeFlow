@@ -8,7 +8,7 @@
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
 [![Conda](https://img.shields.io/badge/conda%20envs-49-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-144-blue)]()
+[![Scripts](https://img.shields.io/badge/scripts-168-blue)]()
 [![RAG](https://img.shields.io/badge/RAG-11988%20chunks-purple)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
@@ -23,9 +23,9 @@
 ║    ╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═╝                                          ║
 ║                                                                           ║
 ║    MaxMetagenome Platform                                                 ║
-║    完整宏基因组多维度分析平台  ·  版本 1.0                                   ║
+║    完整宏基因组多维度分析平台  ·  版本 1.1                                   ║
 ║                                                                           ║
-║    144 分析脚本  ·  131 Snakemake 规则  ·  49 conda 环境  ·  ~1.1TB 数据库  ║
+║    168 分析脚本  ·  138 Snakemake 规则  ·  49 conda 环境  ·  ~1.1TB 数据库  ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -69,6 +69,8 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 **🎉 CSCCD-MetagenomeFlow v1.1 (August 2026)** — first VEBA toolchain integration: eukaryotic candidate QC layer.
 
+**🔧 v1.1.1 patch (2026-08-19)**: Error handling hardening — all scripts now enforce `set -euo pipefail`; ~30 scripts with graceful degradation logic use `set +e`/`set -e` wrapping to preserve EXIT_CODE capture. DAS_Tool R environment isolation fix (df1f1c5).
+
 ### v1.1 新增 | New in v1.1
 - **79b VEBA-style eukaryotic QC** (`scripts/79b_fun_veba_qc.sh`): Tiara deep-learning domain re-confirmation + BUSCO lineage-specific completeness assessment on top of script 79 (Eukfinder) candidate eukaryotic contigs. Methodology referenced from [VEBA](https://github.com/jolespin/veba) `binning-eukaryotic` module — **no VEBA source code reused** (VEBA is AGPLv3; Tiara/BUSCO are both MIT, no license contamination). Validated end-to-end on real data: Sample4 (Project01) resolved to `saccharomycetaceae_odb12.2` at 73.5% completeness; low-depth samples correctly degrade to an `empty.flag` sentinel instead of a false error.
 - **79c-79e real eukaryotic binning** (`scripts/79c_fun_coverm_depth.sh`, `79d_fun_metabat2.sh`, `79e_fun_euk_qc_per_bin.sh`): CoverM coverage depth → MetaBAT2 binning → per-bin BUSCO completeness, producing dRep-style one-genome-per-file eukaryotic MAGs (prerequisite for the upcoming cross-domain `cluster` module). Also VEBA `binning-eukaryotic` methodology reference, no source reused (CoverM Apache-2.0, MetaBAT2/BUSCO MIT/BSD). Validated on Sample4: MetaBAT2 resolved 1 bin (2000/2939 candidate contigs, 8.2Mb) at 63.8% completeness, confirming the candidate pool contains a real dominant species rather than pure noise. 0-bin and upstream-empty branches degrade gracefully (non-error exit 0).
@@ -89,8 +91,9 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 **🎉 CSCCD-MetagenomeFlow v1.0 released (July 2026)** — formerly MaxMetagenome, now officially under the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases.
 
 ### 分析能力 | Analysis Capacity
-- **144 scripts** spanning three kingdoms — bacteria (11–43c), virome (51–72), and mycobiome (71–86)
-- **--force parameter support**: 136/144 scripts (94.4%) now support `--force` flag for idempotent pipeline reruns, automatically propagated by flow orchestrators (00_pipeline_*.sh); both new scripts (02b, 36b) also support `--force`
+- **168 scripts** spanning three kingdoms — bacteria (11–43c), virome (51–72), and mycobiome (71–86), plus cross-domain analysis (98e–98f)
+- **--force parameter support**: 137/146 shell scripts (93.8%) now support `--force` flag for idempotent pipeline reruns, automatically propagated by flow orchestrators (00_pipeline_*.sh); both new scripts (02b, 36b) also support `--force`
+- **Error handling hardening (2026-08 patch)**: All scripts now enforce `set -euo pipefail` for strict error propagation; ~30 scripts with manual EXIT_CODE capture use `set +e`/`set -e` wrapping to preserve graceful degradation logic (e.g., zero-data-row handling in statistical modules). DAS_Tool R environment isolation fix (df1f1c5) resolves ABI conflict between project-global R_LIBS_USER (R 4.5.3) and dastool env's R 4.4.3
 - **inStrain strain-level microdiversity**: 39b–39d scripts quantify within-species genetic variation via read mapping to MAGs, SNV profiling, and population comparison across samples; 39d additionally aggregates the pairwise popANI long table into `strain_comparison_summary.tsv`, a per-genome wide matrix with min popANI and same-strain verdict (popANI ≥ 0.99999) across all sample pairs
 - **Virome expanded to 72**: added PhaBox2, DRAM, and PhaGCN3 for comprehensive phage lifestyle prediction (lytic/temperate/chronic)
 - **Bacteria WGS module (42b)**: MLST typing, pan-genome (Roary), and SNP calling (Snippy) for strain-level tracking
@@ -105,9 +108,10 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 - **MCP protocol compliance**: official Model Context Protocol implementation, registered with Claude Code & Codex CLI for native slash-command integration
 
 ### 平台成熟度 | Platform Maturity
-- **Snakemake full validation**: 134 rules across 10 modules, end-to-end tested from raw reads to statistics (bacteria/virome/fungi + 91-98 stats pipelines)
+- **Snakemake full validation**: 138 rules across 10 modules, end-to-end tested from raw reads to statistics (bacteria/virome/fungi + 91-98 stats pipelines)
 - **49 conda environments**: all tools self-contained under project root, ~1.1 TB databases (GTDB R226, VOGDB, ChocoPhlAn, UniRef90, EukDB, etc.)
 - **Three run modes**: step-by-step (debugging), Bash pipeline (lightweight), or Snakemake DAG (HPC-ready with native resume)
+- **Three-layer test pyramid**: Layer 1 shellcheck (146/146 scripts pass), Layer 2 integration tests (3 representative scripts on Test_CI_fixture), Layer 3 DAG connectivity (Snakemake dry-run validates all 138 rules). Unified entry: `bash scripts/tests/run_ci_checks.sh --level 3`
 
 ---
 
@@ -118,8 +122,8 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | OS | Linux x86_64 · Ubuntu 22.04 |
 | Environment manager | Miniforge3 (self-contained, under project root) |
 | Workflow engine | Snakemake 9.22.0 |
-| Analysis scripts | 144 (01–98f + utilities) |
-| Snakemake rules | 131 across 10 rule files |
+| Analysis scripts | 168 (01–98f + utilities, including .sh/.R/.py) |
+| Snakemake rules | 138 across 10 rule files |
 | Conda environments | 49 isolated tool environments |
 | Databases | ~1.1 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, UniProt Swiss-Prot, Pfam-A, ISfinder, ICEberg, integrall, transposase-db, etc.) |
 | RAG knowledge base | **11,988 chunks** across 4 collections (ChromaDB + bge-small-zh-v1.5 + BM25 hybrid retrieval) |
@@ -170,7 +174,7 @@ bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenom
 # Parallel samples (requires rush)
 bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 -j 2
 
-# Force re-run (ignore existing outputs) — supported by 136/144 scripts (94.4%)
+# Force re-run (ignore existing outputs) — supported by 137/146 scripts (93.8%)
 bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --force
 bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/Maxmetagenome --force
 ```
@@ -745,7 +749,7 @@ All collections are queryable via `/mgx-ask` slash command or direct MCP tool ca
 
 ```
 CSCCD-MetagenomeFlow/
-├── scripts/                  144 scripts (01–98f + utilities)
+├── scripts/                  168 scripts (01–98f + utilities)
 ├── pipeline/
 │   ├── Snakefile             DAG entry point
 │   ├── config/config.yaml    Per-run parameters (samples / workdir / threads)

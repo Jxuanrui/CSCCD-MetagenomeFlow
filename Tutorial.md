@@ -1,7 +1,7 @@
 # MaxMetagenome 分析平台使用教程
 
 > 面向首次使用者的完整流程指南
-> 平台版本：CSCCD-MetagenomeFlow v1.1 | 更新日期：2026-08-03
+> 平台版本：CSCCD-MetagenomeFlow v1.1 (2026-08 patch) | 更新日期：2026-08-19
 >
 > **本教程采用逐步审核制**：每个步骤执行完毕后，你必须审核输出结果，确认无误后再继续下一步。
 > 不得提前启动 Snakemake 全流程，待所有关键步骤单样本审核通过后再切换批量模式。
@@ -1484,7 +1484,7 @@ rush -j 4 'bash scripts/42b_bac_plasmidfinder.sh -s {} -t 8 \
 
 **依赖**：步骤 7（MEGAHIT 组装）输出的 contigs + 步骤 2（去宿主 reads，用于覆盖度计算）
 
-**流程链**：32 CoverM depth → 33/34/35（MetaBAT2 / MaxBin2 / SemiBin2，三算法独立并行）→ 36 DAS_Tool（整合择优）→ 36b post-binning reassembly（用原始 reads 逐 bin 精细重组装）→ 37 CheckM2（ML 质量评估）→ 38 dRep（去冗余）→ 39 CoverM quant（丰度定量）→ 40 GTDB-Tk（系统发育分类）→ 41 Bakta（精细注释）
+**流程链**：32 CoverM depth → 33/34/35（MetaBAT2 / MaxBin2 / SemiBin2，三算法独立并行）→ 36 DAS_Tool（整合择优）→ 36b post-binning reassembly（用原始 reads 逐 bin 精细重组装）→ 37 CheckM2（ML 质量评估）→ 38 dRep（去冗余）→ 39 CoverM quant（丰度定量）→ **39b-d inStrain（菌株追踪：map→profile→compare）**→ 40 GTDB-Tk（系统发育分类）→ 41 Prokka（精细注释）
 
 **执行方式（单样本示例，Sample1）**：
 ```bash
@@ -1547,6 +1547,9 @@ result/binning/reassembly/{sample}/
 | 37 | CheckM2 | ML 质量评估（跨样本一次性跑全部 612 bins） | ✅ `quality_report.tsv`（612 行）；过滤（完整度≥50%，污染度≤10%）后 **488 个高质量 MAG** 进入 `drep_input/` |
 | 38 | dRep | 去冗余（ANI 95%，物种级） | ✅ 488 个高质量 MAG（87.7% 通过 checkM 过滤，428 个）→ 去冗余后 **213 个代表基因组**，耗时 432s（复用 CheckM2 genomeInfo，跳过内部 checkm1 重算）|
 | 39 | CoverM quant | MAG 丰度定量 | ✅ 10/10 样本（Sample1/10-18），213 个代表 MAG mapping率 ~69%（30.6% unmapped）|
+| 39b | inStrain map | 比对到去冗余 MAG 集（per-sample BAM 产出）| ✅ 已集成 Snakemake，自动拼接 combined_mags.fa + 复用 coverm make |
+| 39c | inStrain profile | 菌株级微多样性分析（per-sample profile）| ✅ 已集成 Snakemake，自动生成 .stb scaffold-to-bin 映射 |
+| 39d | inStrain compare | 跨样本 popANI 比较（判断同一菌株）| ✅ 已集成 Snakemake，aggregate 规则聚合全样本 profile |
 | 40 | GTDB-Tk | 系统发育分类（R214 数据库，跳过 skani，marker-based 分类）| ✅ 213 个 MAG 全部分类为细菌（无古菌），耗时 2636s。**已知问题**：GTDB-Tk 2.5.2 强依赖 R226 skani 数据，R214 数据库无法直接使用；修复方案：① patch `ani_rep.py` 跳过空 reference 时的 skani 调用；② 启用 `classify.py` 内置 DEBUG 机制（`skani_verification = {}`）强制跳过所有 skani ANI 验证，仅使用传统 pplacer marker-based 分类。分类结果示例：`d__Bacteria;p__Bacillota_A;c__Clostridia;o__Oscillospirales;f__Oscillospiraceae;g__CAG-103` |
 | 41 | Prokka | MAG 精细注释 | ✅ 213/213 完成（并行优化：`41_bac_prokka_parallel.sh`，6 并发 × 8 线程，耗时 ~26 小时，相比原串行方案 5-9 天加速 5-8×）。**备注**：Bakta 因 Diamond sORF 兼容性问题放弃，Prokka 注释精度对大多数下游分析足够 |
 
