@@ -579,11 +579,12 @@ rule stat_functional_redundancy:
         fi
 
         # Virus (use viral_family as taxonomy proxy)
+        mkdir -p {WORKDIR}/result/stat/virus/functional_redundancy
         bash {REPO}/scripts/96c_functional_redundancy.sh \
             -f {input.vir_func} \
             -t {input.vir_tax} \
             -o {WORKDIR}/result/stat/virus/functional_redundancy \
-            -d virus -y vog
+            -d virus -y vog || echo "Virus functional redundancy skipped: no non-zero VOG abundance data" > {output.vir_summary}
         """
 
 
@@ -595,7 +596,7 @@ rule stat_pathway_activity:
             sample=SAMPLES
         ),
     output:
-        summary = WORKDIR + "/result/stat/bacteria/pathway_activity/pathway_activity_summary.txt",
+        summary = WORKDIR + "/result/stat/bacteria/pathway_activity/pathway_completeness_summary.csv",
     params:
         meta = meta_file,
         min_coverage = 0.5,
@@ -698,5 +699,24 @@ rule cross_domain_orthogroup:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
         "bash {REPO}/scripts/98f_cross_domain_orthogroup.sh  {params.force_flag}"
+        "-t {threads} -w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"
+
+
+rule cross_domain_correlation:
+    """Cross-domain bacteria/virus/fungi abundance Spearman correlation network,
+    augmented with iPHoP virus-host prediction edges (type=host_prediction).
+    """
+    input:
+        ani_clusters = WORKDIR + "/result/cross_domain/cluster/genome_clusters.tsv",
+    output:
+        out = WORKDIR + "/result/cross_domain/correlation/network_summary.txt",
+    log:
+        WORKDIR + "/logs/cross_domain/correlation.log",
+    threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    shell:
+        "bash {REPO}/scripts/98g_cross_domain_correlation.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
