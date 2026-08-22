@@ -180,16 +180,28 @@ if [ ${#SNIPPY_DIRS[@]} -eq 0 ]; then
     exit 1
 fi
 
+set +e
 conda run --prefix "${SNIPPY_ENV}" --no-capture-output \
     snippy-core \
         --ref "${REF}" \
         --prefix "${OUTDIR}/core" \
         "${SNIPPY_DIRS[@]}"
-
 EXIT_CODE=$?
+set -e
+
+# snippy-core 内部最后一步调用 snp-sites -c 生成紧凑版 core.aln；当跨样本 MAG
+# 之间没有共同的多态位点（宏基因组场景下不同样本的独立组装 MAG 本质是不同基
+# 因组，core genome 区域可能 0 SNP）时 snp-sites 会报 "No SNPs were detected"
+# 并以非零码退出，但此时 snippy-core 真正需要的 core.full.aln/core.tab 已经
+# 正常生成（下游只用这两个文件，不用 core.aln），因此仅在这些必需产物缺失时
+# 才视为致命错误
 if [ ${EXIT_CODE} -ne 0 ]; then
-    echo "[ERROR] snippy-core failed"
-    exit ${EXIT_CODE}
+    if [ -s "${FULL_ALN}" ] && [ -s "${CORE_TAB}" ]; then
+        echo "[WARN] snippy-core exited non-zero (likely snp-sites 'no SNPs' on core.aln), but required outputs (core.full.aln/core.tab) are present; continuing"
+    else
+        echo "[ERROR] snippy-core failed"
+        exit ${EXIT_CODE}
+    fi
 fi
 
 if [ ! -f "${FULL_ALN}" ] || [ ! -s "${FULL_ALN}" ]; then

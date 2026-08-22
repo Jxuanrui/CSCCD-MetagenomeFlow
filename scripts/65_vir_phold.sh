@@ -49,6 +49,14 @@ PHOLD_DB="${REPO}/db/phold"
 if [ ! -f "${VOTU_GBK}" ] || [ ! -s "${VOTU_GBK}" ]; then echo "[ERROR] pharokka.gbk 不存在，请先完成步骤64"; exit 1; fi
 if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ]; then echo "[phold] 结果已存在，跳过"; exit 0; fi
 
+# 若已有另一个 phold run 进程在写同一输出目录（如上一次 Snakemake 会话遗留的孤儿
+# 进程），本次 -f 会删除其正在生成的目录；等待其退出后复用结果，而非强行抢占
+while pgrep -f "phold run .*-o ${OUTDIR}( |$)" >/dev/null 2>&1; do
+    echo "[phold] 检测到已有 phold 进程正在写 ${OUTDIR}，等待其完成..."
+    sleep 60
+done
+if [ -f "${SENTINEL}" ]; then echo "[phold] 等待期间结果已生成，跳过"; exit 0; fi
+
 mkdir -p "${OUTDIR}"
 
 echo "[phold] 结构暗物质 ORF 注释 ..."

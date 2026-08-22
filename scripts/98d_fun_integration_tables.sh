@@ -115,6 +115,8 @@ fi
 # Python 整合主逻辑
 # ==============================================================================
 
+export OMP_NUM_THREADS="${CPUS}"
+export OPENBLAS_NUM_THREADS="${CPUS}"
 conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
 python3 - \
     "${WORKDIR}" \
@@ -449,11 +451,23 @@ def print_summary_report():
             print(f"  {relpath:<55s}  {nrows:>6} 行 × {ncols:>3} 列  ({size_kb:.1f} KB)")
 
 
-if os.path.isfile(MAIN_MATRIX):
-    print("[INFO] gene_annotation_matrix.tsv 已存在，跳过 Step1-Step5")
+TYPE_A_FILES = [
+    os.path.join(OUT_DIR, "kegg_ko_gene_count.tsv"),
+    os.path.join(OUT_DIR, "cog_gene_count.tsv"),
+    os.path.join(OUT_DIR, "cazyme_gene_count.tsv"),
+    os.path.join(OUT_DIR, "vfdb_gene_count.tsv"),
+    os.path.join(OUT_DIR, "amr_gene_count.tsv"),
+    os.path.join(OUT_DIR, "merops_family_gene_count.tsv"),
+]
+
+if os.path.isfile(MAIN_MATRIX) and all(os.path.isfile(f) for f in TYPE_A_FILES):
+    print("[INFO] gene_annotation_matrix.tsv 和 6 个类型 A 表均已存在，跳过 Step1-Step5")
     run_funomic_step()
     print_summary_report()
     sys.exit(0)
+elif os.path.isfile(MAIN_MATRIX):
+    print("[WARN] gene_annotation_matrix.tsv 存在但类型 A 表不完整，删除后重建")
+    os.remove(MAIN_MATRIX)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

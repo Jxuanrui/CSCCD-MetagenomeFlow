@@ -59,7 +59,9 @@ if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo
 mkdir -p "${OUTDIR}"
 
 # MaxBin2 需要 2 列 abundance (contig, depth)，从 coverm 深度表提取
-if [ ! -f "${ABUND}" ]; then
+# depth.txt 比 abundance.txt 新时（如 contigs.fa 被上游重新组装）必须重新生成，
+# 否则会用旧 contig-ID 体系的丰度文件配新组装，产生错位的 bins（下游 DAS_Tool 报错）
+if [ ! -f "${ABUND}" ] || [ "${DEPTH}" -nt "${ABUND}" ]; then
     tail -n +2 "${DEPTH}" | cut -f1,4 > "${ABUND}"
 fi
 

@@ -85,11 +85,20 @@ if [ ${FORCE} -eq 0 ] && [ -f "${BAM}" ] && [ -s "${BAM}" ]; then
     echo "[instrain_map] ${SAMPLE} 结果已存在，跳过: ${BAM}"; exit 0
 fi
 
+# 若 dRep 产出比合并参考更新（重新分箱/重新去冗余），需要重建，避免 BAM 用陈旧 scaffold 体系比对
+COMBINED_STALE=0
+if [ -f "${COMBINED_FA}" ] && [ -s "${COMBINED_FA}" ]; then
+    for FA in "${MAGS_DIR}"/*.fa; do
+        [ -f "${FA}" ] || continue
+        if [ "${FA}" -nt "${COMBINED_FA}" ]; then COMBINED_STALE=1; break; fi
+    done
+fi
+
 # ── 构建跨样本共享的合并参考 + .stb（并行样本竞争，用 mkdir 原子锁）──────────────
-if [ ${FORCE} -eq 1 ] || [ ! -f "${COMBINED_FA}" ] || [ ! -s "${COMBINED_FA}" ] || [ ! -f "${COMBINED_STB}" ] || [ ! -s "${COMBINED_STB}" ]; then
+if [ ${FORCE} -eq 1 ] || [ ${COMBINED_STALE} -eq 1 ] || [ ! -f "${COMBINED_FA}" ] || [ ! -s "${COMBINED_FA}" ] || [ ! -f "${COMBINED_STB}" ] || [ ! -s "${COMBINED_STB}" ]; then
     RETRY=0
     while ! mkdir "${LOCK_DIR}" 2>/dev/null; do
-        if [ -f "${COMBINED_FA}" ] && [ -s "${COMBINED_FA}" ] && [ -f "${COMBINED_STB}" ] && [ -s "${COMBINED_STB}" ]; then
+        if [ ${COMBINED_STALE} -eq 0 ] && [ -f "${COMBINED_FA}" ] && [ -s "${COMBINED_FA}" ] && [ -f "${COMBINED_STB}" ] && [ -s "${COMBINED_STB}" ]; then
             break
         fi
         RETRY=$((RETRY + 1))
@@ -99,7 +108,7 @@ if [ ${FORCE} -eq 1 ] || [ ! -f "${COMBINED_FA}" ] || [ ! -s "${COMBINED_FA}" ] 
         sleep 2
     done
 
-    if [ ! -f "${COMBINED_FA}" ] || [ ! -s "${COMBINED_FA}" ] || [ ! -f "${COMBINED_STB}" ] || [ ! -s "${COMBINED_STB}" ]; then
+    if [ ${COMBINED_STALE} -eq 1 ] || [ ! -f "${COMBINED_FA}" ] || [ ! -s "${COMBINED_FA}" ] || [ ! -f "${COMBINED_STB}" ] || [ ! -s "${COMBINED_STB}" ]; then
         echo "[instrain_map] 构建合并参考 combined_mags.fa（${N_MAGS} 个去冗余 MAG）..."
         # 为每个 MAG 的 scaffold 添加唯一前缀（避免重复）
         # 并移除 FASTA header 中的额外信息（只保留 scaffold ID，避免 BAM/FASTA 不匹配）

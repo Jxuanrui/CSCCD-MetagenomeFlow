@@ -18,6 +18,7 @@ rule eggnog:
         protein_nr = PROTEIN_NR_PATH,
     output:
         annotations = WORKDIR + "/result/annotation/eggnog/eggnog.emapper.annotations",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -37,7 +38,7 @@ rule kegg:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/22_bac_kegg.sh -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2> > {log} 2>&11"
+        "bash {REPO}/scripts/22_bac_kegg.sh -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2>&1"
 
 
 # ─── 23: AMRFinderPlus antibiotic resistance ─────────────────────────────────
@@ -47,6 +48,7 @@ rule amrfinder:
         protein_nr = PROTEIN_NR_PATH,
     output:
         tsv = WORKDIR + "/result/annotation/amrfinder/amrfinder_results.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -60,6 +62,7 @@ rule card:
         protein_nr = PROTEIN_NR_PATH,
     output:
         txt = WORKDIR + "/result/annotation/card/rgi_results.txt",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -89,6 +92,7 @@ rule dbcan:
         protein_nr = PROTEIN_NR_PATH,
     output:
         overview = WORKDIR + "/result/annotation/dbcan/overview.txt",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -102,6 +106,7 @@ rule vfdb:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/vfdb/vfdb_hits.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -115,6 +120,7 @@ rule bacmet:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/bacmet/bacmet_hits.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -128,6 +134,7 @@ rule antismash:
         contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
     output:
         index = WORKDIR + "/result/annotation/antismash/{sample}/antismash_done.txt",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -163,6 +170,7 @@ rule defense_finder:
         protein_nr = PROTEIN_NR_PATH,
     output:
         systems = WORKDIR + "/result/annotation/defense_finder/defense_finder_systems.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -176,6 +184,7 @@ rule ncyc:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/ncyc/ncyc_hits.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -189,6 +198,7 @@ rule pcyc:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -202,6 +212,7 @@ rule bac_scyc:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/scyc/scyc_hits.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -216,6 +227,7 @@ rule bac_pfam:
     output:
         tblout = WORKDIR + "/result/annotation/pfam/pfam_hits.tblout",
         domtblout = WORKDIR + "/result/annotation/pfam/pfam_hits.domtblout",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -229,6 +241,7 @@ rule bac_uniprot:
         protein_nr = PROTEIN_NR_PATH,
     output:
         hits = WORKDIR + "/result/annotation/uniprot_sprot/sprot_hits.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -249,4 +262,4 @@ rule fegenie:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/31e_bac_fegenie.sh -s NR -t {threads} -w {WORKDIR} -r {REPO} --input-type nr {params.force_flag} > {log} 2> > {log} 2>&11"
+        "bash {REPO}/scripts/31e_bac_fegenie.sh -s NR -t {threads} -w {WORKDIR} -r {REPO} --input-type nr {params.force_flag} > {log} 2>&1"

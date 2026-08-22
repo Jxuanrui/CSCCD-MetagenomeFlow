@@ -51,23 +51,29 @@ SENTINEL="${OUTDIR}/votu_representatives.tsv"
 if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[votu_gen] vOTU 结果已存在，跳过"; exit 0; fi
 
 # Step 1: 收集所有样本的病毒 contigs
+# 注：MEGAHIT 的 contig ID（如 k127_44127）只是样本内编号，非全局唯一，不同样本
+# 独立组装会产生同名 ID；跨样本合并时若不加前缀区分，下游 pharokka/genomad/bacphlip
+# 等工具会因 fasta 内重复 header 直接报错退出。这里为每条 header 加上样本名前缀。
 echo "[votu_gen] 步骤 1/4: 合并全样本病毒 contigs ..."
 mkdir -p "${CONTIGS_DIR}"
 : > "${ALL_VIRUS}"  # 清空
-for f in "${WORKDIR}"/result/virus/checkv/*/viruses_filtered.fna; do
-    [ -f "$f" ] && cat "$f" >> "${ALL_VIRUS}"
-done
+merge_with_sample_prefix() {
+    local pattern="$1"
+    for f in "${WORKDIR}"/result/virus/checkv/*/${pattern}; do
+        [ -f "$f" ] || continue
+        local sample
+        sample="$(basename "$(dirname "$f")")"
+        sed "s/^>/>${sample}__/" "$f" >> "${ALL_VIRUS}"
+    done
+}
+merge_with_sample_prefix "viruses_filtered.fna"
 # fallback: 用 viruses.fna
 if [ ! -s "${ALL_VIRUS}" ]; then
-    for f in "${WORKDIR}"/result/virus/checkv/*/viruses.fna; do
-        [ -f "$f" ] && cat "$f" >> "${ALL_VIRUS}"
-    done
+    merge_with_sample_prefix "viruses.fna"
 fi
 # second fallback: 用 virus_contigs.fasta
 if [ ! -s "${ALL_VIRUS}" ]; then
-    for f in "${WORKDIR}"/result/virus/checkv/*/virus_contigs.fasta; do
-        [ -f "$f" ] && cat "$f" >> "${ALL_VIRUS}"
-    done
+    merge_with_sample_prefix "virus_contigs.fasta"
 fi
 
 if [ ! -s "${ALL_VIRUS}" ]; then echo "[ERROR] 无病毒 contigs"; exit 1; fi

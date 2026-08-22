@@ -209,16 +209,27 @@ balance_ratio <- if (length(group_counts) > 1 && max(group_counts) > 0) {
   NA_real_
 }
 
-if (!"batch" %in% colnames(metadata)) {
-  stop("Missing required column for batch check: batch")
+has_batch_col <- "batch" %in% colnames(metadata)
+if (!has_batch_col) {
+  # 本项目 metadata 无 batch 列，视为单批次数据（与 95a_stat_batch_correct.sh
+  # 的处理一致），跳过批次-分组混淆检验而非直接报错终止整个 QC 脚本
+  metadata$batch <- "single_batch"
 }
 batch_group_table <- table(metadata$batch, metadata$group)
 batch_has_both <- all(rowSums(batch_group_table > 0) == ncol(batch_group_table))
-chi_p <- tryCatch(
-  suppressWarnings(stats::chisq.test(batch_group_table)$p.value),
-  error = function(e) NA_real_
-)
-batch_ok <- isTRUE(batch_has_both) && (is.na(chi_p) || chi_p >= 0.05)
+chi_p <- if (has_batch_col) {
+  tryCatch(
+    suppressWarnings(stats::chisq.test(batch_group_table)$p.value),
+    error = function(e) NA_real_
+  )
+} else {
+  NA_real_
+}
+batch_ok <- if (has_batch_col) {
+  isTRUE(batch_has_both) && (is.na(chi_p) || chi_p >= 0.05)
+} else {
+  TRUE
+}
 
 covariate_tests <- stats::setNames(lapply(outlier_vars, function(var) {
   cov_df <- metadata[!is.na(metadata[[var]]) & !is.na(metadata$group), c("group", var), drop = FALSE]

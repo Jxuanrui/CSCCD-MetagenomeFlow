@@ -116,8 +116,24 @@ conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
 EXIT_CODE=$?
 set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
-    echo "[ERROR] metaWRAP reassemble_bins 失败 (sample=${SAMPLE})"
-    exit ${EXIT_CODE}
+    echo "[WARN] metaWRAP reassemble_bins 失败 (sample=${SAMPLE})，回退到原始 DAS_Tool bins"
+    # metaWRAP 失败时的 graceful fallback：将所有原始 bins 复制到 reassembled_bins/
+    # 作为"未重组装"版本，确保下游 CheckM2 有输入（CheckM2 脚本已支持此回退逻辑）
+    mkdir -p "${FINAL_DIR}"
+    for bin_fa in "${BINS_DIR}"/*.fa; do
+        cp "${bin_fa}" "${FINAL_DIR}/$(basename "${bin_fa}")"
+    done
+    N_REASSEMBLED=0
+    N_FALLBACK=${N_INPUT_BINS}
+    echo "N_INPUT_BINS=${N_INPUT_BINS}" > "${SENTINEL}"
+    echo "N_REASSEMBLED=0" >> "${SENTINEL}"
+    echo "N_FALLBACK_TO_ORIGINAL=${N_INPUT_BINS}" >> "${SENTINEL}"
+    echo "METAWRAP_FAILED=true" >> "${SENTINEL}"
+    echo "[bin_reassembly] 完成（全部回退），耗时 ${SECONDS}s | 输入: ${N_INPUT_BINS} | 回退: ${N_FALLBACK}"
+    # 清理失败的中间文件前先终止可能残留的 spades 子进程（同下方成功分支的说明）
+    pkill -9 -f "spades.*${MW_WORKDIR}" 2>/dev/null || true
+    rm -rf "${MW_WORKDIR}" "${BINS_CLEAN_DIR}"
+    exit 0
 fi
 
 # --skip-checkm 模式下 metaWRAP 跳过内部"最优bin挑选"环节（该环节本身依赖CheckM
@@ -150,6 +166,12 @@ for bin_fa in "${BINS_DIR}"/*.fa; do
         N_FALLBACK=$((N_FALLBACK+1))
     fi
 done
+
+# metaWRAP 已知问题：主进程返回后，部分 bin 的 spades-corrector-core 子进程
+# 可能仍在后台运行（未被 metaWRAP 正确等待/终止）。若在此时直接 rm -rf 工作目录，
+# 这些子进程会变成孤儿进程，对着已删除的目录空转，长期占满 CPU 却不产出任何结果
+# （曾观测到 5 天未自行退出）。清理前先按目录路径匹配显式终止残留子进程。
+pkill -9 -f "spades.*${MW_WORKDIR}" 2>/dev/null || true
 
 # 清理中间文件（组装临时目录体量大，成功产出已复制到 reassembled_bins，无需保留）
 rm -rf "${MW_WORKDIR}" "${BINS_CLEAN_DIR}"

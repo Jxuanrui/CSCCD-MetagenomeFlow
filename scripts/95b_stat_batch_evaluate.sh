@@ -117,7 +117,10 @@ read_metadata <- function(path) {
   sample_col <- c("sample", "sample_id", "SampleID", "Sample", "id")[c("sample", "sample_id", "SampleID", "Sample", "id") %in% names(meta)][1] %||% names(meta)[1]
   meta <- meta %>% dplyr::rename(sample_id = !!sample_col)
   meta$sample_id <- as.character(meta$sample_id)
-  if (!batch_col %in% names(meta)) stop("Batch column missing: ", batch_col)
+  if (!batch_col %in% names(meta)) {
+    message("[INFO] Batch column '", batch_col, "' not found in metadata; skipping batch evaluation (single-batch data assumed)")
+    return(NULL)
+  }
   rownames(meta) <- meta$sample_id
   meta
 }
@@ -183,6 +186,14 @@ plot_pcoa <- function(mat, meta, title) {
 }
 
 meta <- read_metadata(metadata_csv)
+if (is.null(meta)) {
+  message("[INFO] No batch column found; writing placeholder evaluation report and exiting (single-batch data)")
+  readr::write_tsv(
+    tibble(method = "uncorrected", batch_R2 = NA_real_, group_R2 = NA_real_, silhouette = NA_real_),
+    file.path(result_dir, "evaluation_report.tsv")
+  )
+  quit(save = "no", status = 0)
+}
 matrices <- list(uncorrected = load_baseline(bact_table))
 corrected_files <- Sys.glob(file.path(batch_dir, "*_corrected.tsv"))
 for (fp in corrected_files) {

@@ -97,9 +97,12 @@ fi
 mkdir -p "${RESULT_DIR}" "${TMP_DIR}"
 
 # 获取 conda env 中 PlasmidFinder 内置 DB 路径
+# PlasmidFinder 是脚本式安装（非可导入 Python 包），此 import 必然失败；
+# 加 `|| true` 避免 set -e 在这个预期失败的探测尝试上提前终止脚本，
+# 交由下面 104-107 行的 find 兜底逻辑定位真实数据库路径
 DB_PATH=$(conda run --prefix "${REPO}/envs/plasmidfinder" \
     python -c "import os, plasmidfinder; \
-    print(os.path.join(os.path.dirname(plasmidfinder.__file__), 'database'))" 2>/dev/null)
+    print(os.path.join(os.path.dirname(plasmidfinder.__file__), 'database'))" 2>/dev/null || true)
 
 if [ -z "${DB_PATH}" ] || [ ! -d "${DB_PATH}" ]; then
     # 备用：直接从 conda share 目录查找

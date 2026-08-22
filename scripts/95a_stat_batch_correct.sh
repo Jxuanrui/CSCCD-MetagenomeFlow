@@ -148,7 +148,10 @@ read_metadata <- function(path, batch_col, group_col) {
   meta <- readr::read_csv(path, show_col_types = FALSE)
   sample_col <- c("sample", "sample_id", "SampleID", "Sample", "id")[c("sample", "sample_id", "SampleID", "Sample", "id") %in% names(meta)][1] %||% names(meta)[1]
   meta <- meta %>% dplyr::rename(sample_id = !!sample_col)
-  if (!batch_col %in% names(meta)) stop("Batch column missing: ", batch_col)
+  if (!batch_col %in% names(meta)) {
+    message("[INFO] Batch column '", batch_col, "' not found in metadata; skipping batch correction (single-batch data assumed)")
+    return(NULL)
+  }
   meta$sample_id <- as.character(meta$sample_id)
   meta[[batch_col]] <- as.factor(meta[[batch_col]])
   if (nzchar(group_col) && group_col %in% names(meta)) meta[[group_col]] <- as.factor(meta[[group_col]])
@@ -194,6 +197,12 @@ ensure_matrix <- function(x) {
 baseline_transform <- function(mat) log1p(mat)
 
 meta <- read_metadata(metadata_csv, batch_col, group_col)
+if (is.null(meta)) {
+  message("[INFO] No batch column found; creating sentinel and exiting (single-batch data)")
+  writeLines("No batch correction applied: batch column not present in metadata",
+             file.path(result_dir, "corrected_matrices.done"))
+  quit(save = "no", status = 0)
+}
 mat <- read_abundance_table(bact_table)
 aligned <- align_inputs(mat, meta)
 mat <- aligned$mat

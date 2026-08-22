@@ -35,4 +35,8 @@ if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT_TSV}" ] && [ -s "${OUTPUT_TSV}" ]; then
   exit 0
 fi
 
-REPO="$REPO" Rscript "${REPO}/scripts/01_metadata_qc.R" "$PWD"
+# 直接用系统 Rscript（miniforge3 base env）会缺 readr/tibble——这两个包只装在
+# envs/r_stat 专用环境里，其它 R 脚本均通过 conda run --prefix 调用，此处补齐同样约定
+export REPO
+conda run --prefix "${REPO}/envs/r_stat" --no-capture-output \
+    Rscript "${REPO}/scripts/01_metadata_qc.R" "$PWD"

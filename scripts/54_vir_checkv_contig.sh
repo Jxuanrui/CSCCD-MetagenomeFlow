@@ -86,6 +86,16 @@ else
     exit 0
 fi
 
+# CheckV 内部按 tmp/ 目录里已有的中间结果（gene_features.tsv/diamond.tsv 等）
+# 做断点续跑，但不会校验这些结果是否对应当前的 VIRAL_CONTIGS；若 VIRAL_CONTIGS
+# 是重新生成的（如本次 genomad/virsorter2 重跑后 contig 集合变化），旧 tmp/
+# 会与新 fasta 不一致，导致 contamination.py 里按 contig ID 查 gene 时 KeyError。
+# 因此这里比较 mtime，VIRAL_CONTIGS 更新则视为输入已变化，清空 tmp/ 强制全量重跑。
+if [ -d "${OUTDIR}/tmp" ] && [ "${VIRAL_CONTIGS}" -nt "${OUTDIR}/tmp" ]; then
+    echo "[checkv] 检测到 virus_contigs.fasta 比缓存的 tmp/ 更新，清空旧中间结果重新计算"
+    rm -rf "${OUTDIR}/tmp"
+fi
+
 set +e
 # Step 2: CheckV
 echo "[checkv] ${SAMPLE} | CheckV 质量评估 ..."

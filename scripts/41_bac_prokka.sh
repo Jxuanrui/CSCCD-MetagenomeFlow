@@ -110,7 +110,7 @@ for mag in "${MAGS[@]}"; do
     tsv_out="${mag_out}/${mag_name}.tsv"
 
     # 跳过已完成
-    if [ -f "${tsv_out}" ] && [ -s "${tsv_out}" ]; then
+    if [ ${FORCE} -eq 0 ] && [ -f "${tsv_out}" ] && [ -s "${tsv_out}" ]; then
         echo "[prokka] 跳过已完成: ${mag_name}" | tee -a "${LOG}"
         SKIPPED=$((SKIPPED+1))
         continue
@@ -134,7 +134,7 @@ for mag in "${MAGS[@]}"; do
     CMD="$CMD --force"
 
     # 如果GTDB-Tk提供了属名，加入--genus参数
-    if [ -n "${MAG_GENUS[$mag_name]}" ]; then
+    if [ -n "${MAG_GENUS[$mag_name]:-}" ]; then
         genus="${MAG_GENUS[$mag_name]}"
         CMD="$CMD --genus ${genus}"
         echo "  [提示] 使用 GTDB-Tk 属名: ${genus}" | tee -a "${LOG}"

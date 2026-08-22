@@ -129,7 +129,7 @@ for sam in "${SAM_FILES[@]}"; do
     sample=$(basename "$(dirname "${sam}")")
     dedup_sam="${DEDUP_DIR}/${sample}.sam.bz2"
 
-    if [ ! -f "${dedup_sam}" ]; then
+    if [ ! -f "${dedup_sam}" ] || [ "${sam}" -nt "${dedup_sam}" ]; then
         echo "[INFO] 去重 SAM header: ${sample}"
         bzip2 -dk "${sam}" -c 2>/dev/null | \
             awk '/^@SQ/{sn=$2; if(!seen[sn]++) print; next} {print}' | \
@@ -159,8 +159,16 @@ mkdir -p "${CONSENSUS_DIR}" "${DB_MARKERS_DIR}" "${TREES_DIR}" "${TEMP_DIR}"
 # 幂等：如果所有 pkl 都已存在则跳过
 # ==============================================================================
 
-N_PKL=$(ls "${CONSENSUS_DIR}"/*.json.bz2 2>/dev/null | wc -l)
-if [ "${N_PKL}" -ge "${N_SAMPLES}" ]; then
+N_PKL=$(find "${CONSENSUS_DIR}" -maxdepth 1 -name "*.json.bz2" 2>/dev/null | wc -l)
+STEP1_STALE=0
+for dedup_sam in "${DEDUP_SAM_FILES[@]}"; do
+    sample=$(basename "${dedup_sam}" .sam.bz2)
+    marker="${CONSENSUS_DIR}/${sample}.json.bz2"
+    if [ ! -f "${marker}" ] || [ "${dedup_sam}" -nt "${marker}" ]; then
+        STEP1_STALE=1; break
+    fi
+done
+if [ "${N_PKL}" -ge "${N_SAMPLES}" ] && [ ${STEP1_STALE} -eq 0 ]; then
     echo "[INFO] Step1 已完成（${N_PKL} 个 .json.bz2），跳过 sample2markers"
 else
     echo ""
@@ -187,7 +195,7 @@ set -e
         exit 0
     fi
 
-    N_PKL=$(ls "${CONSENSUS_DIR}"/*.json.bz2 2>/dev/null | wc -l)
+    N_PKL=$(find "${CONSENSUS_DIR}" -maxdepth 1 -name "*.json.bz2" 2>/dev/null | wc -l)
     echo "[Step1] 完成：生成 ${N_PKL} 个 .json.bz2 文件"
 fi
 
@@ -196,7 +204,19 @@ fi
 # 在不知道目标 clade 的情况下先打印候选列表
 # ==============================================================================
 
-if [ ! -f "${CLADES_FILE}" ] || [ ! -s "${CLADES_FILE}" ]; then
+CLADES_STALE=0
+if [ -f "${CLADES_FILE}" ]; then
+    for marker in "${CONSENSUS_DIR}"/*.json.bz2; do
+        [ -f "${marker}" ] || continue
+        if [ "${marker}" -nt "${CLADES_FILE}" ]; then CLADES_STALE=1; break; fi
+    done
+fi
+if [ ${CLADES_STALE} -eq 1 ] || [ ! -f "${CLADES_FILE}" ] || [ ! -s "${CLADES_FILE}" ] || \
+   ! grep -qE "^t__|^s__" "${CLADES_FILE}" 2>/dev/null; then
+    # 已存在但不含有效 t__/s__ 菌株行的文件视为陈旧缓存（例如旧版本参数错误
+    # 导致的 usage/error 输出），需重新生成，否则下方逐行匹配会因找不到
+    # 任何候选菌株在 pipefail 下返回非零，被 set -e 判定为脚本失败
+    rm -f "${CLADES_FILE}"
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "[Step2] 检测可分析菌株（--print_clades_only）"
@@ -207,7 +227,6 @@ if [ ! -f "${CLADES_FILE}" ] || [ ! -s "${CLADES_FILE}" ]; then
             -s "${CONSENSUS_DIR}"/*.json.bz2 \
             -d "${DB_PKL}" \
             -o "${TREES_DIR}" \
-            --database_folder "${TEMP_DIR}/phylophlan_db" \
             --print_clades_only \
             --non_interactive \
             -n "${CPUS}" \
@@ -222,7 +241,7 @@ if [ -z "${CLADE}" ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "[INFO] 可供分析的菌株（从 ${N_SAMPLES} 个样本中检测到）："
     grep -E "^t__|^s__" "${CLADES_FILE}" 2>/dev/null || \
-        grep -v "^\[" "${CLADES_FILE}" | grep "__" | head -30
+        grep -v "^\[" "${CLADES_FILE}" 2>/dev/null | grep "__" | head -30 || true
     echo ""
     echo "[INFO] 请选择目标菌株后，带 -c 参数重新运行，例如："
     echo "       bash 12_bac_strainphlan4.sh -w ${WORKDIR} -r ${REPO} -t ${CPUS} -c t__SGB10068"
@@ -300,7 +319,6 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         -c "${CLADE}" \
         -n "${CPUS}" \
         --tmp "${TEMP_DIR}/${CLADE}" \
-        --database_folder "${TEMP_DIR}/phylophlan_db" \
         --sample_with_n_markers 20 \
         --sample_with_n_markers_perc 25 \
         --marker_in_n_samples_perc 50 \

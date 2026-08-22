@@ -21,6 +21,7 @@ rule coverm_depth:
     output:
         bam = BINNING + "/coverm/{sample}/{sample}.bam",
         depth = BINNING + "/coverm/{sample}/depth.txt",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -36,6 +37,7 @@ rule metabat2:
         depth = BINNING + "/coverm/{sample}/depth.txt",
     output:
         tsv = BINNING + "/metabat2/{sample}/{sample}.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -51,6 +53,7 @@ rule maxbin2:
         depth = BINNING + "/coverm/{sample}/depth.txt",
     output:
         tsv = BINNING + "/maxbin2/{sample}/{sample}.maxbin2.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -66,6 +69,7 @@ rule semibin2:
         bam = BINNING + "/coverm/{sample}/{sample}.bam",
     output:
         tsv = BINNING + "/semibin2/{sample}/{sample}.semibin2.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -83,6 +87,7 @@ rule dastool:
         semibin2 = BINNING + "/semibin2/{sample}/{sample}.semibin2.tsv",
     output:
         contig2bin = BINNING + "/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -99,6 +104,7 @@ rule bin_reassembly:
         reads_2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
         done = BINNING + "/reassembly/{sample}/{sample}.reassembly_done.txt",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -116,6 +122,7 @@ rule checkm2:
                              sample=SAMPLES),
     output:
         report = BINNING + "/checkm2/quality_report.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -129,6 +136,7 @@ rule drep:
         report = BINNING + "/checkm2/quality_report.tsv",
     output:
         done = BINNING + "/drep/drep_done.txt",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -144,6 +152,7 @@ rule coverm_quant:
         r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
         tsv = BINNING + "/coverm_quant/{sample}.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -163,6 +172,7 @@ rule instrain_map:
         bai = BINNING + "/instrain_map/{sample}/{sample}.sorted.bam.bai",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    threads: CPUS
     shell:
         "bash {REPO}/scripts/39b_bac_instrain_map.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -178,6 +188,7 @@ rule instrain_profile:
         genome_info = BINNING + "/instrain_profile/{sample}/output/{sample}_genome_info.tsv",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    threads: CPUS
     shell:
         "bash {REPO}/scripts/39c_bac_instrain_profile.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -194,6 +205,7 @@ rule instrain_compare:
         summary = BINNING + "/instrain_compare/output/strain_comparison_summary.tsv",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    threads: CPUS
     shell:
         "bash {REPO}/scripts/39d_bac_instrain_compare.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -205,6 +217,7 @@ rule gtdbtk:
         drep_done = BINNING + "/drep/drep_done.txt",
     output:
         summary = BINNING + "/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -218,6 +231,7 @@ rule prokka:
         drep_done = BINNING + "/drep/drep_done.txt",
     output:
         summary = BINNING + "/prokka/prokka_summary.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -231,6 +245,7 @@ rule bac_mlst:
         drep_done = BINNING + "/drep/drep_done.txt",
     output:
         tsv = WORKDIR + "/result/wgs/mlst/mlst.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -244,6 +259,7 @@ rule bac_pangenome:
         prokka_summary = BINNING + "/prokka/prokka_summary.tsv",
     output:
         summary = WORKDIR + "/result/wgs/pangenome/summary_statistics.txt",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:
@@ -257,6 +273,7 @@ rule bac_snippy:
         drep_done = BINNING + "/drep/drep_done.txt",
     output:
         core_tsv = WORKDIR + "/result/wgs/snippy/core.tsv",
+    threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:

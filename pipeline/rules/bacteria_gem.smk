@@ -26,7 +26,6 @@ rule gem_carveme:
         # CarveMe processes all dereplicated MAGs in batch mode
         bash {REPO}/scripts/43b_bac_gem_carveme.sh \
             -m all \
-            -t {threads} \
             -w {WORKDIR} \
             -r {REPO} \
             {params.force_flag}

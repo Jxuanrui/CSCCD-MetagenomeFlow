@@ -80,8 +80,19 @@ fi
 
 # 为 CheckM2 创建输入目录（符号链，文件名加样本前缀避免跨样本重名冲突，如 Sample1/0.fa 与 Sample2/0.fa）
 # 注: 必须放在 output-directory 之外，--force 会清空输出目录
+# 幂等性检查用 .done 哨兵，但若上游 reassembled_bins/（bin_reassembly 重跑后
+# 命名规则、bin 数量都可能变化）比 .done 更新，说明输入已变化，旧软链集合会
+# 包含大量悬空链接（指向已不存在的旧 bin 名），必须重建整个 INPUT_DIR
 INPUT_DIR="${WORKDIR}/temp/checkm2_input"
+REBUILD_INPUT=0
 if [ ! -f "${INPUT_DIR}/.done" ]; then
+    REBUILD_INPUT=1
+elif [ -n "$(find "${REASSEMBLY_DIR}" -maxdepth 2 -name reassembled_bins -newer "${INPUT_DIR}/.done" 2>/dev/null)" ]; then
+    echo "[checkm2] 检测到 reassembled_bins/ 比 checkm2_input/.done 更新，重建输入目录"
+    REBUILD_INPUT=1
+fi
+if [ ${REBUILD_INPUT} -eq 1 ]; then
+    rm -rf "${INPUT_DIR}"
     mkdir -p "${INPUT_DIR}"
     for i in "${!BIN_FILES[@]}"; do
         f="${BIN_FILES[$i]}"
@@ -116,7 +127,7 @@ awk -F'\t' 'NR==1 || ($2>=50 && $3<=10)' "${REPORT}" > "${FILTERED_DIR}/filtered
 
 # 复制高质量 MAGs
 N_FILTERED=0
-while IFS=$'\t' read -r name comp cont _; do
+while IFS=$'\t' read -r name _ _ _; do
     [ "$name" == "Name" ] && continue
     src="${INPUT_DIR}/${name}.fa"
     if [ -f "$src" ]; then

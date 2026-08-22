@@ -27,11 +27,12 @@ EOF
 }
 
 FORCE=0
-SAMPLE=""; _CPUS=""; WORKDIR=""; _REPO=""
+SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -s) SAMPLE="$2";  shift 2 ;;
-        -t) _CPUS="$2";   shift 2 ;;
+        # shellcheck disable=SC2034  # CPUS 通过下方必需参数校验循环的间接展开引用
+        -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
         --force) FORCE=1; shift ;;

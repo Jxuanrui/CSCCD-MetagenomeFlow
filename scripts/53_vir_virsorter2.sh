@@ -45,12 +45,17 @@ done
 SECONDS=0
 CONTIGS="${WORKDIR}/result/virus/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/virus/virsorter2/${SAMPLE}"
-SENTINEL="${OUTDIR}/final-viral-combined.fa"
+SENTINEL="${OUTDIR}/final-viral-boundary.tsv"
+COMBINED="${OUTDIR}/final-viral-combined.fa"
 VS2_DB="${REPO}/db/virsorter2"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing: ${CONTIGS}"; exit 1; fi
 if [ ! -d "${VS2_DB}" ]; then echo "[ERROR] VirSorter2 数据库不存在: ${VS2_DB}"; exit 1; fi
 if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo "[virsorter2] 结果已存在，跳过"; exit 0; fi
+if [ ${FORCE} -eq 0 ] && [ -f "${COMBINED}" ] && [ ! -f "${SENTINEL}" ]; then
+    echo "[WARN] final-viral-combined.fa 存在但 final-viral-boundary.tsv 缺失，删除不完整输出后重建"
+    rm -rf "${OUTDIR}"
+fi
 
 set +e
 echo "[virsorter2] ${SAMPLE} | VirSorter2 病毒预测 ..."

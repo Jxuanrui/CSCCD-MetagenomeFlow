@@ -123,9 +123,12 @@ echo "[INFO] Output directory: ${OUT_DIR}"
 export WORKDIR REPO METADATA_CSV GROUP_COL STAT_ROOT DIMENSION FUNC_TYPE OUT_DIR FORCE SENTINEL
 
 RUN_LOG="${LOG_DIR}/96_stat_functional.run.log"
+# set -e 下 pipefail 会让下面这行管道一旦失败立即终止脚本，永远到不了
+# EXIT_CODE 判断和 "zero data rows" 优雅降级分支 —— 必须临时关闭 errexit
+set +e
 (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_stat_functional.R") 2>&1 | tee "${RUN_LOG}"
-
 EXIT_CODE=${PIPESTATUS[0]}
+set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     if grep -q "zero data rows" "${RUN_LOG}"; then
         echo "[WARN] ${DIMENSION}/${FUNC_TYPE}: functional table has no data rows, writing empty-skip sentinel"

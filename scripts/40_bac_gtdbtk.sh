@@ -66,9 +66,14 @@ if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo
 
 mkdir -p "${OUTDIR}"
 
+# 清理残留的悬空符号链接：gtdbtk 的 symlink_f() 用 os.path.isfile() 判断是否
+# 需要先删除旧链接，但该调用对悬空链接（目标不存在）返回 False，导致清理被跳过，
+# 随后 os.symlink() 因链接已存在而抛出 FileExistsError（gtdbtk 2.5.2 已知边界情况）
+find "${OUTDIR}" -maxdepth 1 -xtype l -delete 2>/dev/null || true
+
 # 确保 GTDBTK_DATA_PATH 指向正确
 GTDB_PATH="${REPO}/db/gtdbtk"
-if [ -z "${GTDBTK_DATA_PATH}" ]; then
+if [ -z "${GTDBTK_DATA_PATH:-}" ]; then
     export GTDBTK_DATA_PATH="${GTDB_PATH}"
 elif [ "${GTDBTK_DATA_PATH}" != "${GTDB_PATH}" ]; then
     echo "[gtdbtk] NOTE: 当前 GTDBTK_DATA_PATH=${GTDBTK_DATA_PATH}"

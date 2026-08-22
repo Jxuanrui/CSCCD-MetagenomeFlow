@@ -243,16 +243,13 @@ build_mt_virus <- function(votu_path, meta) {
   if (!length(tpm_cols)) stop("No *_tpm columns in vOTU table")
   sample_ids <- sub("_tpm$", "", tpm_cols, ignore.case = TRUE)
 
-  contig_ord <- order(nchar(clusters$contig), decreasing = TRUE)
-  contigs <- clusters$contig[contig_ord]
-  votus <- clusters$votu_rep[contig_ord]
-
-  orf_to_votu <- vapply(raw$gene, function(orf) {
-    for (i in seq_along(contigs)) {
-      if (orf == contigs[i] || startsWith(orf, paste0(contigs[i], "_"))) return(votus[i])
-    }
-    NA_character_
-  }, character(1))
+  # 基因命名规则为 {contig}_{geneNum}（Prodigal/Phanotate 约定），contig 本身可能
+  # 含下划线（如 Sample10__k127_116589），逐 orf 对 contigs 做 O(N*M) 前缀扫描在
+  # 大表（数十万基因 x 万级 contig）下会跑数小时；改为剥离基因名末尾的 "_数字"
+  # 后缀反查精确匹配 contig，用哈希表做 O(N) 向量化查找
+  contig_to_votu <- setNames(clusters$votu_rep, clusters$contig)
+  orf_contig <- sub("_[0-9]+$", "", raw$gene)
+  orf_to_votu <- unname(contig_to_votu[orf_contig])
 
   raw[tpm_cols] <- lapply(raw[tpm_cols], function(x) suppressWarnings(as.numeric(x)))
   raw$votu_rep <- orf_to_votu

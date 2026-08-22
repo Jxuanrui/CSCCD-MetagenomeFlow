@@ -84,8 +84,12 @@ if [ ! -d "${DB_KRAKEN}" ] || [ -z "$(ls -A "${DB_KRAKEN}" 2>/dev/null)" ]; then
 fi
 
 BRACKEN_S="${BRACKEN_DIR}/${SAMPLE}_S.bracken"
-if [ ${FORCE} -eq 0 ] && [ -f "${BRACKEN_S}" ] && [ -s "${BRACKEN_S}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${REPORT}" ] && [ -s "${REPORT}" ] && [ -f "${BRACKEN_S}" ] && [ -s "${BRACKEN_S}" ]; then
     echo "[INFO] 结果已存在，跳过: ${SAMPLE}"; exit 0
+fi
+if [ ${FORCE} -eq 0 ] && [ ! -f "${REPORT}" ] && [ -f "${BRACKEN_S}" ]; then
+    echo "[WARN] ${SAMPLE}.report 缺失但 bracken 输出存在（旧数据不完整），删除后重新生成"
+    rm -rf "${RESULT_DIR}"
 fi
 
 mkdir -p "${RESULT_DIR}" "${BRACKEN_DIR}"

@@ -102,8 +102,10 @@ if [ -f "${RAW_HMMER}" ] && [ ! -f "${RENAMED_HMMER}" ]; then
 fi
 
 if [ ! -f "${SENTINEL}" ]; then
-    echo "[ERROR] DefenseFinder 运行完成，但未找到 ${SENTINEL}"
-    exit 1
+    # DefenseFinder 未检出任何防御系统时不生成 *_defense_finder_systems.tsv
+    # （非报错场景，genes.tsv/hmmer.tsv 仍会正常产出），写空表头文件作为 sentinel
+    echo "[defense_finder] 未检出防御系统，写入空结果表: ${SENTINEL}"
+    echo -e "sys_id\ttype\tsubtype\tprotein_in_syst\tgenes_count\tname_of_profiles_in_sys" > "${SENTINEL}"
 fi
 
 N_SYSTEMS=$(awk 'NR>1' "${SENTINEL}" 2>/dev/null | wc -l || echo "N/A")
