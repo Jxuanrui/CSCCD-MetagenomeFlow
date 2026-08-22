@@ -305,6 +305,9 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 98 | `scripts/98_stat_report.sh` | 按需生成带时间戳的分析结果 Markdown 快照报告 | bash + Rscript |
 | 98c(mge) | `scripts/98c_bac_mge_summary.sh` | 汇总细菌 MGE（ISFinder/ICEberg/IntegAll/transposase）与质粒（PlasmidFinder）检测结果为整合表。Snakemake rule：`bac_mge_summary` | bash + awk |
 | 98d(mag) | `scripts/98d_bac_mag_integration.sh` | 整合细菌 MAG 级分类（GTDB-Tk）、质量（CheckM2）、去冗余聚类（dRep）与丰度（CoverM）为整合表。Snakemake rule：`bac_mag_integration` | bash + awk |
+| 98e | `scripts/98e_cross_domain_ani_cluster.sh` | **跨域基因组 ANI 聚类**：细菌 dRep MAG + 病毒 vOTU 代表序列 + 真菌 euk MAG 全体两两 FastANI 比对，networkx Louvain 社区检测（参考 VEBA cluster 方法论，非源码复用）。已知局限：跨"域"核酸 ANI 生物学意义有限，为用户知悉后接受的既定方案。配套 `98e_cross_domain_louvain.py`。Snakemake rule：`cross_domain_ani_cluster` | FastANI + networkx (envs/cluster) |
+| 98f | `scripts/98f_cross_domain_orthogroup.sh` | **跨域蛋白正交基因组检测**：合并细菌 Prokka / 病毒 pharokka-prodigal / 真菌 MetaEuk 蛋白预测，MMseqs2 easy-cluster 检测跨域正交基因群。Snakemake rule：`cross_domain_orthogroup` | MMseqs2 (envs/cluster) |
+| 98g | `scripts/98g_cross_domain_correlation.sh` | **跨域丰度互作网络**（2026-08-22 新增）：细菌/病毒/真菌丰度 TSS+CLR 标准化后计算跨域 Spearman 相关性（BH-FDR 校正），叠加 iPHoP 病毒-宿主预测边（`type=host_prediction`，与相关性边分开标记）。无真菌数据或 iPHoP 文件缺失时优雅降级。配套 `98g_cross_domain_corr.py`。Snakemake rule：`cross_domain_correlation` | scipy/pandas/networkx (envs/phagcn3) |
 | 99a | `scripts/99a_core_microbiome.sh` | **Core Microbiome（核心微生物组识别）**：按流行率和最低丰度阈值识别全局及 case/control 组特异核心特征，输出核心成员表、共享关系、流行率曲线和核心丰度占比图，用于发现稳定定植成员。依赖：11、98b；Snakemake rule：`stat_core_microbiome`（**2026-07-16**：真菌分支同96c一并修正为显式 `input:` 依赖） | microbiome + R |
 | 99b | `scripts/99b_lefse.sh` | **LEfSe Analysis（生物标志物发现）**：对细菌、病毒和真菌的分类或功能丰度表执行组间检验与 LDA 效应量排序，输出显著生物标志物、LDA 条形图及分类层级图，用于病例-对照标志物筛选。依赖：98b、98c、98d；Snakemake rule：`stat_lefse` | LEfSe-like + R |
 | — | `downstream_summary`（无独立脚本，直接以 Snakemake inline shell rule 实现） | 汇总 Core Microbiome/Functional Redundancy/Pathway Activity 共7个下游模块的完成状态为单表。**2026-07-16 新增**，替代原 `99c_batch_downstream.sh`/`99d_downstream_summary.R`（与 Snakemake DAG 本身架构性重复，已移至 `scripts/deprecated/`）。Snakemake rule：`downstream_summary` | bash（inline） |
@@ -317,6 +320,22 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | `scripts/00_pipeline_virome.sh` | 病毒完整流程（01-02 + 51-69） |
 | `scripts/00_pipeline_fungi.sh` | 真菌完整流程（01-02 + 71-86） |
 | `scripts/00_pipeline_full.sh` | 三维度完整流程 |
+
+### 🔧 诊断与运维工具（2026-08-20/22 新增，无编号段，独立于三维度分析流）
+
+| 脚本 | 功能 |
+|------|------|
+| `scripts/00_diagnose_error.sh` | 检测运行中的 SPAdes/Snakemake/Python 进程，扫描近期日志错误，检查磁盘占用；`-r/-l/-d/-a` 可选检测项 |
+| `scripts/00_check_database.sh` | 验证三维度分析数据库完整性（Kraken2/MetaPhlAn4/HUMAnN/CheckM2/GTDB-Tk/dRep/Prokka/VirSorter2/CheckV/geNomad/iPHoP/Pharokka/EukCC2） |
+| `scripts/00_multiqc_report.sh` | 汇总各分析模块 QC 数据（FastQC/Kraken2/MetaPhlAn4/HUMAnN/MEGAHIT/CheckM2/GTDB-Tk/CheckV/EukCC2）生成 MultiQC 交互报告 |
+| `scripts/00_validate_metadata.sh` | 校验样本 metadata CSV/TSV（必需列、sample_id 格式、重复检测、FASTQ 存在性），`--strict` 模式将警告视为错误 |
+| `scripts/00_track_status.sh` | 追踪 24 个关键分析脚本的执行状态（✓完成/⚠部分/✗未开始/⏱运行中/⚠陈旧），`-p/-s/--pending` |
+| `scripts/00_preload_database.sh` | 将数据库文件读入 Linux page cache 预热，三级优先级（HIGH/MED/LOW），`--dry-run` 预览 |
+| `scripts/00_snapshot_provenance.sh` | 捕获脚本版本、conda 环境导出、git commit、数据库校验和，生成可复现性快照 + manifest.json + checksums.sha256 |
+| `scripts/00_e2e_test.sh` | 端到端回归测试：Quick 模式（QC→Kraken2→MEGAHIT）；Full 模式待实现 |
+| `scripts/utils/detect_running_jobs.sh` | 检测运行中的 SPAdes/Snakemake/Python 进程，输出 JSON（process_type/pid/cpu_percent/mem_mb） |
+| `scripts/utils/recommend_resources.sh` | 结合当前占用推荐 Snakemake 可用 CPU/内存，输出可直接拼接的 `--cores N --resources mem_mb=M` |
+| `scripts/utils/cleanup_intermediate.sh` | 识别并清理 `temp/` 下超期中间文件（.sam/.fastq/tmp/scratch），**默认 dry-run**，需 `--execute` 才真正删除 |
 
 ## 1.3 维度间依赖说明
 
