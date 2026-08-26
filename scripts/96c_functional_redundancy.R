@@ -1,5 +1,14 @@
 #!/usr/bin/env Rscript
 
+conda_lib <- file.path(R.home("home"), "library")
+if (dir.exists(conda_lib)) {
+  .libPaths(unique(c(
+    conda_lib,
+    .libPaths()[normalizePath(.libPaths(), mustWork = FALSE) !=
+      normalizePath(conda_lib, mustWork = FALSE)]
+  )))
+}
+
 suppressPackageStartupMessages({
   library(optparse)
   library(vegan)
