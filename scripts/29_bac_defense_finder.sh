@@ -27,18 +27,23 @@ cat << EOF
   -t  线程数
   -w  工作目录
   -r  MaxMetagenome 项目根目录
+
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
 EOF
 }
 
 CPUS=""
 WORKDIR=""
 REPO=""
+FORCE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -t) CPUS="$2";    shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";    shift 2 ;;
+        --force) FORCE=1; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
     esac
@@ -64,12 +69,8 @@ if [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then
     echo "[ERROR] 蛋白序列文件不存在: ${PROTEIN_NR}"; exit 1
 fi
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
-    echo "[INFO] DefenseFinder 结果已存在，跳过: ${RESULT_DIR}/"; exit 0
-fi
-
 if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
-    echo "[29_bac_defense_finder] 结果已存在，跳过: ${SENTINEL}"; exit 0
+    echo "[INFO] DefenseFinder 结果已存在，跳过: ${SENTINEL}"; exit 0
 fi
 
 mkdir -p "${RESULT_DIR}"

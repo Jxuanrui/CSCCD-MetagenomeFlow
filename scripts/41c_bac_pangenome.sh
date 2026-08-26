@@ -112,7 +112,9 @@ fi
 
 rm -f "${FAILED_SENTINEL}"
 
+ROARY_LOG="${OUTDIR}/roary.log"
 echo "[pangenome] Running Roary on ${#GFF_FILES[@]} genomes | identity: ${IDENTITY} | core: ${CORE_DEFINITION}"
+set +e
 conda run --prefix "${REPO}/envs/prokaWGS" --no-capture-output \
     roary \
         -p "${THREADS}" \
@@ -121,9 +123,22 @@ conda run --prefix "${REPO}/envs/prokaWGS" --no-capture-output \
         -i "${IDENTITY}" \
         -cd "${CORE_DEFINITION}" \
         -f "${OUTDIR}" \
-        "${GFF_FILES[@]}"
-
+        "${GFF_FILES[@]}" \
+    2>&1 | tee "${ROARY_LOG}"
 EXIT_CODE=$?
+set -e
+# Roary treats "cluster count exceeds --group_limit" as its own early-exit
+# condition and returns 0 in that case (only truly unexpected failures give
+# a non-zero exit), so this check must run regardless of EXIT_CODE.
+if grep -q "exceeds limit\|Exiting early because number of clusters is too high" "${ROARY_LOG}"; then
+    CLUSTER_NOTE="Roary cluster count exceeded --group_limit (see ${ROARY_LOG}); likely a genuinely diverse multi-species MAG set rather than contamination"
+    printf "WARNING\t%s\n" "${CLUSTER_NOTE}" > "${FAILED_SENTINEL}"
+    printf "INPUT_GFFS\t%s\n" "${#GFF_FILES[@]}" >> "${FAILED_SENTINEL}"
+    cp "${FAILED_SENTINEL}" "${SENTINEL}"
+    printf "Pan-genome presence/absence matrix: NA\n" > "${MATRIX_NOTE}"
+    echo "[pangenome] WARNING: ${CLUSTER_NOTE}"
+    exit 0
+fi
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] roary failed"
     exit ${EXIT_CODE}

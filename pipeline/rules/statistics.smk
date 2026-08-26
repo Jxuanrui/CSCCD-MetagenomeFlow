@@ -187,23 +187,40 @@ rule stat_functional:
         run_pair() {{
             dimension=${{1%%:*}}
             func_type=${{1#*:}}
-            bash {REPO}/scripts/96_stat_functional.sh \
+            if ! bash {REPO}/scripts/96_stat_functional.sh \
                 -w {params.workdir} -r {params.repo} -m {params.meta} \
-                -d "$dimension" -t "$func_type"
+                -d "$dimension" -t "$func_type"; then
+                echo "$1" >> "$PAIR_FAIL_LOG"
+            fi
         }}
         export -f run_pair
+        PAIR_FAIL_LOG=$(mktemp)
+        export PAIR_FAIL_LOG
 
         printf '%s\n' \
             bacteria:pathway bacteria:cog bacteria:cazyme bacteria:arg bacteria:vfdb bacteria:defense bacteria:ncyc bacteria:pcyc bacteria:kegg_ko \
             fungi:cog fungi:cazyme fungi:vfdb fungi:amr fungi:merops fungi:kegg_ko \
             virus:phrog virus:vog virus:lifestyle virus:host_genus virus:viral_family \
             | xargs -P 6 -I{{}} bash -c 'run_pair "$1"' _ {{}}
-        ALL_STATUS=$?
 
-        if [ "$ALL_STATUS" -ne 0 ]; then
-            echo "[ERROR] stat_functional: one or more pairs failed (xargs exit=$ALL_STATUS)"
-            exit 1
+        # A pair genuinely failing (as opposed to writing its own SKIPPED
+        # sentinel via a known-benign-failure branch inside
+        # 96_stat_functional.sh) should not sink the other 19 pairs that
+        # succeeded -- same partial-success-tolerance shape already applied
+        # to CarveMe (43b_bac_gem_carveme.sh) and Roary (41c_bac_pangenome.sh).
+        # Only hard-fail if every single pair failed.
+        N_FAILED=$(wc -l < "$PAIR_FAIL_LOG")
+        N_TOTAL=20
+        if [ "$N_FAILED" -gt 0 ]; then
+            echo "[WARN] stat_functional: $N_FAILED/$N_TOTAL pair(s) failed:"
+            cat "$PAIR_FAIL_LOG"
+            if [ "$N_FAILED" -eq "$N_TOTAL" ]; then
+                rm -f "$PAIR_FAIL_LOG"
+                echo "[ERROR] stat_functional: all pairs failed"
+                exit 1
+            fi
         fi
+        rm -f "$PAIR_FAIL_LOG"
         """
 
 
@@ -610,7 +627,10 @@ rule stat_pathway_activity:
             -o {WORKDIR}/result/stat/bacteria/pathway_activity \
             -d bacteria \
             --min-coverage {params.min_coverage} \
-            --top-n-contributors {params.top_n} || echo "Pathway activity analysis failed (likely missing HUMAnN3 stratified output)"
+            --top-n-contributors {params.top_n} || {{
+                mkdir -p {WORKDIR}/result/stat/bacteria/pathway_activity
+                echo "SKIPPED: pathway activity analysis failed (likely missing HUMAnN3 stratified output)" > {output.summary}
+            }}
         """
 
 

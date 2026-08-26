@@ -136,6 +136,18 @@ if [ ${EXIT_CODE} -ne 0 ]; then
         echo "SKIPPED: functional abundance table for ${DIMENSION}/${FUNC_TYPE} has a header but zero data rows" > "${SENTINEL}"
         exit 0
     fi
+    if grep -q "No functional features retained after prevalence filtering" "${RUN_LOG}"; then
+        echo "[WARN] ${DIMENSION}/${FUNC_TYPE}: no functional features survived prevalence filtering, writing empty-skip sentinel"
+        mkdir -p "${OUT_DIR}"
+        echo "SKIPPED: no functional features for ${DIMENSION}/${FUNC_TYPE} survived prevalence filtering (likely all-zero abundance data)" > "${SENTINEL}"
+        exit 0
+    fi
+    if grep -q "maaslin3_analysis: subscript out of bounds" "${RUN_LOG}"; then
+        echo "[WARN] ${DIMENSION}/${FUNC_TYPE}: maaslin3 crashed on this small feature set (upstream instability, see biobakery/maaslin3#25), writing skip sentinel"
+        mkdir -p "${OUT_DIR}"
+        echo "SKIPPED: maaslin3 failed with a subscript-out-of-bounds error on ${DIMENSION}/${FUNC_TYPE} (too few features for stable fitting)" > "${SENTINEL}"
+        exit 0
+    fi
     echo "[ERROR] 96_stat_functional.sh failed with exit code ${EXIT_CODE}"
     exit ${EXIT_CODE}
 fi

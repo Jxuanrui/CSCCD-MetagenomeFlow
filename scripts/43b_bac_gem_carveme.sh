@@ -130,14 +130,28 @@ if [[ "$MAG_NAME" == "all" ]]; then
         fi
     done
 
+    N_SUCCESS=$((${#MAG_FILES[@]} - ${#FAILED[@]}))
     echo "=== Summary ==="
     echo "Total: ${#MAG_FILES[@]}"
-    echo "Success: $((${#MAG_FILES[@]} - ${#FAILED[@]}))"
+    echo "Success: ${N_SUCCESS}"
     echo "Failed: ${#FAILED[@]}"
 
     if [[ ${#FAILED[@]} -gt 0 ]]; then
         echo "Failed MAGs: ${FAILED[*]}"
-        exit 1
+        FAILED_MANIFEST="${OUTBASE}/failed_mags.txt"
+        {
+            printf "%s\n" "${FAILED[@]}"
+        } > "${FAILED_MANIFEST}"
+        echo "[WARN] ${#FAILED[@]} MAG(s) failed CarveMe reconstruction (solver/gapfill errors on individual genomes); see ${FAILED_MANIFEST}"
+
+        # A handful of per-MAG solver failures (e.g. reframed/SCIP returning no
+        # solution) is expected on a large, diverse MAG set and should not block
+        # downstream FBA on the MAGs that did succeed. Only treat this as a hard
+        # failure when reconstruction produced no usable models at all.
+        if [[ ${N_SUCCESS} -eq 0 ]]; then
+            echo "[ERROR] All ${#MAG_FILES[@]} MAGs failed CarveMe reconstruction"
+            exit 1
+        fi
     fi
 else
     # Single MAG mode
