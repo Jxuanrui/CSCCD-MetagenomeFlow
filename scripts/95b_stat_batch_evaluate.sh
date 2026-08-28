@@ -87,6 +87,15 @@ set +e
 options(stringsAsFactors = FALSE)
 options(warn = 1)
 
+conda_lib <- file.path(R.home("home"), "library")
+if (dir.exists(conda_lib)) {
+  .libPaths(unique(c(
+    conda_lib,
+    .libPaths()[normalizePath(.libPaths(), mustWork = FALSE) !=
+      normalizePath(conda_lib, mustWork = FALSE)]
+  )))
+}
+
 required_pkgs <- c("vegan", "cluster", "ggplot2", "patchwork", "tidyverse")
 missing_pkgs <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing_pkgs) > 0) {
