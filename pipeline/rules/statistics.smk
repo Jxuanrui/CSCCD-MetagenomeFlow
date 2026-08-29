@@ -643,7 +643,7 @@ rule downstream_summary:
         bac_redundancy = WORKDIR + "/result/stat/bacteria/functional_redundancy/functional_redundancy_summary.txt",
         fun_redundancy = WORKDIR + "/result/stat/fungi/functional_redundancy/functional_redundancy_summary.txt",
         vir_redundancy = WORKDIR + "/result/stat/virus/functional_redundancy/functional_redundancy_summary.txt",
-        pathway = WORKDIR + "/result/stat/bacteria/pathway_activity/pathway_activity_summary.txt",
+        pathway = WORKDIR + "/result/stat/bacteria/pathway_activity/pathway_completeness_summary.csv",
     output:
         summary = WORKDIR + "/result/stat/downstream_summary.tsv",
     threads: 1

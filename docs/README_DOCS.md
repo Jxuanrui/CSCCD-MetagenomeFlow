@@ -39,6 +39,12 @@
 
 ## 专题文档
 
+### 运维参考
+- **docs/QUICK_START.md** — 5分钟快速上手（比 Tutorial.md 更精简）
+- **docs/PERFORMANCE_TUNING.md** — 硬件配置推荐和参数调优策略
+- **docs/TROUBLESHOOTING.md** — 常见问题诊断和解决方案
+- **docs/visualization_workflow_specification.md** — 91-99 统计/可视化脚本的输入输出、依赖关系与执行顺序规范
+
 ### 工具参考（按需 WebSearch 动态生成）
 - **docs/tools_ref/** — 缓存的工具官方文档摘要
   - 文件命名: `{tool_name}.md`

@@ -25,11 +25,18 @@ set -euo pipefail
     # 多样本并行任务数（建议 = CPU总数 / t，避免超载）
     j=2
 
+    # 统计分析阶段（步骤91-98）所需的样本元数据
+    # 注意：本示例 metadata.csv 只有 group/host_type 两列，属于单批次数据，
+    # 因此第五阶段跳过依赖 batch 列的步骤95a/95b（批次校正），
+    # 多批次/多队列项目请在自己的 metadata.csv 中补充 batch 列后再启用
+    meta=${wd}/metadata.csv
+    group_col=group
+
     # 确认样本列表（metadata.txt 第一列为 SampleID，无表头）
     # 格式示例：
     #   SRR28210342
     #   SRR28210343
-    ls ${wd}/data/*_1.fastq.gz | xargs -n1 basename | sed 's/_1.fastq.gz//' > ${wd}/samples.txt
+    find ${wd}/data -maxdepth 1 -name "*_1.fastq.gz" -exec basename {} \; | sed 's/_1.fastq.gz//' > ${wd}/samples.txt
     echo "样本列表（共 $(wc -l < ${wd}/samples.txt) 个）:"
     cat ${wd}/samples.txt
 
@@ -337,34 +344,37 @@ set -euo pipefail
 
     # 步骤 91：Alpha/Beta 多样性
     bash ${PROJ_DIR}/scripts/91_stat_diversity.sh \
-        -w ${wd} -r ${PROJ_DIR}
+        -w ${wd} -r ${PROJ_DIR} -t ${t} -m ${meta}
 
     # 步骤 92：差异分析（LEfSe/ANCOM-BC2/DESeq2/edgeR/MaAsLin2）
     bash ${PROJ_DIR}/scripts/92_stat_differential.sh \
-        -w ${wd} -r ${PROJ_DIR}
+        -w ${wd} -r ${PROJ_DIR} -t ${t} -m ${meta} -g ${group_col}
 
     # 步骤 93：共现网络（FastSpar/SparCC）
     bash ${PROJ_DIR}/scripts/93_stat_cooccurrence.sh \
-        -w ${wd} -r ${PROJ_DIR}
+        -w ${wd} -r ${PROJ_DIR} -t ${t} -m ${meta} -g ${group_col}
 
     # 步骤 94：统一可视化（热图/PCoA/桑基图/UpSet）
     bash ${PROJ_DIR}/scripts/94_stat_visualization.sh \
-        -w ${wd} -r ${PROJ_DIR}
+        -w ${wd} -r ${PROJ_DIR} -m ${meta}
 
     # 步骤 95a + 95b：多中心批次校正 Top10 评估（需审核后手动选择最优方法）
-    bash ${PROJ_DIR}/scripts/95a_stat_batch_correct.sh \
-        -w ${wd} -r ${PROJ_DIR}
+    # 注意：需要 metadata.csv 含 batch 列（多队列/多批次数据），
+    # 本示例数据单批次，跳过；多批次项目请取消注释并设置 batch_col
+    # batch_col=batch
+    # bash ${PROJ_DIR}/scripts/95a_stat_batch_correct.sh \
+    #     -w ${wd} -r ${PROJ_DIR} -t ${t} -m ${meta} -b ${batch_col} -g ${group_col}
     # → 查看 ${wd}/result/statistics/batch_eval.md 后手动确认方法
-    bash ${PROJ_DIR}/scripts/95b_stat_batch_evaluate.sh \
-        -w ${wd} -r ${PROJ_DIR}
+    # bash ${PROJ_DIR}/scripts/95b_stat_batch_evaluate.sh \
+    #     -w ${wd} -r ${PROJ_DIR} -m ${meta} -b ${batch_col} -g ${group_col}
 
     # 步骤 96：SIAMCAT ML 筛选 + ROC 评估（Top10 特征 + AUC 对比）
     bash ${PROJ_DIR}/scripts/96_stat_ml_siamcat.sh \
-        -w ${wd} -r ${PROJ_DIR}
+        -w ${wd} -r ${PROJ_DIR} -t ${t} -m ${meta} -g ${group_col}
 
-    # 步骤 97：curatedMetagenomicData 跨队列一致性验证（依赖步骤 96 输出）
-    bash ${PROJ_DIR}/scripts/97_stat_curatedMGD.sh \
-        -w ${wd} -r ${PROJ_DIR}
+    # 步骤 97：跨队列一致性验证（依赖步骤 96 输出；本示例仅单队列，--source local 默认用 ${wd} 自身作队列）
+    bash ${PROJ_DIR}/scripts/97_stat_crosscohort.sh \
+        -w ${wd} -r ${PROJ_DIR} -m ${meta} -g ${group_col}
 
     # 步骤 98：生成分析结果快照报告（MD 文档，带时间戳）
     bash ${PROJ_DIR}/scripts/98_stat_report.sh \
