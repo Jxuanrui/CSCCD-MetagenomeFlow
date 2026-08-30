@@ -7,9 +7,9 @@
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
-[![Conda](https://img.shields.io/badge/conda%20envs-49-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-168-blue)]()
-[![RAG](https://img.shields.io/badge/RAG-11988%20chunks-purple)]()
+[![Conda](https://img.shields.io/badge/conda%20envs-52-orange)](https://github.com/conda-forge/miniforge)
+[![Scripts](https://img.shields.io/badge/scripts-178-blue)]()
+[![RAG](https://img.shields.io/badge/RAG-12242%20chunks-purple)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 ```
@@ -23,9 +23,9 @@
 ║    ╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═╝                                          ║
 ║                                                                           ║
 ║    MaxMetagenome Platform                                                 ║
-║    完整宏基因组多维度分析平台  ·  版本 1.1                                   ║
+║    完整宏基因组多维度分析平台  ·  版本 1.1.2                                 ║
 ║                                                                           ║
-║    168 分析脚本  ·  138 Snakemake 规则  ·  49 conda 环境  ·  ~1.1TB 数据库  ║
+║    178 分析脚本  ·  138 Snakemake 规则  ·  52 conda 环境  ·  ~1.2TB 数据库  ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -58,18 +58,20 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 - **Three kingdoms, one platform.** Bacteria (scripts 11–42b), Virome (51–72), and Mycobiome (71–86) share the same preprocessing steps, project directory layout, and Snakemake configuration — no glue scripts, no format conversion between steps.
 - **Mechanistic discovery built-in.** The `mechanism_kb` RAG collection bridges 4,860 manually-curated gut microbe → metabolite → host gene relationships (sourced from GutMGene v2.0 + OmniPath), enabling direct queries like "which microbial functions produce butyrate and activate FFAR2?" — critical for cardiovascular research where short-chain fatty acids modulate inflammation and blood pressure.
-- **Portable and reproducible.** All 49 conda environments and ~1.1 TB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
+- **Portable and reproducible.** All 52 conda environments and ~1.2 TB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
 - **Three run modes.** Step-by-step (fine-grained debugging), Bash pipeline (lightweight, no extra deps, `--from`/`--skip` checkpointing), or Snakemake DAG (production, HPC-ready, native resume). All three modes call the identical underlying scripts.
 - **Functional integration built-in.** Script `98b` generates 11 integration tables per dimension at the end of each analysis — raw (Σ TPM), relative abundance, and CLR-normalized versions — ready for LEfSe, ANCOM-BC2, MaAsLin2, SIAMCAT, and Aitchison-distance ordination without any manual post-processing.
-- **AI-assisted with MCP protocol.** 18 Claude Code slash commands (`/mgx-*` + `/graphify`) cover pipeline planning, execution, visualization, new-script integration, and knowledge graph construction, backed by a quad-source RAG knowledge base (11,988 chunks: 1,634 experience_kb + 5,392 literature_kb + 102 skill_design_kb + 4,860 mechanism_kb) indexed with `BAAI/bge-small-zh-v1.5`. MCP server implements official Model Context Protocol for seamless integration with Claude Code and Codex CLI, supporting incremental indexing (20-50x faster iteration).
+- **AI-assisted with MCP protocol.** 18 Claude Code slash commands (`/mgx-*` + `/graphify`) cover pipeline planning, execution, visualization, new-script integration, and knowledge graph construction, backed by a quad-source RAG knowledge base (12,242 chunks: 1,860 experience_kb + 5,392 literature_kb + 130 skill_design_kb + 4,860 mechanism_kb) indexed with `BAAI/bge-small-zh-v1.5`. MCP server implements official Model Context Protocol for seamless integration with Claude Code and Codex CLI, supporting incremental indexing (20-50x faster iteration).
 
 ---
 
-## 最近更新（v1.1） | Recent Updates
+## 最近更新（v1.1.2） | Recent Updates
 
 **🎉 CSCCD-MetagenomeFlow v1.1 (August 2026)** — first VEBA toolchain integration: eukaryotic candidate QC layer.
 
 **🔧 v1.1.1 patch (2026-08-19)**: Error handling hardening — all scripts now enforce `set -euo pipefail`; ~30 scripts with graceful degradation logic use `set +e`/`set -e` wrapping to preserve EXIT_CODE capture. DAS_Tool R environment isolation fix (df1f1c5).
+
+**🔧 v1.1.2 patch (2026-08-29)**: Cross-domain abundance correlation network (98g) + 8 new diagnostic/ops tools (`00_diagnose_error`, `00_check_database`, `00_multiqc_report`, `00_validate_metadata`, `00_track_status`, `00_preload_database`, `00_snapshot_provenance`, `00_e2e_test`, plus 3 `scripts/utils/` helpers — none wired into the Snakemake DAG, invoked standalone). GEM module (43–43c) full-scale validation on Project01 (216 dRep MAGs): CarveMe 212/216 successful, FBA 214/216 completed; gapseq confirmed as a ~10h/MAG bottleneck and intentionally excluded from the Snakemake DAG (manual-only). 12 bugs found and fixed via a ~45h full Snakemake re-run across 3 commits (3f42234/547f0e4/97ea629) — R-env `.libPaths()` ABI conflicts (4 scripts), Roary/CarveMe/SIAMCAT/`stat_functional` partial-failure tolerance, 2 stale-path/unbound-variable fixes surfaced only by the full re-run. `00_pipeline_full.sh` (Mode 2 one-shot entry) fixed: 9 statistics-stage calls (91–98) were missing required `-m/-g/-b` args since first release, and step 97 referenced a since-removed script (`97_stat_curatedMGD.sh` → `97_stat_crosscohort.sh`). Repository housekeeping: removed 6 stale docs, 4 deprecated/scratch scripts, and orphaned `mcp/chroma_db`+`chroma_data` directories.
 
 ### v1.1 新增 | New in v1.1
 - **79b VEBA-style eukaryotic QC** (`scripts/79b_fun_veba_qc.sh`): Tiara deep-learning domain re-confirmation + BUSCO lineage-specific completeness assessment on top of script 79 (Eukfinder) candidate eukaryotic contigs. Methodology referenced from [VEBA](https://github.com/jolespin/veba) `binning-eukaryotic` module — **no VEBA source code reused** (VEBA is AGPLv3; Tiara/BUSCO are both MIT, no license contamination). Validated end-to-end on real data: Sample4 (Project01) resolved to `saccharomycetaceae_odb12.2` at 73.5% completeness; low-depth samples correctly degrade to an `empty.flag` sentinel instead of a false error.
@@ -91,8 +93,8 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 **🎉 CSCCD-MetagenomeFlow v1.0 released (July 2026)** — formerly MaxMetagenome, now officially under the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases.
 
 ### 分析能力 | Analysis Capacity
-- **168 scripts** spanning three kingdoms — bacteria (11–43c), virome (51–72), and mycobiome (71–86), plus cross-domain analysis (98e–98f)
-- **--force parameter support**: 137/146 shell scripts (93.8%) now support `--force` flag for idempotent pipeline reruns, automatically propagated by flow orchestrators (00_pipeline_*.sh); both new scripts (02b, 36b) also support `--force`
+- **178 scripts** (155 `.sh` + 16 `.R` + 7 `.py`) spanning three kingdoms — bacteria (11–43c), virome (51–72), and mycobiome (71–86), plus cross-domain analysis (98e–98g) and diagnostic/ops tooling
+- **--force parameter support**: 140/155 shell scripts (90.3%) now support `--force` flag for idempotent pipeline reruns, automatically propagated by flow orchestrators (00_pipeline_*.sh)
 - **Error handling hardening (2026-08 patch)**: All scripts now enforce `set -euo pipefail` for strict error propagation; ~30 scripts with manual EXIT_CODE capture use `set +e`/`set -e` wrapping to preserve graceful degradation logic (e.g., zero-data-row handling in statistical modules). DAS_Tool R environment isolation fix (df1f1c5) resolves ABI conflict between project-global R_LIBS_USER (R 4.5.3) and dastool env's R 4.4.3
 - **inStrain strain-level microdiversity**: 39b–39d scripts quantify within-species genetic variation via read mapping to MAGs, SNV profiling, and population comparison across samples; 39d additionally aggregates the pairwise popANI long table into `strain_comparison_summary.tsv`, a per-genome wide matrix with min popANI and same-strain verdict (popANI ≥ 0.99999) across all sample pairs
 - **Virome expanded to 72**: added PhaBox2, DRAM, and PhaGCN3 for comprehensive phage lifestyle prediction (lytic/temperate/chronic)
@@ -102,16 +104,16 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 - **Integration tables auto-generated**: 11 tables per dimension (raw/relab/CLR) ready for LEfSe/ANCOM-BC2/MaAsLin2/SIAMCAT without manual wrangling
 
 ### AI 基础设施 | AI-Assisted Infrastructure
-- **RAG hybrid retrieval** (BM25 + dense vector + reciprocal rank fusion): 11,988 chunks across 4 collections — `experience_kb` (1,634), `literature_kb` (5,392), `skill_design_kb` (102), and `mechanism_kb` (4,860)
+- **RAG hybrid retrieval** (BM25 + dense vector + reciprocal rank fusion): 12,242 chunks across 4 collections — `experience_kb` (1,860), `literature_kb` (5,392), `skill_design_kb` (130), and `mechanism_kb` (4,860)
 - **Mechanism_kb**: microbe → metabolite → host gene causal chains from GutMGene v2.0 + OmniPath downstream PPI, enabling queries like "*which microbes produce butyrate to activate FFAR2 in CVD?*"
 - **Incremental indexing**: `--incremental` mode reduces reindex time from 2-3 min to 2-14 sec during rapid iteration
 - **MCP protocol compliance**: official Model Context Protocol implementation, registered with Claude Code & Codex CLI for native slash-command integration
 
 ### 平台成熟度 | Platform Maturity
-- **Snakemake full validation**: 138 rules across 10 modules, end-to-end tested from raw reads to statistics (bacteria/virome/fungi + 91-98 stats pipelines)
-- **49 conda environments**: all tools self-contained under project root, ~1.1 TB databases (GTDB R226, VOGDB, ChocoPhlAn, UniRef90, EukDB, etc.)
+- **Snakemake full validation**: 138 rules across 11 rule files, end-to-end tested from raw reads to statistics (bacteria/virome/fungi + 91-98 stats pipelines); GEM module (43–43c) validated at full scale on real production data (216 dRep MAGs, CarveMe 212/216 + FBA 214/216 successful)
+- **52 conda environments**: all tools self-contained under project root, ~1.2 TB databases (GTDB R226, VOGDB, ChocoPhlAn, UniRef90, EukDB, etc.)
 - **Three run modes**: step-by-step (debugging), Bash pipeline (lightweight), or Snakemake DAG (HPC-ready with native resume)
-- **Three-layer test pyramid**: Layer 1 shellcheck (146/146 scripts pass), Layer 2 integration tests (3 representative scripts on Test_CI_fixture), Layer 3 DAG connectivity (Snakemake dry-run validates all 138 rules). Unified entry: `bash scripts/tests/run_ci_checks.sh --level 3`
+- **Three-layer test pyramid**: Layer 1 shellcheck full scan (124/155 scripts clean, 31 with pre-existing style-level warnings pending cleanup — not currently a hard CI gate), Layer 2 integration tests (5 representative scripts on Test_CI_fixture), Layer 3 DAG connectivity (Snakemake dry-run resolves 261 jobs on Test_CI_fixture, no connectivity errors). Unified entry: `bash scripts/tests/run_ci_checks.sh --level 3`
 
 ---
 
@@ -122,20 +124,20 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | OS | Linux x86_64 · Ubuntu 22.04 |
 | Environment manager | Miniforge3 (self-contained, under project root) |
 | Workflow engine | Snakemake 9.22.0 |
-| Analysis scripts | 168 (01–98f + utilities, including .sh/.R/.py) |
-| Snakemake rules | 138 across 10 rule files |
-| Conda environments | 49 isolated tool environments |
-| Databases | ~1.1 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, UniProt Swiss-Prot, Pfam-A, ISfinder, ICEberg, integrall, transposase-db, etc.) |
-| RAG knowledge base | **11,988 chunks** across 4 collections (ChromaDB + bge-small-zh-v1.5 + BM25 hybrid retrieval) |
+| Analysis scripts | 178 (01–98g + diagnostic/ops utilities, including .sh/.R/.py) |
+| Snakemake rules | 138 across 11 rule files |
+| Conda environments | 52 isolated tool environments |
+| Databases | ~1.2 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, UniProt Swiss-Prot, Pfam-A, ISfinder, ICEberg, integrall, transposase-db, etc.) |
+| RAG knowledge base | **12,242 chunks** across 4 collections (ChromaDB + bge-small-zh-v1.5 + BM25 hybrid retrieval) |
 | MCP server | Official Model Context Protocol compliance, registered with Claude Code & Codex CLI |
 
 ### RAG Collections
 
 | Collection | Chunks | Content | Use Case |
 |------------|--------|---------|----------|
-| `experience_kb` | 1,634 | Team experience docs (tool best practices, troubleshooting, parameter tuning) | Quick lookup for "how to run CheckM2" or "fix MetaPhlAn4 segfault" |
+| `experience_kb` | 1,860 | Team experience docs (tool best practices, troubleshooting, parameter tuning) | Quick lookup for "how to run CheckM2" or "fix MetaPhlAn4 segfault" |
 | `literature_kb` | 5,392 | Extracted Methods sections from 500+ gut microbiome papers (PubMed/PMC) | Evidence-based parameter selection: "what sequencing depth do similar studies use for fungi?" |
-| `skill_design_kb` | 102 | Agent skill definitions (prompt engineering, skill metadata, design patterns) | Build new Claude Code slash commands or optimize existing skills |
+| `skill_design_kb` | 130 | Agent skill definitions (prompt engineering, skill metadata, design patterns) | Build new Claude Code slash commands or optimize existing skills |
 | `mechanism_kb` | 4,860 | Gut microbe → metabolite → host gene relationships (GutMGene v2.0 + OmniPath downstream interactions) | Mechanistic hypothesis: "which microbes produce TMAO precursors that activate FMO3?" |
 
 **Incremental indexing:** All indexers support `--incremental` mode, skipping unchanged files and reducing reindex time from 2-3 minutes to 2-14 seconds during development iterations.
@@ -704,13 +706,13 @@ graphify explain "vOTU clustering"
 graphify update . --force
 ```
 
-### RAG Knowledge Base (11,988 chunks, 4 collections)
+### RAG Knowledge Base (12,242 chunks, 4 collections)
 
 | Collection | Size | Source | Query Use Case |
 |------------|------|--------|----------------|
-| `experience_kb` | 1,634 chunks | Team experience docs (`docs/experience/`, 79 Markdown files) · tool docs · script headers · skill cards | "How to troubleshoot MetaPhlAn4 out-of-memory errors?" |
+| `experience_kb` | 1,860 chunks | Team experience docs (`docs/experience/`, 86 Markdown files) · tool docs · script headers · skill cards | "How to troubleshoot MetaPhlAn4 out-of-memory errors?" |
 | `literature_kb` | 5,392 chunks | Methods sections from 237 OA metagenomics papers (Europe PMC fullTextXML) | "What sequencing depth do similar gut virome studies use?" |
-| `skill_design_kb` | 102 chunks | Agent skill definitions (`.claude/skills/`, 18 Markdown files with prompt engineering patterns) | "Show me examples of multi-step skill design for pipeline orchestration" |
+| `skill_design_kb` | 130 chunks | Agent skill definitions (`.claude/skills/`, 24 Markdown files with prompt engineering patterns) | "Show me examples of multi-step skill design for pipeline orchestration" |
 | `mechanism_kb` | 4,860 chunks | Gut microbe → metabolite → host gene relationships (GutMGene v2.0 + OmniPath downstream interactions) | "Which microbes produce butyrate and activate FFAR2 in cardiovascular disease?" |
 
 **Embedding model:** `BAAI/bge-small-zh-v1.5` (bilingual, 512-dim). **Retrieval:** Hybrid (dense + BM25 sparse + reciprocal rank fusion).
@@ -749,21 +751,21 @@ All collections are queryable via `/mgx-ask` slash command or direct MCP tool ca
 
 ```
 CSCCD-MetagenomeFlow/
-├── scripts/                  168 scripts (01–98f + utilities)
+├── scripts/                  178 scripts (01–98g + diagnostic/ops utilities)
 ├── pipeline/
 │   ├── Snakefile             DAG entry point
 │   ├── config/config.yaml    Per-run parameters (samples / workdir / threads)
 │   ├── profiles/             Hardware presets (auto / local_16c / 48c / 96c / hpc_slurm)
-│   └── rules/                10 rule files:
+│   └── rules/                11 rule files:
 │                               preprocessing · bacteria_taxonomy · bacteria_assembly
-│                               bacteria_annotation · bacteria_binning
+│                               bacteria_annotation · bacteria_binning · bacteria_gem
 │                               virome · mycobiome · statistics · rag · crosscohort
 ├── agents/
-│   ├── registry.yaml         Global script status tracker (97 entries)
-│   ├── skills/               96 tool skill cards (YAML / Markdown)
-│   └── provenance/           186 run records (auto-generated by /mgx-learn)
+│   ├── registry.yaml         Global script status tracker (144 entries)
+│   ├── skills/               135 tool skill cards (YAML / Markdown)
+│   └── provenance/           188 run records (auto-generated by /mgx-learn)
 ├── docs/
-│   ├── experience/           79 team experience documents (RAG source, editable)
+│   ├── experience/           86 team experience documents (RAG source, editable)
 │   └── tools_ref/            Auto-generated tool parameter docs (WebSearch cache)
 ├── mcp/                      RAG MCP server (ChromaDB + BM25 hybrid, RRF fusion, 4 collections)
 │   ├── server.py             MCP protocol server (registered with Claude Code & Codex CLI)
@@ -771,7 +773,7 @@ CSCCD-MetagenomeFlow/
 │   ├── index_skill_design_kb.py   skill_design_kb indexer
 │   ├── index_mechanism_kb.py      mechanism_kb indexer
 │   ├── gutmgene_bridge.py    GutMGene v2.0 + OmniPath bridge table builder
-│   ├── chromadb_data/        ChromaDB persistent storage (11,988 chunks)
+│   ├── chromadb_data/        ChromaDB persistent storage (12,242 chunks)
 │   ├── bm25_data/            BM25 sparse index (4 PKL files, one per collection)
 │   └── data/
 │       ├── gutmgene/         GutMGene v2.0 CSVs (4,860 microbe-metabolite-gene triples)
