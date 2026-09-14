@@ -167,11 +167,11 @@ score_matrix <- function(mat, meta, method) {
   mat <- mat[, common, drop = FALSE]
   meta <- meta[common, , drop = FALSE]
   bc <- vegan::vegdist(t(mat + 1e-06), method = "bray")
-  batch_fit <- vegan::adonis2(bc ~ .data[[batch_col]], data = meta)
+  batch_fit <- vegan::adonis2(stats::as.formula(paste0("bc ~ `", batch_col, "`")), data = meta)
   batch_r2 <- as.data.frame(batch_fit)$R2[1]
   group_r2 <- NA_real_
   if (nzchar(group_col) && group_col %in% names(meta) && length(unique(meta[[group_col]])) > 1) {
-    grp_fit <- vegan::adonis2(bc ~ .data[[group_col]], data = meta)
+    grp_fit <- vegan::adonis2(stats::as.formula(paste0("bc ~ `", group_col, "`")), data = meta)
     group_r2 <- as.data.frame(grp_fit)$R2[1]
   }
   ord <- stats::cmdscale(bc, k = 2)

@@ -136,15 +136,7 @@ def standardize_ranks(values):
 
 
 def benjamini_hochberg(pvalues):
-    count = len(pvalues)
-    adjusted = np.ones(count, dtype=np.float64)
-    if count == 0:
-        return adjusted
-    order = np.argsort(pvalues)
-    ranked = np.asarray(pvalues)[order] * count / np.arange(1, count + 1)
-    ranked = np.minimum.accumulate(ranked[::-1])[::-1]
-    adjusted[order] = np.minimum(ranked, 1.0)
-    return adjusted
+    return stats.false_discovery_control(pvalues, method="bh")
 
 
 def correlate_pair(source, target, block_size, tempdir):
