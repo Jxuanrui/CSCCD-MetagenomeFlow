@@ -12,7 +12,7 @@ scenario: [gut-microbiome, dereplicated-mags, strain-comparison]
 
 ## Scenario
 
-> 适用于 dRep 去冗余 MAG 的 sequence typing；工具 `mlst 2.11`，脚本 `41b_bac_mlst.sh`，环境 `prokaWGS`，输入 `result/binning/drep/dereplicated_genomes/*.fa`，聚合运行且默认不加 `-s`，可选 `--scheme` 指定方案，输出 `result/wgs/mlst/mlst.tsv`；依赖 dRep(38) 和 Bakta(41) 后续整合。
+> 适用于 dRep 去冗余 MAG 的 sequence typing；工具 `mlst 2.11`，脚本 `41b_bac_mlst.sh`，环境 `prokaWGS`，输入 `result/binning/drep/dereplicated_genomes/*.fa`，聚合运行且默认不加 `-s`，可选 `--scheme` 指定方案，输出 `result/wgs/mlst/mlst.tsv`；依赖 dRep(38) 和 Prokka(41) 后续整合。
 
 MLST 适合在 MAG 层面快速识别特定病原或机会致病菌的 sequence type，例如在同种 MAG 中筛查 ST131 *E. coli* 候选，并用于跨研究或公共数据库的粗粒度 strain comparison。
 
@@ -46,7 +46,7 @@ bash scripts/41b_bac_mlst.sh \
 - **为什么输入 dRep MAG**：MLST 是 genome-level typing，对去冗余代表 MAG 运行可避免同一近重复基因组被重复计数。
 - **为什么默认不加 `-s`**：混合 MAG catalog 可能包含多个物种，自动检测 scheme 比强行指定单一 scheme 更安全。
 - **什么时候指定 `--scheme`**：当研究对象明确为同一物种，或要比较特定公共 MLST scheme 时，显式 scheme 能减少自动检测歧义。
-- **为什么依赖 dRep 与 Bakta 阶段**：dRep 提供代表 MAG；Bakta 输出可用于后续把 MLST 结果与基因组注释、物种分类和功能特征合并。
+- **为什么依赖 dRep 与 Prokka 阶段**：dRep 提供代表 MAG；Prokka 输出可用于后续把 MLST 结果与基因组注释、物种分类和功能特征合并。
 - **为什么适合 ST131 等问题**：MLST 的 ST 编号是跨研究常用标签，能把 MAG 与临床或公共数据库中的已知 sequence type 联系起来。
 - **MAG 局限性**：MAG 可能缺失部分 housekeeping loci，因此阴性或 incomplete allele profile 需要结合完整度、污染度和分类结果解释。
 
@@ -58,5 +58,5 @@ bash scripts/41b_bac_mlst.sh \
 
 - `scripts/41b_bac_mlst.sh`
 - `scripts/38_bac_drep.sh`
-- `scripts/41_bac_bakta.sh`
+- `scripts/41_bac_prokka.sh`
 

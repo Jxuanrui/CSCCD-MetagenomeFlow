@@ -9,10 +9,10 @@
 该 Snakemake 流程整合了 MaxMetagenome 平台的 97 个分析脚本，支持**细菌、病毒、真菌**三维度并行分析。
 
 **特性**:
-- ✅ 74 个规则，覆盖从质控到统计分析的完整流程
+- ✅ 138 个规则，覆盖从质控到统计分析的完整流程
 - ✅ 自动依赖解析和任务调度
 - ✅ 支持断点续跑和增量更新
-- ✅ 硬件自适应配置 (16C / 48C / 96C / HPC)
+- ✅ 硬件自适应配置 (local_16c / local_48c / local_96c / hpc_slurm)
 - ✅ 详细日志和进度追踪
 
 ---
@@ -25,13 +25,14 @@
 
 ```yaml
 # 必填字段
-samples: "Sample1,Sample2,Sample3"
+samplesheet: "/path/to/samplesheet.csv"  # CSV，必需包含 sample_id 列
 workdir: "/home/labuser/Course/Maxmetagenome/Project/MyAnalysis"
 cpus: 16
 
 # 可选字段
 force: false                    # 强制重新运行所有任务
-skip_fungi_assembly: false      # 跳过真菌组装（节省资源）
+threads_per_job: 16          # 每个规则内部线程数
+max_jobs: 3                   # 并行作业数
 ```
 
 ### 2. 运行流程
@@ -41,7 +42,7 @@ skip_fungi_assembly: false      # 跳过真菌组装（节省资源）
 snakemake -s pipeline/Snakefile --profile profiles/auto
 
 # 手动指定配置
-snakemake -s pipeline/Snakefile --profile profiles/48c -j 3
+snakemake -s pipeline/Snakefile --profile profiles/local_48c -j 3
 
 # 预览执行计划（dry-run）
 snakemake -s pipeline/Snakefile --profile profiles/auto --dry-run
@@ -86,8 +87,8 @@ snakemake -s pipeline/Snakefile --dag | dot -Tpng > dag.png
 |---------|---------|-------|---------|
 | `auto` | 自动检测 | 自动 | 首选（推荐） |
 | `local_16c` | 16 核 / 64GB | `-j 2` | 小批量样本 |
-| `48c` | 48 核 / 192GB | `-j 3` | 中等批量 |
-| `96c` | 96 核 / 512GB | `-j 6` | 大批量 |
+| `local_48c` | 48 核 / 192GB | `-j 3` | 中等批量 |
+| `local_96c` | 96 核 / 512GB | `-j 6` | 大批量 |
 | `hpc_slurm` | SLURM 集群 | 动态 | HPC 环境 |
 
 ---
@@ -238,14 +239,14 @@ pipeline/
 ├── profiles/               # 硬件预设
 │   ├── auto/
 │   ├── local_16c/
-│   ├── 48c/
-│   ├── 96c/
+│   ├── local_48c/
+│   ├── local_96c/
 │   └── hpc_slurm/
 └── rules/                  # 规则定义（按维度组织）
-    ├── common.smk          # 通用规则（质控、统计）
-    ├── bacteria.smk        # 细菌维度规则
+    ├── preprocessing.smk   # 通用预处理
+    ├── bacteria_*.smk      # 细菌分类、组装、注释、分箱、GEM
     ├── virome.smk          # 病毒维度规则
-    ├── fungi.smk           # 真菌维度规则
+    ├── mycobiome.smk       # 真菌维度规则
     └── crosscohort.smk     # 跨队列分析
 ```
 
@@ -270,7 +271,7 @@ stats_dimension (LEfSe, Core, Pathway, ...)
 ### 必填字段
 
 ```yaml
-samples: "Sample1,Sample2"     # 样本列表（逗号分隔，无空格）
+samplesheet: "/path/to/samplesheet.csv"  # CSV，必需包含 sample_id 列
 workdir: "/path/to/project"    # 工作目录（绝对路径）
 cpus: 16                       # CPU 核心数
 ```
@@ -282,10 +283,10 @@ cpus: 16                       # CPU 核心数
 force: false                   # 强制重新运行（谨慎使用）
 keep_temp: false               # 保留临时文件（调试用）
 
-# 维度开关
-skip_bacteria: false           # 跳过细菌分析
-skip_virome: false             # 跳过病毒分析
-skip_fungi_assembly: false     # 跳过真菌组装（节省资源）
+# 统计与并行
+metadata: "/path/to/metadata.csv"
+threads_per_job: 16          # 每个规则内部线程数
+max_jobs: 3                   # 并行作业数
 
 # 统计分析
 group_col: "Group"             # metadata.tsv 中的分组列名
@@ -313,7 +314,8 @@ tmp_dir: "/tmp"                # 临时目录
 2. **如何跳过某个维度？**
    ```yaml
    # config.yaml
-   skip_fungi_assembly: true
+   # 按目标规则运行以跳过不需要的维度，例如：
+   snakemake -s pipeline/Snakefile --until metaphlan_profiler
    ```
 
 3. **内存不足 (OOM)？**

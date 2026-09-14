@@ -148,7 +148,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 39c | `scripts/39c_bac_instrain_profile.sh` | 单样本菌株微多样性分析 | inStrain |
 | 39d | `scripts/39d_bac_instrain_compare.sh` | 跨样本 popANI 菌株比较 | inStrain |
 | 40 | `scripts/40_bac_gtdbtk.sh` | MAG 系统发育分类（GTDB R214） | GTDB-Tk |
-| 41 | `scripts/41_bac_bakta.sh` | MAG 全基因组精细注释 | Bakta |
+| 41 | `scripts/41_bac_prokka.sh` | MAG 全基因组精细注释 | Prokka |
 | 41b | `scripts/41b_bac_mlst.sh` | MAG MLST 多位点序列分型（WGS 融入模块） | mlst | envs/prokaWGS (mlst 2.11) |
 | 41c | `scripts/41c_bac_pangenome.sh` | 同种 MAG 泛基因组分析（WGS 融入模块） | Roary | envs/prokaWGS (roary 3.12.0) |
 | 41d | `scripts/41d_bac_snippy.sh` | MAG SNP/InDel 变异检测（WGS 融入模块） | Snippy | envs/snippy (snippy 4.0.2) |
@@ -435,7 +435,7 @@ pipeline/
     ├── bacteria_taxonomy.smk   rules: metaphlan4, metaphlan4_merge, strainphlan4, humann3 ✅
     ├── bacteria_assembly.smk   rules: megahit, prodigal, cdhit, salmon_build, salmon_quant ✅
     ├── bacteria_annotation.smk rules: eggnog, kegg, amrfinder, card, dbcan, vfdb, bacmet, antismash, defense_finder, ncyc, pcyc ✅ (kegg已加log:/threads:)
-    ├── bacteria_binning.smk    rules: coverm_depth, metabat2, maxbin2, semibin2, dastool, checkm2, drep, coverm_quant, gtdbtk, bakta, mlst, pangenome, snippy ✅
+    ├── bacteria_binning.smk    rules: coverm_depth, metabat2, maxbin2, semibin2, dastool, checkm2, drep, coverm_quant, gtdbtk, prokka, mlst, pangenome, snippy ✅
     ├── virome.smk              rules: 51-72（含54b/58-60/70/71/72）✅ 全流程验证通过 2026-06-17
     ├── mycobiome.smk           rules: 71-86（含74a/74e/74f/75/77-86）✅
     ├── statistics.smk          rules: 91-98 ✅（已从rule all移除，R包缺失，需手动安装后运行）

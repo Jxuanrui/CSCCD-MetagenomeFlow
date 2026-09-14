@@ -13,7 +13,7 @@
 | 脚本编号 | 脚本名 | 功能 | 依赖步骤 | 状态 |
 |---------|--------|------|---------|------|
 | `41b` | `41b_bac_mlst.sh` | MLST 多位点序列分型 | 步骤 38-41（MAG） | ⏳ 待开发 |
-| `41c` | `41c_bac_pangenome.sh` | 泛基因组分析（Roary） | 步骤 41（Bakta GFF）| ⏳ 待开发 |
+| `41c` | `41c_bac_pangenome.sh` | 泛基因组分析（Roary） | 步骤 41（Prokka GFF）| ⏳ 待开发 |
 | `41d` | `41d_bac_snippy.sh` | SNP/InDel 变异检测 | 步骤 40（GTDB 分类）+ 参考基因组 | ⏳ 待开发 |
 
 ---
@@ -44,11 +44,11 @@ mlst --scheme ecoli --legacy *.fasta --threads 8 --nopath --quiet \
 
 **功能**：对同一物种的多个 MAG 进行泛基因组分析，区分核心基因（Core）、软核心（Soft core）、壳基因（Shell）和云基因（Cloud），用于理解物种基因组多样性。
 
-**工具**：`Roary v3.13+`（需要 Bakta 步骤输出的 GFF 文件作为输入）
+**工具**：`Roary v3.13+`（需要 Prokka 步骤输出的 GFF 文件作为输入）
 
 **适用条件**：
 - 同一物种（GTDB 分类相同）的 MAG ≥ 3 个
-- 依赖步骤 41（Bakta 全基因组注释）的 `.gff` 文件
+- 依赖步骤 41（Prokka 全基因组注释）的 `.gff` 文件
 
 **典型命令**：
 ```bash
