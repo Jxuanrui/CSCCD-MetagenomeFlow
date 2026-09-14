@@ -80,7 +80,7 @@ for dim in bacteria fungi virus; do
     # Check if kegg_ko table exists
     func_table="${TEST_DATA}/result/integration/${dim}/kegg_ko_abundance.tsv"
     tax_table=$(find ${TEST_DATA}/result/${dim} -name "taxonomy.tsv" -o -name "merged_taxonomy.tsv" 2>/dev/null | head -1)
-    ml_importance="${TEST_DATA}/result/97_ml_mlr3/${dim}/kegg_ko/shap_importance.csv"
+    ml_importance="${TEST_DATA}/result/deprecated/97_ml_mlr3/${dim}/kegg_ko/shap_importance.csv"
 
     if [[ ! -f "$func_table" ]]; then
         echo "  WARNING: No kegg_ko table for ${dim}"
