@@ -22,3 +22,9 @@ group_col: "group"
 # Force re-run all steps ignoring existing outputs
 # Set to true to regenerate all results (123/125 scripts support --force)
 force: false
+
+# Dimension groups to run. Omit or list all three for the full pipeline.
+# A partial list runs only the selected dimension analyses (plus shared
+# preprocessing); the statistics / cross-domain / integration layers assume
+# all three dimensions and run only when all three are selected.
+# kingdoms: ["bacteria", "virome", "fungi"]
