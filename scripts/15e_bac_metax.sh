@@ -12,6 +12,8 @@
 #           ${SAMPLE}.profile.txt    — 最终分类丰度（13 列，含覆盖度/presence 似然）
 #           ${SAMPLE}.classify.txt   — 每条 read 分类（大文件；分数索引下不产出）
 #           ${SAMPLE}.log            — 运行日志
+#           ${SAMPLE}.sam.gz         — 压缩比对中间文件（-z 压缩；--reuse-sam 可复用）
+#                                      注意：不加 -z 时该 SAM 未压缩，约 33 GB/样本
 #
 # ── 定位说明 ──────────────────────────────────────────────────────────────────
 #
@@ -146,6 +148,7 @@ conda run --prefix "${METAX_ENV}" --no-capture-output \
         --dmp-dir "${DMP_DIR}" \
         -i "${INPUT_R1},${INPUT_R2}" \
         -p \
+        -z \
         --sequencer Illumina \
         --mode "${MODE}" \
         -o "${OUT_PREFIX}" \
