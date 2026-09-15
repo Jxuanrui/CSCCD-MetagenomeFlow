@@ -144,7 +144,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 35 | `scripts/35_bac_semibin2.sh` | SemiBin2 分箱（ML自训练） | SemiBin2 |
 | 36 | `scripts/36_bac_dastool.sh` | 多算法分箱整合优化 | DAS_Tool |
 | 37 | `scripts/37_bac_checkm2.sh` | MAG 质量评估（ML） | CheckM2 |
-| 38 | `scripts/38_bac_drep.sh` | MAG 去冗余（ANI 97%） | dRep |
+| 38 | `scripts/38_bac_drep.sh` | MAG 去冗余（默认 95% ANI；二级聚类默认 skani，`-A` 可切 fastANI/ANImf） | dRep |
 | 39 | `scripts/39_bac_coverm_quant.sh` | MAG 丰度定量 | CoverM |
 | 39b | `scripts/39b_bac_instrain_map.sh` | MAG 读段映射（菌株追踪前置） | CoverM (minimap2-sr) |
 | 39c | `scripts/39c_bac_instrain_profile.sh` | 单样本菌株微多样性分析 | inStrain |
@@ -603,3 +603,31 @@ skills/replications/
 | `/mgx-plot-volcano` | 火山图可视化 | 差异分析火山图生成（2026-07-16起 `92_stat_differential` 也会自动生成，见该脚本条目） |
 
 > 本索引由 2026-07-16 头脑风暴发现补齐：此前 CLAUDE.md 声称"完整技能索引见 §1.9-1.10"，但那两节实际是文献技能包规范和Graphify，并非技能列表。
+
+## 1.12 ScientificFigureLibrary（图件模板库 MCP，项目级，2026-09-15 新增）
+
+**定位**：本地优先的科研图件模板库（MCP server + MCP App）。导入「图 + 代码」→ 评审 → 发布不可变 Release 到本机 Library → 跨项目复用同一模板。**不执行绘图代码**（宿主 agent 检查文件，SFL 只做 hash/版本/门禁/发布）。上游 `github.com/xuzhougeng/ScientificFigureLibrary`，MIT，v0.7.0。
+
+**与既有绘图技能的关系**：11 个 `/mgx-plot-*` 技能负责「画」；SFL 负责「沉淀可复用的图件模板资产」——分层互补，无功能重叠。
+
+**本项目部署（全部在项目路径内，不修改服务器全局环境）**：
+
+| 项 | 位置 |
+|---|---|
+| 工具本体 | `tools/ScientificFigureLibrary/`（Release ZIP 还原，已 gitignore） |
+| 图件库 | `FigureLibrary/`（用户数据，已 gitignore） |
+| MCP 注册 | 项目根 `.mcp.json`（**不动 `~/.claude.json`**），server 名 `figure-library` |
+| Library 绑定 | 环境变量 `FIGURE_LIBRARY_DIR=<PROJ_DIR>/FigureLibrary` |
+| 依赖 | Node.js 22+（本机 v24.16.0） |
+
+**还原步骤**（Release ZIP 方式，免 npm 构建）：
+
+```bash
+BASE=https://github.com/xuzhougeng/ScientificFigureLibrary/releases/download/v0.7.0
+curl -sSL -o sfl.zip $BASE/scientific-figure-library-claude-0.7.0.zip
+unzip -q sfl.zip -d tools/ScientificFigureLibrary
+```
+
+**主要工具**：`figure_library_search` / `figure_library_open` / `figure_library_plan_materialize`+`apply_materialize`（复用模板）/ `figure_library_plan_working_revision`+`apply_working_revision`（导入）/ `figure_library_plan_publish_working_revision`+`apply_publish_working_revision`（发布）。
+
+**回退**：删除 `.mcp.json` 中的 `figure-library` 段（或整个 `.mcp.json`）即可。
