@@ -3,6 +3,8 @@
 # 脚本名: 98g_cross_domain_correlation.sh
 # 功  能: 构建细菌、病毒和真菌的跨域丰度 Spearman 相关性网络
 # 依  赖: MetaPhlAn4 丰度表、vOTU abundance table、可选 PHF/iPHoP 结果
+# 环  境: envs/phagcn3（pandas/networkx/scipy>=1.11；BH-FDR 校正依赖
+#         scipy.stats.false_discovery_control，旧版 scipy 无此 API）
 # 输  出: ${WORKDIR}/result/cross_domain/correlation/
 #           abundance_matrix.tsv, network_edges.tsv, network_nodes.tsv,
 #           network_summary.txt
