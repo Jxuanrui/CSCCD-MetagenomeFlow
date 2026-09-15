@@ -143,6 +143,23 @@ rule drep:
         "bash {REPO}/scripts/38_bac_drep.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
+# ─── 38b: GUNC second-pass MAG QC (aggregate, optional) ─────────────────────
+
+rule gunc:
+    """Second-pass MAG QC: detect chimeric / cross-lineage bins via lineage homogeneity (complements CheckM2). Not in rule all; run by requesting a result/binning/gunc/GUNC.*.tsv target."""
+    input:
+        done = BINNING + "/drep/drep_done.txt",
+    output:
+        out = BINNING + "/gunc/GUNC.progenomes_2.1.maxCSS_level.tsv",
+    log:
+        WORKDIR + "/logs/binning/gunc.log",
+    threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    shell:
+        "bash {REPO}/scripts/38b_bac_gunc.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2>&1"
+
+
 # ─── 39: CoverM genome quantification (per-sample) ──────────────────────────
 
 rule coverm_quant:
