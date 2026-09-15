@@ -91,3 +91,10 @@ mcp/bm25_data/*.pkl
 
 # OpenCode 运行时目录（不入库）
 .omo/
+
+# ScientificFigureLibrary 本地部署（Node 构建产物，体积大，不入库；由 tools/sfl_dl 的 Release ZIP 还原）
+tools/ScientificFigureLibrary/
+tools/sfl_dl/
+
+# ScientificFigureLibrary 的图件模板库（用户数据，机器本地，不入库）
+FigureLibrary/

@@ -2,7 +2,7 @@
 # ==============================================================================
 # 脚本名: 38_bac_drep.sh
 # 功  能: MAG 去冗余（dRep，默认 95% ANI / 物种级）
-#         工具版本：dRep 3.6+（conda env: drep）
+#         工具版本：dRep 3.6+（conda env: drep；二级聚类默认 skani 0.3.2）
 # 依  赖: 37_bac_checkm2.sh 的过滤输出
 # 输  入: ${WORKDIR}/result/binning/checkm2/drep_input/*.fa
 # 输  出: ${WORKDIR}/result/binning/drep/
@@ -14,6 +14,7 @@
 #   -sa 0.95：物种级去冗余（推荐用于大多数分析）
 #   -sa 0.97：菌株级去冗余（更严格）
 #   -sa 0.99：亚菌株级（容易过度分割）
+#   -A skani：二级聚类算法，默认 skani（比 fastANI 更快；ANI 估计略有差异）
 #
 # 参  考: Olm et al. 2017 ISME J (dRep)
 # 用  法: bash 38_bac_drep.sh -t CPUS -w WORKDIR -r REPO
@@ -25,6 +26,7 @@ show_help() { cat << EOF
 用法: bash 38_bac_drep.sh -t CPUS -w WORKDIR -r REPO
 可选参数:
   -a ANI_THRESHOLD    去冗余 ANI 阈值（默认 0.95，0.97=菌株级）
+  -A S_ALGORITHM      二级聚类算法（默认 skani；可选 fastANI/ANImf）
 必需参数:
   -t  线程数
   -w  工作目录
@@ -32,10 +34,11 @@ show_help() { cat << EOF
 EOF
 }
 
-ANI="0.95"; CPUS=""; WORKDIR=""; REPO=""; FORCE=0
+ANI="0.95"; S_ALGO="skani"; CPUS=""; WORKDIR=""; REPO=""; FORCE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -a) ANI="$2";    shift 2 ;;
+        -A) S_ALGO="$2"; shift 2 ;;
         -t) CPUS="$2";   shift 2 ;;
         -w) WORKDIR="$2"; shift 2 ;;
         -r) REPO="$2";   shift 2 ;;
@@ -83,12 +86,13 @@ if [ -f "${FILTERED_REPORT}" ]; then
 fi
 
 set +e
-echo "[drep] 去冗余 | ANI: ${ANI} | 线程: ${CPUS}"
+echo "[drep] 去冗余 | ANI: ${ANI} | 二级聚类: ${S_ALGO} | 线程: ${CPUS}"
 conda run --prefix "${REPO}/envs/drep" --no-capture-output \
     dRep dereplicate \
         "${OUTDIR}" \
         -g "${INPUT_DIR}"/*.fa \
         -sa "${ANI}" \
+        --S_algorithm "${S_ALGO}" \
         -pa 0.9 \
         -nc 0.30 \
         -p "${CPUS}" \
