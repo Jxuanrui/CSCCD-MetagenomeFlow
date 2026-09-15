@@ -1165,7 +1165,7 @@ CHECKM_CFG
     # 第2步：从已有 kofam_profiles 重建 KEGG HMM（替代 KEGG FTP 下载）
     # 将下面路径替换为你服务器上的 kofam_profiles 位置
     KOFAM_DIR=/home/labuser/Course/ViOTUcluster/db/DRAM/kofam_profiles/profiles
-    cd ${db}/vibrant/databases
+    cd ${db}/vibrant/databases || exit
     cat ${KOFAM_DIR}/K*.hmm > kegg_temp_full.HMM
     conda run --prefix ${envs}/vibrant \
         hmmfetch -o KEGG_profiles_prokaryotes.HMM \
@@ -1492,7 +1492,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
         conda run --prefix ${envs}/assembly diamond makedb \
             --in ${db}/fungi/combined.fasta \
             -d ${db}/fungi/gut_fungi \
-            --threads $(nproc) --ignore-warnings
+            --threads "$(nproc)" --ignore-warnings
         echo "肠道真菌 DIAMOND DB 构建完成"
     fi
 
@@ -1516,7 +1516,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
         gzip -dc ${db}/merops/peptidases.fasta.gz \
             | sed '/^[^>]/s/ //g' \
             | conda run --prefix ${envs}/assembly diamond makedb \
-                --in /dev/stdin -d ${db}/merops/peptidases --threads $(nproc)
+                --in /dev/stdin -d ${db}/merops/peptidases --threads "$(nproc)"
         echo "MEROPS DIAMOND 索引构建完成"
     fi
 
@@ -1984,4 +1984,43 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
 # ==============================================================================
 # §17 状态：sylph [✓] | sylph-tax [✓] | GTDB-R220 sketch DB [✓] | taxonomy metadata [✓]
+# ==============================================================================
+
+# ==============================================================================
+# §18 MetaX 数据库（15e_bac_metax.sh 依赖）
+# ==============================================================================
+# MetaX 跨域统一 profiler（细菌/古菌/真核/病毒/宿主一次输出），作为单域分类器的验证层。
+# 版本锁定 metax 0.9.22 + 预构建 RefSeq DB（metax 2.0.1 改用 metax_db.tsv.gz/.mxi，
+# 与预构建 DB 不兼容）。峰值内存 ~55G。
+#
+#     mkdir -p ${db}/metax
+#     conda create --prefix ${envs}/metax -y python=3.9
+#     conda install --prefix ${envs}/metax -y -c bioconda -c conda-forge metax=0.9.22 macmd
+#
+#     cd ${db}/metax
+#     aria2c -x16 -s16 -k4M --file-allocation=none -c \
+#         https://research.bifo.helmholtz-hzi.de/downloads/metax/metax_db.tar.xz
+#     tar -xJf metax_db.tar.xz          # 勿用 pixz -d（会删除源文件）
+#     # 预期产物：${db}/metax/metax_bavfph/metax_db.json
+#
+# ==============================================================================
+# §18 状态：metax 0.9.22 [✓] | macmd [✓] | RefSeq 预构建 DB [✓]
+# ==============================================================================
+
+# ==============================================================================
+# §19 GUNC 数据库（38b_bac_gunc.sh 依赖）
+# ==============================================================================
+# GUNC 二次质检：检测嵌合/跨谱系 bin（CheckM2 + GUNC 标准配对）。
+#
+#     mkdir -p ${db}/gunc
+#     conda create --prefix ${envs}/gunc -y
+#     conda install --prefix ${envs}/gunc -y -c bioconda -c conda-forge gunc=1.0.3
+#
+#     aria2c -x16 -s16 -k4M --file-allocation=none -c \
+#         https://swifter.embl.de/~fullam/gunc/gunc_db_progenomes2.1.dmnd.gz -d ${db}/gunc
+#     gunzip -k ${db}/gunc/gunc_db_progenomes2.1.dmnd.gz
+#     # 预期 md5：bc93a855e0760aad5c4e5f2d0e26da46
+#
+# ==============================================================================
+# §19 状态：gunc 1.0.3 [✓] | progenomes2.1 DB [✓]
 # ==============================================================================
