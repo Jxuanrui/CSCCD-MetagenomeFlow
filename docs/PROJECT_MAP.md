@@ -617,7 +617,7 @@ skills/replications/
 | 工具本体 | `tools/ScientificFigureLibrary/`（Release ZIP 还原，已 gitignore） |
 | 图件库 | `FigureLibrary/`（用户数据，已 gitignore） |
 | MCP 注册 | 项目根 `.mcp.json`（**不动 `~/.claude.json`**），server 名 `figure-library` |
-| Library 绑定 | 环境变量 `FIGURE_LIBRARY_DIR=<PROJ_DIR>/FigureLibrary` |
+| Library 绑定 | 环境变量 `FIGURE_LIBRARY_DIR=<PROJ_DIR>/FigureLibrary` 与 `FIGURE_WORKSPACE_DIR=<PROJ_DIR>/FigureLibrary/workspace`（均项目内；不写 `~/.config` locator） |
 | 依赖 | Node.js 22+（本机 v24.16.0） |
 
 **还原步骤**（Release ZIP 方式，免 npm 构建）：
