@@ -168,6 +168,26 @@ rule sylph:
         "> {log} 2>&1"
 
 
+rule metax:
+    """Cross-domain unified profiling (bacteria/archaea/eukaryote/virus/host) with coverage-informed OEBR filtering. Verification layer, not in rule all; run by requesting a result/metax/.../profile.txt target."""
+    input:
+        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+    output:
+        profile = WORKDIR + "/result/metax/{sample}/{sample}.profile.txt",
+    log:
+        WORKDIR + "/logs/metax/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+        mode = config.get("metax_mode", "default"),
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/15e_bac_metax.sh "
+        "-s {wildcards.sample} -t {threads} "
+        "-w {WORKDIR} -r {REPO} --mode {params.mode} {params.force_flag} "
+        "> {log} 2>&1"
+
+
 rule kraken2_merge:
     """Merge per-sample Bracken abundance tables into community matrices."""
     input:
