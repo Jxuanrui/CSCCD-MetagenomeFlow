@@ -139,6 +139,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | **31e** | **`scripts/31e_bac_fegenie.sh`** | **铁代谢基因预测（iron uptake/storage/cycling，10 类功能）** | **FeGenie 1.2** |
 | 32 | `scripts/32_bac_coverm_depth.sh` | 测序深度计算（Binning前置） | CoverM |
 | 33 | `scripts/33_bac_metabat2.sh` | MetaBAT2 分箱 | MetaBAT2 |
+| **33b** | **`scripts/33b_bac_quickbin.sh`** | **QuickBin 高保真分箱（2026-09-15 新增）**：CPU-only、marker-free；GC-覆盖度空间索引 + Oracle 相似度级联。论文在 297 真实宏基因组中高保真 MAG（≥95%/≤1%）产出优于 MetaBAT2/SemiBin2/VAMB/COMEBin 且全部跑完。复用 `32` 的 contig BAM（无需重复映射），派生 contig2bin 后作为 **DAS_Tool 第 4 个 binner**（36） | QuickBin（BBTools 39.81，envs/busco） |
 | 34 | `scripts/34_bac_maxbin2.sh` | MaxBin2 分箱 | MaxBin2 |
 | 35 | `scripts/35_bac_semibin2.sh` | SemiBin2 分箱（ML自训练） | SemiBin2 |
 | 36 | `scripts/36_bac_dastool.sh` | 多算法分箱整合优化 | DAS_Tool |

@@ -77,6 +77,23 @@ rule semibin2:
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
 
+# ─── 33b: QuickBin high-fidelity binning (per-sample) ───────────────────────
+
+rule quickbin:
+    """QuickBin (BBTools) CPU-only, marker-free binning; joins the DAS_Tool ensemble."""
+    input:
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+        bam = BINNING + "/coverm/{sample}/{sample}.bam",
+    output:
+        tsv = BINNING + "/quickbin/{sample}/{sample}.quickbin.tsv",
+    threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    shell:
+        "bash {REPO}/scripts/33b_bac_quickbin.sh -s {wildcards.sample}" +
+        " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
+
+
 # ─── 36: DAS_Tool bin integration (per-sample) ──────────────────────────────
 
 rule dastool:
@@ -85,6 +102,7 @@ rule dastool:
         metabat2 = BINNING + "/metabat2/{sample}/{sample}.tsv",
         maxbin2  = BINNING + "/maxbin2/{sample}/{sample}.maxbin2.tsv",
         semibin2 = BINNING + "/semibin2/{sample}/{sample}.semibin2.tsv",
+        quickbin = BINNING + "/quickbin/{sample}/{sample}.quickbin.tsv",
     output:
         contig2bin = BINNING + "/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
     threads: CPUS

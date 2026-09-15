@@ -56,6 +56,7 @@ BINS_DIR="${OUTDIR}/${SAMPLE}_DASTool_bins"
 METABAT2_TSV="${WORKDIR}/result/binning/metabat2/${SAMPLE}/${SAMPLE}.tsv"
 MAXBIN2_TSV="${WORKDIR}/result/binning/maxbin2/${SAMPLE}/${SAMPLE}.maxbin2.tsv"
 SEMIBIN2_TSV="${WORKDIR}/result/binning/semibin2/${SAMPLE}/${SAMPLE}.semibin2.tsv"
+QUICKBIN_TSV="${WORKDIR}/result/binning/quickbin/${SAMPLE}/${SAMPLE}.quickbin.tsv"
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing"; exit 1; fi
 
@@ -79,7 +80,8 @@ count_assignments() {
 METABAT2_ROWS=$(count_assignments "${METABAT2_TSV}")
 MAXBIN2_ROWS=$(count_assignments "${MAXBIN2_TSV}")
 SEMIBIN2_ROWS=$(count_assignments "${SEMIBIN2_TSV}")
-TOTAL_BINS=$((METABAT2_ROWS + MAXBIN2_ROWS + SEMIBIN2_ROWS))
+QUICKBIN_ROWS=$(count_assignments "${QUICKBIN_TSV}")
+TOTAL_BINS=$((METABAT2_ROWS + MAXBIN2_ROWS + SEMIBIN2_ROWS + QUICKBIN_ROWS))
 
 if [ "${TOTAL_BINS}" -le 0 ]; then
     echo "[dastool] WARNING: No bins from any binner. Creating empty output."
@@ -93,6 +95,7 @@ BINNERS=()
 [ "${METABAT2_ROWS}" -gt 0 ] && BINNERS+=("metabat2:${METABAT2_TSV}")
 [ "${MAXBIN2_ROWS}" -gt 0 ] && BINNERS+=("maxbin2:${MAXBIN2_TSV}")
 [ "${SEMIBIN2_ROWS}" -gt 0 ] && BINNERS+=("semibin2:${SEMIBIN2_TSV}")
+[ "${QUICKBIN_ROWS}" -gt 0 ] && BINNERS+=("quickbin:${QUICKBIN_TSV}")
 if [ ${#BINNERS[@]} -lt 2 ]; then
     echo "[dastool] WARNING: Need at least 2 non-empty binner outputs, found ${#BINNERS[@]}. Creating empty output."
     mkdir -p "${OUTDIR}" "${BINS_DIR}"
