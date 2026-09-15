@@ -68,10 +68,16 @@ def load_skills():
             continue
         rule_ref = data.get("snakemake_rule")
         card_id = data.get("id") or data.get("script_id")
+        card = {
+            "file": path.stem,
+            "rule_ref": rule_ref,
+            "deps": list(data.get("depends_on") or []) + list(data.get("required_by") or []),
+        }
         if card_id:
-            skills[card_id] = {"file": path.stem, "rule_ref": rule_ref}
+            skills[card_id] = card
         else:
-            skills[path.stem] = {"file": path.stem, "rule_ref": rule_ref, "no_id": True}
+            card["no_id"] = True
+            skills[path.stem] = card
     return skills
 
 
@@ -89,6 +95,13 @@ def resolve_rule(rule_ref):
         if re.search(rf"^rule\s+{re.escape(rule_ref)}\s*:", rule_file.read_text(), re.M):
             return f"pipeline/rules/{rule_file.name}", rule_ref
     return None, rule_ref
+
+
+def load_rule_names():
+    names = set()
+    for rule_file in sorted((REPO / "pipeline/rules").glob("*.smk")):
+        names.update(re.findall(r"^rule\s+([A-Za-z0-9_]+)\s*:", rule_file.read_text(), re.M))
+    return names
 
 
 def check_rule_exists(rule_file, rule_name):
@@ -121,6 +134,7 @@ def main():
     registry = load_registry()
     scripts = set(iter_analysis_scripts())
     skills = load_skills()
+    rule_names = load_rule_names()
 
     for script in sorted(scripts):
         if script not in registry and not _is_companion_script(script, registry):
@@ -137,6 +151,11 @@ def main():
             continue
         if skill_id not in registry:
             issues.append(f"[skill] {card['file']}: 技能卡 id 未在 registry 注册")
+        for dep in card["deps"]:
+            if dep not in registry and dep not in rule_names:
+                issues.append(
+                    f"[skill] {card['file']}: 依赖 id '{dep}' 不在 registry 也不匹配任何规则名"
+                )
         rule_file, rule_name = resolve_rule(card["rule_ref"])
         if rule_name and not rule_file:
             issues.append(
