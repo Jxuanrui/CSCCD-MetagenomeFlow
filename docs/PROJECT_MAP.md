@@ -115,6 +115,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 14 | `scripts/14_bac_kraken2.sh` | 快速物种分类（k-mer） | Kraken2+Bracken |
 | 15 | `scripts/15_bac_centrifuger.sh` | 蛋白级精确分类（GTDB R226） | Centrifuger |
 | 15c | `scripts/15c_bac_sylph.sh` | 超快速物种分类（minhash sketch，GTDB-R220），可选快速预筛选，非替代 MetaPhlAn4/Kraken2 | sylph+sylph-tax |
+| **15e** | **`scripts/15e_bac_metax.sh`** | **跨域统一分类（2026-09-15 新增）**：单次运行同时分类细菌/古菌/真核/病毒/宿主，coverage-informed OEBR/COEBR 过滤 reference 污染、同源误配与 kitome 伪阳性 + EM 丰度细化。作为**跨域验证层**与单域工具（11/14/15/52/68）交叉验证，默认**不入 rule all**（请求 `result/metax/<sample>/<sample>.profile.txt` 触发）。版本锁定 metax 0.9.22 + 预构建 RefSeq 库（2.x 的 DB 格式不兼容） | MetaX (envs/metax) |
 | 16 | `scripts/16_bac_megahit.sh` | 宏基因组组装 | MEGAHIT |
 | 17 | `scripts/17_bac_prodigal.sh` | 蛋白编码基因预测 | Prodigal |
 | 18 | `scripts/18_bac_cdhit.sh` | 基因去冗余（95% ANI） | CD-HIT |
@@ -301,7 +302,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 96(cross_dim) | `scripts/96_functional_cross_dimension.sh` | 三维度（细菌/真菌/病毒）功能显著信号联合对比。Snakemake rule：`stat_functional_cross_dimension` | R |
 | 96b | `scripts/96b_pathway_activity.sh` | **Pathway Activity（通路活性分析）**：整合 HUMAnN3 分层通路丰度与覆盖度，评估通路完整性、主要物种贡献者及通路活性与群落组成的相关性，适用于定位驱动功能变化的关键物种。依赖：15；Snakemake rule：`stat_pathway_activity` | HUMAnN3 + R |
 | 96c | `scripts/96c_functional_redundancy.sh` | **Functional Redundancy（功能冗余度分析）**：联合功能与物种丰度矩阵计算功能分散指数（FDI）和物种功能多样性，识别低冗余、潜在脆弱的关键功能，并可结合 ML 重要性筛选候选功能。依赖：98b、98c、98d、11；Snakemake rule：`stat_functional_redundancy`（**2026-07-16**：真菌分支路径由 shell 级 `find`/`if` 判断改为 Snakemake `input:` 声明，DAG 可正确追踪变更） | R |
-| 97 | `scripts/97_stat_crosscohort.sh` | **跨队列验证（Phase 2a 统一）**：本地多队列 ML 迁移验证（8 个可视化 + meta-analysis）。输出到 `result/viz_crosscohort/`。旧的 `statistics.smk::stat_curatedMGD` 规则已删除避免冲突；对应的 `97_stat_curatedMGD.sh` 于 2026-07-16 移至 `scripts/deprecated/` | SIAMCAT/MMUPHin (R) |
+| 97 | `scripts/97_stat_crosscohort.sh` | **跨队列验证（Phase 2a 统一）**：本地多队列 ML 迁移验证（8 个可视化 + meta-analysis）。输出到 `result/viz_crosscohort/`。旧的 `statistics.smk::stat_curatedMGD` 规则已删除避免冲突；对应的 `97_stat_curatedMGD.sh` 已于 2026-09-15 移除 | SIAMCAT/MMUPHin (R) |
 | 98 | `scripts/98_stat_report.sh` | 按需生成带时间戳的分析结果 Markdown 快照报告 | bash + Rscript |
 | 98c(mge) | `scripts/98c_bac_mge_summary.sh` | 汇总细菌 MGE（ISFinder/ICEberg/IntegAll/transposase）与质粒（PlasmidFinder）检测结果为整合表。Snakemake rule：`bac_mge_summary` | bash + awk |
 | 98d(mag) | `scripts/98d_bac_mag_integration.sh` | 整合细菌 MAG 级分类（GTDB-Tk）、质量（CheckM2）、去冗余聚类（dRep）与丰度（CoverM）为整合表。Snakemake rule：`bac_mag_integration` | bash + awk |
@@ -310,7 +311,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 98g | `scripts/98g_cross_domain_correlation.sh` | **跨域丰度互作网络**（2026-08-22 新增）：细菌/病毒/真菌丰度 TSS+CLR 标准化后计算跨域 Spearman 相关性（BH-FDR 校正），叠加 iPHoP 病毒-宿主预测边（`type=host_prediction`，与相关性边分开标记）。无真菌数据或 iPHoP 文件缺失时优雅降级。配套 `98g_cross_domain_corr.py`。Snakemake rule：`cross_domain_correlation` | scipy/pandas/networkx (envs/phagcn3) |
 | 99a | `scripts/99a_core_microbiome.sh` | **Core Microbiome（核心微生物组识别）**：按流行率和最低丰度阈值识别全局及 case/control 组特异核心特征，输出核心成员表、共享关系、流行率曲线和核心丰度占比图，用于发现稳定定植成员。依赖：11、98b；Snakemake rule：`stat_core_microbiome`（**2026-07-16**：真菌分支同96c一并修正为显式 `input:` 依赖） | microbiome + R |
 | 99b | `scripts/99b_lefse.sh` | **LEfSe Analysis（生物标志物发现）**：对细菌、病毒和真菌的分类或功能丰度表执行组间检验与 LDA 效应量排序，输出显著生物标志物、LDA 条形图及分类层级图，用于病例-对照标志物筛选。依赖：98b、98c、98d；Snakemake rule：`stat_lefse` | LEfSe-like + R |
-| — | `downstream_summary`（无独立脚本，直接以 Snakemake inline shell rule 实现） | 汇总 Core Microbiome/Functional Redundancy/Pathway Activity 共7个下游模块的完成状态为单表。**2026-07-16 新增**，替代原 `99c_batch_downstream.sh`/`99d_downstream_summary.R`（与 Snakemake DAG 本身架构性重复，已移至 `scripts/deprecated/`）。Snakemake rule：`downstream_summary` | bash（inline） |
+| — | `downstream_summary`（无独立脚本，直接以 Snakemake inline shell rule 实现） | 汇总 Core Microbiome/Functional Redundancy/Pathway Activity 共7个下游模块的完成状态为单表。**2026-07-16 新增**，替代原 `99c_batch_downstream.sh`/`99d_downstream_summary.R`（与 Snakemake DAG 本身架构性重复，已于 2026-09-15 移除）。Snakemake rule：`downstream_summary` | bash（inline） |
 
 ### 🔄 串联流程脚本
 
@@ -509,7 +510,6 @@ bash scripts/97_stat_crosscohort.sh \
 **输出目录**：`${WORKDIR}/result/viz_crosscohort/`（8个PDF + 2个TSV + sentinel）
 
 **详细文档**：`docs/97_crosscohort_usage.md`
-**测试脚本**：`scripts/tests/deprecated_examples/test_97_crosscohort.sh`（依赖已删除的 `Project/Test_100samples`，已失效，2026-07-28 移入 `deprecated_examples/` 仅作参考；跨队列验证的可运行测试已被 `scripts/tests/run_ci_checks.sh` 的层三DAG连通性测试覆盖到规则图层面）
 
 ## 1.8.1 测试/CI 体系（三层金字塔）
 
@@ -517,12 +517,11 @@ bash scripts/97_stat_crosscohort.sh \
 
 ```
 scripts/tests/
-  level1/run_shellcheck_all.sh        — 层一：全量126脚本shellcheck静态检查
+  level1/run_shellcheck_all.sh        — 层一：全量155脚本shellcheck静态检查
   level2/test_*.sh                    — 层二：抽样代表性脚本集成测试（3个）
   level2/generate_fixture_*.R         — 层二用的fixture中间产物生成器
   level3/test_dag_connectivity.sh     — 层三：Snakemake DAG连通性 dry-run
   run_ci_checks.sh --level {1,2,3,all} — 统一入口，PASS/FAIL汇总表
-  deprecated_examples/                — 依赖已删除 Test_100samples 的3个失效脚本，仅供参考
 
 .shellcheckrc                         — exclude清单（数据驱动定稿，非拍脑袋）
 scripts/hooks/pre-commit + scripts/install_git_hooks.sh — git pre-commit hook（增量检查，阻断模式）
