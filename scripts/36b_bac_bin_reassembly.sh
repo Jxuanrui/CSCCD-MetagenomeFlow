@@ -119,6 +119,7 @@ if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[WARN] metaWRAP reassemble_bins 失败 (sample=${SAMPLE})，回退到原始 DAS_Tool bins"
     # metaWRAP 失败时的 graceful fallback：将所有原始 bins 复制到 reassembled_bins/
     # 作为"未重组装"版本，确保下游 CheckM2 有输入（CheckM2 脚本已支持此回退逻辑）
+    rm -rf "${FINAL_DIR}"
     mkdir -p "${FINAL_DIR}"
     for bin_fa in "${BINS_DIR}"/*.fa; do
         cp "${bin_fa}" "${FINAL_DIR}/$(basename "${bin_fa}")"
@@ -141,6 +142,10 @@ fi
 # {bin_name}.permissive.fa 两个变体，不会产出 {bin_name}.fa。这里手动在两个变体
 # 间选择：以组装总长度（bp）作为无CheckM场景下的替代判定指标——总长度越接近或
 # 超过原始bin，说明重组装填补的gap越多；两者都不存在才回退原始bin。
+# Final dir accumulates: metaWRAP does not clear it and the loop below only adds. A
+# previous run (e.g. one fed by a contaminated dastool dir) would leave stale bins
+# behind, which then flow into CheckM2/dRep. Clear it first.
+rm -rf "${FINAL_DIR}"
 mkdir -p "${FINAL_DIR}"
 N_REASSEMBLED=0
 N_FALLBACK=0
