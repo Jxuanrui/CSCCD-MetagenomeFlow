@@ -14,6 +14,8 @@
 #           ${SAMPLE}.log            — 运行日志
 #           ${SAMPLE}.sam.gz         — 压缩比对中间文件（-z 压缩；--reuse-sam 可复用）
 #                                      注意：不加 -z 时该 SAM 未压缩，约 33 GB/样本
+#           ${SAMPLE}.readfrac.tsv   — 读段占比派生表（taxon/reads/read_fraction_pct），
+#                                      由 profile 第 4 列派生，用于与 MetaPhlAn4/Kraken2 直接比较
 #
 # ── 定位说明 ──────────────────────────────────────────────────────────────────
 #
@@ -165,6 +167,12 @@ if [ ! -s "${PROFILE_OUT}" ]; then
     echo "[ERROR] 未生成 profile 文件: ${PROFILE_OUT}"
     exit 1
 fi
+
+READFRAC_OUT="${OUT_PREFIX}.readfrac.tsv"
+awk -F'\t' 'BEGIN{OFS="\t"; print "taxon","reads","read_fraction_pct"}
+    {r=$4+0; tot+=r; n[NR]=$1; v[NR]=r}
+    END{for(i=1;i<=NR;i++) printf "%s\t%.0f\t%.4f\n", n[i], v[i], (tot>0? v[i]/tot*100 : 0)}
+' "${PROFILE_OUT}" > "${READFRAC_OUT}"
 
 echo ""
 echo "[metax] ${SAMPLE} 完成，耗时 ${SECONDS}s"
