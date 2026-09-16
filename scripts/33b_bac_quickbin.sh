@@ -68,6 +68,11 @@ if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO
     exit 1
 fi
 
+# QuickBin (Java/BBTools) cannot resolve relative paths: the tool is invoked after
+# `cd "${OUTDIR}"`, so a relative -w would break in=/reads=. Absolutise both roots.
+WORKDIR="$(realpath -m "${WORKDIR}")"
+REPO="$(realpath -m "${REPO}")"
+
 SECONDS=0
 
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
