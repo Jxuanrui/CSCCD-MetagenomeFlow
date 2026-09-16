@@ -80,7 +80,7 @@ rule semibin2:
 # ─── 33b: QuickBin high-fidelity binning (per-sample) ───────────────────────
 
 rule quickbin:
-    """QuickBin (BBTools) CPU-only, marker-free binning; joins the DAS_Tool ensemble."""
+    """QuickBin (BBTools) CPU-only, marker-free binning; standalone (NOT wired into the DAS_Tool ensemble)."""
     input:
         contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
         bam = BINNING + "/coverm/{sample}/{sample}.bam",
@@ -102,7 +102,6 @@ rule dastool:
         metabat2 = BINNING + "/metabat2/{sample}/{sample}.tsv",
         maxbin2  = BINNING + "/maxbin2/{sample}/{sample}.maxbin2.tsv",
         semibin2 = BINNING + "/semibin2/{sample}/{sample}.semibin2.tsv",
-        quickbin = BINNING + "/quickbin/{sample}/{sample}.quickbin.tsv",
     output:
         contig2bin = BINNING + "/dastool/{sample}/{sample}_DASTool_contig2bin.tsv",
     threads: CPUS
