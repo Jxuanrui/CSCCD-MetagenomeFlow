@@ -107,8 +107,10 @@ echo "[gunc] MAG 输入目录: ${MAG_DIR} ($(find "${MAG_DIR}" -maxdepth 1 -name
 echo "[gunc] 数据库: ${GUNC_DB}"
 echo "[gunc] 线程: ${CPUS} | 模式: ${SENSITIVE:-default}"
 
+GUNC_TIMEOUT="${GUNC_TIMEOUT:-21600}"
 set +e
-conda run --prefix "${GUNC_ENV}" --no-capture-output \
+timeout --signal=TERM --kill-after=60 "${GUNC_TIMEOUT}" \
+    conda run --prefix "${GUNC_ENV}" --no-capture-output \
     gunc run \
         -d "${MAG_DIR}" \
         -e .fa \
@@ -121,6 +123,11 @@ conda run --prefix "${GUNC_ENV}" --no-capture-output \
 EXIT_CODE=$?
 set -e
 
+if [ ${EXIT_CODE} -eq 124 ]; then
+    echo "[ERROR] gunc run 超时（${GUNC_TIMEOUT}s）。已知失败模式：diamond 子进程意外退出后 gunc 永久空转（无报错、无输出）。"
+    echo "        清理 ${TEMP_DIR} 与 ${OUT_DIR} 后以 --force 重跑。"
+    exit 124
+fi
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] gunc run 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
