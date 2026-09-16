@@ -75,6 +75,12 @@ fi
 
 if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL_FILE}" ]; then echo "[drep] 结果已存在，跳过"; exit 0; fi
 
+# dRep refuses to run into a populated work directory ("Both Bdb and a genome list are
+# found- either don't include a genome list or start a new work directory"). Without
+# this the script aborts after 7 s and then reports the STALE MAG count as success —
+# the same error is present three times in the Project01 log (08-12, 08-20, 09-16).
+rm -rf "${OUTDIR}"
+
 mkdir -p "${OUTDIR}"
 
 # 复用 CheckM2（37）已算好的 completeness/contamination，避免 dRep 内部重跑 checkm1 lineage_wf
