@@ -106,6 +106,12 @@ fi
 
 mkdir -p "${OUTDIR}"
 
+# DAS_Tool writes into an existing ${SAMPLE}_DASTool_bins/ without clearing it, so bins
+# from earlier runs accumulate (confirmed on Project01 Sample2: a run that selected 52
+# bins left 123 files behind, 71 of them stale). Clear the dir so the bin set matches
+# the summary table and downstream CheckM2 does not score phantom bins.
+rm -rf "${BINS_DIR}"
+
 # DAS_Tool 要求 contig2bin 表无表头、两列 tab 分隔；33/35 的输出带表头，需清洗后再传入
 CLEAN_DIR="${OUTDIR}/input_clean"
 mkdir -p "${CLEAN_DIR}"
