@@ -95,6 +95,10 @@ else
     echo "[prokka] 找到 ${#MAGS[@]} 个 MAG"
 fi
 
+# A --force re-run must not leave stale per-MAG dirs from a previous MAG set behind
+# (confirmed: 65 orphan dirs remained after a force run on a smaller drep set). The
+# non-force path keeps its per-MAG skip logic, so only clear on --force.
+if [ ${FORCE} -eq 1 ]; then rm -rf "${OUTDIR}"; fi
 mkdir -p "${OUTDIR}"
 LOG="${OUTDIR}/prokka_batch.log"
 echo "[prokka] 开始批量注释..." | tee "${LOG}"
