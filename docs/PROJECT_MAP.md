@@ -142,7 +142,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | **33b** | **`scripts/33b_bac_quickbin.sh`** | **QuickBin 高保真分箱（2026-09-15 新增）**：CPU-only、marker-free；GC-覆盖度空间索引 + Oracle 相似度级联。论文在 297 真实宏基因组中高保真 MAG（≥95%/≤1%）产出优于 MetaBAT2/SemiBin2/VAMB/COMEBin 且全部跑完。复用 `32` 的 contig BAM（无需重复映射）。**独立使用**：4 样本对照（2026-09-16）证明加入 DAS_Tool 集成对高质 MAG 回收**净有害**（-3 高保真 / -2 MIMAG-high），故**不并入 36** | QuickBin（BBTools 39.81，envs/busco） |
 | 34 | `scripts/34_bac_maxbin2.sh` | MaxBin2 分箱 | MaxBin2 |
 | 35 | `scripts/35_bac_semibin2.sh` | SemiBin2 分箱（ML自训练） | SemiBin2 |
-| 36 | `scripts/36_bac_dastool.sh` | 多算法分箱整合优化 | DAS_Tool |
+| 36 | `scripts/36_bac_dastool.sh` | 多算法分箱整合优化（2026-09-16 修复：运行前清空输出目录，防陈旧 bin 累积） | DAS_Tool |
 | 37 | `scripts/37_bac_checkm2.sh` | MAG 质量评估（ML） | CheckM2 |
 | 38 | `scripts/38_bac_drep.sh` | MAG 去冗余（默认 95% ANI；二级聚类默认 skani，`-A` 可切 fastANI/ANImf） | dRep |
 | 39 | `scripts/39_bac_coverm_quant.sh` | MAG 丰度定量 | CoverM |
@@ -150,7 +150,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 39c | `scripts/39c_bac_instrain_profile.sh` | 单样本菌株微多样性分析 | inStrain |
 | 39d | `scripts/39d_bac_instrain_compare.sh` | 跨样本 popANI 菌株比较 | inStrain |
 | 40 | `scripts/40_bac_gtdbtk.sh` | MAG 系统发育分类（GTDB R214） | GTDB-Tk |
-| 41 | `scripts/41_bac_prokka.sh` | MAG 全基因组精细注释 | Prokka |
+| 41 | `scripts/41_bac_prokka.sh` | MAG 全基因组精细注释（2026-09-16 修复：--force 时清空输出目录，防孤儿目录累积） | Prokka |
 | 41b | `scripts/41b_bac_mlst.sh` | MAG MLST 多位点序列分型（WGS 融入模块） | mlst | envs/prokaWGS (mlst 2.11) |
 | 41c | `scripts/41c_bac_pangenome.sh` | 同种 MAG 泛基因组分析（WGS 融入模块） | Roary | envs/prokaWGS (roary 3.12.0) |
 | 41d | `scripts/41d_bac_snippy.sh` | MAG SNP/InDel 变异检测（WGS 融入模块） | Snippy | envs/snippy (snippy 4.0.2) |
