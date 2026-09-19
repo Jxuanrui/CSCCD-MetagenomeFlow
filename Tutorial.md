@@ -933,6 +933,45 @@ N90：        755 bp
 
 ---
 
+### 步骤 16b：组装器交叉验证（metaSPAdes + QUAST，可选）
+
+**步骤名称**：metaSPAdes 组装 + 与 MEGAHIT 的 QUAST 并排对比
+
+**目的**：2024-26 组装器基准的共识做法是 MEGAHIT 与 metaSPAdes 双跑并用 QUAST 对比——metaSPAdes 通常 N50 更高但内存/耗时数倍于 MEGAHIT。本步骤是**组装验证层**（同 15e MetaX 模式：默认不在 Snakemake rule all 中，不改变主流程结果），用于确认主流程选择 MEGAHIT 的合理性或为特定样本择优。
+
+**依赖**：步骤 2 的 clean reads；步骤 7（16_bac_megahit.sh）的 MEGAHIT 组装结果（可选——存在时 QUAST 并排对比两套组装，不存在时仅评估 metaSPAdes）
+
+**执行方式**（模式一 — 单样本，手动执行；opt-in，不入 rule all）：
+```bash
+bash ~/Course/Maxmetagenome/scripts/16b_bac_metaspades.sh \
+  -s Sample1 \
+  -t 16 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome \
+  --mem-gb 250        # 内存上限 GB，metaspades --memory 取其 0.9 倍（默认 225 GB）
+```
+Snakemake 显式触发（验证层，不在 rule all）：`snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -R metaspades`
+
+**输出结果**：
+```
+Project/Project01/result/assembly_metaspades/Sample1/
+  ├── contigs.fasta                    ← metaSPAdes 组装结果（验证用，不进下游）
+  ├── Sample1.spades.log               ← 组装日志（k 值迭代）
+  ├── quast_report/report.tsv          ← metaSPAdes vs MEGAHIT 并排质量指标
+  └── Sample1.metaspades_done.txt      ← sentinel（contig 数/碱基数/quast 状态）
+```
+
+**审核要点**：
+
+| 指标 | 看什么 | 说明 |
+|------|-------|------|
+| N50 | `quast_report/report.tsv` 中 metaSPAdes 与 MEGAHIT 两列 | metaSPAdes 通常更高；差距 <2 倍时 MEGAHIT 性价比更优 |
+| Total length / # contigs | 同上两列对比 | metaSPAdes 明显更长且 N50 同步更高说明保留更多低丰度序列 |
+| 运行成本 | spades.log 中内存/耗时 | 通常为 MEGAHIT 的 3-5 倍（--mem-gb 需按机器调低） |
+| 空结果 | sentinel 内容为 `empty_assembly` | 深度不足样本优雅降级，不阻塞队列，属预期行为 |
+
+---
+
 ### 步骤 8：基因预测（Prodigal）
 
 **步骤名称**：蛋白编码基因预测
