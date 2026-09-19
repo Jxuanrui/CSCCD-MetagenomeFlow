@@ -146,6 +146,8 @@ echo "[metaspades] 线程: ${CPUS}，内存上限: ${SPADES_MEM} GB（--mem-gb $
 # contigs.fasta 与日志，删除中间文件（节省 >90% 磁盘）
 
 EXIT_CODE=0
+# --phred-offset 33：kneaddata 输出在常数/退化质量范围下（模拟数据、CI fixture）
+# 令 SPAdes 的 PHRED 自动检测失败（exit 255 "Failed to determine offset"），显式指定
 mgx_try mgx_conda assembly \
     metaspades.py \
         -1 "${INPUT_R1}" \
@@ -153,6 +155,7 @@ mgx_try mgx_conda assembly \
         -o "${SPADES_TMP}" \
         -t "${CPUS}" \
         -m "${SPADES_MEM}" \
+        --phred-offset 33 \
         || EXIT_CODE=$?
 if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] metaSPAdes 运行失败（exit code: ${EXIT_CODE}）"

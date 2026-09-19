@@ -970,6 +970,17 @@ Project/Project01/result/assembly_metaspades/Sample1/
 | 运行成本 | spades.log 中内存/耗时 | 通常为 MEGAHIT 的 3-5 倍（--mem-gb 需按机器调低） |
 | 空结果 | sentinel 内容为 `empty_assembly` | 深度不足样本优雅降级，不阻塞队列，属预期行为 |
 
+**实测结果（Project_example S03，2026-09-19，16 线程 / 32GB 上限，全程 85s）**：
+
+| 指标 | metaSPAdes | MEGAHIT |
+|------|-----------|---------|
+| # contigs (≥1000 bp) | 432 | 363 |
+| Total length (≥500 bp 过滤后) | 2,133,103 | 1,960,825 |
+| Largest contig | 3,794 | 4,506 |
+| N50 | 742 | 731 |
+
+该样本两者 N50 基本持平（742 vs 731），MEGAHIT 性价比更优——这正是验证层的用途。注意：脚本已内置 `--phred-offset 33`（kneaddata 输出在常数质量范围下 SPAdes 的 PHRED 自动检测会失败、实测 exit 255，2026-09-19 修复）。
+
 ---
 
 ### 步骤 8：基因预测（Prodigal）
