@@ -77,36 +77,11 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-FORCE=0
-WORKDIR=""
-REPO=""
-SKIP_ISFINDER=false
-SKIP_ICEBERG=false
-SKIP_INTEGRALL=false
-SKIP_TRANSPOSASE=false
-SKIP_MOBILEOG=false
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";    shift 2 ;;
-        -t) CPUS="$2";      shift 2 ;;
-        -w) WORKDIR="$2";   shift 2 ;;
-        -r) REPO="$2";      shift 2 ;;
-        --skip-isfinder)    SKIP_ISFINDER=true;    shift ;;
-        --skip-iceberg)     SKIP_ICEBERG=true;     shift ;;
-        --skip-integrall)   SKIP_INTEGRALL=true;   shift ;;
-        --skip-transposase) SKIP_TRANSPOSASE=true; shift ;;
-        --skip-mobileog)    SKIP_MOBILEOG=true;    shift ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-# 注: 参数解析保留原 while/case —— --skip-* 为含连字符的布尔长选项，mgx_parse
-# 由 flag 名派生变量名（${flag^^}）无法生成合法 bash 标识符，不强转
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+# （--skip-* 连字符布尔标志经 mgx_parse 映射为 SKIP_* 变量，默认 0）
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force skip-isfinder skip-iceberg skip-integrall skip-transposase skip-mobileog"
+mgx_parse "$@"
 mgx_require SAMPLE CPUS WORKDIR REPO
 
 mgx_begin
@@ -131,7 +106,7 @@ DB_MOBILEOG="${REPO}/db/mobileog/mobileOG-db/diamond/mobileOG.dmnd"
 IS_OUT="${MGE_BASE}/isfinder/${SAMPLE}/isfinder_hits.tsv"
 IS_TMP="${WORKDIR}/temp/mge/isfinder/${SAMPLE}"
 
-if [ "${SKIP_ISFINDER}" = false ]; then
+if [ ${SKIP_ISFINDER} -eq 0 ]; then
     if [ ${FORCE} -eq 0 ] && [ -f "${IS_OUT}" ] && [ -s "${IS_OUT}" ]; then
         echo "[mge:isfinder] 已存在，跳过: ${IS_OUT}"
     elif [ ! -f "${PROTEINS}" ] || [ ! -s "${PROTEINS}" ]; then
@@ -165,7 +140,7 @@ fi
 # ──────────────────────────────────────────────────────────────────────────────
 ICE_OUT="${MGE_BASE}/iceberg/${SAMPLE}/iceberg_hits.tsv"
 
-if [ "${SKIP_ICEBERG}" = false ]; then
+if [ ${SKIP_ICEBERG} -eq 0 ]; then
     if [ -f "${ICE_OUT}" ] && [ -s "${ICE_OUT}" ]; then
         echo "[mge:iceberg] 已存在，跳过: ${ICE_OUT}"
     elif [ ! -f "${CONTIGS}" ] || [ ! -s "${CONTIGS}" ]; then
@@ -198,7 +173,7 @@ fi
 INT_OUT="${MGE_BASE}/integrall/${SAMPLE}/integrall_hits.tsv"
 FNA_FILE="${WORKDIR}/result/assembly/prodigal/${SAMPLE}/${SAMPLE}.fna"
 
-if [ "${SKIP_INTEGRALL}" = false ]; then
+if [ ${SKIP_INTEGRALL} -eq 0 ]; then
     if [ -f "${INT_OUT}" ] && [ -s "${INT_OUT}" ]; then
         echo "[mge:integrall] 已存在，跳过: ${INT_OUT}"
     elif [ ! -f "${FNA_FILE}" ] || [ ! -s "${FNA_FILE}" ]; then
@@ -228,7 +203,7 @@ fi
 # ──────────────────────────────────────────────────────────────────────────────
 TN_OUT="${MGE_BASE}/transposase/${SAMPLE}/transposase_hits.tsv"
 
-if [ "${SKIP_TRANSPOSASE}" = false ]; then
+if [ ${SKIP_TRANSPOSASE} -eq 0 ]; then
     if [ -f "${TN_OUT}" ] && [ -s "${TN_OUT}" ]; then
         echo "[mge:transposase] 已存在，跳过: ${TN_OUT}"
     elif [ ! -f "${PROTEINS}" ] || [ ! -s "${PROTEINS}" ]; then
@@ -259,7 +234,7 @@ fi
 # ──────────────────────────────────────────────────────────────────────────────
 MOG_OUT="${MGE_BASE}/mobileog/mobileog_nr_hits.tsv"
 
-if [ "${SKIP_MOBILEOG}" = false ]; then
+if [ ${SKIP_MOBILEOG} -eq 0 ]; then
     if [ -f "${MOG_OUT}" ] && [ -s "${MOG_OUT}" ]; then
         echo "[mge:mobileog] NR 级结果已存在，跳过: ${MOG_OUT}"
     elif [ ! -f "${PROTEIN_NR}" ] || [ ! -s "${PROTEIN_NR}" ]; then

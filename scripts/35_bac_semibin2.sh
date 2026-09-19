@@ -2,7 +2,7 @@
 # ==============================================================================
 # 脚本名: 35_bac_semibin2.sh
 # 功  能: SemiBin2 分箱（肠道样本预训练模型，human_gut）
-#         工具版本：SemiBin2 1.5.0（conda env: semibin）
+#         工具版本：SemiBin 2.5.0（conda env: semibin2x；1.5.0 旧环境 semibin 冻结保留）
 # 依  赖: 32_bac_coverm_depth.sh 的输出（depth.txt）
 # 输  入: ${WORKDIR}/result/assembly/megahit/{sample}/{sample}.contigs.fa
 #         ${WORKDIR}/result/binning/coverm/{sample}/depth.txt
@@ -10,16 +10,18 @@
 #           output/bin/  — SemiBin2 输出目录
 #           ${SAMPLE}.semibin2.tsv  — contig2bin 表
 #
-# 说  明: SemiBin2 1.5.0 --self-supervised 模式需要直接访问 BAM 进行 coverage 计算，
-#         在某些 BAM 格式下会失败（"Generating coverage file fail"）。
-#         改用 --depth-metabat2 + --environment human_gut 预训练模型，
-#         肠道菌群样本效果更好且无 BAM 依赖。
+# 说  明: SemiBin 2.5.0 已修复 1.5.0 的 BAM coverage 失败 bug（2026-09-19 实测
+#         self-supervised + BAM 通过），且 0-bin 时优雅退出（1.5.0 崩在 hmmsearch）。
+#         生产默认仍用 --depth-metabat2 + --environment human_gut 预训练模型，
+#         保持与历史结果可比；如需自监督模式可改用 -b BAM。
 #
 # 参  考: Pan et al. 2023 Nature Comms (SemiBin2)
 # 用  法: bash 35_bac_semibin2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
 set -euo pipefail
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 
 show_help() { cat << EOF
 用法: bash 35_bac_semibin2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -31,24 +33,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 DEPTH="${WORKDIR}/result/binning/coverm/${SAMPLE}/depth.txt"
 OUTDIR="${WORKDIR}/result/binning/semibin2/${SAMPLE}"
@@ -81,18 +72,16 @@ if [ "${LONG_CONTIGS}" -lt 2 ]; then
     exit 0
 fi
 
-set +e
+EXIT_CODE=0
 echo "[semibin2] ${SAMPLE} | 预训练模型分箱（human_gut）..."
-conda run --prefix "${REPO}/envs/semibin" --no-capture-output \
+mgx_try mgx_conda semibin2x \
     SemiBin2 single_easy_bin \
         -t "${CPUS}" \
         --environment human_gut \
         --input-fasta "${CONTIGS}" \
         --depth-metabat2 "${DEPTH}" \
-        -o "${OUTDIR}"
+        -o "${OUTDIR}" || EXIT_CODE=$?
 
-EXIT_CODE=$?
-set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[semibin2] WARNING: SemiBin2 失败，创建空 sentinel: ${SENTINEL}"
     : > "${SENTINEL}"

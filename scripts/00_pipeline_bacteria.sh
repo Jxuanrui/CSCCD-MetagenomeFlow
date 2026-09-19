@@ -51,6 +51,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 # --- 默认参数 ---
 SAMPLESHEET=""
 REPO=""
@@ -60,7 +62,6 @@ SKIP_STEPS=""
 FROM_STEP=""
 ONLY_STEP=""
 HUMANN_SPEED="standard"
-FORCE=0
 FORCE=0
 
 show_help() {
@@ -89,33 +90,19 @@ samplesheet.csv 格式（第一行为表头）:
 EOF
 }
 
-# --- 参数解析（支持长参数 --skip/--from/--only）---
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -i) SAMPLESHEET="$2"; shift 2 ;;
-        -r) REPO="$2";        shift 2 ;;
-        -t) CPUS="$2";        shift 2 ;;
-        -j) PARALLEL_JOBS="$2"; shift 2 ;;
-        --skip) SKIP_STEPS="$2"; shift 2 ;;
-        --from) FROM_STEP="$2";  shift 2 ;;
-        --only) ONLY_STEP="$2";  shift 2 ;;
-        --humann-speed) HUMANN_SPEED="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${SAMPLESHEET}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数 -i/-r"; show_help; exit 1
-fi
+# --- 参数解析（--skip/--from/--only 等由 libcommon.sh 的 mgx_parse 表驱动）---
+export MGX_OPTS_STRING="i:SAMPLESHEET r:REPO t:CPUS j:PARALLEL_JOBS"
+export MGX_OPTS_LONG="skip:SKIP_STEPS from:FROM_STEP only:ONLY_STEP humann-speed:HUMANN_SPEED"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLESHEET REPO
 
 if [ ! -f "${SAMPLESHEET}" ]; then
     echo "[ERROR] samplesheet 不存在: ${SAMPLESHEET}"; exit 1
 fi
 
 SCRIPTS="${REPO}/scripts"
-SECONDS=0
+mgx_begin
 
 # --- 步骤开关辅助函数 ---
 # 返回 0（运行此步骤）/ 1（跳过此步骤）

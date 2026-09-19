@@ -13,6 +13,8 @@
 # ==============================================================================
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash run_functional_analysis.sh -w WORKDIR -r REPO [-m METADATA_CSV]
@@ -32,33 +34,18 @@ Optional:
 EOF
 }
 
-WORKDIR=""
-REPO=""
 METADATA_CSV=""
 GROUP_COL="group"
 CPUS="4"
 PARALLEL="6"
 FORCE_FLAG=""
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        -m) METADATA_CSV="$2"; shift 2 ;;
-        -g) GROUP_COL="$2"; shift 2 ;;
-        -c) CPUS="$2"; shift 2 ;;
-        -p) PARALLEL="$2"; shift 2 ;;
-        --force) FORCE_FLAG="--force"; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] Missing required arguments"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV g:GROUP_COL c:CPUS p:PARALLEL"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
+[ ${FORCE} -eq 1 ] && FORCE_FLAG="--force"
 
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 REPO="$(cd "${REPO}" && pwd)"
@@ -76,7 +63,7 @@ echo "[INFO] Metadata: ${METADATA_CSV}"
 echo "[INFO] Group column: ${GROUP_COL}"
 echo "[INFO] Parallel pairs: ${PARALLEL}"
 
-SECONDS=0
+mgx_begin
 
 # ---- Stage 1: 20 dimension x func_type pairs -------------------------------
 # maaslin3's mirai/nanonext-based internal parallelization (cores>1) is

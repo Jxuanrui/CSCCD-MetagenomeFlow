@@ -35,6 +35,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 16_bac_megahit.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -62,34 +64,17 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-WORKDIR=""
-REPO=""
 MIN_CONTIG_LEN="500"
 PRESETS="meta-large"
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";                   shift 2 ;;
-        -t) CPUS="$2";                     shift 2 ;;
-        -w) WORKDIR="$2";                  shift 2 ;;
-        -r) REPO="$2";                     shift 2 ;;
-        --min-contig-len) MIN_CONTIG_LEN="$2"; shift 2 ;;
-        --presets)        PRESETS="$2";        shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_LONG="min-contig-len:MIN_CONTIG_LEN presets:PRESETS"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"
-    show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -148,8 +133,8 @@ echo "[megahit] 预设: ${PRESETS}，最小 contig: ${MIN_CONTIG_LEN} bp，线�
 # --min-contig-len 过滤短 contig（通用 500；binning 推荐 1000-1500）
 # 输出到临时目录，完成后移动 final.contigs.fa 并删除中间文件节省磁盘
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     megahit \
         -1 "${INPUT_R1}" \
         -2 "${INPUT_R2}" \
@@ -157,10 +142,8 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         -t "${CPUS}" \
         -m 0.9 \
         --presets "${PRESETS}" \
-        --min-contig-len "${MIN_CONTIG_LEN}"
+        --min-contig-len "${MIN_CONTIG_LEN}" || EXIT_CODE=$?
 
-EXIT_CODE=$?
-set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] MEGAHIT 运行失败（exit code: ${EXIT_CODE}）"
     rm -rf "${MEGAHIT_TMP}"

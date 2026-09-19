@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash benchmark_functional_analysis.sh -w WORKDIR -r REPO [-m METADATA_CSV] [-o OUTPUT_DIR]
@@ -38,22 +40,10 @@ REPO=""
 METADATA_CSV=""
 OUTPUT_DIR=""
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        -m) METADATA_CSV="$2"; shift 2 ;;
-        -o) OUTPUT_DIR="$2"; shift 2 ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] Missing required arguments: -w WORKDIR and -r REPO"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV o:OUTPUT_DIR"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 REPO="$(cd "${REPO}" && pwd)"
@@ -92,13 +82,11 @@ for pair in "${PAIRS[@]}"; do
     log_file="${LOG_DIR}/benchmark_${dimension}_${func_type}.log"
 
     echo "[INFO] Benchmarking ${dimension}:${func_type}"
-    set +e
-    /usr/bin/time -v bash "${REPO}/scripts/96_stat_functional.sh" \
+    exit_code=0
+    mgx_try /usr/bin/time -v bash "${REPO}/scripts/96_stat_functional.sh" \
         -w "${WORKDIR}" -r "${REPO}" -m "${METADATA_CSV}" \
         -d "${dimension}" -t "${func_type}" --force \
-        > "${log_file}" 2>&1
-    exit_code=$?
-    set -e
+        > "${log_file}" 2>&1 || exit_code=$?
     echo "  Exit code: ${exit_code} (log: ${log_file})"
 done
 

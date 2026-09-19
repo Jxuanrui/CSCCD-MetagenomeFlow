@@ -8,40 +8,10 @@ set -e
 
 PROJ_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${PROJ_DIR}/scripts/activate.sh"
+source "${PROJ_DIR}/scripts/utils/libcommon.sh"
 
-# Parse arguments
-SHOW_HELP=false
-PROJECT_DIR=""
-SNAPSHOT_NAME=""
-AUTO_NAME=false
-
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    -h|--help)
-      SHOW_HELP=true
-      shift
-      ;;
-    -p|--project)
-      PROJECT_DIR="$2"
-      shift 2
-      ;;
-    -n|--name)
-      SNAPSHOT_NAME="$2"
-      shift 2
-      ;;
-    --auto)
-      AUTO_NAME=true
-      shift
-      ;;
-    *)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-  esac
-done
-
-if [ "$SHOW_HELP" = true ]; then
-  cat << 'EOF'
+show_help() {
+cat << 'EOF'
 Usage: 00_snapshot_provenance.sh [OPTIONS]
 
 Capture and archive script versions used for each analysis run.
@@ -87,13 +57,14 @@ RECOMMENDED WORKFLOW:
   2. After analysis completes: create "post-run" snapshot
   3. Archive snapshots alongside published results
 EOF
-  exit 0
-fi
+}
 
-if [ -z "$PROJECT_DIR" ]; then
-  echo "Error: --project DIR is required"
-  exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh); short + long aliases map to the same vars
+export MGX_OPTS_STRING="p:PROJECT_DIR n:SNAPSHOT_NAME"
+export MGX_OPTS_LONG="project:PROJECT_DIR name:SNAPSHOT_NAME"
+export MGX_OPTS_FLAG="auto"
+mgx_parse "$@"
+mgx_require PROJECT_DIR
 
 if [ ! -d "$PROJECT_DIR" ]; then
   echo "[ERROR] Project directory not found: $PROJECT_DIR"
@@ -102,7 +73,7 @@ fi
 
 # Auto-generate snapshot name if not provided
 if [ -z "$SNAPSHOT_NAME" ]; then
-  if [ "$AUTO_NAME" = true ]; then
+  if [ ${AUTO} -eq 1 ]; then
     GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "no-git")
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
     SNAPSHOT_NAME="snapshot_${GIT_COMMIT}_${TIMESTAMP}"

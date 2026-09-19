@@ -9,6 +9,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKDIR=""
 
@@ -24,18 +26,10 @@ cat << EOF
 EOF
 }
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ]; then
-    echo "[ERROR] 缺少必需参数 -w"; show_help; exit 1
-fi
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO"
+mgx_parse "$@"
+mgx_require WORKDIR
 
 LOGDIR="${WORKDIR}/temp/logs/auto_annotations"
 
@@ -77,22 +71,16 @@ echo "[批次1] 三个任务已启动（PID: ${PID_31B}, ${PID_31D}, ${PID_31C}�
 echo "[批次1] 等待全部完成..." | tee -a "${LOGDIR}/batch1.log"
 
 # 等待批次1全部完成
-set +e
-wait ${PID_31B}
-EXIT_31B=$?
-set -e
+EXIT_31B=0
+mgx_try wait ${PID_31B} || EXIT_31B=$?
 echo "[$(date '+%H:%M:%S')] 31b SCyc 完成 (exit: ${EXIT_31B})" | tee -a "${LOGDIR}/batch1.log"
 
-set +e
-wait ${PID_31D}
-EXIT_31D=$?
-set -e
+EXIT_31D=0
+mgx_try wait ${PID_31D} || EXIT_31D=$?
 echo "[$(date '+%H:%M:%S')] 31d UniProt 完成 (exit: ${EXIT_31D})" | tee -a "${LOGDIR}/batch1.log"
 
-set +e
-wait ${PID_31C}
-EXIT_31C=$?
-set -e
+EXIT_31C=0
+mgx_try wait ${PID_31C} || EXIT_31C=$?
 echo "[$(date '+%H:%M:%S')] 31c Pfam-A 完成 (exit: ${EXIT_31C})" | tee -a "${LOGDIR}/batch1.log"
 
 if [ ${EXIT_31B} -ne 0 ] || [ ${EXIT_31D} -ne 0 ] || [ ${EXIT_31C} -ne 0 ]; then
@@ -109,13 +97,10 @@ echo ""
 echo "=== 批次 2: 铁代谢基因预测 (31e FeGenie NR模式) ==="
 echo "[$(date '+%H:%M:%S')] 启动 31e FeGenie..." | tee -a "${LOGDIR}/batch2.log"
 
-set +e
-bash ${REPO}/scripts/31e_bac_fegenie.sh -s NR -t 16 \
+EXIT_31E=0
+mgx_try bash ${REPO}/scripts/31e_bac_fegenie.sh -s NR -t 16 \
   -w ${WORKDIR} -r ${REPO} --input-type nr \
-  > ${LOGDIR}/31e_fegenie.log 2>&1
-
-EXIT_31E=$?
-set -e
+  > ${LOGDIR}/31e_fegenie.log 2>&1 || EXIT_31E=$?
 if [ ${EXIT_31E} -ne 0 ]; then
     echo "[ERROR] 31e FeGenie 失败 (exit: ${EXIT_31E})" | tee -a "${LOGDIR}/batch2.log"
     exit 1
@@ -158,13 +143,10 @@ echo "[$(date '+%H:%M:%S')] 单样本测试: ${TEST_SAMPLE}" | tee -a "${LOGDIR}
 
 # 42 MGE
 echo "[批次3] 启动 42 MGE (${TEST_SAMPLE})..." | tee -a "${LOGDIR}/batch3.log"
-set +e
-bash ${REPO}/scripts/42_bac_mge.sh -s ${TEST_SAMPLE} -t 16 \
+EXIT_42=0
+mgx_try bash ${REPO}/scripts/42_bac_mge.sh -s ${TEST_SAMPLE} -t 16 \
   -w ${WORKDIR} -r ${REPO} \
-  > ${LOGDIR}/42_mge_${TEST_SAMPLE}.log 2>&1
-
-EXIT_42=$?
-set -e
+  > ${LOGDIR}/42_mge_${TEST_SAMPLE}.log 2>&1 || EXIT_42=$?
 if [ ${EXIT_42} -ne 0 ]; then
     echo "[ERROR] 42 MGE 测试失败 (exit: ${EXIT_42})" | tee -a "${LOGDIR}/batch3.log"
     exit 1
@@ -172,13 +154,10 @@ fi
 
 # 42b 质粒
 echo "[批次3] 启动 42b PlasmidFinder (${TEST_SAMPLE})..." | tee -a "${LOGDIR}/batch3.log"
-set +e
-bash ${REPO}/scripts/42b_bac_plasmidfinder.sh -s ${TEST_SAMPLE} -t 8 \
+EXIT_42B=0
+mgx_try bash ${REPO}/scripts/42b_bac_plasmidfinder.sh -s ${TEST_SAMPLE} -t 8 \
   -w ${WORKDIR} -r ${REPO} \
-  > ${LOGDIR}/42b_plasmidfinder_${TEST_SAMPLE}.log 2>&1
-
-EXIT_42B=$?
-set -e
+  > ${LOGDIR}/42b_plasmidfinder_${TEST_SAMPLE}.log 2>&1 || EXIT_42B=$?
 if [ ${EXIT_42B} -ne 0 ]; then
     echo "[ERROR] 42b PlasmidFinder 测试失败 (exit: ${EXIT_42B})" | tee -a "${LOGDIR}/batch3.log"
     exit 1

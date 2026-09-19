@@ -27,6 +27,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 SAMPLESHEET=""
 REPO=""
 CPUS=8
@@ -34,7 +36,6 @@ PARALLEL_JOBS=1
 SKIP_STEPS=""
 FROM_STEP=""
 ONLY_STEP=""
-FORCE=0
 FORCE=0
 
 show_help() {
@@ -60,30 +61,18 @@ samplesheet.csv 格式（第一行为表头）:
 EOF
 }
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -i) SAMPLESHEET="$2"; shift 2 ;;
-        -r) REPO="$2";        shift 2 ;;
-        -t) CPUS="$2";        shift 2 ;;
-        -j) PARALLEL_JOBS="$2"; shift 2 ;;
-        --skip) SKIP_STEPS="$2"; shift 2 ;;
-        --from) FROM_STEP="$2";  shift 2 ;;
-        --only) ONLY_STEP="$2";  shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+export MGX_OPTS_STRING="i:SAMPLESHEET r:REPO t:CPUS j:PARALLEL_JOBS"
+export MGX_OPTS_LONG="skip:SKIP_STEPS from:FROM_STEP only:ONLY_STEP"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLESHEET REPO
 
-if [ -z "${SAMPLESHEET}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数 -i/-r"; show_help; exit 1
-fi
 if [ ! -f "${SAMPLESHEET}" ]; then
     echo "[ERROR] samplesheet 不存在: ${SAMPLESHEET}"; exit 1
 fi
 
 SCRIPTS="${REPO}/scripts"
-SECONDS=0
+mgx_begin
 
 # 步骤执行顺序（用于 --from 逻辑）
 STEPS_ORDER="qc kneaddata assembly viral_id checkv prodigal_gv quantify cluster mag annotate"
@@ -162,9 +151,11 @@ run_sample() {
     echo "[pipeline_virome] 样本 ${SAMPLE_ID} per-sample 步骤完成"
 }
 export -f run_sample should_run
-export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP FORCE
-export SCRIPTS REPO CPUS SKIP_STEPS FROM_STEP ONLY_STEP FORCE
 export SCRIPTS REPO CPUS FORCE SKIP_STEPS FROM_STEP ONLY_STEP STEPS_ORDER
+
+# 聚合步骤使用的 --force 透传标志（run_sample 内的 local FORCE_FLAG 不泄漏到全局）
+FORCE_FLAG=""
+[ ${FORCE} -eq 1 ] && FORCE_FLAG="--force"
 
 # --- 执行 per-sample 步骤 ---
 if [ "${PARALLEL_JOBS}" -gt 1 ] && command -v rush &>/dev/null; then

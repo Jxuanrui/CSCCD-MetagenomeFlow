@@ -53,23 +53,12 @@ COHORTS=""
 TRAIN_COHORT=""
 TEST_COHORTS=""
 CONDITION="CRC"
-META_ANALYSIS=0
-
-# libcommon 的 FLAG 表不支持带连字符的选项名，--meta-analysis 先归一化为 --meta_analysis
-NORMALIZED_ARGS=()
-for arg in "$@"; do
-    if [ "${arg}" = "--meta-analysis" ]; then
-        NORMALIZED_ARGS+=("--meta_analysis")
-    else
-        NORMALIZED_ARGS+=("${arg}")
-    fi
-done
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
 export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV g:GROUP_COL"
-export MGX_OPTS_FLAG="force meta_analysis"
+export MGX_OPTS_FLAG="force meta-analysis"
 export MGX_OPTS_LONG="source:SOURCE cohorts:COHORTS train-cohort:TRAIN_COHORT test-cohorts:TEST_COHORTS condition:CONDITION"
-mgx_parse "${NORMALIZED_ARGS[@]}"
+mgx_parse "$@"
 mgx_require WORKDIR REPO METADATA_CSV GROUP_COL
 
 # Ensure absolute paths so R sub-processes receive them correctly

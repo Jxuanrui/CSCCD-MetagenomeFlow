@@ -8,35 +8,10 @@ set -e
 
 PROJ_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${PROJ_DIR}/scripts/activate.sh"
+source "${PROJ_DIR}/scripts/utils/libcommon.sh"
 
-# Parse arguments
-SHOW_HELP=false
-METADATA_FILE=""
-STRICT_MODE=false
-
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    -h|--help)
-      SHOW_HELP=true
-      shift
-      ;;
-    -m|--metadata)
-      METADATA_FILE="$2"
-      shift 2
-      ;;
-    --strict)
-      STRICT_MODE=true
-      shift
-      ;;
-    *)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-  esac
-done
-
-if [ "$SHOW_HELP" = true ]; then
-  cat << 'EOF'
+show_help() {
+cat << 'EOF'
 Usage: 00_validate_metadata.sh [OPTIONS]
 
 Validate sample metadata completeness and format.
@@ -66,13 +41,14 @@ OUTPUT:
   - [WARN] Non-critical issues found
   - [ERROR] Critical issues that will cause pipeline failure
 EOF
-  exit 0
-fi
+}
 
-if [ -z "$METADATA_FILE" ]; then
-  echo "Error: --metadata FILE is required"
-  exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh); short + long aliases map to the same vars
+export MGX_OPTS_STRING="m:METADATA_FILE"
+export MGX_OPTS_LONG="metadata:METADATA_FILE"
+export MGX_OPTS_FLAG="strict"
+mgx_parse "$@"
+mgx_require METADATA_FILE
 
 if [ ! -f "$METADATA_FILE" ]; then
   echo "[ERROR] Metadata file not found: $METADATA_FILE"
@@ -263,7 +239,7 @@ echo ""
 if [ $ERROR_COUNT -gt 0 ]; then
   echo "[FAILED] Validation failed with $ERROR_COUNT errors"
   exit 1
-elif [ $WARN_COUNT -gt 0 ] && [ "$STRICT_MODE" = true ]; then
+elif [ $WARN_COUNT -gt 0 ] && [ ${STRICT} -eq 1 ]; then
   echo "[FAILED] Strict mode: $WARN_COUNT warnings treated as errors"
   exit 1
 else

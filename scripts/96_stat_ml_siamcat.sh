@@ -38,22 +38,11 @@ DIMENSION="bacteria"
 FUNGI_METHOD="auto"
 FOLDS="10"
 
-# libcommon 的 FLAG 表不支持带连字符的选项名，--skip-shap 先归一化为 --skip_shap
-SKIP_SHAP=0
-NORMALIZED_ARGS=()
-for arg in "$@"; do
-    if [ "${arg}" = "--skip-shap" ]; then
-        NORMALIZED_ARGS+=("--skip_shap")
-    else
-        NORMALIZED_ARGS+=("${arg}")
-    fi
-done
-
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
 export MGX_OPTS_STRING="w:WORKDIR r:REPO t:THREADS m:METADATA_CSV g:GROUP_COL d:DIMENSION M:FUNGI_METHOD"
-export MGX_OPTS_FLAG="force skip_shap"
+export MGX_OPTS_FLAG="force skip-shap"
 export MGX_OPTS_LONG="folds:FOLDS"
-mgx_parse "${NORMALIZED_ARGS[@]}"
+mgx_parse "$@"
 mgx_require WORKDIR REPO THREADS METADATA_CSV GROUP_COL
 
 # Ensure absolute paths so R sub-processes receive them correctly

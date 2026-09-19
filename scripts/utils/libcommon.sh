@@ -6,8 +6,9 @@
 # 用  法: 在分析脚本中 source 本库后调用：
 #           source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 #           MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"   # 短选项:变量名（空格分隔）
-#           MGX_OPTS_FLAG="force"                                 # 布尔标志，--force → FORCE=1
-#           MGX_OPTS_LONG="speed-mode:SPEED_MODE"                 # 带值长选项:变量名
+#           MGX_OPTS_FLAG="force skip-shap"                      # 布尔标志，--force → FORCE=1；
+#                                     # 标志名中的 - 派生变量名时映射为 _（skip-shap → SKIP_SHAP=1）
+#           MGX_OPTS_LONG="speed-mode:SPEED_MODE"                # 带值长选项:变量名（同样 - → _）
 #           mgx_parse "$@"            # 支持 -s val / -s=val / --flag / --key val / --key=val；
 #                                     # -h|--help → show_help 后 exit 0
 #           mgx_require SAMPLE CPUS WORKDIR REPO   # 任一为空 → [ERROR] 缺少必需参数 后 exit 1
@@ -43,12 +44,18 @@ _mgx_lookup() {
     return 1
 }
 
+# 变量名派生: - 映射为 _ 后转大写（flag/长选项名 → 合法 bash 变量名，skip-shap → SKIP_SHAP）
+_mgx_var() {
+    local name="${1//-/_}"
+    printf '%s' "${name^^}"
+}
+
 # 表驱动参数解析（替代各脚本的 while/case 与 getopts 解析块）
 mgx_parse() {
     local opt var flag
     # 布尔标志默认 0（--flag 出现时置 1）
     for flag in ${MGX_OPTS_FLAG:-}; do
-        printf -v "${flag^^}" '%s' 0
+        printf -v "$(_mgx_var "${flag}")" '%s' 0
     done
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -60,12 +67,13 @@ mgx_parse() {
                 opt="${1#--}"
                 var=""
                 for flag in ${MGX_OPTS_FLAG:-}; do
-                    if [ "${flag}" = "${opt}" ]; then var="${flag^^}"; break; fi
+                    if [ "${flag}" = "${opt}" ]; then var="$(_mgx_var "${flag}")"; break; fi
                 done
                 if [ -n "${var}" ]; then
                     printf -v "${var}" '%s' 1
                     shift
                 elif var="$(_mgx_lookup "-${opt%%=*}" "${MGX_OPTS_LONG:-}")"; then
+                    var="${var//-/_}"
                     if [ "${opt}" != "${opt%%=*}" ]; then
                         printf -v "${var}" '%s' "${opt#*=}"   # --key=val
                         shift

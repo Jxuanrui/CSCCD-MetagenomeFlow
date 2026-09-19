@@ -8,40 +8,10 @@ set -e
 
 PROJ_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${PROJ_DIR}/scripts/activate.sh"
+source "${PROJ_DIR}/scripts/utils/libcommon.sh"
 
-# Parse arguments
-SHOW_HELP=false
-PROJECT_DIR=""
-OUTPUT_DIR=""
-REPORT_TITLE="MaxMetagenome Quality Control Report"
-
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    -h|--help)
-      SHOW_HELP=true
-      shift
-      ;;
-    -p|--project)
-      PROJECT_DIR="$2"
-      shift 2
-      ;;
-    -o|--output)
-      OUTPUT_DIR="$2"
-      shift 2
-      ;;
-    -t|--title)
-      REPORT_TITLE="$2"
-      shift 2
-      ;;
-    *)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-  esac
-done
-
-if [ "$SHOW_HELP" = true ]; then
-  cat << 'EOF'
+show_help() {
+cat << 'EOF'
 Usage: 00_multiqc_report.sh [OPTIONS]
 
 Generate comprehensive MultiQC report from all analysis outputs.
@@ -74,14 +44,15 @@ OUTPUT:
   - multiqc_report.html: Interactive HTML report
   - multiqc_data/: Raw data tables
 EOF
-  exit 0
-fi
+}
 
-if [ -z "$PROJECT_DIR" ]; then
-  echo "Error: --project DIR is required"
-  echo "Example: bash scripts/00_multiqc_report.sh -p Project/Project01"
-  exit 1
-fi
+REPORT_TITLE="MaxMetagenome Quality Control Report"
+
+# MGX_* tables are consumed by mgx_parse (libcommon.sh); short + long aliases map to the same vars
+export MGX_OPTS_STRING="p:PROJECT_DIR o:OUTPUT_DIR t:REPORT_TITLE"
+export MGX_OPTS_LONG="project:PROJECT_DIR output:OUTPUT_DIR title:REPORT_TITLE"
+mgx_parse "$@"
+mgx_require PROJECT_DIR
 
 if [ ! -d "$PROJECT_DIR" ]; then
   echo "[ERROR] Project directory not found: $PROJECT_DIR"

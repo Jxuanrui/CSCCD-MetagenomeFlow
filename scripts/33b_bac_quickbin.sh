@@ -51,21 +51,11 @@ EOF
 SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
 FORCE=0
 MEM_GB=32
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2"; shift 2 ;;
-        -t) CPUS="$2"; shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        --mem-gb) MEM_GB="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-# 注: 参数解析保留原 while/case —— --mem-gb 为带值长选项，libcommon.sh 的
-# mgx_parse 表（短选项 + 布尔长选项）无法表达，不强转
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_LONG="mem-gb:MEM_GB"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
 mgx_require SAMPLE CPUS WORKDIR REPO
 
 # QuickBin (Java/BBTools) cannot resolve relative paths: the tool is invoked after
