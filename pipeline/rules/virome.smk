@@ -397,3 +397,22 @@ rule phagcn3:
         "bash {REPO}/scripts/72_vir_phagcn3.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
         "> {log} 2>&1"
+
+
+# Lifestyle prediction cross-check (ProkBERT-PhaStyle vs BACPHLIP 67). Deliberately
+# NOT in rule all — verification layer, like the metax/metaspades rules; run by
+# requesting a result/virus/phastyle/phastyle_done.txt target.
+rule phastyle:
+    """Phage lifestyle prediction cross-check (ProkBERT-PhaStyle, third vote vs 67 BACPHLIP). Opt-in verification layer, not in rule all."""
+    input:
+        votu_fasta = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
+    output:
+        phastyle_tsv = WORKDIR + "/result/virus/phastyle/phastyle_results.tsv",
+        sentinel = WORKDIR + "/result/virus/phastyle/phastyle_done.txt",
+    log:
+        WORKDIR + "/logs/virus/phastyle/phastyle.log",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/67b_vir_phastyle.sh "
+        "-t {threads} -w {WORKDIR} -r {REPO} "
+        "> {log} 2>&1"

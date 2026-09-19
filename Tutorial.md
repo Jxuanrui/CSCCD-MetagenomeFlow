@@ -1942,6 +1942,49 @@ bash ~/Course/Maxmetagenome/scripts/72_vir_phagcn3.sh \
 
 > **注释工具并行策略**：步骤64-72 中，64/65/67/68/70/71/72 可并行执行（均只依赖 virus.fasta）；步骤66/69 依赖64的输出，需串行。
 
+### 步骤 67b：噬菌体生活方式预测交叉验证（ProkBERT-PhaStyle，可选）
+
+**步骤名称**：ProkBERT-PhaStyle 生活方式预测（第三票验证层）
+
+**目的**：生活方式（裂解/溶原）预测已有两票——67 BACPHLIP（随机森林）与 72 PhaGCN3（图卷积）——本步骤引入 ProkBERT-PhaStyle 基因组语言模型作为**第三票**：序列按 512bp 连续切段直接推理，段级 logits 经 weighted voting 聚合为 vOTU 级 temperate/virulent 概率。三票并排 2/3 一致视为稳健，分歧样本（尤其概率接近 0.5）值得人工复核。默认不入 Snakemake rule all（验证层，同 15e MetaX / 16b metaSPAdes 模式）。
+
+**依赖**：步骤 56（vOTU代表序列 virus.fasta，与 67 输入相同）
+
+**执行方式**（手动执行；opt-in，不入 rule all）：
+```bash
+bash ~/Course/Maxmetagenome/scripts/67b_vir_phastyle.sh \
+  -t 8 \
+  -w ~/Course/Maxmetagenome/Project/Project01 \
+  -r ~/Course/Maxmetagenome \
+  --batch-size 32       # 推理批大小（模型线程封顶 8）
+```
+Snakemake 显式触发（验证层，不在 rule all）：`snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -R phastyle`
+
+**环境与模型（一次性，envs/prokbert）**：
+```bash
+conda create --prefix ~/Course/Maxmetagenome/envs/prokbert python=3.10 -y
+conda run --prefix ~/Course/Maxmetagenome/envs/prokbert pip install prokbert
+conda run --prefix ~/Course/Maxmetagenome/envs/prokbert pip install \
+    torch torchvision --index-url https://download.pytorch.org/whl/cpu
+conda run --prefix ~/Course/Maxmetagenome/envs/prokbert pip install transformers==4.53.2
+```
+模型 `neuralbioinfo/PhaStyle-mini`（约25M参数，~80MB）首次运行自动从 HuggingFace 下载到 `HF_HOME`（默认 `~/.cache/huggingface`），之后离线复用；huggingface.co 不可达时脚本自动改用 hf-mirror.com 镜像。注意 prokbert 0.0.48 与 transformers>=5 不兼容（必须 4.53.2）；CPU 版 torch 使 env 从 6.3G 降至 1.8G。
+
+**输出结果**：
+```
+Project/Project01/result/virus/phastyle/
+  ├── phastyle_results.tsv    ← 逐 vOTU：predicted_label + score_temperate/score_virulent
+  └── phastyle_done.txt       ← sentinel（virulent/temperate 计数；空输入为 empty_input）
+```
+
+**审核要点**：
+
+| 指标 | 看什么 | 说明 |
+|------|-------|------|
+| 三票一致性 | phastyle_results.tsv vs 67 bacphlip_results.tsv（Virulent/Temperate 列）并排 | 2/3 一致为稳健；BACPHLIP 与 PhaStyle 同源训练集（BACPHLIP，去 E. coli），分歧多出现在边界样本 |
+| 边界概率 | score_temperate 接近 0.5（如 0.47-0.60） | 模型不确定，标注时建议降权或人工复核 |
+| 空结果 | sentinel 内容为 `empty_input` | 序列均短于 256bp 分段阈值，优雅降级，属预期行为 |
+
 ---
 ## 真菌维度分析
 
