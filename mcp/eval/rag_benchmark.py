@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import chromadb
@@ -23,219 +25,21 @@ os.environ["HF_HUB_OFFLINE"] = "1"
 
 
 DEFAULT_COLLECTION = "experience_kb"
-DEFAULT_OUTPUT = Path("mcp/eval/benchmark_results.json")
 VALID_MODES = ("hybrid", "dense", "sparse")
 QUERY_LIMIT = 20
 TOP_K = 5
+QUESTIONS_FILE = Path(__file__).resolve().parent / "benchmark_questions.yaml"
 
-GOLDEN_QUESTIONS: list[dict[str, Any]] = [
-    {
-        "id": "metaphlan4_params",
-        "query": "MetaPhlAn4 双端样本参数设置 mapout samout",
-        "expected_doc_prefixes": ["metaphlan4-parameter-guide"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "humann3_speed",
-        "query": "HUMAnN3 速度模式 balanced fast 参数",
-        "expected_doc_prefixes": ["humann3-speed-mode", "02_read_based/humann3"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "kraken2_db",
-        "query": "Kraken2 数据库选择 Standard PlusPF Standard-8",
-        "expected_doc_prefixes": ["kraken2-database-choice"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "megahit_assembly",
-        "query": "MEGAHIT 组装 min-contig-len k-mer 参数",
-        "expected_doc_prefixes": ["megahit-assembly-strategy"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "fastp_qc",
-        "query": "fastp 质控 adapter removal length_required Q20",
-        "expected_doc_prefixes": ["fastp-quality-control"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "kneaddata_host",
-        "query": "KneadData 去宿主 bowtie2 hg37dec very-sensitive-local",
-        "expected_doc_prefixes": ["kneaddata-host-removal", "01_preprocessing/kneaddata"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "metabat2_bin",
-        "query": "MetaBAT2 binning depth 最小长度 minCVSum 参数",
-        "expected_doc_prefixes": ["metabat2-binning-parameters"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "checkm2_quality",
-        "query": "CheckM2 MAG 质量 HQ MQ MIMAG 完整度 污染率",
-        "expected_doc_prefixes": ["checkm2-quality-thresholds", "04_binning/checkm2"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "dastool_refine",
-        "query": "DAS_Tool 多算法 bin 整合 score_threshold diamond",
-        "expected_doc_prefixes": ["dastool-bin-refinement", "04_binning/dastool"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "genomad_virus",
-        "query": "geNomad 病毒鉴定 score 阈值 1500bp 最小长度",
-        "expected_doc_prefixes": [
-            "genomad-virus-identification",
-            "genomad-virsorter2-consensus",
-        ],
-        "dimension": "virome",
-    },
-    {
-        "id": "checkv_viral",
-        "query": "CheckV 病毒 completeness 过滤 provirus 修剪",
-        "expected_doc_prefixes": ["checkv-virus-quality", "checkv-quality-filter"],
-        "dimension": "virome",
-    },
-    {
-        "id": "funomic_fungi",
-        "query": "FunOMIC 真菌 marker 数据库 1.6M 肠道真菌",
-        "expected_doc_prefixes": ["funomic-fungi-profiling"],
-        "dimension": "mycobiome",
-    },
-    {
-        "id": "eukfinder_mag",
-        "query": "Eukfinder 真核 MAG binning BUSCO 质量评估",
-        "expected_doc_prefixes": ["eukfinder-fungi-mag"],
-        "dimension": "mycobiome",
-    },
-    {
-        "id": "batch_correction",
-        "query": "批次校正 ConQuR MMUPHin ComBat-seq 多中心",
-        "expected_doc_prefixes": ["batch-correction-strategy", "05_stats/batch_correct"],
-        "dimension": "statistics",
-    },
-    {
-        "id": "siamcat_ml",
-        "query": "SIAMCAT 机器学习 lasso RF 疾病分类器 ROC AUC",
-        "expected_doc_prefixes": ["siamcat-ml-disease-classifier", "05_stats/siamcat"],
-        "dimension": "statistics",
-    },
-    {
-        "id": "virsorter2_threshold",
-        "query": "VirSorter2 --min-score 阈值 与 geNomad 交集策略 高可信病毒序列",
-        "expected_doc_prefixes": ["virsorter2-virus-prediction", "genomad-virsorter2-consensus"],
-        "dimension": "virome",
-    },
-    {
-        "id": "dbcan_fungi_consensus",
-        "query": "真菌 CAZyme dbCAN 三方法共识 overview.txt HMMER DIAMOND eCAMI",
-        "expected_doc_prefixes": ["fungi-dbcan-cazyme"],
-        "dimension": "mycobiome",
-    },
-    {
-        "id": "snippy_core_snp",
-        "query": "Snippy 核心 SNP core.full.aln 泛基因组 Roary --core-definition 系统发育",
-        "expected_doc_prefixes": ["snippy-snp-detection", "pangenome-roary"],
-        "dimension": "bacteria",
-    },
 
-    # ─── Harder questions (added for RAG collection-routing evaluation) ───
-    # These stress-test cases the original 18 golden questions cannot detect
-    # because dense+BM25 hybrid already saturates them (R@5 = 1.00).
-    # Categories: (a) same-tool cross-dimension confusion (bacteria vs
-    # mycobiome docs sharing a tool name), (b) near-duplicate-scope docs
-    # that require picking the correct one among close competitors, and
-    # (c) implicit Chinese scenario queries with no tool name at all.
-    {
-        "id": "kegg_fungi_vs_bacteria",
-        "query": "真菌基因组 KEGG KO 通路注释，用哪个数据库和比对工具",
-        "expected_doc_prefixes": ["fungi-kegg-annotation", "tools_ref/kegg"],
-        "dimension": "mycobiome",
-    },
-    {
-        "id": "eggnog_fungi_vs_bacteria",
-        "query": "真菌蛋白集 eggNOG 注释 COG KO GO EC CAZy 输出文件",
-        "expected_doc_prefixes": ["fungi-eggnog-annotation"],
-        "dimension": "mycobiome",
-    },
-    {
-        "id": "metaphlan4_fungi_ignore_bacteria",
-        "query": "MetaPhlAn4 只保留真核真菌信号，忽略细菌古菌，用什么参数",
-        "expected_doc_prefixes": ["metaphlan4-fungi-eukaryote"],
-        "dimension": "mycobiome",
-    },
-    {
-        "id": "kraken2_fungi_quick_screen",
-        "query": "在跑完整 FunOMIC 之前，先用 Kraken2 快速判断肠道样本有没有真菌信号",
-        "expected_doc_prefixes": ["kraken2-fungi-database"],
-        "dimension": "mycobiome",
-    },
-    {
-        "id": "dbcan_bacteria_vs_fungi",
-        "query": "细菌 CAZyme 三工具投票注释，overview.txt 里 GH GT family 汇总",
-        "expected_doc_prefixes": ["dbcan-cazyme-annotation"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "amr_primary_vs_card_supplement",
-        "query": "耐药基因分析应该以哪个工具的结果作为发表用的主表，另一个工具做什么补充",
-        "expected_doc_prefixes": ["amrfinder-resistance-genes"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "drep_strain_tracking_097",
-        "query": "如果我想追踪同一个物种内部不同菌株的差异，dRep 的 ANI 阈值该调到多少",
-        "expected_doc_prefixes": ["drep-ani-threshold"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "gtdbtk_bac_vs_ar_summary",
-        "query": "MAG 分类结果里细菌和古菌应该分别看哪个 summary 表，为什么不能混着看",
-        "expected_doc_prefixes": ["gtdbtk-classification", "gtdbtk-mag-taxonomy"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "eukfinder_low_completeness",
-        "query": "真核 MAG 回收出来完整度只有百分之四十，是不是流程哪里错了",
-        "expected_doc_prefixes": ["eukfinder-fungi-mag", "tools_ref/eukfinder"],
-        "dimension": "mycobiome",
-    },
-    {
-        "id": "votu_vclust_species_level",
-        "query": "把多个样本的病毒序列合并去冗余，得到物种级别的代表序列集合，该用什么方法",
-        "expected_doc_prefixes": ["votu-clustering-vclust"],
-        "dimension": "virome",
-    },
-    {
-        "id": "binning_why_multi_algorithm",
-        "query": "只跑一个分箱工具是不是不够，为什么要同时跑好几个再整合",
-        "expected_doc_prefixes": ["binning-multi-algorithm", "dastool-bin-refinement"],
-        "dimension": "bacteria",
-    },
-    {
-        "id": "batch_correction_which_first",
-        "query": "多中心菌群数据校正批次效应，跑了好几种方法，应该优先看哪几个结果",
-        "expected_doc_prefixes": ["batch-correction-strategy", "05_stats/batch_correct", "08_statistics/batch_correct"],
-        "dimension": "statistics",
-    },
-]
-
-HARD_QUESTION_IDS: set[str] = {
-    "kegg_fungi_vs_bacteria",
-    "eggnog_fungi_vs_bacteria",
-    "metaphlan4_fungi_ignore_bacteria",
-    "kraken2_fungi_quick_screen",
-    "dbcan_bacteria_vs_fungi",
-    "amr_primary_vs_card_supplement",
-    "drep_strain_tracking_097",
-    "gtdbtk_bac_vs_ar_summary",
-    "eukfinder_low_completeness",
-    "votu_vclust_species_level",
-    "binning_why_multi_algorithm",
-    "batch_correction_which_first",
-}
+def load_questions() -> tuple[str, list[dict[str, Any]]]:
+    """Load the versioned question set (single source of truth: benchmark_questions.yaml)."""
+    if not QUESTIONS_FILE.is_file():
+        raise SystemExit(f"[rag_benchmark] FATAL question set not found: {QUESTIONS_FILE}")
+    data = yaml.safe_load(QUESTIONS_FILE.read_text(encoding="utf-8")) or {}
+    questions = data.get("questions") or []
+    if not questions:
+        raise SystemExit(f"[rag_benchmark] FATAL no questions parsed from: {QUESTIONS_FILE}")
+    return str(data.get("version", "unknown")), questions
 
 
 @dataclass(slots=True)
@@ -280,8 +84,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-json",
-        default=str(DEFAULT_OUTPUT),
-        help="Path to write the benchmark JSON results.",
+        default=None,
+        help="Path to write the benchmark JSON results. Default: mcp/eval/results/benchmark_<timestamp>.json.",
     )
     return parser.parse_args()
 
@@ -491,8 +295,8 @@ def _aggregate_subset(per_query: list[dict[str, Any]]) -> dict[str, Any]:
 
 def aggregate_mode(per_query: list[dict[str, Any]]) -> dict[str, Any]:
     count = len(per_query)
-    hard_subset = [item for item in per_query if item["id"] in HARD_QUESTION_IDS]
-    easy_subset = [item for item in per_query if item["id"] not in HARD_QUESTION_IDS]
+    hard_subset = [item for item in per_query if item["subset"] == "hard"]
+    easy_subset = [item for item in per_query if item["subset"] != "hard"]
     return {
         "recall_at_1": sum(item["recall_at_1"] for item in per_query) / count,
         "recall_at_3": sum(item["recall_at_3"] for item in per_query) / count,
@@ -524,7 +328,24 @@ def print_markdown_table(mode_results: dict[str, dict[str, Any]], mode_order: li
         )
 
 
+def build_index_fingerprint(repo: Path) -> list[dict[str, Any]]:
+    """Cheap identity/staleness marker for the index a result was produced against."""
+    client = chromadb.PersistentClient(str(repo / "mcp" / "chromadb_data"))
+    fingerprint = []
+    for collection in sorted(client.list_collections(), key=lambda item: item.name):
+        bm25_pkl = repo / "mcp" / "bm25_data" / f"{collection.name}.pkl"
+        fingerprint.append(
+            {
+                "collection": collection.name,
+                "chunk_count": collection.count(),
+                "bm25_pkl_mtime": bm25_pkl.stat().st_mtime if bm25_pkl.is_file() else None,
+            }
+        )
+    return fingerprint
+
+
 def run_benchmark(repo: Path, modes: list[str]) -> dict[str, Any]:
+    question_set_version, questions = load_questions()
     collection = load_collection(repo, DEFAULT_COLLECTION)
     model = load_dense_model()
     bm25_index = load_bm25_index(repo, DEFAULT_COLLECTION)
@@ -532,7 +353,7 @@ def run_benchmark(repo: Path, modes: list[str]) -> dict[str, Any]:
     mode_results: dict[str, dict[str, Any]] = {}
     for mode in modes:
         per_query: list[dict[str, Any]] = []
-        for question in GOLDEN_QUESTIONS:
+        for question in questions:
             start = time.time()
             results, effective_mode = search_mode(collection, model, bm25_index, question["query"], mode)
             latency_ms = (time.time() - start) * 1000.0
@@ -542,6 +363,7 @@ def run_benchmark(repo: Path, modes: list[str]) -> dict[str, Any]:
                     "id": question["id"],
                     "query": question["query"],
                     "dimension": question["dimension"],
+                    "subset": question.get("subset", "easy"),
                     "expected_doc_prefixes": question["expected_doc_prefixes"],
                     "effective_mode": effective_mode,
                     "recall_at_1": metrics["recall_at_1"],
@@ -565,7 +387,9 @@ def run_benchmark(repo: Path, modes: list[str]) -> dict[str, Any]:
 
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "n_questions": len(GOLDEN_QUESTIONS),
+        "question_set_version": question_set_version,
+        "n_questions": len(questions),
+        "index_fingerprint": build_index_fingerprint(repo),
         "modes": mode_results,
     }
 
@@ -575,12 +399,20 @@ def save_results(payload: dict[str, Any], output_json: Path) -> None:
     output_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def resolve_output_path(repo: Path, output_arg: str | None) -> Path:
+    if output_arg:
+        output_json = Path(output_arg).expanduser()
+        if not output_json.is_absolute():
+            output_json = (repo / output_json).resolve()
+        return output_json
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return Path(__file__).resolve().parent / "results" / f"benchmark_{stamp}.json"
+
+
 def main() -> int:
     args = parse_args()
     repo = resolve_repo(args.repo)
-    output_json = Path(args.output_json).expanduser()
-    if not output_json.is_absolute():
-        output_json = (repo / output_json).resolve()
+    output_json = resolve_output_path(repo, args.output_json)
 
     modes = list(VALID_MODES) if args.mode == "all" else [args.mode]
     results = run_benchmark(repo, modes)

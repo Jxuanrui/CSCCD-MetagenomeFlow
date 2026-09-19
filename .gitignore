@@ -95,6 +95,8 @@ skills/replications/**/code/adapted/**/*.zip
 
 # RAG 索引缓存（可通过 mcp/indexer.py / mcp/bm25_index.py 重建，不入库）
 mcp/bm25_data/*.pkl
+# RAG benchmark 运行产物（带时间戳的结果 JSON，不入库）
+mcp/eval/results/
 
 # OpenCode 运行时目录（不入库）
 .omo/
