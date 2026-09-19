@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -155,7 +156,7 @@ def load_embedding_model(set_tokenizer):
 
         import os
         os.environ['HF_HUB_OFFLINE'] = '1'
-        model = SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
+        model = SentenceTransformer(os.environ.get("MGX_EMBED_MODEL", "BAAI/bge-small-zh-v1.5"), local_files_only=True)
         if hasattr(model, "tokenizer"):
             set_tokenizer(model.tokenizer)
         else:

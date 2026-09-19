@@ -288,7 +288,7 @@ def parse_args() -> argparse.Namespace:
 
 def load_dense_model() -> Any:
     try:
-        return SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
+        return SentenceTransformer(os.environ.get("MGX_EMBED_MODEL", "BAAI/bge-small-zh-v1.5"), local_files_only=True)
     except Exception as exc:
         warn(f"local BGE model unavailable, falling back to Chroma ONNX embedder: {exc}")
         from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2

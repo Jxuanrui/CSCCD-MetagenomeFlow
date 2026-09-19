@@ -55,7 +55,7 @@ def _load_runtime(repo, load_model=True):
             from sentence_transformers import SentenceTransformer
 
             os.environ["HF_HUB_OFFLINE"] = "1"
-            _MODEL = SentenceTransformer("BAAI/bge-small-zh-v1.5", local_files_only=True)
+            _MODEL = SentenceTransformer(os.environ.get("MGX_EMBED_MODEL", "BAAI/bge-small-zh-v1.5"), local_files_only=True)
         except Exception:
             from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
 
