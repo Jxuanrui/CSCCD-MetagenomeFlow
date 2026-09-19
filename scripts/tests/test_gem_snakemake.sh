@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 WORKDIR="${REPO}/Project/Project01"
 
 echo "=== GEM Module Snakemake Integration Test ==="

@@ -105,3 +105,6 @@ tools/sfl_dl/
 
 # ScientificFigureLibrary 的图件模板库（用户数据，机器本地，不入库）
 FigureLibrary/
+
+# ZCode client session artifacts (plans etc., machine-local)
+.zcode/
