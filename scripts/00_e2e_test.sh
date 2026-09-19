@@ -81,7 +81,7 @@ EXAMPLES:
   bash scripts/00_e2e_test.sh -s Sample4 --dry-run
 
 OUTPUT:
-  Test results written to: tests/e2e_TIMESTAMP/
+  Test results written to: temp/e2e_TIMESTAMP/
     ├── test_log.txt       (execution log)
     ├── results_summary.txt (pass/fail summary)
     └── outputs/           (generated outputs for verification)
@@ -106,7 +106,7 @@ if [ ! -d "$TEST_SAMPLE_DIR" ]; then
 fi
 
 # Create test run directory
-TEST_RUN_DIR="${PROJ_DIR}/tests/e2e_$(date +%Y%m%d_%H%M%S)"
+TEST_RUN_DIR="${PROJ_DIR}/temp/e2e_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$TEST_RUN_DIR/outputs"
 
 TEST_LOG="${TEST_RUN_DIR}/test_log.txt"

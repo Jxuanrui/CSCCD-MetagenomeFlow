@@ -7,8 +7,8 @@
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
-[![Conda](https://img.shields.io/badge/conda%20envs-54-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-181-blue)]()
+[![Conda](https://img.shields.io/badge/conda%20envs-57-orange)](https://github.com/conda-forge/miniforge)
+[![Scripts](https://img.shields.io/badge/scripts-183-blue)]()
 [![RAG](https://img.shields.io/badge/RAG-12242%20chunks-purple)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
@@ -25,7 +25,7 @@
 ║    MaxMetagenome Platform                                                 ║
 ║    完整宏基因组多维度分析平台  ·  版本 1.1.2                                 ║
 ║                                                                           ║
-║    181 分析脚本  ·  141 Snakemake 规则  ·  54 conda 环境  ·  ~1.2TB 数据库  ║
+║    183 分析脚本  ·  143 Snakemake 规则  ·  57 conda 环境  ·  ~1.2TB 数据库  ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -65,7 +65,30 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 ---
 
-## 最近更新（v1.1.3） | Recent Updates
+## 最近更新（v1.2.0） | Recent Updates
+
+**🔧 v1.2.0 (2026-09-19)**: Engineering-hardening + toolchain refresh + governance migration (ZCode/GLM) — executed as 5 parallel streams under the CLAUDE.md §15 protocol with Ponytail minimalism discipline enforced end-to-end (distilled ruleset in §11.1 + net-line-growth advisory gate in the pre-commit hook + a user-level ZCode skill).
+
+- **Governance migrated to ZCode + GLM** — CLAUDE.md rewritten for the new runtime (main-agent + subagent roles, real no-touch paths, review gates on real invariants); all Codex-era proxy/sandbox constraints retired; `AGENTS.md` pointer added so ZCode reads governance natively. Net −114 lines while adding rules.
+- **Radical boilerplate consolidation — scripts/ net −1,843 lines** — new shared library `scripts/utils/libcommon.sh` (156 lines: table-driven `mgx_parse` with short/long/hyphenated-flag support, `mgx_require`, timing, `mgx_conda`, `mgx_try` errexit-shield); 154 of 158 shell scripts converted across 8 dimension batches, each batch gated on shellcheck + DAG + fixture smoke + byte-identical `-h`/sentinel checks; v1.1.4 output-clearing hunks byte-verified untouched. 5 pre-existing FATAL bugs found and fixed by the conversion (54b checkv_filter unbound-crash on every full-arg call; 74f operator-precedence; 79f tautology; 00_pipeline_virome/fungi local-only `FORCE_FLAG` unbound at aggregate steps).
+- **shellcheck zero** — Level 1 went from 31/158 failing (v1.1.4-baseline tag) to **all 165 pass**; the pre-commit hook and remote CI now also scan `scripts/utils`, `scripts/hooks`, `scripts/tests` (libcommon was a blind spot).
+- **Toolchain refresh (each A/B-validated, old envs frozen for rollback)** — antiSMASH 7.1.0 → **8.0.4** (`envs/antismash8` + `db/antismash8` with MIBiG 4.0; B.subtilis control: all 14 v7 regions reproduced + 1 new terpene-precursor; zero flag renames; 28b novelty scoring verified end-to-end unchanged on MIBiG 3.1 for score comparability). SemiBin 1.5.0 → **2.5.0** (`envs/semibin2x`; zero flag changes; fixes the BAM-coverage failure that forced the pretrained-model workaround, and 0-bin now degrades gracefully instead of crashing in hmmsearch). New **16b metaSPAdes cross-validation track** (opt-in, dual-assembler consensus per 2024-26 benchmarks, metaQUAST offline mode). Prokka stays primary — Bakta switch evaluated and rejected for now (Roary pangenome in 41c requires Prokka-format GFF).
+- **New virome third vote** — `scripts/67b_vir_phastyle.sh` + opt-in `rule phastyle`: ProkBERT-PhaStyle (HF `neuralbioinfo/PhaStyle-mini`, env 1.8G CPU, HF-mirror fallback) as the third lifestyle vote alongside BACPHLIP (67) and PhaGCN3 (72); micro-validated on 4 real Project01 vOTUs (29 s), surfacing 2/4 boundary disagreements with BACPHLIP at p=0.53–0.61.
+- **Remote CI + doc-count automation** — `.github/workflows/ci.yml` (pinned shellcheck 0.11.0 lint + consistency gate; enable by GitHub mirror or Gitee Go translation; levels 2/3 stay local — fixture is gitignored); `check_consistency.py --update-readme-badges` syncs 8 count tokens in README to live values (idempotent) — count drift (52/53/59 envs) eliminated.
+- **Repo hygiene** — root `tests/` orphan folded into `scripts/tests/`; dead `generate_test_100samples.R` removed; `.gitignore` hardened (`/temp/`, `/logs/`, `.zcode/`, `.codegraph`); `0Install.sh` machine-specific DB-bank paths parameterized (`DB_BANK`/`SIBLING_DB` env-overridable, 40 paths); e2e test output moved to `temp/`; RAG embedding model now env-overridable (`MGX_EMBED_MODEL`) for the bge-m3 A/B evaluation.
+- **Verification** — Level 1 (165 scripts), Level 3 DAG (261 jobs + 2 new opt-in rules resolving), consistency checker (registry 142 / scripts 150 / skills 138 / issues 0) all green at tag `v1.2.0`; baseline preserved at tag `v1.1.4-baseline`.
+
+### v1.1.4 及更早 | v1.1.4 and earlier
+
+**🔧 v1.1.4 (2026-09-16)**: Data-integrity remediation — stale-bin contamination found and fixed in the binning chain; the Project01 MAG set was rebuilt reproducibly; four same-root-cause output-clearing bugs fixed.
+
+- **Stale-bin contamination (root cause of the "dRep not reproducible" alarm)** — `36_bac_dastool.sh` never cleared `<sample>_DASTool_bins/` before running, and `36b_bac_bin_reassembly.sh` inherited the stale bins into its own never-cleared `reassembled_bins/`. Confirmed on Project01: Sample2's DAS_Tool summary selected 52 bins but the directory held 123 `.fa` files (71 stale), and the stale bins flowed through CheckM2 into dRep — **153 of 653 drep_input MAGs (23%) descended from stale bins**. The `dastool` and `reassembly` dirs for Sample2/3/10 were cleaned (374 stale bins removed).
+- **dRep silent false-success (38)** — `38_bac_drep.sh` did not clear its work directory, so dRep aborted with `Both Bdb and a genome list are found` in ~7 s while the script still reported the stale MAG count as success; the same ERROR appears three times in the Project01 log (08-12, 08-20, 09-16), i.e. dRep had silently not re-run for weeks.
+- **Rebuild on the de-contaminated inputs** — CheckM2: 631 input bins → **500 high-quality** (was 653); dRep → **213 dereplicated MAGs** (was 216; representatives changed materially — 152 shared, 64 dropped, 61 new). Downstream re-run for the new set: coverm_quant ×10, GTDB-Tk (213), Prokka (213), MAG integration tables (214 rows). The species-level count is nearly unchanged (216→213): most phantom MAGs were redundant, but the set is now reproducible.
+- **Output-clearing fixes (4 scripts, same root cause)** — `36` dastool (`a55b744`), `36b` reassembly (`44bf5fc`), `38` drep (`b991f68`), `41` prokka (`717c89e`) now clear their output dirs (on `--force` where a per-MAG skip logic must be preserved).
+- **QuickBin kept standalone** — a controlled 4-sample study (each arm vs a same-script 3-binner control) showed adding QuickBin to the DAS_Tool ensemble is net harmful to high-quality MAG recovery (aggregate Δ −3 at ≥95%/≤1%, −2 at ≥90%/≤5%; only 1/4 samples gained). QuickBin (33b) stays a fast standalone binner.
+
+### v1.1.3 及更早 | v1.1.3 and earlier
 
 **🎉 CSCCD-MetagenomeFlow v1.1 (August 2026)** — first VEBA toolchain integration: eukaryotic candidate QC layer.
 
@@ -85,13 +108,7 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 - **dRep skani secondary clustering** — `scripts/38_bac_drep.sh` gains an `-A` option selecting the secondary-clustering algorithm, default **skani** (faster than fastANI). skani 0.3.2 is reused from `envs/gtdbtk` via a project-local symlink `envs/drep/bin/skani` — no new conda env. Verified: 8-MAG smoke test → 8 dereplicated in 10 s; dRep records `S_algorithm: skani`. Pass `-A fastANI` to restore the previous behaviour.
 - **ScientificFigureLibrary (project-level MCP, 2026-09-15)** — local-first scientific-figure template library (`github.com/xuzhougeng/ScientificFigureLibrary`, MIT, v0.7.0) deployed **inside the project only**: tool at `tools/ScientificFigureLibrary/` (Release ZIP), Library at `FigureLibrary/`, MCP registered through the project-root `.mcp.json` (server `figure-library`, `FIGURE_LIBRARY_DIR` bound in-project). It does **not** modify `~/.claude.json`. Complements the 11 `/mgx-plot-*` skills — SFL is a versioned, reviewed template store; the plotting skills still draw the figures.
 
-**🔧 v1.1.4 (2026-09-16)**: Data-integrity remediation — stale-bin contamination found and fixed in the binning chain; the Project01 MAG set was rebuilt reproducibly; four same-root-cause output-clearing bugs fixed.
-
-- **Stale-bin contamination (root cause of the "dRep not reproducible" alarm)** — `36_bac_dastool.sh` never cleared `<sample>_DASTool_bins/` before running, and `36b_bac_bin_reassembly.sh` inherited the stale bins into its own never-cleared `reassembled_bins/`. Confirmed on Project01: Sample2's DAS_Tool summary selected 52 bins but the directory held 123 `.fa` files (71 stale), and the stale bins flowed through CheckM2 into dRep — **153 of 653 drep_input MAGs (23%) descended from stale bins**. The `dastool` and `reassembly` dirs for Sample2/3/10 were cleaned (374 stale bins removed).
-- **dRep silent false-success (38)** — `38_bac_drep.sh` did not clear its work directory, so dRep aborted with `Both Bdb and a genome list are found` in ~7 s while the script still reported the stale MAG count as success; the same ERROR appears three times in the Project01 log (08-12, 08-20, 09-16), i.e. dRep had silently not re-run for weeks.
-- **Rebuild on the de-contaminated inputs** — CheckM2: 631 input bins → **500 high-quality** (was 653); dRep → **213 dereplicated MAGs** (was 216; representatives changed materially — 152 shared, 64 dropped, 61 new). Downstream re-run for the new set: coverm_quant ×10, GTDB-Tk (213), Prokka (213), MAG integration tables (214 rows). The species-level count is nearly unchanged (216→213): most phantom MAGs were redundant, but the set is now reproducible.
-- **Output-clearing fixes (4 scripts, same root cause)** — `36` dastool (`a55b744`), `36b` reassembly (`44bf5fc`), `38` drep (`b991f68`), `41` prokka (`717c89e`) now clear their output dirs (on `--force` where a per-MAG skip logic must be preserved).
-- **QuickBin kept standalone** — a controlled 4-sample study (each arm vs a same-script 3-binner control) showed adding QuickBin to the DAS_Tool ensemble is net harmful to high-quality MAG recovery (aggregate Δ −3 at ≥95%/≤1%, −2 at ≥90%/≤5%; only 1/4 samples gained). QuickBin (33b) stays a fast standalone binner.
+---
 
 ### v1.1 新增 | New in v1.1
 - **79b VEBA-style eukaryotic QC** (`scripts/79b_fun_veba_qc.sh`): Tiara deep-learning domain re-confirmation + BUSCO lineage-specific completeness assessment on top of script 79 (Eukfinder) candidate eukaryotic contigs. Methodology referenced from [VEBA](https://github.com/jolespin/veba) `binning-eukaryotic` module — **no VEBA source code reused** (VEBA is AGPLv3; Tiara/BUSCO are both MIT, no license contamination). Validated end-to-end on real data: Sample4 (Project01) resolved to `saccharomycetaceae_odb12.2` at 73.5% completeness; low-depth samples correctly degrade to an `empty.flag` sentinel instead of a false error.
@@ -144,9 +161,9 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | OS | Linux x86_64 · Ubuntu 22.04 |
 | Environment manager | Miniforge3 (self-contained, under project root) |
 | Workflow engine | Snakemake 9.22.0 |
-| Analysis scripts | 181 (01–98g + diagnostic/ops utilities, including .sh/.R/.py) |
-| Snakemake rules | 141 across 11 rule files |
-| Conda environments | 54 isolated tool environments |
+| Analysis scripts | 183 (01–98g + diagnostic/ops utilities, including .sh/.R/.py) |
+| Snakemake rules | 143 across 11 rule files |
+| Conda environments | 57 isolated tool environments |
 | Databases | ~1.2 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, UniProt Swiss-Prot, Pfam-A, ISfinder, ICEberg, integrall, transposase-db, etc.) |
 | RAG knowledge base | **12,242 chunks** across 4 collections (ChromaDB + bge-small-zh-v1.5 + BM25 hybrid retrieval) |
 | MCP server | Official Model Context Protocol compliance, registered with Claude Code & Codex CLI |
