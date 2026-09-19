@@ -83,6 +83,13 @@ skills/replications/**/code/adapted/**/*.zip
 /*.temp
 /*.cache
 
+# 根目录 temp/ 与 logs/（工作临时区，内容不入库；由 *.log 等模式覆盖不到的非日志文件防御）
+/temp/
+/logs/
+
+# Omo codegraph 符号链接（指向 ~/.omo，机器本地）
+/.codegraph
+
 # Claude Code 运行时文件（session lock，不入库）
 .claude/scheduled_tasks.lock
 
