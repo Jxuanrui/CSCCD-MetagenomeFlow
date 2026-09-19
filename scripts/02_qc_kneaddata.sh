@@ -13,6 +13,8 @@
 
 set -e
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 # ===== 参数解析 =====
 show_help() {
 cat << EOF
@@ -32,39 +34,11 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-THREADS=""
-WORKDIR=""
-REPO=""
-FORCE=0
-
-ARGS=()
-for arg in "$@"; do
-    if [ "${arg}" = "--force" ]; then
-        FORCE=1
-    else
-        ARGS+=("${arg}")
-    fi
-done
-set -- "${ARGS[@]}"
-
-while getopts "s:t:w:r:h" opt; do
-  case ${opt} in
-    s) SAMPLE=$OPTARG ;;
-    t) THREADS=$OPTARG ;;
-    w) WORKDIR=$OPTARG ;;
-    r) REPO=$OPTARG ;;
-    h) show_help; exit 0 ;;
-    *) show_help; exit 1 ;;
-  esac
-done
-
-# 检查必需参数
-if [ -z "$SAMPLE" ] || [ -z "$THREADS" ] || [ -z "$WORKDIR" ] || [ -z "$REPO" ]; then
-  echo "[ERROR] 缺少必需参数"
-  show_help
-  exit 1
-fi
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:THREADS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE THREADS WORKDIR REPO
 
 # ===== 路径和环境 =====
 FASTP_OUT="${WORKDIR}/result/fastp/${SAMPLE}"
@@ -116,8 +90,7 @@ TEMP_WORKDIR="${WORKDIR}/temp/kneaddata/${SAMPLE}"
 mkdir -p "${TEMP_WORKDIR}"
 
 # 运行 kneaddata
-conda run --prefix "${REPO}/envs/kneaddata" --no-capture-output \
-  kneaddata \
+mgx_conda kneaddata \
     --input1 "${INPUT_R1}" \
     --input2 "${INPUT_R2}" \
     --output "${TEMP_WORKDIR}" \

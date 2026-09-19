@@ -22,6 +22,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 02b_qc_pair_repair.sh -s SAMPLE -w WORKDIR -r REPO [选项]
 必需参数:
@@ -33,23 +35,13 @@ show_help() { cat << EOF
 EOF
 }
 
-SAMPLE=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 OUTDIR="${WORKDIR}/result/kneaddata/${SAMPLE}"
 RAW_R1="${OUTDIR}/${SAMPLE}_1.kneaddata_raw.fastq.gz"
 RAW_R2="${OUTDIR}/${SAMPLE}_2.kneaddata_raw.fastq.gz"
@@ -72,7 +64,7 @@ rm -rf "${PAIR_TMPDIR}"
 mkdir -p "${PAIR_TMPDIR}"
 
 echo "[pair_repair] 样本 ${SAMPLE} | 严格重新配对 R1/R2 ..."
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     seqkit pair \
         --id-regexp '^(\S+)\/[12]' \
         -1 "${RAW_R1}" \
@@ -97,4 +89,5 @@ rm -rf "${PAIR_TMPDIR}"
 echo "READS_BEFORE=$((N_BEFORE / 4))" > "${SENTINEL}"
 echo "READS_AFTER=$((N_AFTER / 4))" >> "${SENTINEL}"
 
-echo "[pair_repair] 完成，耗时 ${SECONDS}s | 配对前: $((N_BEFORE / 4)) reads | 配对后: $((N_AFTER / 4)) reads"
+echo "[pair_repair] 配对前: $((N_BEFORE / 4)) reads | 配对后: $((N_AFTER / 4)) reads"
+mgx_end "pair_repair"

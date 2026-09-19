@@ -14,47 +14,34 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 # --- 参数解析 ---
 
-FORCE=0
+show_help() { cat << EOF
 
-ARGS=()
-for arg in "$@"; do
-    if [ "${arg}" = "--force" ]; then
-        FORCE=1
-    else
-        ARGS+=("${arg}")
-    fi
-done
-set -- "${ARGS[@]}"
+用法: bash 01_qc_fastp.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 
-if [ $# -ge 8 ]; then
-    while getopts s:t:w:r: option; do
-        case "${option}" in
-            s) SAMPLE=${OPTARG} ;;
-            t) CPUS=${OPTARG} ;;
-            w) WORKDIR=${OPTARG} ;;
-            r) REPO=${OPTARG} ;;
-        esac
-    done
-else
-    echo ""
-    echo "用法: bash 01_qc_fastp.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO"
-    echo ""
-    echo "参数说明:"
-    echo "  -s  样本名（不含后缀，如 SRR28210342）"
-    echo "  -t  线程数（推荐 8-16）"
-    echo "  -w  工作目录（Project_example 路径）"
-    echo "  -r  MaxMetagenome 项目根目录"
-    echo ""
-    echo "示例:"
-    echo "  bash 01_qc_fastp.sh -s SRR28210342 -t 16 \\"
-    echo "       -w ~/Course/Maxmetagenome/Project/Project_example \\"
-    echo "       -r ~/Course/Maxmetagenome"
-    exit 1
-fi
+参数说明:
+  -s  样本名（不含后缀，如 SRR28210342）
+  -t  线程数（推荐 8-16）
+  -w  工作目录（Project_example 路径）
+  -r  MaxMetagenome 项目根目录
 
-SECONDS=0
+示例:
+  bash 01_qc_fastp.sh -s SRR28210342 -t 16 \
+       -w ~/Course/Maxmetagenome/Project/Project_example \
+       -r ~/Course/Maxmetagenome
+EOF
+}
+
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
+
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -98,8 +85,8 @@ echo "[fastp] 线程: ${CPUS}"
 
 # --- 运行 fastp ---
 
-set +e
-conda run --prefix "${REPO}/envs/fastp" fastp \
+EXIT_CODE=0
+mgx_try mgx_conda fastp fastp \
     --in1  "${INPUT_R1}" \
     --in2  "${INPUT_R2}" \
     --out1 "${OUT_R1}" \
@@ -111,11 +98,8 @@ conda run --prefix "${REPO}/envs/fastp" fastp \
     --length_required 50 \
     --correction \
     -w "${CPUS}" \
-    2> "${FASTP_LOG}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+    2> "${FASTP_LOG}" || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] fastp 运行失败（exit code: ${EXIT_CODE}），查看日志: ${FASTP_LOG}"
     exit ${EXIT_CODE}
 fi
@@ -140,4 +124,5 @@ print(f"[fastp] 统计: 输入reads={total_reads:,}  通过={passed_reads:,}  �
 PYEOF
 fi
 
-echo "[fastp] ${SAMPLE} 完成，耗时 ${SECONDS}s，结果: ${RESULT_DIR}"
+echo "[fastp] ${SAMPLE} 完成，结果: ${RESULT_DIR}"
+mgx_end "fastp"

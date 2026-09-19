@@ -20,8 +20,8 @@ fi
 
 cd "${REPO_ROOT}"
 
-mapfile -t ALL_SH < <(find scripts -maxdepth 1 -name '*.sh' -type f | sort)
-echo "[INFO] Scanning ${#ALL_SH[@]} script(s) under scripts/ (severity=warning)..."
+mapfile -t ALL_SH < <( { find scripts -maxdepth 1 -name '*.sh' -type f; find scripts/utils scripts/hooks scripts/tests -maxdepth 1 -name '*.sh' -type f; } | sort -u)
+echo "[INFO] Scanning ${#ALL_SH[@]} script(s) under scripts/ + utils/hooks/tests (severity=warning)..."
 echo ""
 
 FAILED=0

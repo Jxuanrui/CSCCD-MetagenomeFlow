@@ -25,7 +25,7 @@ jobs:
           shellcheck --version
       - name: shellcheck scripts/*.sh (severity=warning, per .shellcheckrc)
         run: |
-          mapfile -t all_sh < <(find scripts -maxdepth 1 -name '*.sh' -type f | sort)
+          mapfile -t all_sh < <( { find scripts -maxdepth 1 -name '*.sh' -type f; find scripts/utils scripts/hooks scripts/tests -maxdepth 1 -name '*.sh' -type f; } | sort -u)
           echo "[INFO] Scanning ${#all_sh[@]} script(s) under scripts/ (severity=warning)..."
           fail=0
           for f in "${all_sh[@]}"; do
