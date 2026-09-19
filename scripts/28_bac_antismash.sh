@@ -2,7 +2,8 @@
 # ==============================================================================
 # 脚本名: 28_bac_antismash.sh
 # 功  能: 次级代谢产物生物合成基因簇（BGC）预测（antiSMASH）
-#         工具版本：antiSMASH 7.x（conda env: antismash）
+#         工具版本：antiSMASH 8.0.4（conda env: antismash8；Blin et al. 2025，101 cluster types；
+#                   旧 7.1.0 env/db 冻结保留可回滚）
 # 依  赖: 16_bac_megahit.sh 的输出（{sample}.contigs.fa，≥1000bp）
 # 输  入: ${WORKDIR}/result/assembly/megahit/{sample}/{sample}.contigs.fa
 # 输  出: ${WORKDIR}/result/antismash/{sample}/
@@ -15,7 +16,7 @@
 #   --minimal 可跳过 NCBI taxonomy 查询，但会损失部分注释
 #   --taxon bacteria 是宏基因组细菌最常用设置
 #
-# 参  考: Blin et al. 2023 NAR (antiSMASH 7)
+# 参  考: Blin et al. 2025 NAR (antiSMASH 8)
 # 用  法: bash 28_bac_antismash.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
@@ -46,7 +47,7 @@ mgx_begin
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 RESULT_DIR="${WORKDIR}/result/annotation/antismash/${SAMPLE}"
 SENTINEL="${RESULT_DIR}/antismash_done.txt"
-ANTISMASH_DB="${REPO}/db/antismash/antismash-db"
+ANTISMASH_DB="${REPO}/db/antismash8"
 
 if [ ! -f "${CONTIGS}" ] || [ ! -s "${CONTIGS}" ]; then
     echo "[ERROR] 组装文件不存在: ${CONTIGS}"; exit 1
@@ -67,7 +68,7 @@ mkdir -p "$(dirname "${RESULT_DIR}")"
 echo "[antismash] 样本: ${SAMPLE} | 线程: ${CPUS}"
 
 EXIT_CODE=0
-mgx_try mgx_conda antismash \
+mgx_try mgx_conda antismash8 \
     antismash \
         "${CONTIGS}" \
         --taxon bacteria \
