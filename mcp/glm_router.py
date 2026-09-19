@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""glm_router — MCP server exposing the configured GLM models for agent use.
+"""glm_router — MCP server exposing the official GLM models for agent use.
 
-Wraps the OpenAI-compatible endpoint configured in ~/.config/opencode/opencode.json
-(provider "xianyu-temp": glm-5.3, glm-5.3-flash). Credentials are read from
-(1) env GLM_API_KEY / GLM_API_BASE if set, else (2) the opencode config file —
-never from this repo, never logged.
+Calls the official Zhipu open platform (OpenAI-compatible). Credentials are
+read from (1) env GLM_API_KEY / GLM_API_BASE if set, else (2) the local
+key file ~/.glm_router_api_key (chmod 600, OUTSIDE the repo) — never from
+this repo, never logged, never printed.
 
 Tool: glm_call(model, prompt, system?, temperature?, max_tokens?)
   model: "glm-5.3" (flagship: planning/review/deep coding) or "glm-5.3-flash"
@@ -19,24 +19,20 @@ import sys
 
 import requests
 
-DEFAULT_BASE = "https://llm.goaichat.top/v1"
+DEFAULT_BASE = "https://open.bigmodel.cn/api/paas/v4"
 MODELS = ("glm-5.3", "glm-5.3-flash")
-OPENCODE_CONFIG = os.path.expanduser("~/.config/opencode/opencode.json")
+KEY_FILE = os.path.expanduser("~/.glm_router_api_key")
 
 
 def _credentials():
-    """API key/base: env first, then the user's opencode config. Never print."""
-    base = os.environ.get("GLM_API_BASE")
+    """API key/base: env first, then the local key file. Never print."""
+    base = os.environ.get("GLM_API_BASE") or DEFAULT_BASE
     key = os.environ.get("GLM_API_KEY")
-    if key:
-        return base or DEFAULT_BASE, key
-    try:
-        cfg = json.load(open(OPENCODE_CONFIG))
-        prov = cfg.get("provider", {}).get("xianyu-temp", {}).get("options", {})
-        key = prov.get("apiKey")
-        base = base or prov.get("baseURL") or DEFAULT_BASE
-    except Exception:
-        base = base or DEFAULT_BASE
+    if not key and os.path.isfile(KEY_FILE):
+        try:
+            key = open(KEY_FILE).read().strip()
+        except OSError:
+            key = None
     return base, key
 
 
@@ -44,8 +40,8 @@ def chat(model, prompt, system=None, temperature=None, max_tokens=None):
     base, key = _credentials()
     if not key:
         raise RuntimeError(
-            "GLM API key not found: set GLM_API_KEY or configure "
-            'provider "xianyu-temp" in ~/.config/opencode/opencode.json'
+            "GLM API key not found: set GLM_API_KEY or create "
+            f"{KEY_FILE} (chmod 600)"
         )
     messages = []
     if system:
@@ -65,12 +61,26 @@ def chat(model, prompt, system=None, temperature=None, max_tokens=None):
     resp.raise_for_status()
     data = resp.json()
     usage = data.get("usage", {})
+    message = data["choices"][0]["message"]
+    content = message.get("content") or ""
+    reasoning = message.get("reasoning_content") or ""
+    # glm-5.3 is a hybrid-reasoning model: small max_tokens budgets can be
+    # consumed entirely by reasoning_content, leaving content empty. Surface
+    # the reasoning in that case (flagged) instead of returning "".
+    if not content.strip() and reasoning:
+        content = reasoning
+        meta_content_source = "reasoning"
+    else:
+        meta_content_source = "final"
+    details = usage.get("completion_tokens_details") or {}
     return (
-        data["choices"][0]["message"]["content"],
+        content,
         {
             "model": data.get("model", model),
             "prompt_tokens": usage.get("prompt_tokens"),
             "completion_tokens": usage.get("completion_tokens"),
+            "reasoning_tokens": details.get("reasoning_tokens"),
+            "content_source": meta_content_source,
         },
     )
 
