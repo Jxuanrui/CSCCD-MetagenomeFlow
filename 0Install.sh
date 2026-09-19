@@ -94,6 +94,14 @@
     db=${PROJ_DIR}/db             # 数据库目录
     tools=${PROJ_DIR}/tools       # 辅助脚本目录
 
+    # 本地数据库银行（"方法0"快装复制源）——迁移新服务器时用环境变量覆盖：
+    #   DB_BANK=/path/to/dbbank SIBLING_DB=/path/to/sibling/db bash 0Install.sh
+    # 银行不存在时，各节的 方法0 cp 会失败；改用各节注释掉的 方法1 wget 下载块。
+    : "${DB_BANK:=/data/mydirectory/db}"
+    : "${SIBLING_DB:=/home/labuser/Course/Metagenomics_Apptainer_pipline/db}"
+    [ -d "${DB_BANK}" ]     || echo "[WARN] DB_BANK 不存在: ${DB_BANK} —— 方法0 本地快装将失败，请覆盖 DB_BANK 或改用各节方法1"
+    [ -d "${SIBLING_DB}" ]  || echo "[WARN] SIBLING_DB 不存在: ${SIBLING_DB} —— 方法0 本地快装将失败，请覆盖 SIBLING_DB 或改用各节方法1"
+
     mkdir -p ${envs} ${db} ${tools}
     echo "项目根目录: ${PROJ_DIR}"
 
@@ -178,9 +186,9 @@
     # ----
     # 方法0：从百度云链接进行下载配置
     # ----
-    cp /data/mydirectory/db/kneaddata/human/* ${db}/kneaddata/human/
-    cp /data/mydirectory/db/kneaddata/mouse/* ${db}/kneaddata/mouse/
-    cp /data/mydirectory/db/kneaddata/rat/*   ${db}/kneaddata/rat/
+    cp ${DB_BANK}/kneaddata/human/* ${db}/kneaddata/human/
+    cp ${DB_BANK}/kneaddata/mouse/* ${db}/kneaddata/mouse/
+    cp ${DB_BANK}/kneaddata/rat/*   ${db}/kneaddata/rat/
 
     # ----
     # 方法1：NMDC 国内镜像下载（国内服务器推荐，速度较快）
@@ -265,9 +273,9 @@
     # ----
     # 方法0：从本服务器复制（最快）
     # ----
-    cp -r /data/mydirectory/db/humann3/chocophlan/*    ${db}/humann4/chocophlan/
-    cp -r /data/mydirectory/db/humann3/uniref/*        ${db}/humann4/uniref/
-    cp -r /data/mydirectory/db/humann3/utility_mapping/* ${db}/humann4/utility_mapping/
+    cp -r ${DB_BANK}/humann3/chocophlan/*    ${db}/humann4/chocophlan/
+    cp -r ${DB_BANK}/humann3/uniref/*        ${db}/humann4/uniref/
+    cp -r ${DB_BANK}/humann3/utility_mapping/* ${db}/humann4/utility_mapping/
 
     # ----
     # 方法1：官方下载（humann v3.9 兼容版本）
@@ -320,7 +328,7 @@
     # ----
     # 方法0：从本服务器复制（最快）
     # ----
-    cp /data/mydirectory/db/metaphlan4/* ${db}/metaphlan4/
+    cp ${DB_BANK}/metaphlan4/* ${db}/metaphlan4/
 
     # ----
     # 方法1：NMDC 国内镜像（202403 最新版，推荐）
@@ -373,7 +381,7 @@
     # ----
     # 方法0：从本服务器复制（最快）
     # ----
-    cp /data/mydirectory/db/kraken2/pluspf/* ${db}/kraken2/pluspf/
+    cp ${DB_BANK}/kraken2/pluspf/* ${db}/kraken2/pluspf/
 
     # ----
     # 方法1：官方 S3 下载
@@ -438,10 +446,10 @@
     # ----
     # 方法0：从本服务器复制（最快，约 59 GB）
     # ----
-    cp /data/mydirectory/db/eggnog/eggnog.db                    ${db}/eggnog/
-    cp /data/mydirectory/db/eggnog/eggnog_proteins.dmnd          ${db}/eggnog/
-    cp /data/mydirectory/db/eggnog/eggnog.taxa.db                ${db}/eggnog/
-    cp /data/mydirectory/db/eggnog/eggnog.taxa.db.traverse.pkl   ${db}/eggnog/
+    cp ${DB_BANK}/eggnog/eggnog.db                    ${db}/eggnog/
+    cp ${DB_BANK}/eggnog/eggnog_proteins.dmnd          ${db}/eggnog/
+    cp ${DB_BANK}/eggnog/eggnog.taxa.db                ${db}/eggnog/
+    cp ${DB_BANK}/eggnog/eggnog.taxa.db.traverse.pkl   ${db}/eggnog/
 
     # ----
     # 方法1：NMDC 国内镜像
@@ -492,7 +500,7 @@
     # ----
     # 方法0：从本服务器复制（1.7 GB）
     # ----
-    cp -r /data/mydirectory/db/checkm/* ${db}/checkm/
+    cp -r ${DB_BANK}/checkm/* ${db}/checkm/
 
     # ----
     # 方法1：官方下载（275 MB 压缩，解压 1.4 GB）
@@ -561,7 +569,7 @@ CHECKM_CFG
     # ----
     # 方法0：从本服务器复制（160 GB）
     # ----
-    cp -r /data/mydirectory/db/gtdbtk-2.3.2/* ${db}/gtdbtk/
+    cp -r ${DB_BANK}/gtdbtk-2.3.2/* ${db}/gtdbtk/
 
     # ----
     # 方法1：官方下载
@@ -602,7 +610,7 @@ CHECKM_CFG
     # ----
     # 方法0：从本服务器复制（2.9 GB）
     # ----
-    cp -r /data/mydirectory/db/checkm2/* ${db}/checkm2/
+    cp -r ${DB_BANK}/checkm2/* ${db}/checkm2/
 
     # ----
     # 方法1：官方下载
@@ -686,7 +694,7 @@ CHECKM_CFG
     # ----
     # 方法0：从本服务器复制（48 MB）
     # ----
-    cp /data/mydirectory/db/card/* ${db}/card/
+    cp ${DB_BANK}/card/* ${db}/card/
     # 方法1：官方下载
     # wget -c https://card.mcmaster.ca/latest/data \
     #     -O ${db}/card/card-data.tar.gz
@@ -717,7 +725,7 @@ CHECKM_CFG
     # ----
     # 方法0：从本服务器复制（3.5 GB）
     # ----
-    cp /data/mydirectory/db/dbcan3/* ${db}/dbcan3/
+    cp ${DB_BANK}/dbcan3/* ${db}/dbcan3/
     # 方法1：官方下载
     # wget -c https://bcb.unl.edu/dbCAN2/download/CAZyDB.07262023.fa \
     #     -O ${db}/dbcan3/CAZyDB.07262023.fa
@@ -969,7 +977,7 @@ CHECKM_CFG
     # ----
     # 方法0：从 Apptainer 项目复制（最快）
     # ----
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/centrifuger/* ${db}/centrifuger/
+    cp -r ${SIBLING_DB}/centrifuger/* ${db}/centrifuger/
 
     # ----
     # 方法1：官方下载
@@ -985,57 +993,57 @@ CHECKM_CFG
 
     # VFDB 毒力因子（2.0 GB）
     mkdir -p ${db}/vfdb
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/vfdb/* ${db}/vfdb/
+    cp -r ${SIBLING_DB}/vfdb/* ${db}/vfdb/
     echo "VFDB 就绪: ${db}/vfdb/"
 
     # BacMet 重金属抗性基因（867 MB）
     mkdir -p ${db}/bacmet
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/bacmet-db/* ${db}/bacmet/
+    cp -r ${SIBLING_DB}/bacmet-db/* ${db}/bacmet/
     echo "BacMet 就绪: ${db}/bacmet/"
 
     # MEROPS 蛋白酶（3.7 GB）
     mkdir -p ${db}/merops
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/merops/* ${db}/merops/
+    cp -r ${SIBLING_DB}/merops/* ${db}/merops/
     echo "MEROPS 就绪: ${db}/merops/"
 
     # KEGG diamond 索引（48 GB）
     mkdir -p ${db}/kegg
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/kegg/* ${db}/kegg/
+    cp -r ${SIBLING_DB}/kegg/* ${db}/kegg/
     echo "KEGG 就绪: ${db}/kegg/"
 
     # NCBI AMRFinder 数据库（488 MB，amr 环境已有工具）
     mkdir -p ${db}/amrfinder
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/amrfinder-db/* ${db}/amrfinder/
+    cp -r ${SIBLING_DB}/amrfinder-db/* ${db}/amrfinder/
     echo "AMRFinder 数据库就绪: ${db}/amrfinder/"
 
     # SARG+ 污水抗性基因库（264 MB）
     mkdir -p ${db}/sarg
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/sarg+-db/* ${db}/sarg/
+    cp -r ${SIBLING_DB}/sarg+-db/* ${db}/sarg/
     echo "SARG+ 就绪: ${db}/sarg/"
 
     # PHI 植物-微生物互作（946 MB）
     mkdir -p ${db}/phi
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/phi/* ${db}/phi/
+    cp -r ${SIBLING_DB}/phi/* ${db}/phi/
     echo "PHI 就绪: ${db}/phi/"
 
     # mVIRdb 微生物病毒数据库（1.2 GB）
     mkdir -p ${db}/mvirdb
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/mvirdb/* ${db}/mvirdb/
+    cp -r ${SIBLING_DB}/mvirdb/* ${db}/mvirdb/
     echo "mVIRdb 就绪: ${db}/mvirdb/"
 
     # TCDB 转运载体数据库（982 MB）
     mkdir -p ${db}/tcdb
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/tcdb/* ${db}/tcdb/
+    cp -r ${SIBLING_DB}/tcdb/* ${db}/tcdb/
     echo "TCDB 就绪: ${db}/tcdb/"
 
     # NCyc 氮循环（214 MB）
     mkdir -p ${db}/ncyc
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/ncyc-db/* ${db}/ncyc/
+    cp -r ${SIBLING_DB}/ncyc-db/* ${db}/ncyc/
     echo "NCyc 就绪: ${db}/ncyc/"
 
     # PCyc 磷循环（846 MB）
     mkdir -p ${db}/pcyc
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/pcyc-db/* ${db}/pcyc/
+    cp -r ${SIBLING_DB}/pcyc-db/* ${db}/pcyc/
     echo "PCyc 就绪: ${db}/pcyc/"
 
 
@@ -1046,7 +1054,7 @@ CHECKM_CFG
     # ----
     # 方法0：从压缩包解压（Apptainer 项目有 tar.gz）
     # ----
-    tar xvzf /home/labuser/Course/Metagenomics_Apptainer_pipline/db/genomad.tar.gz \
+    tar xvzf ${SIBLING_DB}/genomad.tar.gz \
         -C ${db}/genomad/ 2>/dev/null \
         || echo "genomad.tar.gz 解压失败，请使用方法1"
 
@@ -1201,7 +1209,7 @@ CHECKM_CFG
     # ----
     # 注：解压后数据库实际路径为 ${db}/antismash/antismash-db/
     # 使用时：antismash --databases ${db}/antismash/antismash-db
-    tar xzf /home/labuser/Course/Metagenomics_Apptainer_pipline/db/antismash-db.tar.gz \
+    tar xzf ${SIBLING_DB}/antismash-db.tar.gz \
         -C ${db}/antismash/ \
         && echo "antiSMASH 数据库就绪: ${db}/antismash/antismash-db/ ($(ls ${db}/antismash/antismash-db/ | wc -l) 个模块)"
 
@@ -1480,7 +1488,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # --- 11.1 肠道真菌参考数据库（gut_fungi DIAMOND DB） [✓ 已完成] ---
 # 说明：供 74_fun_blast_gutdb.sh 使用，基于 NCBI 肠道真菌基因组（19G fasta）
 #       使用 diamond blastn 模式比对 reads → 鉴定真菌物种
-# 数据源：/data/mydirectory/db/fungi_human_gut_reference/combined.fasta
+# 数据源：${DB_BANK}/fungi_human_gut_reference/combined.fasta
 
     mkdir -p ${db}/fungi
 
@@ -1488,7 +1496,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     # 方法0：从本服务器复制并构建 DMND（推荐，19G fasta → ~8G DMND，需数小时）
     # ----
     if [ ! -f "${db}/fungi/gut_fungi.dmnd" ]; then
-        cp /data/mydirectory/db/fungi_human_gut_reference/combined.fasta ${db}/fungi/combined.fasta
+        cp ${DB_BANK}/fungi_human_gut_reference/combined.fasta ${db}/fungi/combined.fasta
         conda run --prefix ${envs}/assembly diamond makedb \
             --in ${db}/fungi/combined.fasta \
             -d ${db}/fungi/gut_fungi \
@@ -1785,7 +1793,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 #   recombinase-kit    — 位点特异性重组酶注释
 #
 # 数据来源：
-#   §15.1-15.3 均从 /home/labuser/Course/Metagenomics_Apptainer_pipline/db/ 复制 ✓
+#   §15.1-15.3 均从 ${SIBLING_DB}/ 复制 ✓
 #   §15.4-15.5 原参考项目使用 Apptainer 容器（DB 内嵌），本项目改用 conda 安装
 
 # --- §15.1 UniProt Swiss-Prot [✓ 已完成] ---
@@ -1796,7 +1804,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     mkdir -p ${db}/uniprot_sprot
 
     # ---- 方法0：从参考项目复制（推荐，已完成）----
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/uniprot_sprot/* \
+    cp -r ${SIBLING_DB}/uniprot_sprot/* \
         ${db}/uniprot_sprot/
     echo "UniProt Swiss-Prot 就绪: ${db}/uniprot_sprot/"
 
@@ -1818,7 +1826,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
     mkdir -p ${db}/pfam
 
     # ---- 方法0：从参考项目复制（推荐，已完成，含 hmmpress 索引）----
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/pfam/* \
+    cp -r ${SIBLING_DB}/pfam/* \
         ${db}/pfam/
     echo "Pfam-A 就绪: ${db}/pfam/"
 
@@ -1835,7 +1843,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
     # ── ISfinder（插入序列，2.7 MB .faa + 16 MB .udb）──
     mkdir -p ${db}/ISfinder
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/ISfinder/* \
+    cp -r ${SIBLING_DB}/ISfinder/* \
         ${db}/ISfinder/
     echo "ISfinder 就绪: ${db}/ISfinder/"
 
@@ -1847,7 +1855,7 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
     # ── ICEberg（整合接合元件，33 MB .fasta）──
     mkdir -p ${db}/ICEberg
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/ICEberg/* \
+    cp -r ${SIBLING_DB}/ICEberg/* \
         ${db}/ICEberg/
     echo "ICEberg 就绪: ${db}/ICEberg/"
 
@@ -1860,13 +1868,13 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 
     # ── integrall（整合子，30 MB .ffn + BLAST 索引）──
     mkdir -p ${db}/integrall
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/integrall/* \
+    cp -r ${SIBLING_DB}/integrall/* \
         ${db}/integrall/
     echo "integrall 就绪: ${db}/integrall/"
 
     # ── transposase-db（转座酶 HMM，4.3 MB .hmm + hmmpress 索引）──
     mkdir -p ${db}/transposase-db
-    cp -r /home/labuser/Course/Metagenomics_Apptainer_pipline/db/transposase-db/* \
+    cp -r ${SIBLING_DB}/transposase-db/* \
         ${db}/transposase-db/
     echo "transposase-db 就绪: ${db}/transposase-db/"
 
