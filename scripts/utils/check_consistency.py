@@ -6,6 +6,9 @@ that every top-level analysis script is registered, and that every skill card's
 snakemake_rule points at a real rule in an existing rule file.
 
 Exit 0 on clean, 1 on any discrepancy. Deterministic (sorted) output.
+
+With --update-readme-badges, additionally rewrites the count tokens in
+README.md (badges, ASCII banner, Platform table) to live repo values.
 """
 
 import argparse
@@ -122,10 +125,78 @@ def _is_companion_script(stem, registry):
     return any(registered.startswith(prefix + "_") for registered in registry)
 
 
+def count_repo_assets():
+    """Live counts for README badge sync: scripts by type, total, rules, env dirs.
+
+    envs is None when envs/ is absent (gitignored, e.g. on a fresh clone).
+    """
+    per_type = {".sh": 0, ".R": 0, ".py": 0}
+    for path in (REPO / "scripts").iterdir():
+        if path.is_file() and path.suffix in per_type:
+            per_type[path.suffix] += 1
+    n_rules = sum(
+        len(re.findall(r"^rule\s", rule_file.read_text(), re.M))
+        for rule_file in sorted((REPO / "pipeline/rules").glob("*.smk"))
+    )
+    envs_dir = REPO / "envs"
+    n_envs = (
+        sum(1 for child in envs_dir.iterdir() if child.is_dir())
+        if envs_dir.is_dir()
+        else None
+    )
+    return {
+        "sh": per_type[".sh"],
+        "R": per_type[".R"],
+        "py": per_type[".py"],
+        "scripts": sum(per_type.values()),
+        "rules": n_rules,
+        "envs": n_envs,
+    }
+
+
+# README.md count tokens kept in sync by --update-readme-badges.
+# Each pattern has one named group "n" covering exactly the stale digits.
+README_TOKENS = (
+    ("scripts badge", r"scripts-(?P<n>\d+)-blue", "scripts"),
+    ("conda envs badge", r"conda%20envs-(?P<n>\d+)-orange", "envs"),
+    ("banner 分析脚本", r"(?P<n>\d+)(?=\s*分析脚本)", "scripts"),
+    ("banner Snakemake 规则", r"(?P<n>\d+)(?=\s*Snakemake\s*规则)", "rules"),
+    ("banner conda 环境", r"(?P<n>\d+)(?=\s*conda\s*环境)", "envs"),
+    ("table Analysis scripts", r"\|\s*Analysis scripts\s*\|\s*(?P<n>\d+)", "scripts"),
+    ("table Snakemake rules", r"\|\s*Snakemake rules\s*\|\s*(?P<n>\d+)", "rules"),
+    ("table Conda environments", r"\|\s*Conda environments\s*\|\s*(?P<n>\d+)", "envs"),
+)
+
+
+def update_readme_badges():
+    """Rewrite the README_TOKENS digits in README.md to live values (idempotent)."""
+    counts = count_repo_assets()
+    text = (REPO / "README.md").read_text()
+    for label, pattern, key in README_TOKENS:
+        value = counts[key]
+        if value is None:
+            print(f"[badge] {label}: envs/ not found, token left unchanged")
+            continue
+        match = re.search(pattern, text)
+        if not match:
+            print(f"[badge] {label}: token not found in README.md")
+            continue
+        old = match.group("n")
+        if old != str(value):
+            text = text[: match.start("n")] + str(value) + text[match.end("n"):]
+            print(f"[badge] {label}: {old} -> {value}")
+    (REPO / "README.md").write_text(text)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--quiet", action="store_true", help="only print failures")
     ap.add_argument("--verbose", action="store_true", help="print every check line")
+    ap.add_argument(
+        "--update-readme-badges",
+        action="store_true",
+        help="also sync README.md count tokens (badges/banner/table) to live values",
+    )
     args = ap.parse_args()
 
     issues = []
@@ -172,6 +243,9 @@ def main():
         print(line)
     for line in sorted(issues):
         print(line)
+
+    if args.update_readme_badges:
+        update_readme_badges()
 
     summary = (
         f"registry={len(registry)} scripts={len(scripts)} "

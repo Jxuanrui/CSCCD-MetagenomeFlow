@@ -7,7 +7,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
-[![Conda](https://img.shields.io/badge/conda%20envs-52-orange)](https://github.com/conda-forge/miniforge)
+[![Conda](https://img.shields.io/badge/conda%20envs-54-orange)](https://github.com/conda-forge/miniforge)
 [![Scripts](https://img.shields.io/badge/scripts-181-blue)]()
 [![RAG](https://img.shields.io/badge/RAG-12242%20chunks-purple)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
@@ -25,7 +25,7 @@
 ║    MaxMetagenome Platform                                                 ║
 ║    完整宏基因组多维度分析平台  ·  版本 1.1.2                                 ║
 ║                                                                           ║
-║    181 分析脚本  ·  141 Snakemake 规则  ·  53 conda 环境  ·  ~1.2TB 数据库  ║
+║    181 分析脚本  ·  141 Snakemake 规则  ·  54 conda 环境  ·  ~1.2TB 数据库  ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -58,7 +58,7 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 - **Three kingdoms, one platform.** Bacteria (scripts 11–42b), Virome (51–72), and Mycobiome (71–86) share the same preprocessing steps, project directory layout, and Snakemake configuration — no glue scripts, no format conversion between steps.
 - **Mechanistic discovery built-in.** The `mechanism_kb` RAG collection bridges 4,860 manually-curated gut microbe → metabolite → host gene relationships (sourced from GutMGene v2.0 + OmniPath), enabling direct queries like "which microbial functions produce butyrate and activate FFAR2?" — critical for cardiovascular research where short-chain fatty acids modulate inflammation and blood pressure.
-- **Portable and reproducible.** All 53 conda environments and ~1.2 TB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
+- **Portable and reproducible.** All 54 conda environments and ~1.2 TB of databases install locally under the project root via a single `0Install.sh`. Moving to a new server is a `git clone` + `bash 0Install.sh`.
 - **Three run modes.** Step-by-step (fine-grained debugging), Bash pipeline (lightweight, no extra deps, `--from`/`--skip` checkpointing), or Snakemake DAG (production, HPC-ready, native resume). All three modes call the identical underlying scripts.
 - **Functional integration built-in.** Script `98b` generates 11 integration tables per dimension at the end of each analysis — raw (Σ TPM), relative abundance, and CLR-normalized versions — ready for LEfSe, ANCOM-BC2, MaAsLin2, SIAMCAT, and Aitchison-distance ordination without any manual post-processing.
 - **AI-assisted with MCP protocol.** 18 Claude Code slash commands (`/mgx-*` + `/graphify`) cover pipeline planning, execution, visualization, new-script integration, and knowledge graph construction, backed by a quad-source RAG knowledge base (12,242 chunks: 1,860 experience_kb + 5,392 literature_kb + 130 skill_design_kb + 4,860 mechanism_kb) indexed with `BAAI/bge-small-zh-v1.5`. MCP server implements official Model Context Protocol for seamless integration with Claude Code and Codex CLI, supporting incremental indexing (20-50x faster iteration).
@@ -131,7 +131,7 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 ### 平台成熟度 | Platform Maturity
 - **Snakemake full validation**: 141 rules across 11 rule files, end-to-end tested from raw reads to statistics (bacteria/virome/fungi + 91-98 stats pipelines); GEM module (43–43c) validated at full scale on real production data (216 dRep MAGs, CarveMe 212/216 + FBA 214/216 successful)
-- **53 conda environments**: all tools self-contained under project root, ~1.2 TB databases (GTDB R226, VOGDB, ChocoPhlAn, UniRef90, EukDB, etc.)
+- **54 conda environments**: all tools self-contained under project root, ~1.2 TB databases (GTDB R226, VOGDB, ChocoPhlAn, UniRef90, EukDB, etc.)
 - **Three run modes**: step-by-step (debugging), Bash pipeline (lightweight), or Snakemake DAG (HPC-ready with native resume)
 - **Three-layer test pyramid**: Layer 1 shellcheck full scan (124/155 scripts clean, 31 with pre-existing style-level warnings pending cleanup — not currently a hard CI gate), Layer 2 integration tests (5 representative scripts on Test_CI_fixture), Layer 3 DAG connectivity (Snakemake dry-run resolves 261 jobs on Test_CI_fixture, no connectivity errors). Unified entry: `bash scripts/tests/run_ci_checks.sh --level 3`
 
@@ -144,9 +144,9 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 | OS | Linux x86_64 · Ubuntu 22.04 |
 | Environment manager | Miniforge3 (self-contained, under project root) |
 | Workflow engine | Snakemake 9.22.0 |
-| Analysis scripts | 178 (01–98g + diagnostic/ops utilities, including .sh/.R/.py) |
-| Snakemake rules | 138 across 11 rule files |
-| Conda environments | 52 isolated tool environments |
+| Analysis scripts | 181 (01–98g + diagnostic/ops utilities, including .sh/.R/.py) |
+| Snakemake rules | 141 across 11 rule files |
+| Conda environments | 54 isolated tool environments |
 | Databases | ~1.2 TB (ChocoPhlAn, UniRef90, GTDB R226, VOGDB, EukDB, UniProt Swiss-Prot, Pfam-A, ISfinder, ICEberg, integrall, transposase-db, etc.) |
 | RAG knowledge base | **12,242 chunks** across 4 collections (ChromaDB + bge-small-zh-v1.5 + BM25 hybrid retrieval) |
 | MCP server | Official Model Context Protocol compliance, registered with Claude Code & Codex CLI |

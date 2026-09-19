@@ -354,3 +354,18 @@ tmp_dir: "/tmp"                # 临时目录
 - 📖 性能调优: [docs/PERFORMANCE_TUNING.md](../docs/PERFORMANCE_TUNING.md)
 - 📖 故障排查: [docs/TROUBLESHOOTING.md](../docs/TROUBLESHOOTING.md)
 - 🤖 Claude Code 技能: 22 个 `/mgx-*` 技能（见根目录 README.md）
+
+---
+
+## Remote CI（远程持续集成）
+
+`.github/workflows/ci.yml` 只运行**仓库自含、确定性**的两项检查：
+
+- ✅ `lint`：对 `scripts/*.sh` 全量 shellcheck（`--severity=warning`，遵循根目录 `.shellcheckrc`）——本地 Level 1 的独立复刻
+- ✅ `consistency`：运行 `python3 scripts/utils/check_consistency.py`，要求输出以 `issues=0` 结尾
+- ❌ 不含 Level 2/3：集成测试与 Snakemake DAG dry-run 依赖 `Project/Test_CI_fixture` 数据（已 gitignore），远程 runner 无法复现，仍留在本地执行（`bash scripts/tests/run_ci_checks.sh --level {2,3}`）
+
+启用方式（二选一）：
+
+1. 镜像推送 GitHub（Actions 直接生效）：`git remote add github <github-url> && git push --mirror github`
+2. 翻译为 Gitee Go：将 `ci.yml` 改写为 `.workflow/` 流水线，两个 job 的安装与检查命令原样保留
