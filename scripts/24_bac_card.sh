@@ -20,6 +20,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 24_bac_card.sh -t CPUS -w WORKDIR -r REPO
@@ -31,27 +33,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-FORCE=0
-WORKDIR=""
-REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/annotation/card"
@@ -75,39 +63,32 @@ mkdir -p "${RESULT_DIR}"
 # rgi --local reads/writes localDB/ relative to CWD; cd ensures load and main share the same localDB
 cd "${RESULT_DIR}"
 
-set +e
 echo "[card] 加载 CARD 本地数据库..."
-conda run --prefix "${REPO}/envs/amr" --no-capture-output \
-    rgi load \
-        --card_json "${CARD_DB}" \
-        --local
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+EXIT_CODE=0
+mgx_try mgx_conda amr rgi load \
+    --card_json "${CARD_DB}" \
+    --local || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] rgi load 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
 fi
 
 echo "[card] 开始 RGI 耐药基因注释 | 线程: ${CPUS}"
 
-set +e
-conda run --prefix "${REPO}/envs/amr" --no-capture-output \
-    rgi main \
-        --input_sequence "${PROTEIN_NR}" \
-        --output_file "${OUTPUT_PREFIX}" \
-        --input_type protein \
-        --alignment_tool DIAMOND \
-        --num_threads "${CPUS}" \
-        --local \
-        --clean \
-        --include_loose
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+EXIT_CODE=0
+mgx_try mgx_conda amr rgi main \
+    --input_sequence "${PROTEIN_NR}" \
+    --output_file "${OUTPUT_PREFIX}" \
+    --input_type protein \
+    --alignment_tool DIAMOND \
+    --num_threads "${CPUS}" \
+    --local \
+    --clean \
+    --include_loose || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] rgi main 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
 fi
 
 N_STRICT=$(awk -F'\t' 'NR>1 && $24=="Strict"' "${OUTPUT_PREFIX}.txt" 2>/dev/null | wc -l || echo "N/A")
 N_PERFECT=$(awk -F'\t' 'NR>1 && $24=="Perfect"' "${OUTPUT_PREFIX}.txt" 2>/dev/null | wc -l || echo "N/A")
-echo "[card] 完成，耗时 ${SECONDS}s | Perfect: ${N_PERFECT} | Strict: ${N_STRICT} | 输出: ${OUTPUT_PREFIX}.txt"
+echo "[card] Perfect: ${N_PERFECT} | Strict: ${N_STRICT} | 输出: ${OUTPUT_PREFIX}.txt"
+mgx_end "card"

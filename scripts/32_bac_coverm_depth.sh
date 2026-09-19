@@ -19,6 +19,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 32_bac_coverm_depth.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -33,24 +35,13 @@ show_help() { cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数 -$(echo ${v:0:1} | tr '[:upper:]' '[:lower:]')"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/binning/coverm/${SAMPLE}"
 BAM="${OUTDIR}/${SAMPLE}.bam"
@@ -69,7 +60,7 @@ mkdir -p "${OUTDIR}"
     set +e
 if [ ! -f "${BAM}" ] || [ ! -s "${BAM}" ]; then
     echo "[coverm] 步骤 1/2: minimap2 比对生成 BAM ..."
-    conda run --prefix "${REPO}/envs/coverm" --no-capture-output \
+    mgx_conda coverm \
         coverm make \
             -p minimap2-sr \
             -t "${CPUS}" \
@@ -89,7 +80,7 @@ fi
     set +e
 if [ ! -f "${DEPTH}" ] || [ ! -s "${DEPTH}" ]; then
     echo "[coverm] 步骤 2/2: 生成深度表 ..."
-    conda run --prefix "${REPO}/envs/coverm" --no-capture-output \
+    mgx_conda coverm \
         coverm contig \
             -t "${CPUS}" \
             --methods metabat \
@@ -100,4 +91,5 @@ if [ ! -f "${DEPTH}" ] || [ ! -s "${DEPTH}" ]; then
     if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] coverm contig 失败"; exit ${EXIT_CODE}; fi
 fi
 
-echo "[coverm] 完成，耗时 ${SECONDS}s | 输出: ${OUTDIR}/"
+echo "[coverm] 输出: ${OUTDIR}/"
+mgx_end "coverm"

@@ -18,6 +18,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 19_bac_salmon_build.sh -t CPUS -w WORKDIR -r REPO
@@ -37,28 +39,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-WORKDIR=""
-REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"
-    show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -102,16 +89,14 @@ echo "[salmon-index] 线程: ${CPUS}"
 # -p: 线程数
 # Salmon 自动选择最优 word size
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     salmon index \
         -t "${NR_FNA}" \
         -i "${INDEX_DIR}" \
-        -p "${CPUS}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        -p "${CPUS}" \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] salmon index 运行失败（exit code: ${EXIT_CODE}）"
     rm -rf "${INDEX_DIR}"
     exit ${EXIT_CODE}
@@ -127,7 +112,8 @@ if [ ! -f "${INDEX_INFO}" ]; then
 fi
 
 echo ""
-echo "[salmon-index] 索引构建完成，耗时 ${SECONDS}s"
+echo "[salmon-index] 索引构建完成"
 echo "[salmon-index] 索引目录: ${INDEX_DIR}/"
 echo ""
 echo "[提示] 下一步: 对每个样本运行 20_bac_salmon_quant.sh 进行基因丰度定量"
+mgx_end "salmon-index"

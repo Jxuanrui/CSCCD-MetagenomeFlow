@@ -11,50 +11,35 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 # --- 参数解析 ---
 
-if [ $# -lt 4 ]; then
-    echo ""
-    echo "用法: bash 13b_bac_humann3_merge.sh -w WORKDIR -r REPO"
-    echo ""
-    echo "参数说明:"
-    echo "  -w  工作目录（Project_example 路径）"
-    echo "  -r  MaxMetagenome 项目根目录"
-    echo ""
-    echo "示例:"
-    echo "  bash 13b_bac_humann3_merge.sh \\"
-    echo "       -w ~/Course/Maxmetagenome/Project/Project_example \\"
-    echo "       -r ~/Course/Maxmetagenome"
-    echo ""
-    echo "可选参数:"
-    echo "  --force  强制重新运行（忽略已存在的结果）"
-    exit 1
-fi
+show_help() { cat << EOF
 
-FORCE=0
-ARGS=()
-for arg in "$@"; do
-    if [ "${arg}" = "--force" ]; then
-        FORCE=1
-    else
-        ARGS+=("${arg}")
-    fi
-done
-set -- "${ARGS[@]}"
+用法: bash 13b_bac_humann3_merge.sh -w WORKDIR -r REPO
 
-while getopts w:r: option; do
-    case "${option}" in
-        w) WORKDIR=${OPTARG} ;;
-        r) REPO=${OPTARG} ;;
-    esac
-done
+参数说明:
+  -w  工作目录（Project_example 路径）
+  -r  MaxMetagenome 项目根目录
 
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-w/-r）"
-    exit 1
-fi
+示例:
+  bash 13b_bac_humann3_merge.sh \\
+       -w ~/Course/Maxmetagenome/Project/Project_example \\
+       -r ~/Course/Maxmetagenome
 
-SECONDS=0
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
+EOF
+}
+
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
+
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -125,7 +110,7 @@ done
 # --- Step 2: 合并通路丰度表 ---
 
 echo "[INFO] 合并多样本 pathabundance relab 表..."
-conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+mgx_conda humann4 \
     humann_join_tables \
         --input "${STAGE_DIR}" \
         --file_name pathabundance_relab.tsv \
@@ -143,7 +128,7 @@ sed -i 's/_Abundance//g' "${PATHABUNDANCE_TSV}"
 
 
 echo "[INFO] 合并多样本 genefamilies relab 表..."
-conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+mgx_conda humann4 \
     humann_join_tables \
         --input "${STAGE_DIR}" \
         --file_name genefamilies_relab.tsv \
@@ -165,7 +150,8 @@ rm -rf "${STAGE_DIR}"
 # --- 统计摘要 ---
 
 echo ""
-echo "[humann3_merge] 合并完成，耗时 ${SECONDS}s"
+echo "[humann3_merge] 合并完成"
 echo "[humann3_merge] 输出目录: ${MERGED_DIR}"
 echo "    pathabundance_relab.tsv — $(wc -l < "${PATHABUNDANCE_TSV}") 行"
 echo "    genefamilies_relab.tsv  — $(wc -l < "${GENEFAMILIES_TSV}") 行"
+mgx_end "humann3_merge"

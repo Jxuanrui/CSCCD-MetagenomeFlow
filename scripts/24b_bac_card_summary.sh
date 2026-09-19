@@ -23,6 +23,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 24b_bac_card_summary.sh -w WORKDIR -r REPO [选项]
@@ -36,25 +38,13 @@ cat << EOF
 EOF
 }
 
-WORKDIR=""
-REPO=""
-FORCE=0
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 RGI_TXT="${WORKDIR}/result/annotation/card/rgi_results.txt"
 OUT_DIR="${WORKDIR}/result/annotation/card/summary"
@@ -206,6 +196,6 @@ if [ ! -s "${REPORT_TXT}" ]; then
 fi
 
 echo ""
-echo "[card_summary] 完成，耗时 ${SECONDS}s"
 echo "[card_summary] 输出目录: ${OUT_DIR}/"
 cat "${REPORT_TXT}"
+mgx_end "card_summary"

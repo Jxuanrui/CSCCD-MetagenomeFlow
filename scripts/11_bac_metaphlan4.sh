@@ -13,54 +13,37 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 # --- 参数解析 ---
 
-if [ $# -lt 8 ]; then
-    echo ""
-    echo "用法: bash 11_bac_metaphlan4.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO"
-    echo ""
-    echo "参数说明:"
-    echo "  -s  样本名（不含后缀，如 SRR28210342）"
-    echo "  -t  线程数（推荐 8-16）"
-    echo "  -w  工作目录（Project_example 路径）"
-    echo "  -r  MaxMetagenome 项目根目录"
-    echo ""
-    echo "示例:"
-    echo "  bash 11_bac_metaphlan4.sh -s SRR28210342 -t 16 \\"
-    echo "       -w ~/Course/Maxmetagenome/Project/Project_example \\"
-    echo "       -r ~/Course/Maxmetagenome"
-    echo ""
-    echo "可选参数:"
-    echo "  --force  强制重新运行（忽略已存在的结果）"
-    exit 1
-fi
+show_help() { cat << EOF
 
-FORCE=0
-ARGS=()
-for arg in "$@"; do
-    if [ "${arg}" = "--force" ]; then
-        FORCE=1
-    else
-        ARGS+=("${arg}")
-    fi
-done
-set -- "${ARGS[@]}"
+用法: bash 11_bac_metaphlan4.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 
-while getopts s:t:w:r: option; do
-    case "${option}" in
-        s) SAMPLE=${OPTARG} ;;
-        t) CPUS=${OPTARG} ;;
-        w) WORKDIR=${OPTARG} ;;
-        r) REPO=${OPTARG} ;;
-    esac
-done
+参数说明:
+  -s  样本名（不含后缀，如 SRR28210342）
+  -t  线程数（推荐 8-16）
+  -w  工作目录（Project_example 路径）
+  -r  MaxMetagenome 项目根目录
 
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"
-    exit 1
-fi
+示例:
+  bash 11_bac_metaphlan4.sh -s SRR28210342 -t 16 \\
+       -w ~/Course/Maxmetagenome/Project/Project_example \\
+       -r ~/Course/Maxmetagenome
 
-SECONDS=0
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
+EOF
+}
+
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
+
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -135,8 +118,8 @@ MERGED_FASTQ="${TEMP_DIR}/${SAMPLE}_merged.fastq.gz"
 echo "[INFO] 合并双端 reads..."
 zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${MERGED_FASTQ}"
 
-set +e
-conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda humann4 \
     metaphlan \
         "${MERGED_FASTQ}" \
         --input_type fastq \
@@ -146,12 +129,10 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         --mapout "${MAPOUT}" \
         --samout "${RESULT_DIR}/${SAMPLE}.sam" \
         -o "${PROFILE_OUT}" \
-        --offline
-
-EXIT_CODE=$?
-set -e
+        --offline \
+        || EXIT_CODE=$?
 rm -f "${MERGED_FASTQ}"
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] metaphlan4 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -187,9 +168,10 @@ grep -v "^#" "${PROFILE_OUT}" | grep "s__" | grep -v "t__" | \
     awk -F'\t' '{printf "               %.4f%%  %s\n", $1, $2}' || true
 
 echo ""
-echo "[metaphlan4] ${SAMPLE} 完成，耗时 ${SECONDS}s"
+echo "[metaphlan4] ${SAMPLE} 完成"
 echo "[metaphlan4] 结果目录: ${RESULT_DIR}"
 echo "[metaphlan4] Profile:  ${PROFILE_OUT}"
 if [ -f "${SAM_OUT}" ]; then
     echo "[metaphlan4] SAM.bz2:  ${SAM_OUT} ($(du -h "${SAM_OUT}" | cut -f1))"
 fi
+mgx_end "metaphlan4"

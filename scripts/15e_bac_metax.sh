@@ -41,6 +41,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 15e_bac_metax.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -58,38 +60,21 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-WORKDIR=""
-REPO=""
-FORCE=0
 MODE="default"
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2"; shift 2 ;;
-        -t) CPUS="$2"; shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        --mode) MODE="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"
-    show_help
-    exit 1
-fi
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="mode:MODE"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
 case "${MODE}" in
     default|recall|precision) ;;
     *) echo "[ERROR] --mode 必须为 default/recall/precision，收到: ${MODE}"; exit 1 ;;
 esac
 
-SECONDS=0
+mgx_begin
 
 INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
@@ -143,8 +128,8 @@ echo "[metax] 数据库: ${METAX_DB_JSON}"
 echo "[metax] taxonomy: ${DMP_DIR}"
 echo "[metax] 模式: ${MODE} | 线程: ${CPUS}"
 
-set +e
-conda run --prefix "${METAX_ENV}" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda metax \
     metax profile \
         --db "${METAX_DB_JSON}" \
         --dmp-dir "${DMP_DIR}" \
@@ -154,11 +139,10 @@ conda run --prefix "${METAX_ENV}" --no-capture-output \
         --sequencer Illumina \
         --mode "${MODE}" \
         -o "${OUT_PREFIX}" \
-        -t "${CPUS}"
-EXIT_CODE=$?
-set -e
+        -t "${CPUS}" \
+        || EXIT_CODE=$?
 
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] metax profile 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -175,7 +159,8 @@ awk -F'\t' 'BEGIN{OFS="\t"; print "taxon","reads","read_fraction_pct"}
 ' "${PROFILE_OUT}" > "${READFRAC_OUT}"
 
 echo ""
-echo "[metax] ${SAMPLE} 完成，耗时 ${SECONDS}s"
+echo "[metax] ${SAMPLE} 完成"
 echo "[metax] 检出分类单元数: $(wc -l < "${PROFILE_OUT}")"
 echo "[metax] 结果目录: ${RESULT_DIR}"
 echo "[metax] Profile:  ${PROFILE_OUT}"
+mgx_end "metax"

@@ -33,6 +33,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 38b_bac_gunc.sh -t CPUS -w WORKDIR -r REPO [选项]
 
@@ -48,28 +50,14 @@ show_help() { cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-SENSITIVE=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2"; shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        --sensitive) SENSITIVE="--sensitive"; shift ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+# （--sensitive 布尔长选项 → SENSITIVE=0/1，透传给 gunc 时用 ${SENSITIVE:+--sensitive}）
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force sensitive"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"
-    show_help
-    exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 MAG_DIR="${WORKDIR}/result/binning/drep/dereplicated_genomes"
 OUT_DIR="${WORKDIR}/result/binning/gunc"
@@ -105,11 +93,12 @@ mkdir -p "${OUT_DIR}" "${TEMP_DIR}"
 
 echo "[gunc] MAG 输入目录: ${MAG_DIR} ($(find "${MAG_DIR}" -maxdepth 1 -name '*.fa' 2>/dev/null | wc -l) 个 MAG)"
 echo "[gunc] 数据库: ${GUNC_DB}"
-echo "[gunc] 线程: ${CPUS} | 模式: ${SENSITIVE:-default}"
+echo "[gunc] 线程: ${CPUS} | 模式: $([ "${SENSITIVE}" -eq 1 ] && echo sensitive || echo default)"
 
 GUNC_TIMEOUT="${GUNC_TIMEOUT:-21600}"
-set +e
-timeout --signal=TERM --kill-after=60 "${GUNC_TIMEOUT}" \
+# timeout 外层守卫（diamond 子进程挂起防护）使本调用无法走 mgx_conda 包装，保留原 conda run 形式
+EXIT_CODE=0
+mgx_try timeout --signal=TERM --kill-after=60 "${GUNC_TIMEOUT}" \
     conda run --prefix "${GUNC_ENV}" --no-capture-output \
     gunc run \
         -d "${MAG_DIR}" \
@@ -119,11 +108,9 @@ timeout --signal=TERM --kill-after=60 "${GUNC_TIMEOUT}" \
         -o "${OUT_DIR}" \
         --temp_dir "${TEMP_DIR}" \
         --detailed_output \
-        ${SENSITIVE}
-EXIT_CODE=$?
-set -e
+        ${SENSITIVE:+--sensitive} || EXIT_CODE=$?
 
-if [ ${EXIT_CODE} -eq 124 ]; then
+if [ "${EXIT_CODE}" -eq 124 ]; then
     echo "[ERROR] gunc run 超时（${GUNC_TIMEOUT}s）。已知失败模式：diamond 子进程意外退出后 gunc 永久空转（无报错、无输出）。"
     echo "        清理 ${TEMP_DIR} 与 ${OUT_DIR} 后以 --force 重跑。"
     exit 124
@@ -142,6 +129,6 @@ fi
 PASS_N=$(awk -F'\t' 'NR>1 && $NF=="True"' "${MAIN_TSV}" 2>/dev/null | wc -l)
 FAIL_N=$(awk -F'\t' 'NR>1 && $NF=="False"' "${MAIN_TSV}" 2>/dev/null | wc -l)
 echo ""
-echo "[gunc] 完成，耗时 ${SECONDS}s"
 echo "[gunc] 结果表: ${MAIN_TSV}"
 echo "[gunc] pass/fail: ${PASS_N}/${FAIL_N}"
+mgx_end "gunc"

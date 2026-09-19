@@ -21,6 +21,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 36b_bac_bin_reassembly.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
 必需参数:
@@ -36,27 +38,15 @@ show_help() { cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""; MEM=64
-FORCE=0
-PARALLEL_FLAG=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        -m) MEM="$2";     shift 2 ;;
-        --parallel) PARALLEL_FLAG="--parallel"; shift ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+# （--parallel 布尔长选项 → PARALLEL=0/1，透传给 metaWRAP 时用 ${PARALLEL:+--parallel}）
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO m:MEM"
+export MGX_OPTS_FLAG="force parallel"
+MEM=64
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 BINS_DIR="${WORKDIR}/result/binning/dastool/${SAMPLE}/${SAMPLE}_DASTool_bins"
 READS_1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 READS_2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
@@ -102,20 +92,17 @@ done
 # （已建好索引/已产出 scaffolds.fasta 的 bin 会跳过），中途中断（如超时）后
 # 直接重跑本脚本即可从断点继续，无需从零开始
 mkdir -p "${OUTDIR}" "${MW_WORKDIR}"
-set +e
-conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
-    metaWRAP reassemble_bins \
+EXIT_CODE=0
+mgx_try mgx_conda metawrap metaWRAP reassemble_bins \
         -b "${BINS_CLEAN_DIR}" \
         -o "${MW_WORKDIR}" \
         -1 "${READS_1}" \
         -2 "${READS_2}" \
         -t "${CPUS}" \
         -m "${MEM}" \
-        --skip-checkm ${PARALLEL_FLAG}
+        --skip-checkm ${PARALLEL:+--parallel} || EXIT_CODE=$?
 
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[WARN] metaWRAP reassemble_bins 失败 (sample=${SAMPLE})，回退到原始 DAS_Tool bins"
     # metaWRAP 失败时的 graceful fallback：将所有原始 bins 复制到 reassembled_bins/
     # 作为"未重组装"版本，确保下游 CheckM2 有输入（CheckM2 脚本已支持此回退逻辑）
@@ -185,4 +172,5 @@ echo "N_INPUT_BINS=${N_INPUT_BINS}" > "${SENTINEL}"
 echo "N_REASSEMBLED=${N_REASSEMBLED}" >> "${SENTINEL}"
 echo "N_FALLBACK_TO_ORIGINAL=${N_FALLBACK}" >> "${SENTINEL}"
 
-echo "[bin_reassembly] 完成，耗时 ${SECONDS}s | 输入: ${N_INPUT_BINS} | 重组装成功: ${N_REASSEMBLED} | 回退原始bin: ${N_FALLBACK}"
+echo "[bin_reassembly] 完成 | 输入: ${N_INPUT_BINS} | 重组装成功: ${N_REASSEMBLED} | 回退原始bin: ${N_FALLBACK}"
+mgx_end "bin_reassembly"

@@ -41,6 +41,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 31e_bac_fegenie.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -70,31 +72,17 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-WORKDIR=""
-REPO=""
+SAMPLE=""   # show_help 的 ${SAMPLE} 在 -h 时需已定义（set -u）
 INPUT_TYPE="prodigal"
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";    shift 2 ;;
-        -t) CPUS="$2";      shift 2 ;;
-        -w) WORKDIR="$2";   shift 2 ;;
-        -r) REPO="$2";      shift 2 ;;
-        --input-type) INPUT_TYPE="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="input-type:INPUT_TYPE"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 输入路径判断 ---
 if [ "${INPUT_TYPE}" = "nr" ]; then
@@ -149,20 +137,16 @@ TMP_BIN_DIR="${WORKDIR}/temp/fegenie/${SAMPLE}"
 mkdir -p "${TMP_BIN_DIR}"
 cp "${PROTEINS}" "${TMP_BIN_DIR}/${SAMPLE}.faa"
 
-set +e
-conda run --prefix "${REPO}/envs/fegenie" --no-capture-output \
-    FeGenie.py \
-        -bin_dir "${TMP_BIN_DIR}" \
-        -bin_ext faa \
-        -out     "${RESULT_DIR}" \
-        -t       "${CPUS}" \
-        --orfs
-
-EXIT_CODE=$?
-set -e
+EXIT_CODE=0
+mgx_try mgx_conda fegenie FeGenie.py \
+    -bin_dir "${TMP_BIN_DIR}" \
+    -bin_ext faa \
+    -out     "${RESULT_DIR}" \
+    -t       "${CPUS}" \
+    --orfs || EXIT_CODE=$?
 rm -rf "${TMP_BIN_DIR}"
 
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] FeGenie 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -170,7 +154,7 @@ fi
 # --- 摘要统计 ---
 if [ -f "${SENTINEL}" ]; then
     N_HITS=$(tail -n +2 "${SENTINEL}" | wc -l)
-    echo "[fegenie] ${SAMPLE}: 完成，耗时 ${SECONDS}s"
+    echo "[fegenie] ${SAMPLE}: 完成"
     echo "  铁代谢基因命中: ${N_HITS} 条"
     echo "  主结果: ${SENTINEL}"
 
@@ -185,3 +169,4 @@ else
     echo "[WARN] FeGenie 未生成预期输出文件: ${SENTINEL}"
     exit 1
 fi
+mgx_end "fegenie"

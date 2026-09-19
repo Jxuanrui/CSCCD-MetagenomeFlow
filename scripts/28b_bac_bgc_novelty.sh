@@ -22,6 +22,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 28b_bac_bgc_novelty.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--force]
 必需参数:
@@ -35,23 +37,13 @@ show_help() { cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""; FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 REPO="$(readlink -f "${REPO}")"
 WORKDIR="$(readlink -f "${WORKDIR}")"
 ANTISMASH_DIR="${WORKDIR}/result/annotation/antismash/${SAMPLE}"
@@ -82,7 +74,7 @@ fi
 
 mkdir -p "${TMP_DIR}"
 
-conda run --prefix "${ANTISMASH_ENV}" --no-capture-output \
+mgx_conda antismash \
     python3 "${REPO}/scripts/28b_bgc_novelty_score.py" \
         --sample "${SAMPLE}" \
         --antismash-dir "${ANTISMASH_DIR}" \
@@ -94,5 +86,6 @@ conda run --prefix "${ANTISMASH_ENV}" --no-capture-output \
         --threads "${CPUS}"
 
 rm -rf "${TMP_DIR}"
-echo "[28b_bgc_novelty] 完成，耗时 ${SECONDS}s | 样本: ${SAMPLE} | region数: ${N_REGION}"
+echo "[28b_bgc_novelty] 样本: ${SAMPLE} | region数: ${N_REGION}"
 echo "[28b_bgc_novelty] 输出: ${OUT_TSV}"
+mgx_end "28b_bgc_novelty"

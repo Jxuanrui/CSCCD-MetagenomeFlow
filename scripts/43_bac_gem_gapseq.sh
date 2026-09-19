@@ -28,6 +28,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 43_bac_gem_gapseq.sh -m MAG_NAME -t CPUS -w WORKDIR -r REPO
 
@@ -50,23 +52,15 @@ show_help() { cat << EOF
 EOF
 }
 
-MAG_NAME=""; WORKDIR=""; REPO=""; FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -m) MAG_NAME="$2"; shift 2 ;;
-        -w) WORKDIR="$2";  shift 2 ;;
-        -r) REPO="$2";     shift 2 ;;
-        --force) FORCE=1;  shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+# （帮助文本里的 -t CPUS 并无对应解析分支：原 while/case 同样不接受 -t，保持一致）
+export MGX_OPTS_STRING="m:MAG_NAME w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+MAG_NAME=""
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
-for v in WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
-
-SECONDS=0
+mgx_begin
 
 # 转换为绝对路径（避免 cd 后路径错误）
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
@@ -234,7 +228,8 @@ for mag_fa in "${MAGS[@]}"; do
     cd "${WORKDIR}"
 done
 
-# 汇总统计
+# 汇总统计（gapseq 各步 conda 调用位于 if ! 条件分支且无 --no-capture-output，
+# 不满足 mgx_conda 的字节等价条件，保留原 conda run 形式）
 ELAPSED=$((SECONDS))
 echo "" | tee -a "${LOG}"
 echo "=== GEM 重建完成 ===" | tee -a "${LOG}"

@@ -7,7 +7,9 @@
 #           source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 #           MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"   # 短选项:变量名（空格分隔）
 #           MGX_OPTS_FLAG="force"                                 # 布尔标志，--force → FORCE=1
-#           mgx_parse "$@"            # 支持 -s val / -s=val / --flag；-h|--help → show_help 后 exit 0
+#           MGX_OPTS_LONG="speed-mode:SPEED_MODE"                 # 带值长选项:变量名
+#           mgx_parse "$@"            # 支持 -s val / -s=val / --flag / --key val / --key=val；
+#                                     # -h|--help → show_help 后 exit 0
 #           mgx_require SAMPLE CPUS WORKDIR REPO   # 任一为空 → [ERROR] 缺少必需参数 后 exit 1
 #           mgx_begin                  # SECONDS=0
 #           mgx_end "fastp"            # 输出 [fastp] 耗时 ${SECONDS}s
@@ -60,9 +62,24 @@ mgx_parse() {
                 for flag in ${MGX_OPTS_FLAG:-}; do
                     if [ "${flag}" = "${opt}" ]; then var="${flag^^}"; break; fi
                 done
-                if [ -z "${var}" ]; then _mgx_unknown "$1"; fi
-                printf -v "${var}" '%s' 1
-                shift
+                if [ -n "${var}" ]; then
+                    printf -v "${var}" '%s' 1
+                    shift
+                elif var="$(_mgx_lookup "-${opt%%=*}" "${MGX_OPTS_LONG:-}")"; then
+                    if [ "${opt}" != "${opt%%=*}" ]; then
+                        printf -v "${var}" '%s' "${opt#*=}"   # --key=val
+                        shift
+                    elif [ $# -lt 2 ]; then
+                        echo "[ERROR] 参数 $1 缺少值"
+                        _mgx_help
+                        exit 1
+                    else
+                        printf -v "${var}" '%s' "$2"          # --key val
+                        shift 2
+                    fi
+                else
+                    _mgx_unknown "$1"
+                fi
                 ;;
             -?=?*)
                 opt="${1%%=*}"

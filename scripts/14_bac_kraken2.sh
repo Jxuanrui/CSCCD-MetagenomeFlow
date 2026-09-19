@@ -47,6 +47,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 14_bac_kraken2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -74,34 +76,17 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-WORKDIR=""
-REPO=""
 CONFIDENCE="0.1"
 READ_LEN="150"
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";       shift 2 ;;
-        -t) CPUS="$2";         shift 2 ;;
-        -w) WORKDIR="$2";      shift 2 ;;
-        -r) REPO="$2";         shift 2 ;;
-        --confidence) CONFIDENCE="$2"; shift 2 ;;
-        --read-len)   READ_LEN="$2";   shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="confidence:CONFIDENCE read-len:READ_LEN"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"
-    show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -155,8 +140,8 @@ echo "[kraken2] 数据库: ${DB_KRAKEN}"
 # output 通过管道压缩，避免大文件占用磁盘（原始 output 可达原 fastq 体积）
 
 echo "[kraken2] 运行 Kraken2..."
-set +e
-conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
+EXIT_CODE=0
+mgx_conda kraken2 \
     kraken2 \
         --db          "${DB_KRAKEN}" \
         --threads     "${CPUS}" \
@@ -166,11 +151,8 @@ conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
         --confidence  "${CONFIDENCE}" \
         --report      "${REPORT}" \
         --output      - \
-    | gzip -c > "${OUTPUT_GZ}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+    | gzip -c > "${OUTPUT_GZ}" || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] Kraken2 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -198,8 +180,8 @@ for LEVEL in S G P; do
 
     echo "[bracken] 运行 Bracken ${LEVEL_NAME} 级别丰度估计..."
 
-    set +e
-    conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
+    EXIT_CODE=0
+    mgx_try mgx_conda kraken2 \
         bracken \
             -d "${DB_KRAKEN}" \
             -i "${REPORT}" \
@@ -207,25 +189,20 @@ for LEVEL in S G P; do
             -l "${LEVEL}" \
             -t 10 \
             -o "${BRACKEN_DIR}/${SAMPLE}_${LEVEL}.bracken" \
-            -w "${BRACKEN_DIR}/${SAMPLE}_${LEVEL}.report"
-
-    EXIT_CODE=$?
-    set -e
-    if [ ${EXIT_CODE} -ne 0 ]; then
+            -w "${BRACKEN_DIR}/${SAMPLE}_${LEVEL}.report" \
+            || EXIT_CODE=$?
+    if [ "${EXIT_CODE}" -ne 0 ]; then
         echo "[WARN] Bracken ${LEVEL_NAME} 级别运行失败（exit code: ${EXIT_CODE}），跳过"
     fi
 done
 
 # --- 统计摘要 ---
 
-TOTAL_READS=$(grep -m1 "^" "${REPORT}" | awk '{print $2}' || echo "N/A")
-CLASSIFIED=$(awk 'NR==1{print $2}' "${REPORT}" 2>/dev/null || echo "N/A")
-UNCLASSIFIED=$(awk 'NR==2{print $2}' "${REPORT}" 2>/dev/null || echo "N/A")
 N_SPECIES=$([ -f "${BRACKEN_S}" ] && tail -n+2 "${BRACKEN_S}" | wc -l || echo "N/A")
 N_GENUS=$([ -f "${BRACKEN_DIR}/${SAMPLE}_G.bracken" ] && tail -n+2 "${BRACKEN_DIR}/${SAMPLE}_G.bracken" | wc -l || echo "N/A")
 
 echo ""
-echo "[kraken2] ${SAMPLE} 完成，置信度: ${CONFIDENCE}，耗时 ${SECONDS}s"
+echo "[kraken2] ${SAMPLE} 完成，置信度: ${CONFIDENCE}"
 echo "[kraken2] 结果目录: ${RESULT_DIR}/"
 echo "    检测到种数: ${N_SPECIES}"
 echo "    检测到属数: ${N_GENUS}"
@@ -237,3 +214,4 @@ echo "    ├── bracken/${SAMPLE}_G.bracken    (属级丰度)"
 echo "    └── bracken/${SAMPLE}_P.bracken    (门级丰度)"
 echo ""
 echo "[提示] 所有样本完成后运行 14b_bac_kraken2_merge.sh 合并丰度矩阵"
+mgx_end "kraken2"

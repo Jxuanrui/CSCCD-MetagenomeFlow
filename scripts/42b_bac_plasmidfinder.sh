@@ -29,6 +29,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 42b_bac_plasmidfinder.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -51,33 +53,15 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-WORKDIR=""
-REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO l:MIN_COV T:THRESHOLD"
+export MGX_OPTS_FLAG="force"
 MIN_COV="0.60"
 THRESHOLD="0.95"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";    shift 2 ;;
-        -t) CPUS="$2";      shift 2 ;;
-        -w) WORKDIR="$2";   shift 2 ;;
-        -r) REPO="$2";      shift 2 ;;
-        -l) MIN_COV="$2";   shift 2 ;;
-        -T) THRESHOLD="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 RESULT_DIR="${WORKDIR}/result/mge/plasmidfinder/${SAMPLE}"
@@ -99,7 +83,8 @@ mkdir -p "${RESULT_DIR}" "${TMP_DIR}"
 # 获取 conda env 中 PlasmidFinder 内置 DB 路径
 # PlasmidFinder 是脚本式安装（非可导入 Python 包），此 import 必然失败；
 # 加 `|| true` 避免 set -e 在这个预期失败的探测尝试上提前终止脚本，
-# 交由下面 104-107 行的 find 兜底逻辑定位真实数据库路径
+# 交由下方 find 兜底逻辑定位真实数据库路径
+# 注: 探测调用无 --no-capture-output（仅取 stdout），保留原 conda run 形式
 DB_PATH=$(conda run --prefix "${REPO}/envs/plasmidfinder" \
     python -c "import os, plasmidfinder; \
     print(os.path.join(os.path.dirname(plasmidfinder.__file__), 'database'))" 2>/dev/null || true)
@@ -120,9 +105,8 @@ echo "  Contig 输入: ${CONTIGS}"
 echo "  DB 路径: ${DB_PATH}"
 echo "  覆盖度阈值: ${MIN_COV} | 相似度阈值: ${THRESHOLD}"
 
-set +e
-conda run --prefix "${REPO}/envs/plasmidfinder" --no-capture-output \
-    plasmidfinder.py \
+EXIT_CODE=0
+mgx_try mgx_conda plasmidfinder plasmidfinder.py \
         -i  "${CONTIGS}" \
         -o  "${RESULT_DIR}" \
         -tmp "${TMP_DIR}" \
@@ -130,13 +114,10 @@ conda run --prefix "${REPO}/envs/plasmidfinder" --no-capture-output \
         -l  "${MIN_COV}" \
         -t  "${THRESHOLD}" \
         -x \
-        -q
-
-EXIT_CODE=$?
-set -e
+        -q || EXIT_CODE=$?
 rm -rf "${TMP_DIR}"
 
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] PlasmidFinder 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -144,7 +125,8 @@ fi
 N_PLASMID=$(grep -v "^#\|^Database\|^Plasmidfinder" "${SENTINEL}" 2>/dev/null | \
             grep -v "^$" | wc -l || echo "N/A")
 
-echo "[plasmidfinder] ${SAMPLE}: 完成，耗时 ${SECONDS}s"
+echo "[plasmidfinder] ${SAMPLE}: 完成"
 echo "  质粒 replicon 命中: ${N_PLASMID} 条"
 echo "  输出: ${RESULT_DIR}/"
 echo "[提示] results_tab.tsv 含 replicon 类型 + 不相容群（Inc group），可与 AMR 结果关联"
+mgx_end "plasmidfinder"

@@ -10,50 +10,33 @@
 
 set -euo pipefail
 
-if [ $# -lt 4 ]; then
-    echo ""
-    echo "用法: bash 15d_bac_sylph_merge.sh -w WORKDIR -r REPO"
-    echo ""
-    echo "参数说明:"
-    echo "  -w  工作目录（Project_example 路径）"
-    echo "  -r  MaxMetagenome 项目根目录"
-    echo ""
-    echo "示例:"
-    echo "  bash 15d_bac_sylph_merge.sh \\"
-    echo "       -w ~/Course/Maxmetagenome/Project/Project_example \\"
-    echo "       -r ~/Course/Maxmetagenome"
-    echo ""
-    echo "可选参数:"
-    echo "  --force  强制重新运行（忽略已存在的结果）"
-    exit 1
-fi
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 
-FORCE=0
-ARGS=()
-for arg in "$@"; do
-    if [ "${arg}" = "--force" ]; then
-        FORCE=1
-    else
-        ARGS+=("${arg}")
-    fi
-done
-set -- "${ARGS[@]}"
+show_help() { cat << EOF
 
-WORKDIR=""
-REPO=""
-while getopts w:r: option; do
-    case "${option}" in
-        w) WORKDIR=${OPTARG} ;;
-        r) REPO=${OPTARG} ;;
-    esac
-done
+用法: bash 15d_bac_sylph_merge.sh -w WORKDIR -r REPO
 
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-w/-r）"
-    exit 1
-fi
+参数说明:
+  -w  工作目录（Project_example 路径）
+  -r  MaxMetagenome 项目根目录
 
-SECONDS=0
+示例:
+  bash 15d_bac_sylph_merge.sh \\
+       -w ~/Course/Maxmetagenome/Project/Project_example \\
+       -r ~/Course/Maxmetagenome
+
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
+EOF
+}
+
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
+
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -104,16 +87,14 @@ for sample in "${SAMPLE_LIST[@]}"; do
 done
 
 echo "[INFO] 合并多样本 sylphmpa 相对丰度表..."
-set +e
-conda run --prefix "${REPO}/envs/sylph" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda sylph \
     sylph-tax merge \
         "${MPA_FILES[@]}" \
         --column relative_abundance \
-        -o "${MERGED_TSV}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        -o "${MERGED_TSV}" \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] sylph-tax merge 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -129,5 +110,6 @@ NROW=$(wc -l < "${MERGED_TSV}")
 NCOL=$(awk -F'\t' 'NR==1{print NF}' "${MERGED_TSV}")
 
 echo ""
-echo "[sylph_merge] 合并完成，耗时 ${SECONDS}s"
+echo "[sylph_merge] 合并完成"
 echo "[sylph_merge] 输出: ${MERGED_TSV} — ${NROW} 行 × ${NCOL} 列"
+mgx_end "sylph_merge"

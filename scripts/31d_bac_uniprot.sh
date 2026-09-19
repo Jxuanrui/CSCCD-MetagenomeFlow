@@ -24,6 +24,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 31d_bac_uniprot.sh -t CPUS -w WORKDIR -r REPO
@@ -43,27 +45,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-WORKDIR=""
-REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/annotation/uniprot_sprot"
@@ -92,22 +80,18 @@ mkdir -p "${RESULT_DIR}" "${TMP_DIR}"
 echo "[uniprot] 开始 Swiss-Prot 注释 | 线程: ${CPUS}"
 echo "[uniprot] DB: ${MMSEQS_DB}"
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    mmseqs easy-search \
-        --threads    "${CPUS}" \
-        --max-accept 1 \
-        -e           1e-5 \
-        --format-output "query,target,fident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qcov" \
-        -v           1 \
-        "${PROTEIN_NR}" \
-        "${MMSEQS_DB}" \
-        "${OUTPUT}" \
-        "${TMP_DIR}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+EXIT_CODE=0
+mgx_try mgx_conda assembly mmseqs easy-search \
+    --threads    "${CPUS}" \
+    --max-accept 1 \
+    -e           1e-5 \
+    --format-output "query,target,fident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qcov" \
+    -v           1 \
+    "${PROTEIN_NR}" \
+    "${MMSEQS_DB}" \
+    "${OUTPUT}" \
+    "${TMP_DIR}" || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] MMseqs2 easy-search 失败（exit code: ${EXIT_CODE}）"
     rm -f "${OUTPUT}"; exit ${EXIT_CODE}
 fi
@@ -118,8 +102,8 @@ rm -rf "${TMP_DIR}"
 N_HITS=$(wc -l < "${OUTPUT}" 2>/dev/null || echo "N/A")
 N_QUERY=$(grep -c "^>" "${PROTEIN_NR}" 2>/dev/null || echo "N/A")
 echo ""
-echo "[uniprot] 完成，耗时 ${SECONDS}s"
 echo "    查询蛋白数: ${N_QUERY}"
 echo "    Swiss-Prot 命中: ${N_HITS}"
 echo "    输出: ${OUTPUT}"
 echo "[提示] 结合 21_bac_eggnog.sh 输出，可识别 eggNOG 未命中但 Swiss-Prot 有功能描述的基因"
+mgx_end "uniprot"

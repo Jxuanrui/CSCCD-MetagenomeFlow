@@ -21,6 +21,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 # --- 参数解析 ---
 
 show_help() {
@@ -53,29 +55,14 @@ EOF
 
 CPUS=8
 CLADE=""
-FORCE=0
 
-while getopts "w:r:t:c:h-:" opt; do
-    case "${opt}" in
-        w) WORKDIR=${OPTARG} ;;
-        r) REPO=${OPTARG} ;;
-        t) CPUS=${OPTARG} ;;
-        c) CLADE=${OPTARG} ;;
-        h) show_help; exit 0 ;;
-        -) case "${OPTARG}" in
-               force) FORCE=1 ;;
-               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
-           esac ;;
-        *) show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO t:CPUS c:CLADE"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-w/-r）"
-    show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -178,18 +165,16 @@ else
     echo "        输出: ${CONSENSUS_DIR}/"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-set +e
-    conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+    EXIT_CODE=0
+    mgx_try mgx_conda humann4 \
         sample2markers.py \
             -i "${DEDUP_SAM_FILES[@]}" \
             -d "${DB_PKL}" \
             -o "${CONSENSUS_DIR}" \
             -f bz2 \
-            -n "${CPUS}"
-
-    EXIT_CODE=$?
-set -e
-    if [ ${EXIT_CODE} -ne 0 ]; then
+            -n "${CPUS}" \
+            || EXIT_CODE=$?
+    if [ "${EXIT_CODE}" -ne 0 ]; then
         echo "[strainphlan4] WARNING: sample2markers 失败（exit: ${EXIT_CODE}），跳过 StrainPhlAn4"
         mkdir -p "${CONSENSUS_DIR}"
         exit 0
@@ -222,7 +207,7 @@ if [ ${CLADES_STALE} -eq 1 ] || [ ! -f "${CLADES_FILE}" ] || [ ! -s "${CLADES_FI
     echo "[Step2] 检测可分析菌株（--print_clades_only）"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+    mgx_conda humann4 \
         strainphlan \
             -s "${CONSENSUS_DIR}"/*.json.bz2 \
             -d "${DB_PKL}" \
@@ -280,16 +265,14 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "[Step3a] extract_markers — 从数据库提取 ${CLADE} 的 clade markers"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-set +e
-conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda humann4 \
     extract_markers.py \
         -c "${CLADE}" \
         -d "${DB_PKL}" \
-        -o "${CLADE_MARKER_DIR}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        -o "${CLADE_MARKER_DIR}" \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] extract_markers 失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -309,8 +292,8 @@ echo "[Step3b] strainphlan — 构建 ${CLADE} 系统发育树"
 echo "         样本数: ${N_SAMPLES}，线程: ${CPUS}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-set +e
-conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda humann4 \
     strainphlan \
         -s "${CONSENSUS_DIR}"/*.json.bz2 \
         -m "${CLADE_MARKERS_FA}" \
@@ -324,11 +307,9 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         --marker_in_n_samples_perc 50 \
         --breadth_thres 80 \
         --phylophlan_mode fast \
-        --non_interactive
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        --non_interactive \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] strainphlan 失败（exit code: ${EXIT_CODE}）"
     echo "[HINT]  若因样本过滤后数量不足，可尝试放宽阈值重新运行："
     echo "        添加参数：--marker_in_n_samples_perc 30 --sample_with_n_markers 10"
@@ -338,7 +319,7 @@ fi
 # --- 输出汇总 ---
 
 echo ""
-echo "[strainphlan4] ${CLADE} 分析完成，耗时 ${SECONDS}s"
+echo "[strainphlan4] ${CLADE} 分析完成"
 echo "[strainphlan4] 结果目录: ${CLADE_OUT_DIR}/"
 
 # 列出生成的关键文件
@@ -353,3 +334,4 @@ if [ ${FORCE} -eq 0 ] && [ -f "${BEST_TREE}" ]; then
     echo "[INFO] 系统发育树 (Newick): ${BEST_TREE}"
     echo "       可视化工具: iTOL (https://itol.embl.de/)  |  FigTree  |  ggtree (R)"
 fi
+mgx_end "strainphlan4"

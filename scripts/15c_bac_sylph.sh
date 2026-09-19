@@ -32,6 +32,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 15c_bac_sylph.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -53,32 +55,16 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-WORKDIR=""
-REPO=""
 MIN_ANI="95"
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";       shift 2 ;;
-        -t) CPUS="$2";         shift 2 ;;
-        -w) WORKDIR="$2";      shift 2 ;;
-        -r) REPO="$2";         shift 2 ;;
-        --min-ani) MIN_ANI="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="min-ani:MIN_ANI"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"
-    show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -133,18 +119,16 @@ echo "[sylph] 数据库: ${DB_SYLDB}"
 # profile 子命令支持直接传入原始 fastq（自动 sketch），无需单独跑 sylph sketch
 
 echo "[sylph] 运行 sylph profile..."
-set +e
-conda run --prefix "${REPO}/envs/sylph" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda sylph \
     sylph profile \
         "${DB_SYLDB}" \
         -1 "${INPUT_R1}" -2 "${INPUT_R2}" \
         -t "${CPUS}" \
         -m "${MIN_ANI}" \
-        -o "${PROFILE_TSV}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        -o "${PROFILE_TSV}" \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] sylph profile 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -160,17 +144,15 @@ echo "[sylph] sylph profile 完成，运行 sylph-tax 物种名标注..."
 # sylph-tax taxprof 按 Sample_file 列的文件名生成输出：<prefix><basename(fastq)>.sylphmpa
 # -1 (basename of INPUT_R1) 是 sylph profile 的 Sample_file 列值，需要匹配前缀策略
 
-set +e
-conda run --prefix "${REPO}/envs/sylph" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda sylph \
     sylph-tax taxprof \
         "${PROFILE_TSV}" \
         -t "${DB_METADATA}" \
         -o "${RESULT_DIR}/${SAMPLE}_" \
-        --overwrite
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        --overwrite \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] sylph-tax taxprof 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -189,7 +171,7 @@ mv "${GENERATED_MPA}" "${SYLPHMPA}"
 N_TAXA=$(tail -n+3 "${SYLPHMPA}" 2>/dev/null | grep -vc "NO_TAXONOMY$" || echo "0")
 
 echo ""
-echo "[sylph] ${SAMPLE} 完成，耗时 ${SECONDS}s"
+echo "[sylph] ${SAMPLE} 完成"
 echo "[sylph] 结果目录: ${RESULT_DIR}/"
 echo "    检测到分类条目数: ${N_TAXA}"
 echo "    关键输出:"
@@ -197,3 +179,4 @@ echo "    ├── ${SAMPLE}.sylph_profile.tsv    (sylph 原始输出)"
 echo "    └── ${SAMPLE}.sylphmpa             (物种级 profile，MetaPhlAn 风格)"
 echo ""
 echo "[提示] 所有样本完成后运行 15d_bac_sylph_merge.sh 合并丰度矩阵"
+mgx_end "sylph"

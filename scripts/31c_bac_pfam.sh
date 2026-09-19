@@ -30,6 +30,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 31c_bac_pfam.sh -t CPUS -w WORKDIR -r REPO
@@ -49,25 +51,11 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-WORKDIR=""
-REPO=""
-
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"; show_help; exit 1
-fi
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
 if ! [[ "${CPUS}" =~ ^[0-9]+$ ]] || [ "$((10#${CPUS}))" -lt 1 ]; then
     echo "[ERROR] -t 必须是正整数: ${CPUS}"
@@ -75,7 +63,7 @@ if ! [[ "${CPUS}" =~ ^[0-9]+$ ]] || [ "$((10#${CPUS}))" -lt 1 ]; then
 fi
 CPUS=$((10#${CPUS}))
 
-SECONDS=0
+mgx_begin
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/annotation/pfam"
@@ -145,17 +133,14 @@ rm -rf "${TMP_DIR}"
 mkdir -p "${SPLIT_DIR}"
 
 echo "[pfam] 拆分蛋白 FASTA: ${SPLIT_DIR}"
-set +e
-"${CONDA}" run --prefix "${REPO}/envs/assembly" --no-capture-output \
+SPLIT_EXIT=0
+mgx_try "${CONDA}" run --prefix "${REPO}/envs/assembly" --no-capture-output \
     seqkit split2 \
         -p "${CHUNKS}" \
         -O "${SPLIT_DIR}" \
         --by-part-prefix chunk_ \
-        -1 "${PROTEIN_NR}"
-
-SPLIT_EXIT=$?
-set -e
-if [ ${SPLIT_EXIT} -ne 0 ]; then
+        -1 "${PROTEIN_NR}" || SPLIT_EXIT=$?
+if [ "${SPLIT_EXIT}" -ne 0 ]; then
     echo "[ERROR] seqkit split2 失败（exit code: ${SPLIT_EXIT}）"
     echo "        临时目录保留用于排查: ${TMP_DIR}"
     exit ${SPLIT_EXIT}
@@ -241,7 +226,6 @@ rm -rf "${TMP_DIR}"
 N_HITS=$(wc -l < "${TBLOUT}" | tr -d ' ')
 N_DOM=$(wc -l < "${DOMTBLOUT}" | tr -d ' ')
 echo ""
-echo "[pfam] 完成，耗时 ${SECONDS}s"
 echo "    chunks: ${CHUNKS}"
 echo "    每个 chunk 线程数: ${THREADS_PER_CHUNK}"
 echo "    蛋白命中数（gene-level）: ${N_HITS}"
@@ -250,3 +234,4 @@ echo "    输出:"
 echo "    ├── pfam_hits.tblout     (基因级，下游解析用）"
 echo "    └── pfam_hits.domtblout  (域坐标级，结构域边界分析用）"
 echo "[提示] 结合 25_bac_dbcan.sh（CAZyme 也用 hmmscan）结果可做跨域功能对比"
+mgx_end "pfam"

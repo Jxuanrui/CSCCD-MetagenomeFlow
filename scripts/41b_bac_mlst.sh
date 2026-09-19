@@ -10,6 +10,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 Usage: bash 41b_bac_mlst.sh -w WORKDIR -r REPO -t THREADS [--scheme SCHEME]
 Required:
@@ -49,15 +51,11 @@ while [[ $# -gt 0 ]]; do
         *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
     esac
 done
-for v in THREADS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then
-        echo "[ERROR] Missing required argument"
-        show_help
-        exit 1
-    fi
-done
+# 注: 参数解析保留原 while/case —— --scheme 为带值长选项，libcommon.sh 的
+# mgx_parse 表（短选项 + 布尔长选项）无法表达，不强转
+mgx_require THREADS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 MAGS_DIR="${WORKDIR}/result/binning/drep/dereplicated_genomes"
 OUTDIR="${WORKDIR}/result/wgs/mlst"
 SENTINEL="${OUTDIR}/mlst.tsv"
@@ -110,7 +108,7 @@ MLST_CMD+=("${MAG_FILES[@]}")
 
 echo "[mlst] Typing ${#MAG_FILES[@]} MAGs | scheme: ${SCHEME}"
 if [ ${USE_CONDA_ENV} -eq 1 ]; then
-    conda run --prefix "${REPO}/envs/prokaWGS" --no-capture-output \
+    mgx_conda prokaWGS \
         "${MLST_CMD[@]}" > "${RAW_OUT}"
 else
     "${MLST_CMD[@]}" > "${RAW_OUT}"
@@ -137,4 +135,5 @@ fi
 } > "${SENTINEL}"
 
 DISTINCT_STS=$(awk -F'\t' 'NR > 1 && $3 != "" && $3 != "-" && $3 != "NA" {print $3}' "${SENTINEL}" | sort -u | wc -l)
-echo "[mlst] Done in ${SECONDS}s | total MAGs: ${#MAG_FILES[@]} | distinct STs: ${DISTINCT_STS}"
+echo "[mlst] total MAGs: ${#MAG_FILES[@]} | distinct STs: ${DISTINCT_STS}"
+mgx_end "mlst"

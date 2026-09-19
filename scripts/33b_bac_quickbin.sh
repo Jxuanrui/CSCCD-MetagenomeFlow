@@ -30,6 +30,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 33b_bac_quickbin.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
 
@@ -62,18 +64,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"
-    show_help
-    exit 1
-fi
+# 注: 参数解析保留原 while/case —— --mem-gb 为带值长选项，libcommon.sh 的
+# mgx_parse 表（短选项 + 布尔长选项）无法表达，不强转
+mgx_require SAMPLE CPUS WORKDIR REPO
 
 # QuickBin (Java/BBTools) cannot resolve relative paths: the tool is invoked after
 # `cd "${OUTDIR}"`, so a relative -w would break in=/reads=. Absolutise both roots.
 WORKDIR="$(realpath -m "${WORKDIR}")"
 REPO="$(realpath -m "${REPO}")"
 
-SECONDS=0
+mgx_begin
 
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 BAM="${WORKDIR}/result/binning/coverm/${SAMPLE}/${SAMPLE}.bam"
@@ -99,9 +99,8 @@ echo "[quickbin] contigs: ${CONTIGS}"
 echo "[quickbin] bam: ${BAM}"
 echo "[quickbin] 线程: ${CPUS} | JVM 堆: ${MEM_GB}g"
 
-set +e
-( cd "${OUTDIR}" && conda run --prefix "${REPO}/envs/busco" --no-capture-output \
-    quickbin.sh \
+EXIT_CODE=0
+( cd "${OUTDIR}" && mgx_conda busco quickbin.sh \
     "in=${CONTIGS}" \
     "reads=${BAM}" \
     "out=QUICKBIN_BIN%.fa" \
@@ -111,10 +110,8 @@ set +e
     simd \
     threads="${CPUS}" \
     -Xmx"${MEM_GB}"g \
-    -eoom )
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+    -eoom ) || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] quickbin 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -132,5 +129,6 @@ for f in "${OUTDIR}"/QUICKBIN_BIN*.fa; do
 done | sort -u > "${SENTINEL}"
 
 echo ""
-echo "[quickbin] ${SAMPLE} 完成，耗时 ${SECONDS}s | bins: ${N_BINS}"
+echo "[quickbin] ${SAMPLE} 完成 | bins: ${N_BINS}"
 echo "[quickbin] contig2bin: ${SENTINEL}"
+mgx_end "quickbin"

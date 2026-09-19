@@ -16,6 +16,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 33_bac_metabat2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -26,24 +28,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 DEPTH="${WORKDIR}/result/binning/coverm/${SAMPLE}/depth.txt"
 OUTDIR="${WORKDIR}/result/binning/metabat2/${SAMPLE}"
@@ -58,7 +49,7 @@ if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then echo
 mkdir -p "${OUTDIR}"
 
 echo "[metabat2] ${SAMPLE} | MetaBAT2 分箱 ..."
-conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
+mgx_conda metawrap \
     metabat2 \
         --numThreads "${CPUS}" \
         -m 1500 \
@@ -83,8 +74,8 @@ if [ "${N_BINS}" -eq 0 ]; then
 fi
 
 echo "[metabat2] 构建 contig2bin 表 ..."
-if conda run --prefix "${REPO}/envs/metawrap" --no-capture-output bash -lc 'command -v metabat2-utils >/dev/null'; then
-    conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
+if mgx_conda metawrap bash -lc 'command -v metabat2-utils >/dev/null'; then
+    mgx_conda metawrap \
         metabat2-utils bin "${OUTDIR}" | \
         metabat2-utils label - > "${CONTIG2BIN}"
 else
@@ -103,4 +94,5 @@ if [ ! -f "${CONTIG2BIN}" ] || [ ! -s "${CONTIG2BIN}" ]; then
     echo "[metabat2] ${SAMPLE} complete (0 bins)"
 fi
 
-echo "[metabat2] 完成，耗时 ${SECONDS}s | bins: ${N_BINS}"
+echo "[metabat2] bins: ${N_BINS}"
+mgx_end "metabat2"

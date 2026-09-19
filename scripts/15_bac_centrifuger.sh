@@ -39,6 +39,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 15_bac_centrifuger.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -59,30 +61,13 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-WORKDIR=""
-REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"
-    show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -137,18 +122,16 @@ CLASSIF_TMP="${RESULT_DIR}/${SAMPLE}.classifications.tsv"
 
 echo "[centrifuger] Step 1/2: 运行 centrifuger 分类..."
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     bash -c "centrifuger \
         -x    '${DB_INDEX}' \
         -1    '${INPUT_R1}' \
         -2    '${INPUT_R2}' \
         -t    '${CPUS}' \
-        > '${CLASSIF_TMP}'"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        > '${CLASSIF_TMP}'" \
+    || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] centrifuger 运行失败（exit code: ${EXIT_CODE}）"
     rm -f "${CLASSIF_TMP}"
     exit ${EXIT_CODE}
@@ -161,16 +144,14 @@ fi
 
 echo "[centrifuger] Step 2/2: 生成 Kraken2 格式报告..."
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     centrifuger-kreport \
         -x "${DB_INDEX}" \
         "${CLASSIF_TMP}" \
-        > "${KREPORT}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        > "${KREPORT}" \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] centrifuger-kreport 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -181,15 +162,15 @@ gzip -c "${CLASSIF_TMP}" > "${CLASSIF_GZ}" && rm -f "${CLASSIF_TMP}"
 
 # --- 统计摘要 ---
 
-N_CLASSIFIED=$(awk 'NR>1 && $4 != "U" {sum += $2} END {print sum+0}' "${KREPORT}" 2>/dev/null || echo "N/A")
 N_SPECIES=$(awk '$4 == "S" && $2 > 0' "${KREPORT}" 2>/dev/null | wc -l || echo "N/A")
 N_GENUS=$(awk '$4 == "G" && $2 > 0' "${KREPORT}" 2>/dev/null | wc -l || echo "N/A")
 
 echo ""
-echo "[centrifuger] ${SAMPLE} 完成，耗时 ${SECONDS}s"
+echo "[centrifuger] ${SAMPLE} 完成"
 echo "[centrifuger] 结果目录: ${RESULT_DIR}/"
 echo "    检测到种数: ${N_SPECIES}"
 echo "    检测到属数: ${N_GENUS}"
 echo "    关键输出:"
-echo "    ├── ${SAMPLE}.kreport.tsv              (Kraken2 格式报告，主要结果)"
+echo "    ├── ${SAMPLE}.kreport.tsv              (Kraken 格式报告，主要结果)"
 echo "    └── ${SAMPLE}.classifications.tsv.gz   (每条 read 分类，压缩存储)"
+mgx_end "centrifuger"

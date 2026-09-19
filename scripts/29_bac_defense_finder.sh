@@ -19,6 +19,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 29_bac_defense_finder.sh -t CPUS -w WORKDIR -r REPO
@@ -33,27 +35,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-WORKDIR=""
-REPO=""
-FORCE=0
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/annotation/defense_finder"
@@ -77,18 +65,14 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[defense_finder] 开始防御系统检测 | 线程: ${CPUS}"
 
-set +e
-conda run --prefix "${REPO}/envs/defense-finder" --no-capture-output \
-    defense-finder run \
-        --models-dir "${DF_DB}" \
-        --db-type unordered \
-        --workers "${CPUS}" \
-        --out-dir "${RESULT_DIR}" \
-        "${PROTEIN_NR}"
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+EXIT_CODE=0
+mgx_try mgx_conda defense-finder defense-finder run \
+    --models-dir "${DF_DB}" \
+    --db-type unordered \
+    --workers "${CPUS}" \
+    --out-dir "${RESULT_DIR}" \
+    "${PROTEIN_NR}" || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] defense-finder 失败（exit code: ${EXIT_CODE}）"; exit ${EXIT_CODE}
 fi
 
@@ -110,4 +94,5 @@ if [ ! -f "${SENTINEL}" ]; then
 fi
 
 N_SYSTEMS=$(awk 'NR>1' "${SENTINEL}" 2>/dev/null | wc -l || echo "N/A")
-echo "[defense_finder] 完成，耗时 ${SECONDS}s | 防御系统: ${N_SYSTEMS} | 输出: ${RESULT_DIR}/"
+echo "[defense_finder] 防御系统: ${N_SYSTEMS} | 输出: ${RESULT_DIR}/"
+mgx_end "defense_finder"

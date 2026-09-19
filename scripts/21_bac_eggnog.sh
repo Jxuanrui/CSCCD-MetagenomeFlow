@@ -26,6 +26,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 21_bac_eggnog.sh -t CPUS -w WORKDIR -r REPO
@@ -45,28 +47,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-WORKDIR=""
-REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"
-    show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -111,23 +98,19 @@ echo "[eggnog] 线程: ${CPUS}，预计耗时 30-120 分钟（取决于基因规
 # --dbmem:       内存加载注释数据库（加快注释步骤，需要 ~30G RAM）
 # --temp_dir:    临时文件目录（建议本地 SSD）
 
-set +e
-conda run --prefix "${REPO}/envs/eggnog" --no-capture-output \
-    emapper.py \
-        -m diamond \
-        --itype proteins \
-        --data_dir "${EGGNOG_DB}" \
-        --dbmem \
-        -i "${PROTEIN_NR}" \
-        --cpu "${CPUS}" \
-        -o "${OUTPUT_PREFIX}" \
-        --output_dir "${RESULT_DIR}" \
-        --temp_dir "${TEMP_DIR}" \
-        --override
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+EXIT_CODE=0
+mgx_try mgx_conda eggnog emapper.py \
+    -m diamond \
+    --itype proteins \
+    --data_dir "${EGGNOG_DB}" \
+    --dbmem \
+    -i "${PROTEIN_NR}" \
+    --cpu "${CPUS}" \
+    -o "${OUTPUT_PREFIX}" \
+    --output_dir "${RESULT_DIR}" \
+    --temp_dir "${TEMP_DIR}" \
+    --override || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] emapper.py 运行失败（exit code: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
@@ -146,9 +129,10 @@ N_KO=$(grep -v "^#" "${ANNOTATIONS}" | awk -F'\t' '$12!=""&&$12!="-"' | wc -l 2>
 N_COG=$(grep -v "^#" "${ANNOTATIONS}" | awk -F'\t' '$7!=""&&$7!="-"' | wc -l 2>/dev/null || echo "N/A")
 
 echo ""
-echo "[eggnog] 功能注释完成，耗时 ${SECONDS}s"
+echo "[eggnog] 功能注释完成"
 echo "[eggnog] 结果: ${RESULT_DIR}/"
 echo "    注释基因数:  ${N_ANNOTATED}"
 echo "    有 KO 注释:  ${N_KO}"
 echo "    有 COG 注释: ${N_COG}"
 echo "    主要输出: eggnog.emapper.annotations（COG/KO/GO/EC/CAZy）"
+mgx_end "eggnog"

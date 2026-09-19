@@ -29,8 +29,8 @@ show_help() { cat << EOF
   -r  MaxMetagenome 项目根目录
 
 示例:
-  bash 01_qc_fastp.sh -s SRR28210342 -t 16 \
-       -w ~/Course/Maxmetagenome/Project/Project_example \
+  bash 01_qc_fastp.sh -s SRR28210342 -t 16 \\
+       -w ~/Course/Maxmetagenome/Project/Project_example \\
        -r ~/Course/Maxmetagenome
 EOF
 }

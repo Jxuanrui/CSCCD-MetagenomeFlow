@@ -10,6 +10,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 Usage: bash 41d_bac_snippy.sh -w WORKDIR -r REPO -t THREADS [-R REF_GENOME]
 Required:
@@ -40,34 +42,14 @@ strip_ext() {
     echo "${name}"
 }
 
-THREADS=""
-WORKDIR=""
-REPO=""
-FORCE=0
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:THREADS w:WORKDIR r:REPO R:REF_GENOME"
+export MGX_OPTS_FLAG="force"
 REF_GENOME=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) THREADS="$2"; shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        -R) REF_GENOME="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        -) case "${OPTARG}" in
-               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
-           esac ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in THREADS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then
-        echo "[ERROR] Missing required argument"
-        show_help
-        exit 1
-    fi
-done
+mgx_parse "$@"
+mgx_require THREADS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 MAGS_DIR="${WORKDIR}/result/binning/drep/dereplicated_genomes"
 OUTDIR="${WORKDIR}/result/wgs/snippy"
 SENTINEL="${OUTDIR}/core.tsv"
@@ -180,14 +162,14 @@ if [ ${#SNIPPY_DIRS[@]} -eq 0 ]; then
     exit 1
 fi
 
-set +e
-conda run --prefix "${SNIPPY_ENV}" --no-capture-output \
+# 注: conda 前缀为运行时回退变量 ${SNIPPY_ENV}（snippy 或 prokaWGS），无法走
+# mgx_conda 的固定 env 名包装，保留原 conda run 形式
+EXIT_CODE=0
+mgx_try conda run --prefix "${SNIPPY_ENV}" --no-capture-output \
     snippy-core \
         --ref "${REF}" \
         --prefix "${OUTDIR}/core" \
-        "${SNIPPY_DIRS[@]}"
-EXIT_CODE=$?
-set -e
+        "${SNIPPY_DIRS[@]}" || EXIT_CODE=$?
 
 # snippy-core 内部最后一步调用 snp-sites -c 生成紧凑版 core.aln；当跨样本 MAG
 # 之间没有共同的多态位点（宏基因组场景下不同样本的独立组装 MAG 本质是不同基
@@ -233,4 +215,5 @@ TOTAL_SNPS=$(awk 'NR > 1 {count++} END {print count + 0}' "${CORE_TAB}")
     printf "clean_alignment\t%s\n" "${CLEAN_ALN}"
 } > "${SUMMARY_FILE}"
 
-echo "[snippy] Done in ${SECONDS}s | total MAGs: ${#MAG_FILES[@]} | successful runs: ${#SNIPPY_DIRS[@]} | total SNPs: ${TOTAL_SNPS}"
+echo "[snippy] total MAGs: ${#MAG_FILES[@]} | successful runs: ${#SNIPPY_DIRS[@]} | total SNPs: ${TOTAL_SNPS}"
+mgx_end "snippy"

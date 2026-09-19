@@ -32,6 +32,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 17_bac_prodigal.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -52,30 +54,14 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS="1"
-WORKDIR=""
-REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+# 注：-t 仅占位（Prodigal 单线程），CPUS 不在脚本内使用，故不设默认值
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE WORKDIR REPO
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${SAMPLE}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-w/-r）"
-    show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -118,19 +104,15 @@ echo "[prodigal] 模式: -p meta（宏基因组），输入: ${INPUT_CONTIGS}"
 # -f gff:   GFF3 格式输出（基因坐标，含 partial/complete 标记）
 # -o ${GFF}: GFF 文件路径
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    prodigal \
-        -i "${INPUT_CONTIGS}" \
-        -a "${FAA}" \
-        -d "${FNA}" \
-        -f gff \
-        -o "${GFF}" \
-        -p meta
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+EXIT_CODE=0
+mgx_try mgx_conda assembly prodigal \
+    -i "${INPUT_CONTIGS}" \
+    -a "${FAA}" \
+    -d "${FNA}" \
+    -f gff \
+    -o "${GFF}" \
+    -p meta || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] Prodigal 运行失败（exit code: ${EXIT_CODE}）"
     rm -f "${FAA}" "${FNA}" "${GFF}"
     exit ${EXIT_CODE}
@@ -153,7 +135,7 @@ else
 fi
 
 echo ""
-echo "[prodigal] ${SAMPLE} 预测完成，耗时 ${SECONDS}s"
+echo "[prodigal] ${SAMPLE} 预测完成"
 echo "[prodigal] 结果目录: ${RESULT_DIR}/"
 echo "    预测基因总数:  ${N_TOTAL}"
 echo "    完整基因数:    ${N_COMPLETE} (${PCT_COMPLETE}%，partial=00)"
@@ -163,3 +145,4 @@ echo "    ├── ${SAMPLE}.fna  (核苷酸序列，→ CD-HIT 去冗余 → S
 echo "    └── ${SAMPLE}.gff  (基因坐标，GFF3 格式)"
 echo ""
 echo "[提示] 下一步: 运行 18_bac_cdhit.sh 对全部样本基因集进行去冗余"
+mgx_end "prodigal"

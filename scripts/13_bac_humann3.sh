@@ -66,6 +66,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 13_bac_humann3.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--speed-mode MODE]
@@ -90,37 +92,21 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""
-CPUS=""
-WORKDIR=""
-REPO=""
 SPEED_MODE="standard"
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";          shift 2 ;;
-        -t) CPUS="$2";            shift 2 ;;
-        -w) WORKDIR="$2";         shift 2 ;;
-        -r) REPO="$2";            shift 2 ;;
-        --speed-mode) SPEED_MODE="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"
-    show_help; exit 1
-fi
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="speed-mode:SPEED_MODE"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
 if [[ ! "${SPEED_MODE}" =~ ^(standard|balanced|fast)$ ]]; then
     echo "[ERROR] --speed-mode 必须为 standard / balanced / fast"
     exit 1
 fi
 
-SECONDS=0
+mgx_begin
 
 # --- 速度模式配置 ---
 # 注意：threshold 值对应 MetaPhlAn4 的百分比尺度（0-100），非分数（0-1）
@@ -165,8 +151,6 @@ RESULT_DIR="${WORKDIR}/result/humann3/${SAMPLE}"
 
 DB_CHOCOPHLAN="${REPO}/db/humann4/chocophlan"
 DB_UNIREF="${REPO}/db/humann4/uniref"
-MPA_DB_DIR="${REPO}/db/metaphlan4"
-MPA_DB_INDEX="mpa_vOct22_CHOCOPhlAnSGB_202212"
 
 # --- 输入检查 ---
 
@@ -265,8 +249,8 @@ fi
 # cd to TEMP_DIR so MetaPhlAn4's hardcoded fifo_map.mapout.txt lands here, not in PROJ_DIR
 cd "${TEMP_DIR}"
 
-set +e
-conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda humann4 \
     humann \
         --input                   "${MERGED_FQ}" \
         --output                  "${TEMP_DIR}" \
@@ -280,12 +264,10 @@ conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
         --metaphlan-options       "-t rel_ab --tmp_dir ${TEMP_DIR}" \
         ${REMOVE_TEMP} \
         ${TAXONOMIC_PROFILE_ARG} \
-        "${DIAMOND_CMD_ARGS[@]}"
-
-EXIT_CODE=$?
-set -e
+        "${DIAMOND_CMD_ARGS[@]}" \
+        || EXIT_CODE=$?
 rm -f "${MERGED_FQ}"
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] HUMAnN3 运行失败（exit code: ${EXIT_CODE}）"
     echo "        查看日志: ${TEMP_DIR}/${SAMPLE}.log"
     exit ${EXIT_CODE}
@@ -313,7 +295,7 @@ mv "${TEMP_DIR}/${SAMPLE}_genefamilies.tsv"  "${RESULT_DIR}/"
 echo "[humann3] 标准化为相对丰度..."
 
 for tsv in pathabundance genefamilies; do
-    conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+    mgx_conda humann4 \
         humann_renorm_table \
             --input  "${RESULT_DIR}/${SAMPLE}_${tsv}.tsv" \
             --units  relab \
@@ -327,7 +309,7 @@ echo "[humann3] 拆分 stratified/unstratified..."
 mkdir -p "${RESULT_DIR}/unstratified" "${RESULT_DIR}/stratified"
 
 for tsv in pathabundance_relab genefamilies_relab; do
-    conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+    mgx_conda humann4 \
         humann_split_stratified_table \
             --input  "${RESULT_DIR}/${SAMPLE}_${tsv}.tsv" \
             --output "${RESULT_DIR}/"
@@ -344,7 +326,7 @@ N_GENES=$(grep -v "^#\|UNMAPPED\|UNGROUPED" "${RESULT_DIR}/${SAMPLE}_genefamilie
           | grep -v "|" | wc -l 2>/dev/null || echo "N/A")
 
 echo ""
-echo "[humann3] ${SAMPLE} 完成，速度模式: ${SPEED_MODE}，耗时 ${SECONDS}s"
+echo "[humann3] ${SAMPLE} 完成，速度模式: ${SPEED_MODE}"
 echo "[humann3] 结果目录: ${RESULT_DIR}/"
 echo "    检测通路数: ${N_PATHS}"
 echo "    基因家族数: ${N_GENES}"
@@ -354,3 +336,4 @@ echo "    ├── ${SAMPLE}_pathabundance_relab.tsv  (MetaCyc 通路 relab)"
 echo "    ├── ${SAMPLE}_genefamilies_relab.tsv   (UniRef90 基因家族)"
 echo "    ├── unstratified/  (社区整体，统计分析用)"
 echo "    └── stratified/    (物种分层，溯源分析用)"
+mgx_end "humann3"

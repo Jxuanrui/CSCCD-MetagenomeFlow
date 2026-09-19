@@ -13,50 +13,35 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 # --- 参数解析 ---
 
-if [ $# -lt 4 ]; then
-    echo ""
-    echo "用法: bash 11b_bac_metaphlan4_merge.sh -w WORKDIR -r REPO"
-    echo ""
-    echo "参数说明:"
-    echo "  -w  工作目录（Project_example 路径）"
-    echo "  -r  MaxMetagenome 项目根目录"
-    echo ""
-    echo "示例:"
-    echo "  bash 11b_bac_metaphlan4_merge.sh \\"
-    echo "       -w ~/Course/Maxmetagenome/Project/Project_example \\"
-    echo "       -r ~/Course/Maxmetagenome"
-    echo ""
-    echo "可选参数:"
-    echo "  --force  强制重新运行（忽略已存在的结果）"
-    exit 1
-fi
+show_help() { cat << EOF
 
-FORCE=0
-ARGS=()
-for arg in "$@"; do
-    if [ "${arg}" = "--force" ]; then
-        FORCE=1
-    else
-        ARGS+=("${arg}")
-    fi
-done
-set -- "${ARGS[@]}"
+用法: bash 11b_bac_metaphlan4_merge.sh -w WORKDIR -r REPO
 
-while getopts w:r: option; do
-    case "${option}" in
-        w) WORKDIR=${OPTARG} ;;
-        r) REPO=${OPTARG} ;;
-    esac
-done
+参数说明:
+  -w  工作目录（Project_example 路径）
+  -r  MaxMetagenome 项目根目录
 
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-w/-r）"
-    exit 1
-fi
+示例:
+  bash 11b_bac_metaphlan4_merge.sh \\
+       -w ~/Course/Maxmetagenome/Project/Project_example \\
+       -r ~/Course/Maxmetagenome
 
-SECONDS=0
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
+EOF
+}
+
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
+
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -90,7 +75,7 @@ fi
 
 echo "[metaphlan4_merge] 找到 ${#PROFILE_LIST[@]} 个样本 profile:"
 for p in "${PROFILE_LIST[@]}"; do
-    echo "    $(basename $(dirname ${p}))"
+    echo "    $(basename "$(dirname "${p}")")"
 done
 
 # --- 幂等性检查 ---
@@ -113,7 +98,7 @@ mkdir -p "${MERGED_DIR}"
 #   - sed '2i #metaphlan4' 插入工具标识注释行
 
 echo "[INFO] 合并多样本丰度表..."
-conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+mgx_conda humann4 \
     merge_metaphlan_tables.py "${PROFILE_LIST[@]}" \
     | tail -n+2 \
     | sed '1 s/clade_name/ID/' \
@@ -201,9 +186,10 @@ PYEOF
 # --- 统计摘要 ---
 
 echo ""
-echo "[metaphlan4_merge] 合并完成，耗时 ${SECONDS}s"
+echo "[metaphlan4_merge] 合并完成"
 echo "[metaphlan4_merge] 输出目录: ${MERGED_DIR}"
 echo "    taxonomy.tsv         — 全层级丰度表（供统计分析脚本 91+ 使用）"
 echo "    taxonomy_species.tsv — 菌种级 TSV"
 echo "    taxonomy_genus.tsv   — 菌属级 TSV"
 echo "    taxonomy_species.csv — 菌种级 CSV（列=样本，行=物种，可直接导入 Excel/R）"
+mgx_end "metaphlan4_merge"

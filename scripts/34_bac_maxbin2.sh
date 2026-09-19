@@ -17,6 +17,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 34_bac_maxbin2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -27,24 +29,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 DEPTH="${WORKDIR}/result/binning/coverm/${SAMPLE}/depth.txt"
 OUTDIR="${WORKDIR}/result/binning/maxbin2/${SAMPLE}"
@@ -65,19 +56,16 @@ if [ ! -f "${ABUND}" ] || [ "${DEPTH}" -nt "${ABUND}" ]; then
     tail -n +2 "${DEPTH}" | cut -f1,4 > "${ABUND}"
 fi
 
-set +e
 echo "[maxbin2] ${SAMPLE} | 线程: ${CPUS}"
-conda run --prefix "${REPO}/envs/metawrap" --no-capture-output \
-    run_MaxBin.pl \
+EXIT_CODE=0
+mgx_try mgx_conda metawrap run_MaxBin.pl \
         -contig "${CONTIGS}" \
         -max_iteration 50 \
         -thread "${CPUS}" \
         -abund "${ABUND}" \
-        -out "${OUTDIR}/bin"
+        -out "${OUTDIR}/bin" || EXIT_CODE=$?
 
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[maxbin2] WARNING: MaxBin2 失败，创建空 sentinel: ${SENTINEL}"
     : > "${SENTINEL}"
     exit 0
@@ -95,4 +83,5 @@ else
     done > "${SENTINEL}"
 fi
 
-echo "[maxbin2] 完成，耗时 ${SECONDS}s | bins: ${N_FA}"
+echo "[maxbin2] bins: ${N_FA}"
+mgx_end "maxbin2"

@@ -18,6 +18,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 23_bac_amrfinder.sh -t CPUS -w WORKDIR -r REPO
@@ -29,27 +31,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-WORKDIR=""
-REPO=""
-FORCE=0
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/annotation/amrfinder"
@@ -72,22 +60,19 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[amrfinder] 开始耐药基因检测 | 线程: ${CPUS}"
 
-set +e
-conda run --prefix "${REPO}/envs/amr" --no-capture-output \
-    amrfinder \
-        --protein "${PROTEIN_NR}" \
-        --database "${AMR_DB}" \
-        --output "${OUTPUT}" \
-        --threads "${CPUS}" \
-        --ident_min 0.9 \
-        --coverage_min 0.6 \
-        --plus
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+EXIT_CODE=0
+mgx_try mgx_conda amr amrfinder \
+    --protein "${PROTEIN_NR}" \
+    --database "${AMR_DB}" \
+    --output "${OUTPUT}" \
+    --threads "${CPUS}" \
+    --ident_min 0.9 \
+    --coverage_min 0.6 \
+    --plus || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] amrfinder 失败（exit code: ${EXIT_CODE}）"; rm -f "${OUTPUT}"; exit ${EXIT_CODE}
 fi
 
 N_HITS=$(awk 'NR>1' "${OUTPUT}" 2>/dev/null | wc -l || echo "N/A")
-echo "[amrfinder] 完成，耗时 ${SECONDS}s | 耐药基因命中: ${N_HITS} | 输出: ${OUTPUT}"
+echo "[amrfinder] 耐药基因命中: ${N_HITS} | 输出: ${OUTPUT}"
+mgx_end "amrfinder"

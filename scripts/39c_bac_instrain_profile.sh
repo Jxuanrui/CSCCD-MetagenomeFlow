@@ -23,6 +23,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 39c_bac_instrain_profile.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -38,24 +40,13 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 MAP_DIR="${WORKDIR}/result/binning/instrain_map"
 BAM="${MAP_DIR}/${SAMPLE}/${SAMPLE}.sorted.bam"
 COMBINED_FA="${MAP_DIR}/combined_mags.fa"
@@ -84,25 +75,23 @@ fi
 
 mkdir -p "${OUTDIR}"
 
-set +e
 echo "[instrain_profile] ${SAMPLE} | 菌株微多样性分析 | 线程: ${CPUS}"
-conda run --prefix "${REPO}/envs/instrain" --no-capture-output \
-    inStrain profile \
+EXIT_CODE=0
+mgx_try mgx_conda instrain inStrain profile \
         "${BAM}" \
         "${COMBINED_FA}" \
         -o "${OUTDIR}" \
         -s "${COMBINED_STB}" \
         -p "${CPUS}" \
-        --pairing_filter all_reads
+        --pairing_filter all_reads || EXIT_CODE=$?
 
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] inStrain profile 失败"; exit ${EXIT_CODE}; fi
+if [ "${EXIT_CODE}" -ne 0 ]; then echo "[ERROR] inStrain profile 失败"; exit ${EXIT_CODE}; fi
 
 N_GENOMES=0
 if [ -f "${OUTPUT_GENOME_INFO}" ]; then
     N_GENOMES=$(($(wc -l < "${OUTPUT_GENOME_INFO}") - 1))
 fi
 
-echo "[instrain_profile] ${SAMPLE} 完成，耗时 ${SECONDS}s | 分析了 ${N_GENOMES} 个基因组"
+echo "[instrain_profile] ${SAMPLE} 分析了 ${N_GENOMES} 个基因组"
 echo "[提示] 下一步: 运行 39d_bac_instrain_compare.sh 进行跨样本群体 ANI 比较"
+mgx_end "instrain_profile"

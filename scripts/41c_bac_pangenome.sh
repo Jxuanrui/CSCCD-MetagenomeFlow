@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 Usage: bash 41c_bac_pangenome.sh -w WORKDIR -r REPO -t THREADS [--identity 95] [--core-definition 99]
 Required:
@@ -53,15 +55,11 @@ while [[ $# -gt 0 ]]; do
         *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
     esac
 done
-for v in THREADS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then
-        echo "[ERROR] Missing required argument"
-        show_help
-        exit 1
-    fi
-done
+# 注: 参数解析保留原 while/case —— --identity / --core-definition 为带值长选项，
+# libcommon.sh 的 mgx_parse 表（短选项 + 布尔长选项）无法表达，不强转
+mgx_require THREADS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 PROKKA_DIR="${WORKDIR}/result/binning/prokka"
 OUTDIR="${WORKDIR}/result/wgs/pangenome"
 SENTINEL="${OUTDIR}/summary_statistics.txt"
@@ -115,8 +113,8 @@ rm -f "${FAILED_SENTINEL}"
 ROARY_LOG="${OUTDIR}/roary.log"
 echo "[pangenome] Running Roary on ${#GFF_FILES[@]} genomes | identity: ${IDENTITY} | core: ${CORE_DEFINITION}"
 set +e
-conda run --prefix "${REPO}/envs/prokaWGS" --no-capture-output \
-    roary \
+# 注: 管道（conda | tee）无法走 mgx_try 包装，保留 set +e ... set -e 结构
+mgx_conda prokaWGS roary \
         -p "${THREADS}" \
         -e \
         --mafft \
@@ -174,4 +172,5 @@ if [ -z "${UNIQUE_GENES}" ]; then
 fi
 
 printf "Pan-genome presence/absence matrix: %s\n" "${OUTDIR}/gene_presence_absence.csv" > "${MATRIX_NOTE}"
-echo "[pangenome] Done in ${SECONDS}s | total genomes: ${#GFF_FILES[@]} | core genes: ${CORE_GENES:-NA} | accessory genes: ${ACCESSORY_GENES:-NA} | unique genes: ${UNIQUE_GENES:-NA}"
+echo "[pangenome] total genomes: ${#GFF_FILES[@]} | core genes: ${CORE_GENES:-NA} | accessory genes: ${ACCESSORY_GENES:-NA} | unique genes: ${UNIQUE_GENES:-NA}"
+mgx_end "pangenome"

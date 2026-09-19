@@ -13,6 +13,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 27_bac_bacmet.sh -t CPUS -w WORKDIR -r REPO
@@ -24,27 +26,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-FORCE=0
-WORKDIR=""
-REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 PROTEIN_NR="${WORKDIR}/result/assembly/cdhit/protein_nr.fa"
 RESULT_DIR="${WORKDIR}/result/annotation/bacmet"
@@ -67,24 +55,21 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[bacmet] 开始重金属抗性基因注释 | DB: ${DB_FILE} | 线程: ${CPUS}"
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-    diamond blastp \
-        --db     "${DB_FILE}" \
-        --query  "${PROTEIN_NR}" \
-        --out    "${OUTPUT}" \
-        --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore \
-        --evalue 1e-5 \
-        --max-target-seqs 1 \
-        --sensitive \
-        --threads "${CPUS}" \
-        --quiet
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+EXIT_CODE=0
+mgx_try mgx_conda assembly diamond blastp \
+    --db     "${DB_FILE}" \
+    --query  "${PROTEIN_NR}" \
+    --out    "${OUTPUT}" \
+    --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore \
+    --evalue 1e-5 \
+    --max-target-seqs 1 \
+    --sensitive \
+    --threads "${CPUS}" \
+    --quiet || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] diamond blastp 失败（exit code: ${EXIT_CODE}）"; rm -f "${OUTPUT}"; exit ${EXIT_CODE}
 fi
 
 N_HITS=$(wc -l < "${OUTPUT}" 2>/dev/null || echo "N/A")
-echo "[bacmet] 完成，耗时 ${SECONDS}s | 重金属抗性命中: ${N_HITS} | 输出: ${OUTPUT}"
+echo "[bacmet] 重金属抗性命中: ${N_HITS} | 输出: ${OUTPUT}"
+mgx_end "bacmet"

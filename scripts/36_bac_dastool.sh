@@ -16,6 +16,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 36_bac_dastool.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -30,24 +32,13 @@ show_help() { cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/binning/dastool/${SAMPLE}"
 SENTINEL="${OUTDIR}/${SAMPLE}_DASTool_contig2bin.tsv"
@@ -136,11 +127,12 @@ for entry in "${BINNERS[@]}"; do
     INPUTS="${INPUTS}${CLEAN_F}"
 done
 
-set +e
 echo "[dastool] ${SAMPLE} | binner: ${LABELS} | 整合分箱 ..."
 # R_LIBS_USER (项目全局 Rlib，R 4.5.3 编译) 与本环境 R 4.4.3 ABI 不兼容，
 # 会覆盖 envs/dastool 自带且兼容的 data.table，导致 DAS_Tool 内部 R 脚本崩溃
-env -u R_LIBS_USER conda run --prefix "${REPO}/envs/dastool" --no-capture-output \
+# （env -u 前缀使本调用无法走 mgx_conda 包装，保留原 conda run 形式）
+EXIT_CODE=0
+mgx_try env -u R_LIBS_USER conda run --prefix "${REPO}/envs/dastool" --no-capture-output \
     DAS_Tool \
         --threads "${CPUS}" \
         -i "${INPUTS}" \
@@ -148,12 +140,11 @@ env -u R_LIBS_USER conda run --prefix "${REPO}/envs/dastool" --no-capture-output
         -c "${CONTIGS}" \
         -o "${OUTDIR}/${SAMPLE}" \
         --score_threshold 0.3 \
-        --write_bins
+        --write_bins || EXIT_CODE=$?
 
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] DAS_Tool 失败"; exit ${EXIT_CODE}; fi
+if [ "${EXIT_CODE}" -ne 0 ]; then echo "[ERROR] DAS_Tool 失败"; exit ${EXIT_CODE}; fi
 
 N_BINS=0
 [ -d "${BINS_DIR}" ] && N_BINS=$(ls "${BINS_DIR}"/*.fa 2>/dev/null | wc -l)
-echo "[dastool] 完成，耗时 ${SECONDS}s | 整合 bins: ${N_BINS}"
+echo "[dastool] 整合 bins: ${N_BINS}"
+mgx_end "dastool"

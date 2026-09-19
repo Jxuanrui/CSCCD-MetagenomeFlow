@@ -6,13 +6,10 @@
 
 set -euo pipefail
 
-# ==================== Parameter parsing ====================
-REPO=""
-WORKDIR=""
-MAG_NAME=""
-FORCE=0
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 
-usage() {
+# ==================== Parameter parsing ====================
+show_help() {
     cat << EOF
 Usage: $0 -m MAG_NAME -w WORKDIR -r REPO [--force]
 
@@ -28,21 +25,13 @@ Example:
   $0 -m bin001 -w /path/to/project -r ~/Course/Maxmetagenome
   $0 -m all -w /path/to/project -r ~/Course/Maxmetagenome
 EOF
-    exit 1
 }
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -m) MAG_NAME="$2"; shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) usage ;;
-        *) echo "Unknown option: $1"; usage ;;
-    esac
-done
-
-[[ -z "$MAG_NAME" || -z "$WORKDIR" || -z "$REPO" ]] && usage
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="m:MAG_NAME w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require MAG_NAME WORKDIR REPO
 
 # Convert to absolute paths
 WORKDIR=$(cd "$WORKDIR" && pwd)

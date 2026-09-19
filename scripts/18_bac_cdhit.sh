@@ -54,6 +54,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 18_bac_cdhit.sh -t CPUS -w WORKDIR -r REPO [--tool cdhit|mmseqs]
@@ -81,35 +83,21 @@ cat << EOF
 EOF
 }
 
-CPUS=""
-WORKDIR=""
-REPO=""
 TOOL="cdhit"
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t)      CPUS="$2";    shift 2 ;;
-        -w)      WORKDIR="$2"; shift 2 ;;
-        -r)      REPO="$2";    shift 2 ;;
-        --tool)  TOOL="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-t/-w/-r）"
-    show_help; exit 1
-fi
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="tool:TOOL"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
 if [[ "${TOOL}" != "cdhit" && "${TOOL}" != "mmseqs" ]]; then
     echo "[ERROR] --tool 只接受 cdhit 或 mmseqs，当前值: ${TOOL}"
     exit 1
 fi
 
-SECONDS=0
+mgx_begin
 
 # --- 路径设置 ---
 
@@ -123,7 +111,7 @@ NR_FAA="${RESULT_DIR}/protein_nr.fa"
 
 # --- 输入检查 ---
 
-FNA_FILES=($(find "${PRODIGAL_DIR}" -name "*.fna" -size +0c 2>/dev/null | sort))
+mapfile -t FNA_FILES < <(find "${PRODIGAL_DIR}" -name "*.fna" -size +0c 2>/dev/null | sort)
 N_SAMPLES="${#FNA_FILES[@]}"
 
 if [ "${N_SAMPLES}" -eq 0 ]; then
@@ -157,7 +145,7 @@ echo "[cdhit] 合并基因总数: ${N_RAW}"
 # --- Step 2: 过滤 <100 bp 的基因片段 ---
 
 echo "[cdhit] Step 2/4: 过滤长度 <100 bp 的基因片段..."
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     seqkit seq -m 100 "${COMBINED_FNA}" > "${FILTERED_FNA}"
 
 N_FILTERED=$(grep -c "^>" "${FILTERED_FNA}" || echo "N/A")
@@ -170,23 +158,19 @@ if [ "${TOOL}" = "cdhit" ]; then
     echo "[cdhit] Step 3/4: 运行 CD-HIT-EST（95% identity，90% coverage）..."
     echo "[cdhit] 线程: ${CPUS}，≤500万基因预计 10-60 分钟"
 
-    set +e
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-        cd-hit-est \
-            -i  "${FILTERED_FNA}" \
-            -o  "${NR_FNA}" \
-            -c  0.95 \
-            -aS 0.9 \
-            -G  0 \
-            -g  1 \
-            -r  1 \
-            -n  10 \
-            -T  "${CPUS}" \
-            -M  0 \
-            -d  0
-
-    EXIT_CODE=$?
-    set -e
+    EXIT_CODE=0
+    mgx_try mgx_conda assembly cd-hit-est \
+        -i  "${FILTERED_FNA}" \
+        -o  "${NR_FNA}" \
+        -c  0.95 \
+        -aS 0.9 \
+        -G  0 \
+        -g  1 \
+        -r  1 \
+        -n  10 \
+        -T  "${CPUS}" \
+        -M  0 \
+        -d  0 || EXIT_CODE=$?
 
 else  # mmseqs
 
@@ -197,24 +181,20 @@ else  # mmseqs
     MMSEQS_TMP="${RESULT_DIR}/mmseqs_tmp"
     mkdir -p "${MMSEQS_TMP}"
 
-    set +e
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-        mmseqs easy-linclust \
-            "${FILTERED_FNA}" \
-            "${MMSEQS_PREFIX}" \
-            "${MMSEQS_TMP}" \
-            --min-seq-id 0.95 \
-            -c 0.9 \
-            --cov-mode 1 \
-            --cluster-mode 2 \
-            --threads "${CPUS}" \
-            -v 1
-
-    EXIT_CODE=$?
-    set -e
+    EXIT_CODE=0
+    mgx_try mgx_conda assembly mmseqs easy-linclust \
+        "${FILTERED_FNA}" \
+        "${MMSEQS_PREFIX}" \
+        "${MMSEQS_TMP}" \
+        --min-seq-id 0.95 \
+        -c 0.9 \
+        --cov-mode 1 \
+        --cluster-mode 2 \
+        --threads "${CPUS}" \
+        -v 1 || EXIT_CODE=$?
 
     # easy-linclust 输出 *_rep_seq.fasta，统一重命名为 nucleotide_nr.fa
-    if [ ${EXIT_CODE} -eq 0 ] && [ -f "${MMSEQS_PREFIX}_rep_seq.fasta" ]; then
+    if [ "${EXIT_CODE}" -eq 0 ] && [ -f "${MMSEQS_PREFIX}_rep_seq.fasta" ]; then
         cp "${MMSEQS_PREFIX}_rep_seq.fasta" "${NR_FNA}"
         # 清理 MMseqs2 临时目录
         rm -rf "${MMSEQS_TMP}"
@@ -222,7 +202,7 @@ else  # mmseqs
 
 fi
 
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[ERROR] 去冗余运行失败（exit code: ${EXIT_CODE}，tool: ${TOOL}）"
     rm -f "${NR_FNA}"
     exit ${EXIT_CODE}
@@ -237,14 +217,14 @@ fi
 
 echo "[cdhit] Step 4/4: 翻译蛋白序列（seqkit translate）..."
 set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     seqkit translate --trim "${NR_FNA}" | \
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    mgx_conda assembly \
     seqkit seq -m 1 > "${NR_FAA}"
 
 EXIT_CODE=$?
 set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[WARN] seqkit translate 失败（exit code: ${EXIT_CODE}），蛋白序列文件未生成"
 fi
 
@@ -254,12 +234,11 @@ rm -f "${COMBINED_FNA}" "${FILTERED_FNA}"
 # --- 统计摘要 ---
 
 N_NR=$(grep -c "^>" "${NR_FNA}" 2>/dev/null || echo "N/A")
-N_FAA=$(grep -c "^>" "${NR_FAA}" 2>/dev/null || echo "N/A")
 
 DEDUP_RATE=$(awk "BEGIN{if(\"${N_FILTERED}\" ~ /^[0-9]+$/ && \"${N_NR}\" ~ /^[0-9]+$/ && ${N_FILTERED}>0) printf \"%.1f\", (1-${N_NR}/${N_FILTERED})*100; else print \"N/A\"}")
 
 echo ""
-echo "[cdhit] 去冗余完成（后端: ${TOOL}），耗时 ${SECONDS}s"
+echo "[cdhit] 去冗余完成（后端: ${TOOL}）"
 echo "[cdhit] 结果目录: ${RESULT_DIR}/"
 echo "    输入样本数:    ${N_SAMPLES}"
 echo "    合并基因数:    ${N_RAW}"
@@ -271,3 +250,4 @@ echo "    ├── nucleotide_nr.fa.clstr (聚类信息，CD-HIT 模式)"
 echo "    └── protein_nr.fa         (NR 蛋白序列，→ 21-31 功能注释)"
 echo ""
 echo "[提示] 下一步: 运行 19_bac_salmon_build.sh 构建 Salmon 定量索引"
+mgx_end "cdhit"
