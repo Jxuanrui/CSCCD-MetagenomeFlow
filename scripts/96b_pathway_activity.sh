@@ -6,6 +6,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'HELP'
 Usage: bash 96b_pathway_activity.sh -w WORKDIR -m METADATA_FILE -o OUTPUT_DIR \
@@ -24,41 +26,18 @@ Optional:
 HELP
 }
 
-WORKDIR=""
-FORCE=0
 METADATA_FILE=""
 OUTPUT_DIR=""
 DIMENSION=""
 MIN_COVERAGE="0.5"
 TOP_N_CONTRIBUTORS="5"
 
-require_value() {
-    if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == -* ]]; then
-        echo "[ERROR] Missing value for $1" >&2
-        show_help >&2
-        exit 1
-    fi
-}
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w|--workdir) require_value "$@"; WORKDIR="$2"; shift 2 ;;
-        -m|--metadata-file) require_value "$@"; METADATA_FILE="$2"; shift 2 ;;
-        -o|--output-dir) require_value "$@"; OUTPUT_DIR="$2"; shift 2 ;;
-        -d|--dimension) require_value "$@"; DIMENSION="$2"; shift 2 ;;
-        --min-coverage) require_value "$@"; MIN_COVERAGE="$2"; shift 2 ;;
-        --top-n-contributors) require_value "$@"; TOP_N_CONTRIBUTORS="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1" >&2; show_help >&2; exit 1 ;;
-    esac
-done
-
-if [[ -z "${WORKDIR}" || -z "${METADATA_FILE}" || -z "${OUTPUT_DIR}" || -z "${DIMENSION}" ]]; then
-    echo "[ERROR] Missing required arguments" >&2
-    show_help >&2
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR m:METADATA_FILE o:OUTPUT_DIR d:DIMENSION"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="workdir:WORKDIR metadata-file:METADATA_FILE output-dir:OUTPUT_DIR dimension:DIMENSION min-coverage:MIN_COVERAGE top-n-contributors:TOP_N_CONTRIBUTORS"
+mgx_parse "$@"
+mgx_require WORKDIR METADATA_FILE OUTPUT_DIR DIMENSION
 
 DIMENSION="$(printf '%s' "${DIMENSION}" | tr '[:upper:]' '[:lower:]')"
 [[ "${DIMENSION}" == "bacteria" ]] || {

@@ -14,6 +14,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 74_fun_blast_gutdb.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -30,22 +32,13 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; exit 1; fi; done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 
 INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
@@ -78,8 +71,8 @@ fi
 mkdir -p "${OUTDIR}"
 zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${TMP_FASTQ}"
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     diamond blastx \
         --db "${DB_FILE}" \
         --query "${TMP_FASTQ}" \
@@ -88,9 +81,8 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --evalue 1e-5 \
         --max-target-seqs 5 \
         --threads "${CPUS}" \
-        --sensitive
-EXIT_CODE=$?
-set -e
+        --sensitive \
+        || EXIT_CODE=$?
 rm -f "${TMP_FASTQ}"
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] diamond blastx 失败（exit: ${EXIT_CODE}）"
@@ -99,4 +91,5 @@ if [ ${EXIT_CODE} -ne 0 ]; then
 fi
 
 N_HITS=$(wc -l < "${OUTPUT_TSV}" 2>/dev/null || echo "0")
-echo "[fun_blast_gutdb] 完成，耗时 ${SECONDS}s | 命中: ${N_HITS}"
+echo "[fun_blast_gutdb] 完成 | 命中: ${N_HITS}"
+mgx_end "fun_blast_gutdb"

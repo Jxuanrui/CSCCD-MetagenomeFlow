@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 84_fun_vfdb.sh -t CPUS -w WORKDIR -r REPO
@@ -22,25 +24,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 RESULT_DIR="${WORKDIR}/result/fungi/vfdb"
 PRODIGAL_DIR="${WORKDIR}/result/fungi/prodigal"
@@ -54,14 +44,14 @@ if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then echo "[I
 
 mkdir -p "${RESULT_DIR}"
 
-FAA_FILES=($(find "${PRODIGAL_DIR}" -name "*.faa" 2>/dev/null))
+mapfile -t FAA_FILES < <(find "${PRODIGAL_DIR}" -name "*.faa" 2>/dev/null)
 if [ ${#FAA_FILES[@]} -eq 0 ]; then echo "[ERROR] 未找到 FAA 文件"; exit 1; fi
 cat "${FAA_FILES[@]}" > "${COMBINED_FAA}"
 
 echo "[fun_vfdb] 开始真菌毒力因子注释 | DB: ${DB_FILE} | 线程: ${CPUS}"
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     diamond blastp \
         --db     "${DB_FILE}" \
         --query  "${COMBINED_FAA}" \
@@ -71,11 +61,10 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         --max-target-seqs 1 \
         --sensitive \
         --threads "${CPUS}" \
-        --quiet
-
-EXIT_CODE=$?
-set -e
+        --quiet \
+        || EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] diamond blastp 失败"; rm -f "${OUTPUT}"; exit ${EXIT_CODE}; fi
 
 N_HITS=$(wc -l < "${OUTPUT}" 2>/dev/null || echo "0")
-echo "[fun_vfdb] 完成，耗时 ${SECONDS}s | 毒力因子: ${N_HITS} | 输出: ${OUTPUT}"
+echo "[fun_vfdb] 完成 | 毒力因子: ${N_HITS} | 输出: ${OUTPUT}"
+mgx_end "fun_vfdb"

@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 96_functional_permanova.sh -w WORKDIR -r REPO [-m METADATA_CSV] [-g GROUP_COL] [-d DIMENSION] [--force]
@@ -34,39 +36,15 @@ Outputs:
 EOF
 }
 
-require_value() {
-    if [ "$#" -lt 2 ] || [[ "$2" == -* ]]; then
-        echo "[ERROR] Missing value for argument: $1"
-        show_help
-        exit 1
-    fi
-}
-
-WORKDIR=""
-REPO=""
 METADATA_CSV=""
 GROUP_COL="${GROUP_COL:-group}"
 DIMENSION=""
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) require_value "$@"; WORKDIR="$2"; shift 2 ;;
-        -r) require_value "$@"; REPO="$2"; shift 2 ;;
-        -m) require_value "$@"; METADATA_CSV="$2"; shift 2 ;;
-        -g) require_value "$@"; GROUP_COL="$2"; shift 2 ;;
-        -d) require_value "$@"; DIMENSION="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] Missing required arguments: -w WORKDIR and -r REPO"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV g:GROUP_COL d:DIMENSION"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
 if [ ! -d "${WORKDIR}" ]; then
     echo "[ERROR] Workdir not found: ${WORKDIR}"

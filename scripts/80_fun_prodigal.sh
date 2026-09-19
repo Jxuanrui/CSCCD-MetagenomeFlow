@@ -14,6 +14,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 80_fun_prodigal.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -34,26 +36,13 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS="1"; WORKDIR=""; REPO=""
+# 注：-t 仅占位（Prodigal 单线程），CPUS 不在脚本内使用，故不设默认值
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE WORKDIR REPO
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${SAMPLE}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 INPUT_CONTIGS="${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 RESULT_DIR="${WORKDIR}/result/fungi/prodigal/${SAMPLE}"
@@ -72,22 +61,21 @@ mkdir -p "${RESULT_DIR}"
 
 echo "[fun_prodigal] 开始真菌基因预测: ${SAMPLE} | 输入: ${INPUT_CONTIGS}"
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     prodigal \
         -i "${INPUT_CONTIGS}" \
         -a "${FAA}" \
         -d "${FNA}" \
         -f gff \
         -o "${GFF}" \
-        -p meta
-
-EXIT_CODE=$?
-set -e
+        -p meta \
+        || EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] Prodigal 失败（exit: ${EXIT_CODE}）"
     rm -f "${FAA}" "${FNA}" "${GFF}"; exit ${EXIT_CODE}
 fi
 
 N_TOTAL=$(grep -c "^>" "${FAA}" 2>/dev/null || echo "0")
-echo "[fun_prodigal] ${SAMPLE} 完成，耗时 ${SECONDS}s | 预测基因: ${N_TOTAL} | 输出: ${RESULT_DIR}/"
+echo "[fun_prodigal] ${SAMPLE} 完成 | 预测基因: ${N_TOTAL} | 输出: ${RESULT_DIR}/"
+mgx_end "fun_prodigal"

@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 75b_fun_funomics_aggregate.sh -w WORKDIR -r REPO [-t CPUS]
@@ -25,28 +27,15 @@ cat << EOF
 EOF
 }
 
-WORKDIR=""; REPO=""; CPUS="1"
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+CPUS="1"
 
-for v in WORKDIR REPO; do
-    if [ -z "${!v}" ]; then
-        echo "[ERROR] 缺少必需参数: ${v}"
-        show_help
-        exit 1
-    fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO t:CPUS"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 
 FUNOMIC_DIR="${WORKDIR}/result/fungi/funomic"
 OUTDIR="${WORKDIR}/result/integration/fungi"
@@ -54,8 +43,6 @@ NORMDIR="${OUTDIR}/normalized"
 COUNT_TSV="${OUTDIR}/funomic_species_count.tsv"
 RELAB_TSV="${NORMDIR}/funomic_species_relab.tsv"
 CLR_TSV="${NORMDIR}/funomic_species_clr.tsv"
-TAXONOMY_TSV="${REPO}/db/funomic/P/taxonomy_for_function.csv"
-RUN_ENV="${REPO}/envs/assembly"
 
 if [ ${FORCE} -eq 0 ] && [ -s "${COUNT_TSV}" ] && [ -s "${RELAB_TSV}" ] && [ -s "${CLR_TSV}" ]; then
     echo "[INFO] 结果已存在，跳过: ${COUNT_TSV}"
@@ -78,9 +65,9 @@ fi
 
 mkdir -p "${OUTDIR}" "${NORMDIR}"
 
-set +e
-conda run --prefix "${RUN_ENV}" --no-capture-output \
-    python3 - "${WORKDIR}" "${REPO}" "${CPUS}" <<'PY'
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
+    python3 - "${WORKDIR}" "${REPO}" "${CPUS}" <<'PY' || EXIT_CODE=$?
 import csv
 import math
 import sys
@@ -218,11 +205,10 @@ print(f"  {clr_tsv}")
 print(f"[fun_funomics_aggregate] cpus parameter accepted: {cpus}")
 PY
 
-EXIT_CODE=$?
-set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] FunOMIC 汇总失败（exit: ${EXIT_CODE}）"
     exit ${EXIT_CODE}
 fi
 
-echo "[fun_funomics_aggregate] 完成，耗时 ${SECONDS}s"
+echo "[fun_funomics_aggregate] 完成"
+mgx_end "fun_funomics_aggregate"

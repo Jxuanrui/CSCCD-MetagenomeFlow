@@ -20,6 +20,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 73_fun_humann4_fungi.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -32,22 +34,13 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; exit 1; fi; done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 
 INPUT_STRATIFIED="${WORKDIR}/result/humann3/${SAMPLE}/stratified/${SAMPLE}_pathabundance_relab_stratified.tsv"
 OUTDIR="${WORKDIR}/result/fungi/humann4/${SAMPLE}"
@@ -95,7 +88,7 @@ else
     echo "[fun_humann3_fungi] 样本 ${SAMPLE}: 提取到 ${N_ROWS} 条真菌分层通路"
 fi
 
-echo "[fun_humann3_fungi] 完成，耗时 ${SECONDS}s | 输出: ${OUTPUT_TSV}"
+echo "[fun_humann3_fungi] 完成 | 输出: ${OUTPUT_TSV}"
 fi
 
 FUNOMIC_CLASSIFICATION="${WORKDIR}/result/fungi/funomic/${SAMPLE}/${SAMPLE}_classification.tsv"
@@ -108,9 +101,9 @@ elif [ ! -f "${FUNOMIC_CLASSIFICATION}" ]; then
     echo "[WARN] FunOMIC classification 文件不存在，跳过: ${FUNOMIC_CLASSIFICATION}"
 else
     mkdir -p "${OUTDIR}"
-    set +e
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-        python3 - "${FUNOMIC_ANN}" "${FUNOMIC_CLASSIFICATION}" "${FUNOMIC_OUTPUT}" <<'PY'
+    EXIT_CODE=0
+    mgx_try mgx_conda assembly \
+        python3 - "${FUNOMIC_ANN}" "${FUNOMIC_CLASSIFICATION}" "${FUNOMIC_OUTPUT}" <<'PY' || EXIT_CODE=$?
 import sys
 from collections import Counter
 
@@ -149,8 +142,6 @@ with open(output_path, "w", encoding="utf-8") as out:
         out.write(f"{pathway}\t{count}\n")
 PY
 
-    EXIT_CODE=$?
-    set -e
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] FunOMIC pathway 提取失败（exit: ${EXIT_CODE}）"
         rm -f "${FUNOMIC_OUTPUT}"
@@ -159,5 +150,6 @@ PY
 
     FUNOMIC_ROWS=$(awk 'NR>1' "${FUNOMIC_OUTPUT}" 2>/dev/null | wc -l || echo "0")
     echo "[fun_funomic_fungi] 样本 ${SAMPLE}: 提取到 ${FUNOMIC_ROWS} 条 FunOMIC pathway"
-    echo "[fun_funomic_fungi] 完成，耗时 ${SECONDS}s | 输出: ${FUNOMIC_OUTPUT}"
+    echo "[fun_funomic_fungi] 完成 | 输出: ${FUNOMIC_OUTPUT}"
 fi
+mgx_end "fun_humann4_fungi"

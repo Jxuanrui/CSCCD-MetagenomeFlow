@@ -8,6 +8,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 96_functional_integrated.sh [-w WORKDIR] [-r REPO] [-m METADATA_CSV] -d DIMENSION [-c CPUS] [--force]
@@ -26,14 +28,6 @@ Optional:
 EOF
 }
 
-require_value() {
-    if [ "$#" -lt 2 ] || [[ "$2" == -* ]]; then
-        echo "[ERROR] Missing value for argument: $1"
-        show_help
-        exit 1
-    fi
-}
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 WORKDIR="$(pwd)"
@@ -42,27 +36,13 @@ METADATA_CSV=""
 GROUP_COL="${GROUP_COL:-group}"
 DIMENSION=""
 CPUS="${CPUS:-1}"
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) require_value "$@"; WORKDIR="$2"; shift 2 ;;
-        -r) require_value "$@"; REPO="$2"; shift 2 ;;
-        -m) require_value "$@"; METADATA_CSV="$2"; shift 2 ;;
-        -g) require_value "$@"; GROUP_COL="$2"; shift 2 ;;
-        -d) require_value "$@"; DIMENSION="$2"; shift 2 ;;
-        -c|--cpus) require_value "$@"; CPUS="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${DIMENSION}" ]; then
-    echo "[ERROR] Missing required argument: -d DIMENSION"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV g:GROUP_COL d:DIMENSION c:CPUS"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="cpus:CPUS"
+mgx_parse "$@"
+mgx_require DIMENSION
 
 DIMENSION="$(printf '%s' "${DIMENSION}" | tr '[:upper:]' '[:lower:]')"
 
@@ -102,7 +82,7 @@ if [ ! -f "${R_SCRIPT}" ]; then
     exit 1
 fi
 
-SECONDS=0
+mgx_begin
 
 STAT_ROOT="${WORKDIR}/result/stat"
 DIM_ROOT="${STAT_ROOT}/${DIMENSION}"
@@ -160,6 +140,6 @@ if ! awk -F '\t' 'NR > 1 && $2 != "OK" { bad = 1 } END { exit bad }' "${STATUS_T
     exit 1
 fi
 
-echo "[INFO] Integrated functional visualization completed in ${SECONDS}s"
+mgx_end "functional_integrated"
 echo "[INFO] Status: ${STATUS_TSV}"
 echo "[INFO] Sentinel: ${SENTINEL}"

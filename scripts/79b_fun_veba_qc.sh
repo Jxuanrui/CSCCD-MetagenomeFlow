@@ -20,6 +20,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 79b_fun_veba_qc.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--min-len N] [--force]
@@ -36,23 +38,16 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""; MIN_LEN=1000
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";       shift 2 ;;
-        -t) CPUS="$2";         shift 2 ;;
-        -w) WORKDIR="$2";      shift 2 ;;
-        -r) REPO="$2";         shift 2 ;;
-        --min-len) MIN_LEN="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数 -${v:0:1}"; exit 1; fi; done
+MIN_LEN=1000
 
-SECONDS=0
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="min-len:MIN_LEN"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
+
+mgx_begin
 
 EUKFINDER_DIR="${WORKDIR}/result/fungi/eukfinder/${SAMPLE}"
 EUKFINDER_MARKER="${EUKFINDER_DIR}/results.txt"
@@ -107,7 +102,7 @@ EOF
 
 # ── 步骤1：长度预过滤（Tiara 官方不建议对 <1000bp 序列分类）───────────────────
 FILTERED="${OUTDIR}/${SAMPLE}.euk_filtered.fasta"
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     seqkit seq -m "${MIN_LEN}" "${INPUT_EUK}" -o "${FILTERED}"
 
 if [ ! -s "${FILTERED}" ]; then
@@ -116,7 +111,7 @@ fi
 
 # ── 步骤2：Tiara 域二次确认 ───────────────────────────────────────────────────
 TIARA_CLASS="${OUTDIR}/${SAMPLE}.tiara_classification.txt"
-conda run --prefix "${REPO}/envs/tiara" --no-capture-output \
+mgx_conda tiara \
     tiara -i "${FILTERED}" -o "${TIARA_CLASS}" \
           -m "${MIN_LEN}" -t "${CPUS}" \
           --to_fasta euk \
@@ -133,7 +128,7 @@ BUSCO_OUT="${SAMPLE}.busco"
 BUSCO_EXIT=0
 (
     cd "${OUTDIR}"
-    conda run --prefix "${REPO}/envs/busco" --no-capture-output \
+    mgx_conda busco \
         busco -i "${TIARA_EUK_FASTA}" -o "${BUSCO_OUT}" \
               -m genome --auto-lineage-euk -c "${CPUS}" -f \
               --download_path "${BUSCO_DOWNLOAD_PATH}"
@@ -156,6 +151,7 @@ LINEAGE=$(grep -oP '(?<=lineage dataset is: ).*(?= \()' "${BUSCO_SUMMARY_FILE}" 
     echo -e "${SAMPLE}\t${LINEAGE}\t${COMPLETE}\t${DUPLICATED}\t${MISSING}"
 } > "${SUMMARY}"
 
-echo "[fun_veba_qc] ${SAMPLE} 完成，耗时 ${SECONDS}s"
+echo "[fun_veba_qc] ${SAMPLE} 完成"
 echo "[fun_veba_qc] 输出目录: ${OUTDIR}"
 echo "[fun_veba_qc] 质量摘要: ${SUMMARY}"
+mgx_end "fun_veba_qc"

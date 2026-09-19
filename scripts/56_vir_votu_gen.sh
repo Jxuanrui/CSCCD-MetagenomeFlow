@@ -17,6 +17,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 56_vir_votu_gen.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -26,23 +28,13 @@ show_help() { cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 OUTDIR="${WORKDIR}/result/virus/votu"
 CONTIGS_DIR="${OUTDIR}/contigs"
 ALL_VIRUS="${CONTIGS_DIR}/virus.fasta"
@@ -82,7 +74,7 @@ mkdir -p "${OUTDIR}/vclust"
 
 # Step 2: vclust prefilter
 echo "[votu_gen] 步骤 2/4: vclust prefilter ..."
-conda run --prefix "${REPO}/envs/vclust" --no-capture-output \
+mgx_conda vclust \
     vclust prefilter \
         -i "${ALL_VIRUS}" \
         -o "${OUTDIR}/vclust/fltr.txt" \
@@ -90,7 +82,7 @@ conda run --prefix "${REPO}/envs/vclust" --no-capture-output \
 
 # Step 3: vclust align
 echo "[votu_gen] 步骤 3/4: vclust align ..."
-conda run --prefix "${REPO}/envs/vclust" --no-capture-output \
+mgx_conda vclust \
     vclust align \
         -i "${ALL_VIRUS}" \
         -o "${OUTDIR}/vclust/ani.tsv" \
@@ -99,7 +91,7 @@ conda run --prefix "${REPO}/envs/vclust" --no-capture-output \
 
 # Step 4: vclust cluster
 echo "[votu_gen] 步骤 4/4: vclust cluster (Leiden, ANI 0.95) ..."
-conda run --prefix "${REPO}/envs/vclust" --no-capture-output \
+mgx_conda vclust \
     vclust cluster \
         -i "${OUTDIR}/vclust/ani.tsv" \
         -o "${OUTDIR}/vclust/clusters.tsv" \
@@ -113,4 +105,5 @@ conda run --prefix "${REPO}/envs/vclust" --no-capture-output \
 cut -f2 "${OUTDIR}/vclust/clusters.tsv" | tail -n +2 | sort -u > "${SENTINEL}"
 
 N_VOTUS=$(wc -l < "${SENTINEL}")
-echo "[votu_gen] 完成，耗时 ${SECONDS}s | vOTUs: ${N_VOTUS}"
+echo "[votu_gen] vOTUs: ${N_VOTUS}"
+mgx_end "votu_gen"

@@ -9,6 +9,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 97_stat_crosscohort.sh -w WORKDIR -r REPO -m METADATA_CSV -g GROUP_COL [OPTIONS]
@@ -46,47 +48,35 @@ Examples:
 EOF
 }
 
-WORKDIR=""
-REPO=""
-METADATA_CSV=""
-GROUP_COL=""
 SOURCE="local"
 COHORTS=""
 TRAIN_COHORT=""
 TEST_COHORTS=""
 CONDITION="CRC"
 META_ANALYSIS=0
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        -m) METADATA_CSV="$2"; shift 2 ;;
-        -g) GROUP_COL="$2"; shift 2 ;;
-        --source) SOURCE="$2"; shift 2 ;;
-        --cohorts) COHORTS="$2"; shift 2 ;;
-        --train-cohort) TRAIN_COHORT="$2"; shift 2 ;;
-        --test-cohorts) TEST_COHORTS="$2"; shift 2 ;;
-        --condition) CONDITION="$2"; shift 2 ;;
-        --meta-analysis) META_ANALYSIS=1; shift ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
+# libcommon 的 FLAG 表不支持带连字符的选项名，--meta-analysis 先归一化为 --meta_analysis
+NORMALIZED_ARGS=()
+for arg in "$@"; do
+    if [ "${arg}" = "--meta-analysis" ]; then
+        NORMALIZED_ARGS+=("--meta_analysis")
+    else
+        NORMALIZED_ARGS+=("${arg}")
+    fi
 done
 
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ] || [ -z "${METADATA_CSV}" ] || [ -z "${GROUP_COL}" ]; then
-    echo "[ERROR] Missing required arguments"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV g:GROUP_COL"
+export MGX_OPTS_FLAG="force meta_analysis"
+export MGX_OPTS_LONG="source:SOURCE cohorts:COHORTS train-cohort:TRAIN_COHORT test-cohorts:TEST_COHORTS condition:CONDITION"
+mgx_parse "${NORMALIZED_ARGS[@]}"
+mgx_require WORKDIR REPO METADATA_CSV GROUP_COL
 
 # Ensure absolute paths so R sub-processes receive them correctly
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 [ -n "${METADATA_CSV}" ] && METADATA_CSV="$(cd "$(dirname "${METADATA_CSV}")" && pwd)/$(basename "${METADATA_CSV}")"
 
-SECONDS=0
+mgx_begin
 
 ML_DIR="${WORKDIR}/result/stat/ml"
 RESULT_DIR="${WORKDIR}/result/viz_crosscohort"
@@ -158,7 +148,7 @@ export WORKDIR REPO METADATA_CSV GROUP_COL SOURCE COHORTS TRAIN_COHORT TEST_COHO
 
 echo "[INFO] Running R script for cross-cohort analysis..."
 
-(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/97_crosscohort.R")
+(cd "${WORKDIR}" && mgx_conda r_stat Rscript "${REPO}/scripts/97_crosscohort.R")
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
@@ -172,7 +162,7 @@ if [ ! -s "${SENTINEL}" ]; then
 fi
 
 echo "=============================================================================="
-echo "[SUCCESS] Cross-cohort validation completed in ${SECONDS}s"
+mgx_end "crosscohort"
 echo "Results: ${RESULT_DIR}"
 echo "Log: ${LOG_FILE}"
 echo "=============================================================================="

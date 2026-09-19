@@ -16,6 +16,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 61_vir_vmag.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -25,23 +27,13 @@ show_help() { cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
 BAM_DIR="${WORKDIR}/result/virus/votu/bam"
 OUTDIR="${WORKDIR}/result/virus/vmag"
@@ -62,7 +54,7 @@ if [ ! -d "${BAM_DIR}" ] || [ -z "$(ls "${BAM_DIR}"/*.bam 2>/dev/null)" ]; then
         R1="${WORKDIR}/result/kneaddata/${sid}/${sid}_1.kneaddata.fastq.gz"
         R2="${WORKDIR}/result/kneaddata/${sid}/${sid}_2.kneaddata.fastq.gz"
         [ ! -f "$R1" ] && continue
-        conda run --prefix "${REPO}/envs/coverm" --no-capture-output \
+        mgx_conda coverm \
             coverm make \
                 -p minimap2-sr \
                 -t "${CPUS}" \
@@ -75,28 +67,27 @@ if [ ! -d "${BAM_DIR}" ] || [ -z "$(ls "${BAM_DIR}"/*.bam 2>/dev/null)" ]; then
 fi
 
 echo "[vmag] 步骤 1/3: vRhyme 分箱 ..."
-set +e
-conda run --prefix "${REPO}/envs/vrhyme" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda vrhyme \
     vRhyme \
         -i "${VOTU_FA}" \
         -b "${BAM_DIR}"/*.bam \
         -o "${OUTDIR}/vrhyme" \
         -l 10000 \
         -t "${CPUS}" \
-        --iter 15
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then
+        --iter 15 \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then
     echo "[WARN] vRhyme 分箱失败（exit code: ${EXIT_CODE}），无法生成 vMAGs"
     touch "${SENTINEL}"
-    echo "[vmag] 完成，耗时 ${SECONDS}s | vMAGs: 0（vRhyme 失败）"
+    echo "[vmag] vMAGs: 0（vRhyme 失败）"
+    mgx_end "vmag"
     exit 0
 fi
 
 # 步骤 2: 提取 bins
 echo "[vmag] 步骤 2/3: 提取 vMAGs ..."
-conda run --prefix "${REPO}/envs/vrhyme" --no-capture-output \
+mgx_conda vrhyme \
     vRhyme -i "${VOTU_FA}" -b "${BAM_DIR}"/*.bam \
         -o "${OUTDIR}/vrhyme" -l 10000 -t "${CPUS}" --iter 15 \
         --derep_only
@@ -114,4 +105,5 @@ fi
 
 touch "${SENTINEL}"
 N_VMAGS=$(ls "${BINS_DIR}/vMAG"/*.fasta 2>/dev/null | wc -l || echo 0)
-echo "[vmag] 完成，耗时 ${SECONDS}s | vMAGs: ${N_VMAGS}"
+echo "[vmag] vMAGs: ${N_VMAGS}"
+mgx_end "vmag"

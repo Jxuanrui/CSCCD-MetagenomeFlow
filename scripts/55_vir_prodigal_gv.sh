@@ -16,6 +16,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 55_vir_prodigal_gv.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -26,25 +28,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-# shellcheck disable=SC2034  # CPUS 通过下方必需参数校验循环的间接展开引用
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 INPUT_FA="${WORKDIR}/result/virus/checkv/${SAMPLE}/viruses.fna"
 # fallback: 如果 viruses.fna 不存在，用完整的组合病毒 contigs
 [ -f "${INPUT_FA}" ] || INPUT_FA="${WORKDIR}/result/virus/checkv/${SAMPLE}/virus_contigs.fasta"
@@ -59,19 +49,18 @@ if [ ${FORCE} -eq 0 ] && [ -f "${FAA}" ] && [ -s "${FAA}" ]; then echo "[prodiga
 mkdir -p "${OUTDIR}"
 
 echo "[prodigal_gv] ${SAMPLE} | 病毒基因预测（遗传密码 11 + -p meta）..."
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     prodigal \
         -i "${INPUT_FA}" \
         -a "${FAA}" \
         -d "${FNA}" \
         -f gff \
         -o "${GFF}" \
-        -p meta
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] prodigal 失败"; exit ${EXIT_CODE}; fi
+        -p meta \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then echo "[ERROR] prodigal 失败"; exit ${EXIT_CODE}; fi
 
 N_GENES=$(grep -c '^>' "${FAA}" 2>/dev/null || echo 0)
-echo "[prodigal_gv] 完成，耗时 ${SECONDS}s | 预测基因: ${N_GENES}"
+echo "[prodigal_gv] 预测基因: ${N_GENES}"
+mgx_end "prodigal_gv"

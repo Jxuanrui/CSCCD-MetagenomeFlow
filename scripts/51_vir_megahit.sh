@@ -13,6 +13,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 51_vir_megahit.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -23,24 +25,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 OUTDIR="${WORKDIR}/result/virus/assembly/${SAMPLE}"
@@ -52,22 +43,20 @@ if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ]; then echo "[vir_megahit] 结果已
 mkdir -p "${OUTDIR}"
 MEGA_TMP="${OUTDIR}/_megahit_tmp"
 
-set +e
 echo "[vir_megahit] ${SAMPLE} | 病毒优化组装 ..."
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     megahit -1 "${R1}" -2 "${R2}" \
         -o "${MEGA_TMP}" \
         --out-prefix "${SAMPLE}" \
         -t "${CPUS}" \
         --presets meta-large \
         --min-contig-len 1500 \
-        --force
-
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] megahit 失败"; exit ${EXIT_CODE}; fi
+        --force \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then echo "[ERROR] megahit 失败"; exit ${EXIT_CODE}; fi
 
 mv "${MEGA_TMP}/${SAMPLE}.contigs.fa" "${CONTIGS}"
 rm -rf "${MEGA_TMP}"  # 删中间文件，节省 ~80% 磁盘
 
-echo "[vir_megahit] 完成，耗时 ${SECONDS}s"
+mgx_end "vir_megahit"

@@ -15,6 +15,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 53_vir_virsorter2.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -25,24 +27,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 CONTIGS="${WORKDIR}/result/virus/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/virus/virsorter2/${SAMPLE}"
 SENTINEL="${OUTDIR}/final-viral-boundary.tsv"
@@ -57,6 +48,7 @@ if [ ${FORCE} -eq 0 ] && [ -f "${COMBINED}" ] && [ ! -f "${SENTINEL}" ]; then
     rm -rf "${OUTDIR}"
 fi
 
+# --- 运行 VirSorter2（保留原始 set +e 形式：命令带 CONDA_EXE 环境前缀与 2>&1，不套 mgx_conda/mgx_try）---
 set +e
 echo "[virsorter2] ${SAMPLE} | VirSorter2 病毒预测 ..."
 # virsorter2 内部会调用 conda info --json 检测 conda 环境
@@ -76,4 +68,4 @@ EXIT_CODE=$?
 set -e
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] virsorter2 失败"; exit ${EXIT_CODE}; fi
 
-echo "[virsorter2] 完成，耗时 ${SECONDS}s"
+mgx_end "virsorter2"

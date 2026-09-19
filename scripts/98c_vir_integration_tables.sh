@@ -33,6 +33,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 98c_vir_integration_tables.sh -w WORKDIR -r REPO [-t CPUS]
@@ -47,27 +49,17 @@ cat << EOF
 EOF
 }
 
-WORKDIR=""
-FORCE=0
-REPO=""
 CPUS=4
+# -t 为保留接口（Python 侧暂未并行化）；export 供子进程读取
+export CPUS
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO t:CPUS"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 VIRUS_DIR="${WORKDIR}/result/virus"
 OUT_DIR="${WORKDIR}/result/integration/virus"
@@ -115,8 +107,7 @@ echo "[integration] 开始病毒维度功能整合"
 echo "[integration] 输出目录: ${OUT_DIR}"
 echo "[integration] 将重建已有病毒整合输出"
 
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
-python3 - \
+mgx_conda assembly python3 - \
     "${WORKDIR}" \
     "${OUT_DIR}" \
     "${NORM_DIR}" \
@@ -687,5 +678,5 @@ if [ ${EXIT_CODE} -ne 0 ]; then
 fi
 
 echo ""
-echo "[integration] 病毒维度整合表生成完成，耗时 ${SECONDS}s"
+mgx_end "integration"
 echo "[integration] 输出目录: ${OUT_DIR}"

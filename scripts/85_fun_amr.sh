@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 85_fun_amr.sh -t CPUS -w WORKDIR -r REPO
@@ -22,25 +24,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 RESULT_DIR="${WORKDIR}/result/fungi/amr"
 PRODIGAL_DIR="${WORKDIR}/result/fungi/prodigal"
@@ -54,7 +44,7 @@ if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then echo "[I
 
 mkdir -p "${RESULT_DIR}"
 
-FAA_FILES=($(find "${PRODIGAL_DIR}" -name "*.faa" 2>/dev/null))
+mapfile -t FAA_FILES < <(find "${PRODIGAL_DIR}" -name "*.faa" 2>/dev/null)
 if [ ${#FAA_FILES[@]} -eq 0 ]; then echo "[ERROR] 未找到 FAA 文件"; exit 1; fi
 cat "${FAA_FILES[@]}" > "${COMBINED_FAA}"
 
@@ -67,8 +57,8 @@ echo "[fun_amr] 合并去重完成: ${#FAA_FILES[@]} 个样本, ${N_PROTEINS} �
 
 echo "[fun_amr] 开始耐药基因检测 | 线程: ${CPUS}"
 
-set +e
-conda run --prefix "${REPO}/envs/amr" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda amr \
     amrfinder \
         --protein "${COMBINED_FAA}" \
         --database "${AMR_DB}" \
@@ -76,10 +66,8 @@ conda run --prefix "${REPO}/envs/amr" --no-capture-output \
         --threads "${CPUS}" \
         --ident_min 0.9 \
         --coverage_min 0.6 \
-        --plus
-
-EXIT_CODE=$?
-set -e
+        --plus \
+        || EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[fun_amr] WARNING: amrfinder 失败（exit: ${EXIT_CODE}），创建空结果文件"
     echo -e "Protein identifier\tContig id\tStart\tStop\tStrand\tElement symbol\tElement name\tScope\tElement type\tElement subtype\tClass\tSubclass\tMethod\tTarget length\tReference sequence length\t% Coverage of reference sequence\t% Identity to reference sequence\tAlignment length\tAccession of closest sequence\tName of closest sequence\tHMM id\tHMM description" > "${OUTPUT}"
@@ -87,4 +75,5 @@ if [ ${EXIT_CODE} -ne 0 ]; then
 fi
 
 N_HITS=$(awk 'NR>1' "${OUTPUT}" 2>/dev/null | wc -l || echo "0")
-echo "[fun_amr] 完成，耗时 ${SECONDS}s | 耐药基因: ${N_HITS} | 输出: ${OUTPUT}"
+echo "[fun_amr] 完成 | 耐药基因: ${N_HITS} | 输出: ${OUTPUT}"
+mgx_end "fun_amr"

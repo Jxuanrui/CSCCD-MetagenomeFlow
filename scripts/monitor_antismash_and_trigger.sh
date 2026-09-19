@@ -46,7 +46,8 @@ check_antismash() {
         return 1
     fi
 
-    local completed=$(grep -c "antismash done" "${RUSH_LOG}" 2>/dev/null)
+    local completed
+    completed=$(grep -c "antismash done" "${RUSH_LOG}" 2>/dev/null)
     local total=10
 
     echo "[monitor] antiSMASH 进度: ${completed}/${total}"

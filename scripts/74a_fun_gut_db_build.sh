@@ -15,18 +15,23 @@
 #   ${REPO}/db/gut_fungi_db/bwt.index.fungi_target.*
 #   ${REPO}/db/gut_fungi_db/bwt.index.human_chm13v2.*
 # 用  法: bash 74a_fun_gut_db_build.sh -t CPUS -r REPO
-#   注: -r 默认使用脚本所在目录的父目录
+#   注: -t/-r 必需（原静默默认值已移除，防止误触发了小时级索引构建）
 # ==============================================================================
 
 set -euo pipefail
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 
 show_help() {
 cat << EOF
 用法: bash 74a_fun_gut_db_build.sh -t CPUS -r REPO
 
-参数:
-  -t  线程数（默认: 1）
-  -r  MaxMetagenome 项目根目录（默认: 脚本所在目录的父目录）
+必需参数:
+  -t  线程数
+  -r  MaxMetagenome 项目根目录
+
+可选参数:
+  --force  强制重新运行（忽略已存在的结果）
 
 示例:
   bash 74a_fun_gut_db_build.sh -t 16 -r ~/Course/Maxmetagenome
@@ -36,21 +41,11 @@ WARNING:
 EOF
 }
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEFAULT_REPO="$(cd "${SCRIPT_DIR}/.." && pwd)"
-CPUS="1"
-FORCE=0
-REPO="${DEFAULT_REPO}"
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS REPO
 
 if ! [[ "${CPUS}" =~ ^[1-9][0-9]*$ ]]; then echo "[ERROR] -t 必须是正整数: ${CPUS}"; exit 1; fi
 if [ ! -d "${REPO}" ]; then echo "[ERROR] REPO 不存在: ${REPO}"; exit 1; fi
@@ -63,7 +58,7 @@ LOG_DIR="${REPO}/logs/gut_fungi_db_build"
 if [ ! -d "${SRC_DIR}" ]; then echo "[ERROR] db/gut_fungi_db 不存在: ${SRC_DIR}"; exit 1; fi
 mkdir -p "${IDX_DIR}" "${LOG_DIR}"
 
-SECONDS=0
+mgx_begin
 
 declare -A DB_MAP=(
     ["db.fungi.fa.gz"]="bwt.index.gut_fungi_geneset"
@@ -93,7 +88,7 @@ for db_file in "${BUILD_ORDER[@]}"; do
     fi
 
     echo "[gut_db_build] 构建索引: ${idx_name} ..."
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    mgx_conda assembly \
         bowtie2-build --threads "${CPUS}" \
             "${src}" "${idx}" \
         2>&1 | tee "${LOG_DIR}/${idx_name}.log"
@@ -105,5 +100,6 @@ for db_file in "${BUILD_ORDER[@]}"; do
     echo "[INFO] 索引完成: ${idx_name}"
 done
 
-echo "[gut_db_build] 全部索引构建完成，耗时 ${SECONDS}s"
+echo "[gut_db_build] 全部索引构建完成"
 echo "[gut_db_build] 索引目录: ${IDX_DIR}/"
+mgx_end "gut_db_build"

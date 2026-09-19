@@ -9,6 +9,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 96_stat_functional.sh -w WORKDIR -r REPO [-m METADATA_CSV] [-d DIMENSION] [-t FUNC_TYPE] [--force]
@@ -27,39 +29,15 @@ Optional:
 EOF
 }
 
-require_value() {
-    if [ "$#" -lt 2 ] || [[ "$2" == -* ]]; then
-        echo "[ERROR] Missing value for argument: $1"
-        show_help
-        exit 1
-    fi
-}
-
-WORKDIR=""
-REPO=""
 METADATA_CSV=""
 DIMENSION="bacteria"
 FUNC_TYPE="pathway"
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) require_value "$@"; WORKDIR="$2"; shift 2 ;;
-        -r) require_value "$@"; REPO="$2"; shift 2 ;;
-        -m) require_value "$@"; METADATA_CSV="$2"; shift 2 ;;
-        -d) require_value "$@"; DIMENSION="$2"; shift 2 ;;
-        -t) require_value "$@"; FUNC_TYPE="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] Missing required arguments"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV d:DIMENSION t:FUNC_TYPE"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
 # Normalize and validate batch parameters
 DIMENSION="$(printf '%s' "${DIMENSION}" | tr '[:upper:]' '[:lower:]')"
@@ -89,7 +67,7 @@ esac
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 [ -n "${METADATA_CSV}" ] && METADATA_CSV="$(cd "$(dirname "${METADATA_CSV}")" && pwd)/$(basename "${METADATA_CSV}")"
 
-SECONDS=0
+mgx_begin
 
 GROUP_COL="${GROUP_COL:-group}"
 STAT_ROOT="${WORKDIR}/result/stat"
@@ -126,7 +104,7 @@ RUN_LOG="${LOG_DIR}/96_stat_functional.run.log"
 # set -e 下 pipefail 会让下面这行管道一旦失败立即终止脚本，永远到不了
 # EXIT_CODE 判断和 "zero data rows" 优雅降级分支 —— 必须临时关闭 errexit
 set +e
-(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_stat_functional.R") 2>&1 | tee "${RUN_LOG}"
+(cd "${WORKDIR}" && mgx_conda r_stat Rscript "${REPO}/scripts/96_stat_functional.R") 2>&1 | tee "${RUN_LOG}"
 EXIT_CODE=${PIPESTATUS[0]}
 set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
@@ -157,5 +135,5 @@ if [ ! -s "${SENTINEL}" ]; then
     exit 1
 fi
 
-echo "[INFO] Functional analysis completed in ${SECONDS}s"
+mgx_end "functional"
 echo "[INFO] Sentinel: ${SENTINEL}"

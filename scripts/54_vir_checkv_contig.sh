@@ -17,6 +17,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 54_vir_checkv_contig.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -27,24 +29,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 GENOMAD_DIR="${WORKDIR}/result/virus/genomad/${SAMPLE}"
 VS2_DIR="${WORKDIR}/result/virus/virsorter2/${SAMPLE}"
 CONTIGS_DIR="${WORKDIR}/result/virus/checkv/${SAMPLE}"
@@ -74,7 +65,7 @@ if $HAS_GENOMAD || $HAS_VS2; then
     : > "${CONTIGS_DIR}/_merged.fasta"
     $HAS_GENOMAD && cat "${GENOMAD_VIRUS}" >> "${CONTIGS_DIR}/_merged.fasta"
     $HAS_VS2 && cat "${VS2_VIRUS}" >> "${CONTIGS_DIR}/_merged.fasta"
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    mgx_conda assembly \
         seqkit rmdup -s -o "${VIRAL_CONTIGS}" "${CONTIGS_DIR}/_merged.fasta"
     rm -f "${CONTIGS_DIR}/_merged.fasta"
 else
@@ -96,18 +87,17 @@ if [ -d "${OUTDIR}/tmp" ] && [ "${VIRAL_CONTIGS}" -nt "${OUTDIR}/tmp" ]; then
     rm -rf "${OUTDIR}/tmp"
 fi
 
-set +e
 # Step 2: CheckV
 echo "[checkv] ${SAMPLE} | CheckV 质量评估 ..."
-conda run --prefix "${REPO}/envs/checkv" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda checkv \
     checkv end_to_end \
         "${VIRAL_CONTIGS}" \
         "${OUTDIR}" \
         -d "${CHK_DB}" \
-        -t "${CPUS}"
+        -t "${CPUS}" \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then echo "[ERROR] checkv 失败"; exit ${EXIT_CODE}; fi
 
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] checkv 失败"; exit ${EXIT_CODE}; fi
-
-echo "[checkv] 完成，耗时 ${SECONDS}s | 输出: ${OUTDIR}/quality_summary.tsv"
+echo "[checkv] 输出: ${OUTDIR}/quality_summary.tsv"
+mgx_end "checkv"

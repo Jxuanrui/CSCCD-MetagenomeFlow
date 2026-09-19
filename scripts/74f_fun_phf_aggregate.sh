@@ -12,6 +12,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 74f_fun_phf_aggregate.sh -w WORKDIR -r REPO
@@ -30,21 +32,14 @@ cat << EOF
 EOF
 }
 
-WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-[ -z "${WORKDIR}" ] || [ -z "${REPO}" ] && { echo "[ERROR] 缺少 -w/-r"; show_help; exit 1; }
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 REPO="$(cd "${REPO}" && pwd)"
 
-SECONDS=0
+mgx_begin
 PROFILER_DIR="${WORKDIR}/result/fungi/phf_profiler"
 TAXONOMY="${REPO}/db/gut_fungi_db/db.fungi.taxonomy.tsv"
 MERGED="${PROFILER_DIR}/merged_abundance.tsv"
@@ -54,7 +49,7 @@ if [ ${FORCE} -eq 0 ] && [ -f "${MERGED}" ] && [ -s "${MERGED}" ]; then
     echo "[INFO] 结果已存在，跳过: ${MERGED}"; exit 0
 fi
 
-RC_FILES=( $(find "${PROFILER_DIR}" -maxdepth 2 -name '*.rc' -size +0c | sort) )
+mapfile -t RC_FILES < <(find "${PROFILER_DIR}" -maxdepth 2 -name '*.rc' -size +0c | sort)
 N_SAMPLES=${#RC_FILES[@]}
 if [ "${N_SAMPLES}" -eq 0 ]; then
     echo "[ERROR] 未找到 .rc 文件: ${PROFILER_DIR}/*/*.rc"; exit 1
@@ -121,4 +116,5 @@ os.replace(out_tax + '.tmp', out_tax)
 print(f"[INFO] With taxonomy: {out_tax}")
 PY
 
-echo "[phf_aggregate] 完成，耗时 ${SECONDS}s"
+echo "[phf_aggregate] 完成"
+mgx_end "phf_aggregate"

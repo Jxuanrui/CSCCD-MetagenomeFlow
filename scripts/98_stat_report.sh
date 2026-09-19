@@ -7,6 +7,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 98_stat_report.sh -w WORKDIR -r REPO [-o OUTPUT_DIR] [--force]
@@ -22,32 +24,18 @@ Optional:
 EOF
 }
 
-WORKDIR=""
-REPO=""
 OUTPUT_DIR=""
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        -o) OUTPUT_DIR="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] Missing required arguments"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO o:OUTPUT_DIR"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
 # Ensure absolute paths so R sub-processes receive them correctly
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 
-SECONDS=0
+mgx_begin
 
 if [ -z "${OUTPUT_DIR}" ]; then
     OUTPUT_DIR="${WORKDIR}/result/stat/report"
@@ -205,4 +193,4 @@ if [ ! -s "${REPORT_FILE}" ]; then
 fi
 
 echo "[INFO] Report generated: ${REPORT_FILE}"
-echo "[INFO] Report generation completed in ${SECONDS}s"
+mgx_end "report"

@@ -18,6 +18,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 71_vir_dram.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -27,23 +29,13 @@ show_help() { cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 VMAG_DIR="${WORKDIR}/result/virus/vmag"
 OUTDIR="${WORKDIR}/result/virus/dram"
 ANNOTATE_DIR="${OUTDIR}/annotate"
@@ -159,7 +151,7 @@ done
 build_dram_config "${DRAM_DB}" "${DRAM_CONFIG}"
 
 echo "[dram] DRAM-v annotate ..."
-conda run --prefix "${DRAM_ENV}" --no-capture-output \
+mgx_conda dram \
     DRAM-v.py annotate \
         -i "${MERGED_VMAG_FA}" \
         -o "${ANNOTATE_DIR}" \
@@ -178,7 +170,7 @@ if 'auxiliary_score' not in df.columns:
 
 echo "[dram] DRAM-v distill ..."
 rm -rf "${DISTILL_DIR}"
-conda run --prefix "${DRAM_ENV}" --no-capture-output \
+mgx_conda dram \
     DRAM-v.py distill \
         -i "${ANNOTATE_DIR}/annotations.tsv" \
         -o "${DISTILL_DIR}" \
@@ -187,4 +179,4 @@ conda run --prefix "${DRAM_ENV}" --no-capture-output \
 cp "${ANNOTATE_DIR}/annotations.tsv" "${SENTINEL}"
 cp "${DISTILL_DIR}/amg_summary.tsv" "${AMG_SUMMARY}"
 
-echo "[dram] 完成，耗时 ${SECONDS}s"
+mgx_end "dram"

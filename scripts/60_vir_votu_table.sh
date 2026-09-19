@@ -15,6 +15,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 60_vir_votu_table.sh [-m SAMPLES_TSV] [-t CPUS] -w WORKDIR -r REPO
 必需参数:
@@ -26,24 +28,13 @@ show_help() { cat << EOF
 EOF
 }
 
-SAMPLES_TSV=""; WORKDIR=""; REPO=""; CPUS=""; FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -m) SAMPLES_TSV="$2"; shift 2 ;;
-        -t) CPUS="$2";      shift 2 ;;
-        -w) WORKDIR="$2";     shift 2 ;;
-        -r) REPO="$2";       shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        -) case "${OPTARG}" in
-               *) echo "[ERROR] 未知参数: --${OPTARG}"; exit 1 ;;
-           esac ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+SAMPLES_TSV=""  # 可选参数默认值（未传 -m 时下方回退到 WORKDIR/samples.txt）
+
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="m:SAMPLES_TSV t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 if [ -z "${SAMPLES_TSV}" ]; then
     SAMPLES_TSV="${WORKDIR}/samples.txt"
 fi
@@ -52,7 +43,7 @@ if [ ! -f "${SAMPLES_TSV}" ]; then
     exit 1
 fi
 
-SECONDS=0
+mgx_begin
 OUTDIR="${WORKDIR}/result/virus/votu/table"
 TAXONOMY="${WORKDIR}/result/virus/votu/genomad/virus_taxonomy.tsv"
 REPORT_DIR="${WORKDIR}/result/virus/salmon"
@@ -138,4 +129,5 @@ fi
 # Maintain the legacy path expected by integration and older wrappers.
 cp "${OUTDIR}/vOTU_table.txt" "${LEGACY_TABLE}"
 
-echo "[votu_table] 完成，耗时 ${SECONDS}s | 输出: ${OUTDIR}/"
+echo "[votu_table] 输出: ${OUTDIR}/"
+mgx_end "votu_table"

@@ -6,6 +6,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 95b_stat_lefse.sh -i ABUNDANCE_TSV -m METADATA_CSV -o OUTPUT_DIR \
@@ -26,46 +28,16 @@ Optional:
 EOF
 }
 
-ABUNDANCE_FILE=""
-METADATA_FILE=""
-OUTPUT_DIR=""
-DIMENSION=""
-TYPE=""
 LDA_THRESHOLD="2.0"
 MIN_PREVALENCE="0.1"
 WILCOXON_ALPHA="0.05"
-FORCE=0
 
-require_value() {
-    if [[ $# -lt 2 || -z "${2:-}" ]]; then
-        echo "[ERROR] Missing value for $1" >&2
-        show_help >&2
-        exit 1
-    fi
-}
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -i|--abundance-file) require_value "$@"; ABUNDANCE_FILE="$2"; shift 2 ;;
-        -m|--metadata-file) require_value "$@"; METADATA_FILE="$2"; shift 2 ;;
-        -o|--output-dir) require_value "$@"; OUTPUT_DIR="$2"; shift 2 ;;
-        -d|--dimension) require_value "$@"; DIMENSION="$2"; shift 2 ;;
-        -y|--type) require_value "$@"; TYPE="$2"; shift 2 ;;
-        --lda-threshold) require_value "$@"; LDA_THRESHOLD="$2"; shift 2 ;;
-        --min-prevalence) require_value "$@"; MIN_PREVALENCE="$2"; shift 2 ;;
-        --wilcoxon-alpha) require_value "$@"; WILCOXON_ALPHA="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1" >&2; show_help >&2; exit 1 ;;
-    esac
-done
-
-if [[ -z "${ABUNDANCE_FILE}" || -z "${METADATA_FILE}" || -z "${OUTPUT_DIR}" ||
-      -z "${DIMENSION}" || -z "${TYPE}" ]]; then
-    echo "[ERROR] Missing required arguments" >&2
-    show_help >&2
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="i:ABUNDANCE_FILE m:METADATA_FILE o:OUTPUT_DIR d:DIMENSION y:TYPE"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="abundance-file:ABUNDANCE_FILE metadata-file:METADATA_FILE output-dir:OUTPUT_DIR dimension:DIMENSION type:TYPE lda-threshold:LDA_THRESHOLD min-prevalence:MIN_PREVALENCE wilcoxon-alpha:WILCOXON_ALPHA"
+mgx_parse "$@"
+mgx_require ABUNDANCE_FILE METADATA_FILE OUTPUT_DIR DIMENSION TYPE
 
 [[ -f "${ABUNDANCE_FILE}" ]] || { echo "[ERROR] Abundance file not found: ${ABUNDANCE_FILE}" >&2; exit 1; }
 [[ -f "${METADATA_FILE}" ]] || { echo "[ERROR] Metadata file not found: ${METADATA_FILE}" >&2; exit 1; }

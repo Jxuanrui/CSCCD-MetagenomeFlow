@@ -23,6 +23,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 71_fun_kraken2_fungi.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [选项]
@@ -44,29 +46,16 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
 CONFIDENCE="0.1"; READ_LEN="150"
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";       shift 2 ;;
-        -t) CPUS="$2";         shift 2 ;;
-        -w) WORKDIR="$2";      shift 2 ;;
-        -r) REPO="$2";         shift 2 ;;
-        --confidence) CONFIDENCE="$2"; shift 2 ;;
-        --read-len)   READ_LEN="$2";   shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="confidence:CONFIDENCE read-len:READ_LEN"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-t/-w/-r）"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
@@ -98,7 +87,7 @@ echo "[fun_kraken2] 开始真菌物种分类: ${SAMPLE}"
 echo "[fun_kraken2] 线程: ${CPUS}，置信度: ${CONFIDENCE}，读长: ${READ_LEN}"
 
 set +e
-conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
+mgx_conda kraken2 \
     kraken2 \
         --db "${DB_KRAKEN}" \
         --threads "${CPUS}" \
@@ -118,7 +107,7 @@ if [ ! -f "${REPORT}" ] || [ ! -s "${REPORT}" ]; then echo "[ERROR] Report 未�
 echo "[fun_kraken2] Kraken2 完成，运行 Bracken 丰度重估..."
 
 for LEVEL in S G P; do
-    conda run --prefix "${REPO}/envs/kraken2" --no-capture-output \
+    mgx_conda kraken2 \
         bracken \
             -d "${DB_KRAKEN}" \
             -i "${REPORT}" \
@@ -130,5 +119,6 @@ for LEVEL in S G P; do
         echo "[WARN] Bracken ${LEVEL} 失败，跳过"
 done
 
-echo "[fun_kraken2] ${SAMPLE} 完成，耗时 ${SECONDS}s | 结果: ${RESULT_DIR}/"
+echo "[fun_kraken2] ${SAMPLE} 完成 | 结果: ${RESULT_DIR}/"
 echo "[提示] 使用 Bracken 分类结果提取真菌 reads 供 78_fun_megahit.sh 组装"
+mgx_end "fun_kraken2"

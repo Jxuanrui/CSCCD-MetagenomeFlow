@@ -17,38 +17,26 @@
 
 set -euo pipefail
 
-FORCE=0
-for arg in "$@"; do
-    if [ "$arg" = "--force" ]; then
-        FORCE=1
-        break
-    fi
-done
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 
-if [ $# -lt 8 ]; then
-    echo "用法: bash 72_fun_metaphlan4_euk.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--force]"
-    echo "  -s  样本名"
-    echo "  -t  线程数"
-    echo "  -w  工作目录"
-    echo "  -r  MaxMetagenome 根目录"
-    echo "  --force  强制重跑"
-    exit 1
-fi
+show_help() {
+cat << EOF
+用法: bash 72_fun_metaphlan4_euk.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO [--force]
+  -s  样本名
+  -t  线程数
+  -w  工作目录
+  -r  MaxMetagenome 根目录
+  --force  强制重跑
+EOF
+}
 
-while getopts s:t:w:r: option; do
-    case "${option}" in
-        s) SAMPLE=${OPTARG} ;;
-        t) CPUS=${OPTARG} ;;
-        w) WORKDIR=${OPTARG} ;;
-        r) REPO=${OPTARG} ;;
-    esac
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-if [ -z "${SAMPLE}" ] || [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数"; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
@@ -56,7 +44,6 @@ MAPOUT_BZ2="${WORKDIR}/temp/metaphlan4/${SAMPLE}/${SAMPLE}.mapout.bz2"
 
 TEMP_DIR="${WORKDIR}/temp/fungi/metaphlan4/${SAMPLE}"
 RESULT_DIR="${WORKDIR}/result/fungi/metaphlan4/${SAMPLE}"
-PROFILE_OUT="${RESULT_DIR}/${SAMPLE}_profile.txt"
 DB_DIR="${REPO}/db/metaphlan4"
 DB_INDEX="mpa_vOct22_CHOCOPhlAnSGB_202212"
 
@@ -84,8 +71,8 @@ if [ -f "${MAPOUT_BZ2}" ]; then
     MAPOUT_TMP="${TEMP_DIR}/${SAMPLE}.mapout"
     bunzip2 -c "${MAPOUT_BZ2}" > "${MAPOUT_TMP}"
 
-set +e
-    conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+    EXIT_CODE=0
+    mgx_try mgx_conda humann4 \
         metaphlan \
             "${MAPOUT_TMP}" \
             --input_type mapout \
@@ -95,10 +82,8 @@ set +e
             --ignore_bacteria \
             --ignore_archaea \
             -o "${RESULT_DIR}/${SAMPLE}_profile.txt" \
-            --offline
-
-    EXIT_CODE=$?
-set -e
+            --offline \
+            || EXIT_CODE=$?
     rm -f "${MAPOUT_TMP}"
 else
     echo "[fun_metaphlan4] mapout 不存在，从 reads 重新比对: ${SAMPLE}"
@@ -107,8 +92,8 @@ else
     MERGED_FQ="${TEMP_DIR}/${SAMPLE}_merged.fastq.gz"
     zcat "${INPUT_R1}" "${INPUT_R2}" | gzip -c > "${MERGED_FQ}"
 
-set +e
-    conda run --prefix "${REPO}/envs/humann4" --no-capture-output \
+    EXIT_CODE=0
+    mgx_try mgx_conda humann4 \
         metaphlan \
             "${MERGED_FQ}" \
             --input_type fastq \
@@ -118,10 +103,8 @@ set +e
             --ignore_bacteria \
             --ignore_archaea \
             -o "${RESULT_DIR}/${SAMPLE}_profile.txt" \
-            --offline
-
-    EXIT_CODE=$?
-set -e
+            --offline \
+            || EXIT_CODE=$?
     rm -f "${MERGED_FQ}"
 fi
 
@@ -135,4 +118,5 @@ if [ ! -f "${RESULT_DIR}/${SAMPLE}_profile.txt" ]; then
 fi
 
 FUNGI_COUNT=$(grep -c "k__Eukaryota" "${RESULT_DIR}/${SAMPLE}_profile.txt" 2>/dev/null || echo "0")
-echo "[fun_metaphlan4] ${SAMPLE} 完成，耗时 ${SECONDS}s | 真核生物分类群数: ${FUNGI_COUNT}"
+echo "[fun_metaphlan4] ${SAMPLE} 完成 | 真核生物分类群数: ${FUNGI_COUNT}"
+mgx_end "fun_metaphlan4"

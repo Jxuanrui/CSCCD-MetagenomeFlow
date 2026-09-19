@@ -18,6 +18,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 70_vir_phabox2.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -27,23 +29,13 @@ show_help() { cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
 OUTDIR="${WORKDIR}/result/virus/phabox2"
 SENTINEL="${OUTDIR}/phabox2_summary.tsv"
@@ -58,7 +50,7 @@ if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ]; then echo "[phabox2] 结果已存
 mkdir -p "${OUTDIR}"
 
 echo "[phabox2] 病毒端到端分析 ..."
-conda run --prefix "${REPO}/envs/phabox2" --no-capture-output \
+mgx_conda phabox2 \
     phabox2 --task end_to_end \
         --dbdir "${PHABOX_DB}" \
         --outpth "${PREDICT_DIR}" \
@@ -73,4 +65,5 @@ fi
 
 cp "${PREDICT_SUMMARY}" "${SENTINEL}"
 
-echo "[phabox2] 完成，耗时 ${SECONDS}s | 输出: ${SENTINEL}"
+echo "[phabox2] 输出: ${SENTINEL}"
+mgx_end "phabox2"

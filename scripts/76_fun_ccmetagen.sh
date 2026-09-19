@@ -12,6 +12,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 76_fun_ccmetagen.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -28,22 +30,13 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; exit 1; fi; done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 
 INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
@@ -68,8 +61,8 @@ fi
 
 mkdir -p "${OUTDIR}" "${TEMPDIR}"
 
-set +e
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda assembly \
     kma \
         -ipe "${INPUT_R1}" "${INPUT_R2}" \
         -o "${KMA_PREFIX}" \
@@ -79,27 +72,25 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
         -mem_mode \
         -and \
         -apm f \
-        -ef
-EXIT_CODE=$?
-set -e
+        -ef \
+        || EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] KMA 比对失败（exit: ${EXIT_CODE}）"
     rm -rf "${TEMPDIR}"
     exit ${EXIT_CODE}
 fi
 
-CCMETAGEN_CMD=$(conda run --prefix "${REPO}/envs/assembly" --no-capture-output bash -lc 'command -v CCMetagen.py || command -v CCMetagen || true' 2>/dev/null | tail -n 1)
+CCMETAGEN_CMD=$(mgx_conda assembly bash -lc 'command -v CCMetagen.py || command -v CCMetagen || true' 2>/dev/null | tail -n 1)
 
 if [ -n "${CCMETAGEN_CMD}" ]; then
-    set +e
-    conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    EXIT_CODE=0
+    mgx_try mgx_conda assembly \
         bash -lc '
             set -e
             CMD=$(command -v CCMetagen.py || command -v CCMetagen)
             "${CMD}" -i "$1" -o "$2"
-        ' _ "${KMA_PREFIX}.res" "${OUTDIR}"
-    EXIT_CODE=$?
-    set -e
+        ' _ "${KMA_PREFIX}.res" "${OUTDIR}" \
+        || EXIT_CODE=$?
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[WARN] CCMetagen 失败，回退到 KMA 结果整理"
     fi
@@ -120,4 +111,5 @@ fi
 
 rm -rf "${TEMPDIR}"
 N_ROWS=$(tail -n +2 "${SPECIES_TXT}" 2>/dev/null | wc -l || echo "0")
-echo "[fun_ccmetagen] 完成，耗时 ${SECONDS}s | 物种条目: ${N_ROWS}"
+echo "[fun_ccmetagen] 完成 | 物种条目: ${N_ROWS}"
+mgx_end "fun_ccmetagen"

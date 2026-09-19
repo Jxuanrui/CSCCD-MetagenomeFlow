@@ -21,6 +21,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 69_vir_vcontact3.sh -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -30,23 +32,13 @@ show_help() { cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 VOTU_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
 PROTEINS="${WORKDIR}/result/virus/pharokka/phanotate.faa"
 G2G="${WORKDIR}/result/virus/votu/votu_gene2genome.tsv"
@@ -88,17 +80,16 @@ if [ ! -f "${LEN}" ]; then
 fi
 
 echo "[vcontact3] 病毒分类基因共享网络分析 ..."
-set +e
-conda run --prefix "${REPO}/envs/vcontact3" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda vcontact3 \
     vcontact3 run \
         --nucleotide "${VOTU_FA}" \
         --output "${OUTDIR}" \
         --db-path "${VDB}" \
         -t "${CPUS}" \
-        -e graphml cytoscape completeness
+        -e graphml cytoscape completeness \
+        || EXIT_CODE=$?
+if [ "${EXIT_CODE}" -ne 0 ]; then echo "[WARN] vcontact3 失败（exit: ${EXIT_CODE}）"; touch "${SENTINEL}"; fi
 
-EXIT_CODE=$?
-set -e
-if [ ${EXIT_CODE} -ne 0 ]; then echo "[WARN] vcontact3 失败（exit: ${EXIT_CODE}）"; touch "${SENTINEL}"; fi
-
-echo "[vcontact3] 完成，耗时 ${SECONDS}s | 输出: ${OUTDIR}/"
+echo "[vcontact3] 输出: ${OUTDIR}/"
+mgx_end "vcontact3"

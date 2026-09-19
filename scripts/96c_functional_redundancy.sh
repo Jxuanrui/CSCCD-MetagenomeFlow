@@ -7,6 +7,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'HELP'
 Usage: bash 96c_functional_redundancy.sh -f FUNCTIONAL_TSV -t TAXONOMY_TSV -o OUTPUT_DIR [options]
@@ -24,41 +26,16 @@ Optional:
 HELP
 }
 
-require_value() {
-    if [ "$#" -lt 2 ] || [[ "$2" == -* ]]; then
-        echo "[ERROR] Missing value for argument: $1" >&2
-        show_help
-        exit 1
-    fi
-}
-
-FUNCTIONAL_FILE=""
-TAXONOMY_FILE=""
-OUTPUT_DIR=""
 DIMENSION="bacteria"
 FUNCTIONAL_TYPE="kegg_ko"
 ML_IMPORTANCE=""
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -f|--functional-file) require_value "$@"; FUNCTIONAL_FILE="$2"; shift 2 ;;
-        -t|--taxonomy-file) require_value "$@"; TAXONOMY_FILE="$2"; shift 2 ;;
-        -o|--output-dir) require_value "$@"; OUTPUT_DIR="$2"; shift 2 ;;
-        -d|--dimension) require_value "$@"; DIMENSION="$2"; shift 2 ;;
-        -y|--type) require_value "$@"; FUNCTIONAL_TYPE="$2"; shift 2 ;;
-        --ml-importance) require_value "$@"; ML_IMPORTANCE="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1" >&2; show_help; exit 1 ;;
-    esac
-done
-
-if [[ -z "${FUNCTIONAL_FILE}" || -z "${TAXONOMY_FILE}" || -z "${OUTPUT_DIR}" ]]; then
-    echo "[ERROR] -f, -t, and -o are required" >&2
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="f:FUNCTIONAL_FILE t:TAXONOMY_FILE o:OUTPUT_DIR d:DIMENSION y:FUNCTIONAL_TYPE"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="functional-file:FUNCTIONAL_FILE taxonomy-file:TAXONOMY_FILE output-dir:OUTPUT_DIR dimension:DIMENSION type:FUNCTIONAL_TYPE ml-importance:ML_IMPORTANCE"
+mgx_parse "$@"
+mgx_require FUNCTIONAL_FILE TAXONOMY_FILE OUTPUT_DIR
 if [[ ! -f "${FUNCTIONAL_FILE}" ]]; then echo "[ERROR] Functional file not found: ${FUNCTIONAL_FILE}" >&2; exit 1; fi
 if [[ ! -f "${TAXONOMY_FILE}" ]]; then echo "[ERROR] Taxonomy file not found: ${TAXONOMY_FILE}" >&2; exit 1; fi
 

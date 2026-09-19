@@ -22,6 +22,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 98e_cross_domain_ani_cluster.sh -t CPUS -w WORKDIR -r REPO [--force]
 必需参数:
@@ -34,23 +36,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 REPO="$(readlink -f "${REPO}")"
 WORKDIR="$(readlink -f "${WORKDIR}")"
 OUTDIR="${WORKDIR}/result/cross_domain/cluster"
@@ -58,7 +50,6 @@ MANIFEST="${OUTDIR}/genome_manifest.tsv"
 GENOME_LIST="${OUTDIR}/all_genomes.list"
 ANI_MATRIX="${OUTDIR}/ani_matrix.tsv"
 CLUSTERS="${OUTDIR}/genome_clusters.tsv"
-CLUSTER_ENV="${REPO}/envs/cluster"
 
 if [ ${FORCE} -eq 0 ] && [ -f "${CLUSTERS}" ] && [ -s "${CLUSTERS}" ]; then
     echo "[cross_domain_ani] 结果已存在，跳过: ${CLUSTERS}"
@@ -92,7 +83,7 @@ if [ -f "${VOTU_REP_TSV}" ] && [ -f "${VOTU_CONTIGS}" ]; then
     if [ ${FORCE} -eq 1 ] || [ ! -d "${VOTU_FASTA_DIR}" ] || [ -z "$(ls -A "${VOTU_FASTA_DIR}" 2>/dev/null)" ]; then
         rm -rf "${VOTU_FASTA_DIR}"
         mkdir -p "${VOTU_FASTA_DIR}"
-        conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+        mgx_conda assembly \
             seqkit split2 -s 1 --seqid-as-filename -O "${VOTU_FASTA_DIR}" "${VOTU_CONTIGS}"
     fi
     # votu_representatives.tsv 的 ID 就是 fasta header 原文（含 ||full 等标记）；
@@ -137,7 +128,7 @@ cut -f3 "${MANIFEST}" | tail -n +2 > "${GENOME_LIST}"
 
 # ── 步骤4：FastANI 批量比对（--ql/--rl 列表模式，全体两两比对）───────────────
 echo "[cross_domain_ani] FastANI 批量比对: ${N_TOTAL} 个基因组 ..."
-conda run --prefix "${CLUSTER_ENV}" --no-capture-output \
+mgx_conda cluster \
     fastANI \
         --ql "${GENOME_LIST}" \
         --rl "${GENOME_LIST}" \
@@ -146,7 +137,7 @@ conda run --prefix "${CLUSTER_ENV}" --no-capture-output \
 
 # ── 步骤5：networkx 建图 + Louvain 社区检测 ──────────────────────────────────
 echo "[cross_domain_ani] networkx 建图 + Louvain 社区检测 ..."
-conda run --prefix "${CLUSTER_ENV}" --no-capture-output \
+mgx_conda cluster \
     python3 "${REPO}/scripts/98e_cross_domain_louvain.py" \
         --manifest "${MANIFEST}" \
         --ani-matrix "${ANI_MATRIX}" \

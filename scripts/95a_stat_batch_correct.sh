@@ -8,6 +8,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 95a_stat_batch_correct.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV
@@ -27,39 +29,19 @@ Optional:
 EOF
 }
 
-WORKDIR=""
-REPO=""
-THREADS=""
-METADATA_CSV=""
-BATCH_COL=""
 GROUP_COL=""
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        -t) THREADS="$2"; shift 2 ;;
-        -m) METADATA_CSV="$2"; shift 2 ;;
-        -b) BATCH_COL="$2"; shift 2 ;;
-        -g) GROUP_COL="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ] || [ -z "${THREADS}" ] || [ -z "${METADATA_CSV}" ] || [ -z "${BATCH_COL}" ]; then
-    echo "[ERROR] Missing required arguments"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO t:THREADS m:METADATA_CSV b:BATCH_COL g:GROUP_COL"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO THREADS METADATA_CSV BATCH_COL
 
 # Ensure absolute paths so R sub-processes receive them correctly
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 [ -n "${METADATA_CSV}" ] && METADATA_CSV="$(cd "$(dirname "${METADATA_CSV}")" && pwd)/$(basename "${METADATA_CSV}")"
 
-SECONDS=0
+mgx_begin
 
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 RESULT_DIR="${WORKDIR}/result/stat/bacteria/batch"
@@ -84,7 +66,7 @@ echo "[INFO] Running batch correction methods"
 
 export WORKDIR REPO THREADS METADATA_CSV BATCH_COL GROUP_COL BACT_TABLE RESULT_DIR
 
-(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT'
+(cd "${WORKDIR}" && mgx_conda r_stat Rscript - <<'RSCRIPT'
 options(stringsAsFactors = FALSE)
 options(warn = 1)
 
@@ -300,5 +282,5 @@ if [ ! -s "${SENTINEL}" ]; then
     exit 1
 fi
 
-echo "[INFO] Batch correction completed in ${SECONDS}s"
+mgx_end "batch_correct"
 echo "[INFO] Sentinel: ${SENTINEL}"

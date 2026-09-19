@@ -21,6 +21,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 79f_fun_metaeuk_per_bin.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -36,25 +38,16 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""; DB=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --db) DB="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+DB=""
 
-SECONDS=0
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="db:DB"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
+
+mgx_begin
 REPO="$(readlink -f "${REPO}")"
 WORKDIR="$(readlink -f "${WORKDIR}")"
 DB="${DB:-${REPO}/db/metaeuk_db/fungi_refseq_mmseqs}"
@@ -69,7 +62,7 @@ if [ "${#BIN_FILES[@]}" -eq 0 ]; then
     exit 0
 fi
 
-if [ "${DB}.dbtype" ] && [ ! -e "${DB}.dbtype" ]; then
+if [ ! -e "${DB}.dbtype" ]; then
     echo "[ERROR] MetaEuk 数据库不存在: ${DB}"; exit 1
 fi
 
@@ -86,7 +79,6 @@ for BIN_FA in "${BIN_FILES[@]}"; do
     mkdir -p "${BIN_OUTDIR}"
     OUT_PREFIX="${BIN_OUTDIR}/${BIN_ID}"
     FAS="${OUT_PREFIX}.fas"
-    CODON_FAS="${OUT_PREFIX}.codon.fas"
     FAA="${OUT_PREFIX}.faa"
     TMP_DIR="${BIN_OUTDIR}/tmp_${BIN_ID}"
 
@@ -98,8 +90,8 @@ for BIN_FA in "${BIN_FILES[@]}"; do
     fi
 
     echo "[metaeuk_per_bin] ${SAMPLE} | ${BIN_ID} | MetaEuk 蛋白预测 ..."
-    set +e
-    conda run --prefix "${REPO}/envs/metaeuk" --no-capture-output \
+    EXIT_CODE=0
+    mgx_try mgx_conda metaeuk \
         metaeuk easy-predict \
             "${BIN_FA}" \
             "${DB}" \
@@ -108,9 +100,8 @@ for BIN_FA in "${BIN_FILES[@]}"; do
             --threads "${CPUS}" \
             -s 7.5 \
             --min-length 100 \
-            --translation-table 1
-    EXIT_CODE=$?
-    set -e
+            --translation-table 1 \
+            || EXIT_CODE=$?
 
     if [ ${EXIT_CODE} -ne 0 ] || [ ! -s "${FAS}" ]; then
         echo "[metaeuk_per_bin] ${BIN_ID}: MetaEuk 失败或无蛋白输出（exit ${EXIT_CODE}），记为 0 蛋白，不中断其他 bin"
@@ -125,5 +116,6 @@ for BIN_FA in "${BIN_FILES[@]}"; do
     echo -e "${BIN_ID}\t${FAA}\t${N_PROT}" >> "${SENTINEL}"
 done
 
-echo "[metaeuk_per_bin] ${SAMPLE} 完成，耗时 ${SECONDS}s | bins 处理数: ${#BIN_FILES[@]}"
+echo "[metaeuk_per_bin] ${SAMPLE} 完成 | bins 处理数: ${#BIN_FILES[@]}"
 echo "[metaeuk_per_bin] 汇总: ${SENTINEL}"
+mgx_end "metaeuk_per_bin"

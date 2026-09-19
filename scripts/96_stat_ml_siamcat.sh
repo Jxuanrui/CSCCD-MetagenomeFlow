@@ -8,6 +8,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 96_stat_ml_siamcat.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV
@@ -32,46 +34,34 @@ Optional:
 EOF
 }
 
-WORKDIR=""
-REPO=""
-THREADS=""
-METADATA_CSV=""
-GROUP_COL=""
 DIMENSION="bacteria"
 FUNGI_METHOD="auto"
 FOLDS="10"
-FORCE=0
-SKIP_SHAP=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        -t) THREADS="$2"; shift 2 ;;
-        -m) METADATA_CSV="$2"; shift 2 ;;
-        -g) GROUP_COL="$2"; shift 2 ;;
-        -d) DIMENSION="$2"; shift 2 ;;
-        -M) FUNGI_METHOD="$2"; shift 2 ;;
-        --folds) FOLDS="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        --skip-shap) SKIP_SHAP=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
+# libcommon 的 FLAG 表不支持带连字符的选项名，--skip-shap 先归一化为 --skip_shap
+SKIP_SHAP=0
+NORMALIZED_ARGS=()
+for arg in "$@"; do
+    if [ "${arg}" = "--skip-shap" ]; then
+        NORMALIZED_ARGS+=("--skip_shap")
+    else
+        NORMALIZED_ARGS+=("${arg}")
+    fi
 done
 
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ] || [ -z "${THREADS}" ] || [ -z "${METADATA_CSV}" ] || [ -z "${GROUP_COL}" ]; then
-    echo "[ERROR] Missing required arguments"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO t:THREADS m:METADATA_CSV g:GROUP_COL d:DIMENSION M:FUNGI_METHOD"
+export MGX_OPTS_FLAG="force skip_shap"
+export MGX_OPTS_LONG="folds:FOLDS"
+mgx_parse "${NORMALIZED_ARGS[@]}"
+mgx_require WORKDIR REPO THREADS METADATA_CSV GROUP_COL
 
 # Ensure absolute paths so R sub-processes receive them correctly
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 REPO="$(cd "${REPO}" && pwd)"
 [ -n "${METADATA_CSV}" ] && METADATA_CSV="$(cd "$(dirname "${METADATA_CSV}")" && pwd)/$(basename "${METADATA_CSV}")"
 
-SECONDS=0
+mgx_begin
 
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/votu_table.tsv"
@@ -102,7 +92,7 @@ run_ml_visualization() {
     # If SIAMCAT was skipped (too few samples), generate placeholder PDFs
     if grep -q "^SKIPPED" "${RESULT_DIR}/siamcat_done.txt" 2>/dev/null; then
         echo "[INFO] SIAMCAT was skipped — generating placeholder visualization PDFs"
-        conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'PLACEHOLDER_R'
+        mgx_conda r_stat Rscript - <<'PLACEHOLDER_R'
 viz_ml <- Sys.getenv("VIZ_ML_DIR")
 dir.create(viz_ml, recursive=TRUE, showWarnings=FALSE)
 for (fname in c("roc_multimodel_comparison.pdf", "feature_importance_with_sd.pdf")) {
@@ -116,7 +106,7 @@ PLACEHOLDER_R
         return 0
     fi
     set +e
-    (cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_ml_visualization.R")
+    (cd "${WORKDIR}" && mgx_conda r_stat Rscript "${REPO}/scripts/96_ml_visualization.R")
     local viz_exit=$?
     set -e
     if [ ${viz_exit} -ne 0 ]; then
@@ -127,7 +117,7 @@ PLACEHOLDER_R
         return 0
     fi
     echo "[INFO] Computing SHAP feature attribution (randomForest only)..."
-    conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/96_ml_shap.R"
+    mgx_conda r_stat Rscript "${REPO}/scripts/96_ml_shap.R"
     return 0
 }
 
@@ -198,7 +188,7 @@ RUN_LOG="${LOG_DIR:-${RESULT_DIR}}/96_stat_ml_siamcat.run.log"
 mkdir -p "$(dirname "${RUN_LOG}")"
 set +e
 set -o pipefail
-(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript - <<'RSCRIPT' 2>&1 | tee "${RUN_LOG}"
+(cd "${WORKDIR}" && mgx_conda r_stat Rscript - <<'RSCRIPT' 2>&1 | tee "${RUN_LOG}"
 options(stringsAsFactors = FALSE)
 # Fix: Ensure working directory is WORKDIR (conda run may reset it)
 workdir <- Sys.getenv("WORKDIR")
@@ -450,6 +440,6 @@ if [ ${EXIT_CODE} -ne 0 ]; then
     exit ${EXIT_CODE}
 fi
 
-echo "[INFO] SIAMCAT analysis completed in ${SECONDS}s"
+mgx_end "siamcat"
 echo "[INFO] Sentinel: ${SENTINEL}"
 echo "[INFO] Visualizations: ${VIZ_ML_DIR}"

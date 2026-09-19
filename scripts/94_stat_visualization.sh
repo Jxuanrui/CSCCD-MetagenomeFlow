@@ -7,6 +7,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 94_stat_visualization.sh -w WORKDIR -r REPO [-m METADATA_CSV] [--force]
@@ -22,33 +24,20 @@ Optional:
 EOF
 }
 
-WORKDIR=""
-REPO=""
 METADATA_CSV=""
-FORCE=0
+GROUP_COL="${GROUP_COL:-group}"
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2"; shift 2 ;;
-        -m) METADATA_CSV="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] Missing required arguments"
-    show_help
-    exit 1
-fi
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO
 
 # Ensure absolute paths so R sub-processes receive them correctly
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 [ -n "${METADATA_CSV}" ] && METADATA_CSV="$(cd "$(dirname "${METADATA_CSV}")" && pwd)/$(basename "${METADATA_CSV}")"
 
-SECONDS=0
+mgx_begin
 
 GROUP_COL="${GROUP_COL:-group}"
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
@@ -87,7 +76,7 @@ echo "[INFO] Stat root: ${STAT_ROOT}"
 
 export WORKDIR REPO METADATA_CSV GROUP_COL BACT_TABLE VIR_TABLE FUNGI_DIR STAT_ROOT FORCE SENTINEL
 
-(cd "${WORKDIR}" && conda run --prefix "${REPO}/envs/r_stat" --no-capture-output Rscript "${REPO}/scripts/94_visualization.R")
+(cd "${WORKDIR}" && mgx_conda r_stat Rscript "${REPO}/scripts/94_visualization.R")
 
 EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
@@ -100,5 +89,5 @@ if [ ! -s "${SENTINEL}" ]; then
     exit 1
 fi
 
-echo "[INFO] Visualization completed in ${SECONDS}s"
+mgx_end "visualization"
 echo "[INFO] Sentinel: ${SENTINEL}"

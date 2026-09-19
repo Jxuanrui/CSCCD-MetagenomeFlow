@@ -13,6 +13,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 81_fun_eggnog.sh -t CPUS -w WORKDIR -r REPO
@@ -28,25 +30,13 @@ cat << EOF
 EOF
 }
 
-CPUS=""; WORKDIR=""; REPO=""
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${CPUS}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数"; show_help; exit 1
-fi
-
-SECONDS=0
+mgx_begin
 
 RESULT_DIR="${WORKDIR}/result/fungi/eggnog"
 EGGNOG_DB="${REPO}/db/eggnog"
@@ -65,7 +55,7 @@ fi
 mkdir -p "${RESULT_DIR}" "${TEMP_DIR}"
 
 echo "[fun_eggnog] 合并各样本 FAA 文件..."
-FAA_FILES=($(find "${PRODIGAL_DIR}" -name "*.faa" 2>/dev/null))
+mapfile -t FAA_FILES < <(find "${PRODIGAL_DIR}" -name "*.faa" 2>/dev/null)
 if [ ${#FAA_FILES[@]} -eq 0 ]; then echo "[ERROR] 未找到 FAA 文件"; exit 1; fi
 cat "${FAA_FILES[@]}" > "${COMBINED_FAA}"
 
@@ -73,8 +63,8 @@ N_PROTEINS=$(grep -c "^>" "${COMBINED_FAA}")
 echo "[fun_eggnog] 合并完成: ${#FAA_FILES[@]} 个样本, ${N_PROTEINS} 条蛋白序列"
 echo "[fun_eggnog] 开始 eggNOG-mapper 注释 | 线程: ${CPUS}"
 
-set +e
-conda run --prefix "${REPO}/envs/eggnog" --no-capture-output \
+EXIT_CODE=0
+mgx_try mgx_conda eggnog \
     emapper.py \
         -m diamond \
         --itype proteins \
@@ -85,12 +75,11 @@ conda run --prefix "${REPO}/envs/eggnog" --no-capture-output \
         -o eggnog \
         --output_dir "${RESULT_DIR}" \
         --temp_dir "${TEMP_DIR}" \
-        --override
-
-EXIT_CODE=$?
-set -e
+        --override \
+        || EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] emapper.py 失败（exit: ${EXIT_CODE}）"; exit ${EXIT_CODE}; fi
 rm -rf "${TEMP_DIR}"
 
 N_ANNOTATED=$(grep -v "^#" "${ANNOTATIONS}" 2>/dev/null | wc -l || echo "0")
-echo "[fun_eggnog] 完成，耗时 ${SECONDS}s | 注释: ${N_ANNOTATED} | 输出: ${RESULT_DIR}/"
+echo "[fun_eggnog] 完成 | 注释: ${N_ANNOTATED} | 输出: ${RESULT_DIR}/"
+mgx_end "fun_eggnog"

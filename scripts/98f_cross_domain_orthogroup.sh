@@ -22,6 +22,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 98f_cross_domain_orthogroup.sh -t CPUS -w WORKDIR -r REPO [--force]
 必需参数:
@@ -34,23 +36,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 REPO="$(readlink -f "${REPO}")"
 WORKDIR="$(readlink -f "${WORKDIR}")"
 OUTDIR="${WORKDIR}/result/cross_domain/orthogroup"
@@ -58,7 +50,6 @@ MERGED_FAA="${OUTDIR}/merged_proteins.faa"
 MMSEQS_PREFIX="${OUTDIR}/mmseqs_cluster"
 MMSEQS_TMP="${OUTDIR}/mmseqs_tmp"
 ORTHOGROUP_TABLE="${OUTDIR}/orthogroup_table.tsv"
-CLUSTER_ENV="${REPO}/envs/cluster"
 
 if [ ${FORCE} -eq 0 ] && [ -f "${ORTHOGROUP_TABLE}" ] && [ -s "${ORTHOGROUP_TABLE}" ]; then
     echo "[cross_domain_orthogroup] 结果已存在，跳过: ${ORTHOGROUP_TABLE}"
@@ -99,7 +90,7 @@ fi
 
 echo "[cross_domain_orthogroup] MMseqs2 easy-cluster 正交基因组检测 ..."
 mkdir -p "${MMSEQS_TMP}"
-conda run --prefix "${CLUSTER_ENV}" --no-capture-output \
+mgx_conda cluster \
     mmseqs easy-cluster \
         "${MERGED_FAA}" \
         "${MMSEQS_PREFIX}" \
@@ -117,7 +108,7 @@ if [ ! -s "${CLUSTER_TSV}" ]; then
 fi
 
 echo "[cross_domain_orthogroup] 生成正交基因组表 ..."
-conda run --prefix "${CLUSTER_ENV}" --no-capture-output \
+mgx_conda cluster \
     python3 -c "
 import sys, csv
 
@@ -144,5 +135,5 @@ with open('${ORTHOGROUP_TABLE}', 'w', newline='') as fh:
 print(f'[cross_domain_orthogroup] 蛋白数: {len(rows)} | 正交基因组数: {og_counter}')
 "
 
-echo "[cross_domain_orthogroup] 完成，耗时 ${SECONDS}s"
+mgx_end "cross_domain_orthogroup"
 echo "[cross_domain_orthogroup] 输出: ${ORTHOGROUP_TABLE}"

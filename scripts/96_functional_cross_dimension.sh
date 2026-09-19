@@ -8,6 +8,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat <<'EOF'
 Usage: bash 96_functional_cross_dimension.sh [-w WORKDIR] [-r REPO] [--force]
@@ -28,31 +30,17 @@ Outputs:
 EOF
 }
 
-require_value() {
-    if [ "$#" -lt 2 ] || [[ "$2" == -* ]]; then
-        echo "[ERROR] Missing value for argument: $1"
-        show_help
-        exit 1
-    fi
-}
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 WORKDIR="$(pwd)"
 REPO="$(cd "${SCRIPT_DIR}/.." && pwd)"
 METADATA_CSV="${METADATA_CSV:-}"
 GROUP_COL="${GROUP_COL:-group}"
-FORCE=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -w) require_value "$@"; WORKDIR="$2"; shift 2 ;;
-        -r) require_value "$@"; REPO="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] Unknown argument: $1"; show_help; exit 1 ;;
-    esac
-done
+# MGX_* tables are consumed by mgx_parse (libcommon.sh)
+export MGX_OPTS_STRING="w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
 
 if [ ! -d "${WORKDIR}" ]; then
     echo "[ERROR] Workdir not found: ${WORKDIR}"
@@ -80,7 +68,7 @@ if [ ! -f "${R_SCRIPT}" ]; then
     exit 1
 fi
 
-SECONDS=0
+mgx_begin
 
 STAT_ROOT="${WORKDIR}/result/stat"
 OUT_DIR="${STAT_ROOT}/cross_dimension/functional"
@@ -151,6 +139,6 @@ if ! awk -F '\t' 'NR > 1 && $2 != "OK" { bad = 1 } END { exit bad }' "${STATUS_T
     exit 1
 fi
 
-echo "[INFO] Cross-dimension functional visualization completed in ${SECONDS}s"
+mgx_end "functional_cross_dimension"
 echo "[INFO] Status: ${STATUS_TSV}"
 echo "[INFO] Sentinel: ${SENTINEL}"

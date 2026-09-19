@@ -15,6 +15,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法:
@@ -45,32 +47,20 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS="1"; WORKDIR=""; REPO=""; METHOD="prodigal"; DB=""
+CPUS="1"; METHOD="prodigal"; DB=""
 
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --method) METHOD="$2"; shift 2 ;;
-        --db) DB="$2"; shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-
-if [ -z "${SAMPLE}" ] || [ -z "${WORKDIR}" ] || [ -z "${REPO}" ]; then
-    echo "[ERROR] 缺少必需参数（-s/-w/-r）"; show_help; exit 1
-fi
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+export MGX_OPTS_LONG="method:METHOD db:DB"
+mgx_parse "$@"
+mgx_require SAMPLE WORKDIR REPO
 
 if [ "${METHOD}" != "prodigal" ] && [ "${METHOD}" != "metaeuk" ]; then
     echo "[ERROR] --method 仅支持: prodigal | metaeuk"; show_help; exit 1
 fi
 
-SECONDS=0
+mgx_begin
 
 INPUT_CONTIGS="${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/fungi/metaeuk/${SAMPLE}"
@@ -81,7 +71,6 @@ CODON_FAS="${OUTDIR}/${SAMPLE}.codon.fas"
 FAA="${OUTDIR}/${SAMPLE}_metaeuk.faa"
 GFF="${OUTDIR}/${SAMPLE}.gff"
 METAEUK_ENV="${REPO}/envs/metaeuk"
-ASSEMBLY_ENV="${REPO}/envs/assembly"
 METAEUK_DBTYPE="${DB}.dbtype"
 
 if [ ! -f "${INPUT_CONTIGS}" ]; then echo "[WARN] 输入不存在，跳过 MetaEuk: ${INPUT_CONTIGS}"; exit 0; fi
@@ -111,8 +100,8 @@ mkdir -p "${OUTDIR}"
 echo "[fun_metaeuk] 开始真菌基因预测: ${SAMPLE} | 方法: ${METHOD} | 输入: ${INPUT_CONTIGS}"
 
 if [ "${METHOD}" = "prodigal" ]; then
-set +e
-    conda run --prefix "${ASSEMBLY_ENV}" --no-capture-output \
+    EXIT_CODE=0
+    mgx_try mgx_conda assembly \
         prodigal \
             -i "${INPUT_CONTIGS}" \
             -a "${FAA}" \
@@ -120,10 +109,8 @@ set +e
             -p meta \
             -f gff \
             -o "${GFF}" \
-            -q
-
-    EXIT_CODE=$?
-set -e
+            -q \
+            || EXIT_CODE=$?
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] Prodigal 失败（exit: ${EXIT_CODE}）"
         rm -f "${FAA}" "${GFF}"; exit ${EXIT_CODE}
@@ -134,8 +121,8 @@ set -e
         rm -f "${FAA}"; exit 1
     fi
 else
-set +e
-    conda run --prefix "${METAEUK_ENV}" --no-capture-output \
+    EXIT_CODE=0
+    mgx_try mgx_conda metaeuk \
         metaeuk easy-predict \
             "${INPUT_CONTIGS}" \
             "${DB}" \
@@ -144,10 +131,8 @@ set +e
             --threads "${CPUS}" \
             -s 7.5 \
             --min-length 100 \
-            --translation-table 1
-
-    EXIT_CODE=$?
-set -e
+            --translation-table 1 \
+            || EXIT_CODE=$?
     if [ ${EXIT_CODE} -ne 0 ]; then
         echo "[ERROR] MetaEuk 失败（exit: ${EXIT_CODE}）"
         rm -f "${FAS}" "${CODON_FAS}" "${FAA}"
@@ -167,4 +152,5 @@ set -e
 fi
 
 N_TOTAL=$(grep -c "^>" "${FAA}" 2>/dev/null || echo "0")
-echo "[fun_metaeuk] ${SAMPLE} 完成，耗时 ${SECONDS}s | 方法: ${METHOD} | 预测基因: ${N_TOTAL} | 输出: ${OUTDIR}/"
+echo "[fun_metaeuk] ${SAMPLE} 完成 | 方法: ${METHOD} | 预测基因: ${N_TOTAL} | 输出: ${OUTDIR}/"
+mgx_end "fun_metaeuk"

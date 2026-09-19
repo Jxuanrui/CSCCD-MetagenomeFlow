@@ -17,6 +17,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 79e_fun_euk_qc_per_bin.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 必需参数:
@@ -31,24 +33,13 @@ show_help() { cat << EOF
 EOF
 }
 
-FORCE=0
-SAMPLE=""; CPUS=""; WORKDIR=""; REPO=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
-for v in SAMPLE CPUS WORKDIR REPO; do
-    if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
 
-SECONDS=0
+mgx_begin
 REPO="$(readlink -f "${REPO}")"
 WORKDIR="$(readlink -f "${WORKDIR}")"
 METABAT_DIR="${WORKDIR}/result/fungi/veba_qc/${SAMPLE}/metabat2"
@@ -82,7 +73,7 @@ for BIN_FA in "${BIN_FILES[@]}"; do
     cp -f "${BIN_FA}" "${LOCAL_FA}"
 
     N_CONTIGS=$(grep -c "^>" "${LOCAL_FA}" || echo 0)
-    SIZE_BP=$(conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+    SIZE_BP=$(mgx_conda assembly \
         seqkit stats -T "${LOCAL_FA}" | tail -n1 | cut -f5)
 
     echo "[euk_qc_per_bin] ${SAMPLE} | ${BIN_ID} | BUSCO 评估 (${N_CONTIGS} contigs, ${SIZE_BP} bp) ..."
@@ -90,7 +81,7 @@ for BIN_FA in "${BIN_FILES[@]}"; do
     BUSCO_EXIT=0
     (
         cd "${OUTDIR}"
-        conda run --prefix "${REPO}/envs/busco" --no-capture-output \
+        mgx_conda busco \
             busco -i "${LOCAL_FA}" -o "${BUSCO_OUT}" \
                   -m genome --auto-lineage-euk -c "${CPUS}" -f \
                   --download_path "${BUSCO_DOWNLOAD_PATH}"
@@ -112,5 +103,6 @@ for BIN_FA in "${BIN_FILES[@]}"; do
     echo -e "${SAMPLE}\t${BIN_ID}\t${LINEAGE}\t${COMPLETE}\t${DUPLICATED}\t${MISSING}\t${N_CONTIGS}\t${SIZE_BP}" >> "${SUMMARY}"
 done
 
-echo "[euk_qc_per_bin] ${SAMPLE} 完成，耗时 ${SECONDS}s | bins 评估数: ${#BIN_FILES[@]}"
+echo "[euk_qc_per_bin] ${SAMPLE} 完成 | bins 评估数: ${#BIN_FILES[@]}"
 echo "[euk_qc_per_bin] 质量摘要: ${SUMMARY}"
+mgx_end "euk_qc_per_bin"

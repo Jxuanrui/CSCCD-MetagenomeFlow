@@ -13,6 +13,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() {
 cat << EOF
 用法: bash 74e_fun_phf_profiler.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
@@ -37,27 +39,18 @@ cat << EOF
 EOF
 }
 
-SAMPLE=""; CPUS="1"; WORKDIR=""; REPO=""
-FORCE=0
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s) SAMPLE="$2";  shift 2 ;;
-        -t) CPUS="$2";    shift 2 ;;
-        -w) WORKDIR="$2"; shift 2 ;;
-        -r) REPO="$2";    shift 2 ;;
-        --force) FORCE=1; shift ;;
-        -h|--help) show_help; exit 0 ;;
-        *) echo "[ERROR] 未知参数: $1"; show_help; exit 1 ;;
-    esac
-done
+CPUS="1"
 
-for v in SAMPLE CPUS WORKDIR REPO; do
-    [ -z "${!v}" ] && { echo "[ERROR] 缺少必需参数: -${v:0:1}"; show_help; exit 1; }
-done
+# MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE CPUS WORKDIR REPO
+
 if ! [[ "${CPUS}" =~ ^[1-9][0-9]*$ ]]; then echo "[ERROR] -t 必须是正整数: ${CPUS}"; exit 1; fi
 REPO="$(cd "${REPO}" && pwd)"
 
-SECONDS=0
+mgx_begin
 
 # Paths
 KNEADDATA_DIR="${WORKDIR}/result/kneaddata/${SAMPLE}"
@@ -119,7 +112,7 @@ IN="${MERGED_FQ}"
 # Step 1: Map to fungi gene set → extract fungi reads
 STEP1="${TMPDIR_BASE}/${SAMPLE}.step1_fungi.fq.gz"
 echo "# Step 1: map to fungi gene set" >> "${CMD_LOG}"
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     bowtie2 --end-to-end --mm --fast --no-head --no-unal --no-sq \
         -U "${IN}" -x "${IDX_FUNGI}" -S /dev/null \
         --al-gz "${STEP1}" -p "${CPUS}" \
@@ -134,7 +127,7 @@ fi
 # Step 2: Filter human reads
 STEP2="${TMPDIR_BASE}/${SAMPLE}.step2_rmHost.fq.gz"
 echo "# Step 2: remove human" >> "${CMD_LOG}"
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     bowtie2 --end-to-end --mm --fast --no-head --no-unal --no-sq \
         -U "${STEP1}" -x "${IDX_HUMAN}" -S /dev/null \
         --un-gz "${STEP2}" -p "${CPUS}" \
@@ -143,7 +136,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
 # Step 3: Filter bacterial reads (UHGG)
 STEP3="${TMPDIR_BASE}/${SAMPLE}.step3_rmUHGG.fq.gz"
 echo "# Step 3: remove UHGG bacteria" >> "${CMD_LOG}"
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     bowtie2 --end-to-end --mm --fast --no-head --no-unal --no-sq \
         -U "${STEP2}" -x "${IDX_UHGG}" -S /dev/null \
         --un-gz "${STEP3}" -p "${CPUS}" \
@@ -152,7 +145,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
 # Step 4: Filter rRNA reads
 STEP4="${TMPDIR_BASE}/${SAMPLE}.step4_rmrRNA.fq.gz"
 echo "# Step 4: remove rRNA" >> "${CMD_LOG}"
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     bowtie2 --end-to-end --mm --fast --no-head --no-unal --no-sq \
         -U "${STEP3}" -x "${IDX_RRNA}" -S /dev/null \
         --un-gz "${STEP4}" -p "${CPUS}" \
@@ -161,7 +154,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
 # Step 5: Re-map with -k 1000 for multi-mapping (Escrow reads)
 STEP5_SAM="${TMPDIR_BASE}/${SAMPLE}.step5_fungi.sam"
 echo "# Step 5: re-map k=1000 for Singular+Escrow" >> "${CMD_LOG}"
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     bowtie2 --end-to-end --mm --fast --no-head --no-unal --no-sq \
         -U "${STEP4}" -x "${IDX_FUNGI}" -S "${STEP5_SAM}" \
         -k 1000 -p "${CPUS}" \
@@ -169,7 +162,7 @@ conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
 
 # Step 6: GPA.py — Singular+Escrow abundance
 echo "# Step 6: GPA.py Singular+Escrow abundance" >> "${CMD_LOG}"
-conda run --prefix "${REPO}/envs/assembly" --no-capture-output \
+mgx_conda assembly \
     python "${GPA_PY}" \
         -i "${STEP5_SAM}" \
         -o "${RESULT}" \
@@ -183,4 +176,5 @@ fi
 rm -rf "${TMPDIR_BASE}"
 
 N_CLUSTERS=$(tail -n +2 "${RESULT}" 2>/dev/null | wc -l | tr -d ' ')
-echo "[phf_profiler] ${SAMPLE} 完成，耗时 ${SECONDS}s | 检出真菌簇: ${N_CLUSTERS} | 输出: ${RESULT}"
+echo "[phf_profiler] ${SAMPLE} 完成 | 检出真菌簇: ${N_CLUSTERS} | 输出: ${RESULT}"
+mgx_end "phf_profiler"
