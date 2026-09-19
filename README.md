@@ -65,7 +65,19 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 ---
 
-## 最近更新（v1.2.0） | Recent Updates
+## 最近更新（v1.2.1） | Recent Updates
+
+**🔧 v1.2.1 (2026-09-19)**: Post-release cleanup + pilot-verified toolchain decisions + RAG benchmark governance.
+
+- **Disk reclaimed ~766 GB** (user-approved, manifests in `agents/provenance/20260919_temp_cleanup_all.json`): Project01/temp humann3 (788 GB SAM/bt2 intermediates; results untouched, chain re-runnable from raw reads) + strainphlan4 + metaphlan4; `conda clean -t -i` a further 8.2 GB. `temp/logs` (9.8 GB) deliberately kept pending dedup check. 5 zero-reference docs removed (git history is the archive).
+- **SemiBin 2.5.0 pilot verdict: production stays frozen** — Sample4 solo-binner A/B via CheckM2 (provenance `20260919_35_semibin25_pilot_Sample4.json`): strict-HQ (≥95%/≤5%) MAGs **16 vs 16 identical** to the 1.5.0 production bins; lenient +2, MQ −2, median completeness +19 pp but contamination up slightly. The decision gate rejects a full-chain rebuild: Project01 keeps the v1.1.4 MAG set; script 35 ships 2.5.0 for new projects.
+- **16b metaSPAdes pilot** — surfaced and fixed a real bug (missing `--phred-offset 33`: SPAdes auto-detection hard-fails exit 255 on constant-quality kneaddata output, i.e. every fixture/example sample); verified end-to-end on S03 (85 s). Tutorial §16b now carries the measured dual-assembler table (N50 742 vs 731 — MEGAHIT wins cost-effectiveness on this sample).
+- **antiSMASH 8 full re-run (28+28b) on Project01 in flight** — the subagent orchestrator was reaped mid-run (2 sample dirs cleared but unwritten); recovered by a session-decoupled takeover orchestrator (`/tmp/antismash8_takeover/`); v7 region-count snapshot for all 10 samples preserved at `/tmp/antismash8_rerun/v7_snapshot.json`. Results to be appended on completion.
+- **RAG benchmark governance (I4)** — 30-question set externalized to versioned `mcp/eval/benchmark_questions.yaml` (v2, now 45 questions; first 30 field-identical to the legacy embedded set); `rag_benchmark.py` net −168 lines, stamps results with question-set version + per-collection index fingerprint (fixes the E1 reproducibility finding), writes timestamped runs to gitignored `mcp/eval/results/`. Old-30 metrics byte-match the E1 fresh baseline; new 15 all pass R@3. Current hybrid: R@1/3/5 = 0.84/0.98/1.00.
+- **E2/E3 source reconnaissance verdicts** — microbiome-fm corpus: CONDITIONAL (QA-format not methods, ~45% microbiome-relevant, license unspecified → per-PMCID CC-BY audit needed before any ingestion); MicrobiomeKG: CONDITIONAL (TRAPI live-verified with PMIDs/effect sizes, needs data-license confirmation from authors); GutBugDB and GFKB: NOT-FEASIBLE (content class / license / access). BugSigDB flagged as the better-vetted third mechanism source. **No corpus ingestion executed** pending user decision on the conditional tracks.
+- **New level2 test `test_28_bac_antismash.sh`** — first fixture-grade path for script 28 (CI fixture contigs are all <1000 bp, under antiSMASH's hard minimum); derives a ≥1000 bp subset at run time from Project_example S03 (generator style, zero committed data); auto-discovered by the CI glob.
+
+### v1.2.0 | v1.2.0
 
 **🔧 v1.2.0 (2026-09-19)**: Engineering-hardening + toolchain refresh + governance migration (ZCode/GLM) — executed as 5 parallel streams under the CLAUDE.md §15 protocol with Ponytail minimalism discipline enforced end-to-end (distilled ruleset in §11.1 + net-line-growth advisory gate in the pre-commit hook + a user-level ZCode skill).
 
