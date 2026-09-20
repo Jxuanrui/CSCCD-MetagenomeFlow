@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument(
         "--collection",
         default="experience_kb",
-        choices=["experience_kb", "literature_kb", "all"],
+        choices=["experience_kb", "literature_kb", "signature_kb", "all"],
         help="Collection to search.",
     )
     parser.add_argument("--n-results", type=int, default=5, help="Number of results per collection.")
@@ -74,7 +74,7 @@ def load_filter(filter_arg):
 def get_collections(client, collection_name):
     collections = []
     if collection_name == "all":
-        for name in ["experience_kb", "literature_kb"]:
+        for name in ["experience_kb", "literature_kb", "signature_kb"]:
             try:
                 collections.append(client.get_collection(name))
             except Exception:

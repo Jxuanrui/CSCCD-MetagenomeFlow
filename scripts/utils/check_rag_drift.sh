@@ -27,7 +27,7 @@ if [ -z "${LATEST}" ]; then
 fi
 
 FAIL=0
-for coll in experience_kb literature_kb skill_design_kb mechanism_kb; do
+for coll in experience_kb literature_kb skill_design_kb mechanism_kb signature_kb; do
     live=$(python3 - "$REPO" "$coll" <<'EOF'
 import sys, chromadb
 repo, coll = sys.argv[1], sys.argv[2]

@@ -1,9 +1,14 @@
 # MaxMetagenome MCP
 
-本目录提供 MaxMetagenome 的双知识库检索能力：
+本目录提供 MaxMetagenome 的五知识库检索能力：
 
 - `experience_kb`：索引 `docs/`、`scripts/`、`pipeline/rules/`、`agents/skills/` 等项目经验文档。
 - `literature_kb`：索引 Europe PMC 检索到的高影响力肠道菌群文献 Methods 文本块。
+- `skill_design_kb`：索引可复用的实验/分析技能设计卡片。
+- `mechanism_kb`：索引 GutMGene + MicrobiomeKG 桥接表（菌群-代谢物-基因关联）。
+- `signature_kb`：索引 BugSigDB 菌群签名（条件-方向-分类群，默认人类肠道子集，CC BY 4.0）。
+
+当前 chunk 规模：`experience_kb` 1963、`literature_kb` 30826、`skill_design_kb` 130、`mechanism_kb` 5295、`signature_kb` 7669。
 
 两套知识库都使用 `ChromaDB` 持久化，默认嵌入模型为 `BAAI/bge-small-zh-v1.5`。
 
@@ -27,6 +32,20 @@
 - 向量库：`mcp/chromadb_data/literature_kb`
 
 文献管线的核心目标是优先收录高引用、高影响力期刊中与肠道菌群分析流程直接相关、且可抽取 Methods 章节的文章。
+
+### mechanism_kb
+
+- 入口：`index_mechanism_kb.py`
+- 数据来源：`mcp/data/gutmgene_bridge/bridge_table.json`、`mcp/data/microbiomekg_bridge/bridge_table.json`
+- 向量库：`mcp/chromadb_data/mechanism_kb`
+
+### signature_kb
+
+- 入口：`bugsigdb_bridge.py`（构建桥接表）+ `index_signature_kb.py`（索引）
+- 数据来源：BugSigDB 官方全量导出 CSV（`https://raw.githubusercontent.com/waldronlab/BugSigDBExports/devel/full_dump.csv`，每小时刷新，CC BY 4.0），缓存于 `/tmp/bugsigdb_full_dump.csv`
+- 默认过滤：State=Complete 且 Host species=Homo sapiens 且 Body site 含 gut/feces/intestin/colon/bowel/rectum 等肠道词（`--all` 可关闭过滤）
+- 分块逻辑：每条签名一个 chunk（条件 + 身体部位 + 分类群摘要 + 方向 + 分组 + PMID）
+- 向量库：`mcp/chromadb_data/signature_kb`，BM25：`mcp/bm25_data/signature_kb.pkl`
 
 ## 文献知识库构建
 
@@ -124,6 +143,13 @@ python mcp/literature_pipeline.py --repo . --max-articles 100
 python mcp/indexer.py --repo . --force
 ```
 
+构建 BugSigDB 签名知识库（先桥接后索引）：
+
+```bash
+python mcp/bugsigdb_bridge.py
+python mcp/index_signature_kb.py --repo . --force
+```
+
 ## 文件结构
 
 ### 工作目录
@@ -133,7 +159,10 @@ python mcp/indexer.py --repo . --force
   - 包含 `search_results.jsonl`、`last_update.txt`、`pmc_xml/`、`methods/`、`annotations/`
 - `mcp/chromadb_data/`
   - ChromaDB 持久化目录
-  - 保存 `experience_kb` 与 `literature_kb`
+  - 保存 `experience_kb`、`literature_kb`、`skill_design_kb`、`mechanism_kb`、`signature_kb`
+- `mcp/data/bugsigdb_bridge/`
+  - BugSigDB 桥接表（`bridge_table.json`，`{"signature": [...]}`）
+  - 由 `mcp/bugsigdb_bridge.py` 生成，供 `index_signature_kb.py` 消费
 
 ### 关键脚本
 
@@ -162,4 +191,5 @@ python mcp/server.py --repo .
 
 - `experience_kb`
 - `literature_kb`
+- `signature_kb`
 - `all`

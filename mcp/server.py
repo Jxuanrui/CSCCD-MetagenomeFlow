@@ -95,7 +95,7 @@ def _trim_document(text, limit=500):
 
 
 def _get_collections(collection_name):
-    if collection_name not in {"experience_kb", "literature_kb", "skill_design_kb", "mechanism_kb", "all"}:
+    if collection_name not in {"experience_kb", "literature_kb", "skill_design_kb", "mechanism_kb", "signature_kb", "all"}:
         raise ValueError(f"unsupported collection: {collection_name}")
 
     collections = []
@@ -280,7 +280,7 @@ async def main():
                 name="meta-server_rag_search",
                 description=(
                     "Hybrid BM25+dense retrieval over the MaxMetagenome RAG knowledge "
-                    "base(s): experience_kb, literature_kb, skill_design_kb, mechanism_kb, or all."
+                    "base(s): experience_kb, literature_kb, skill_design_kb, mechanism_kb, signature_kb, or all."
                 ),
                 inputSchema={
                     "type": "object",
@@ -297,7 +297,7 @@ async def main():
                         },
                         "collection": {
                             "type": "string",
-                            "enum": ["experience_kb", "literature_kb", "skill_design_kb", "mechanism_kb", "all"],
+                            "enum": ["experience_kb", "literature_kb", "skill_design_kb", "mechanism_kb", "signature_kb", "all"],
                             "default": "experience_kb",
                             "description": "Knowledge base collection to search.",
                         },
