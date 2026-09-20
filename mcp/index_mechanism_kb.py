@@ -37,25 +37,32 @@ def empty_bridge_data():
     }
 
 
+SOURCES = [
+    "mcp/data/gutmgene_bridge/bridge_table.json",
+    "mcp/data/microbiomekg_bridge/bridge_table.json",
+]
+
+
 def load_bridge_table(repo):
-    bridge_path = repo / SOURCE_PATH
-    if not bridge_path.is_file():
-        warn(f"missing bridge table: {bridge_path}")
-        return empty_bridge_data()
-
-    try:
-        data = json.loads(bridge_path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        warn(f"failed to read bridge table {bridge_path}: {exc}")
-        return empty_bridge_data()
-
+    """Load every available source; each source file is {doc_type: [records]}."""
     bridge_data = empty_bridge_data()
-    for doc_type in DOC_TYPES:
-        records = data.get(doc_type, []) if isinstance(data, dict) else []
-        if not isinstance(records, list):
-            warn(f"invalid bridge table section: {doc_type}")
-            records = []
-        bridge_data[doc_type] = records
+    for source in SOURCES:
+        bridge_path = repo / source
+        if not bridge_path.is_file():
+            if source == SOURCES[0]:
+                warn(f"missing bridge table: {bridge_path}")
+            continue
+        try:
+            data = json.loads(bridge_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            warn(f"failed to read bridge table {bridge_path}: {exc}")
+            continue
+        for doc_type in DOC_TYPES:
+            records = data.get(doc_type, []) if isinstance(data, dict) else []
+            if not isinstance(records, list):
+                warn(f"invalid bridge table section: {doc_type} in {source}")
+                records = []
+            bridge_data[doc_type].extend(records)
     return bridge_data
 
 
@@ -261,15 +268,17 @@ def main():
         metadata={"hnsw:space": "cosine"},
     )
 
-    bridge_path = repo / SOURCE_PATH
-    bridge_mtime = bridge_path.stat().st_mtime if bridge_path.is_file() else 0
+    # source fingerprint: newest mtime across all SOURCES
+    source_mtimes = [(repo / s).stat().st_mtime for s in SOURCES if (repo / s).is_file()]
+    bridge_mtime = max(source_mtimes) if source_mtimes else 0
 
     if args.incremental:
         existing_sources = get_existing_sources(collection)
-        try:
-            bridge_unchanged = abs(float(existing_sources.get(SOURCE_PATH, 0)) - bridge_mtime) < 0.000001
-        except Exception:
-            bridge_unchanged = False
+        bridge_unchanged = all(
+            abs(float(existing_sources.get(s, 0)) - ((repo / s).stat().st_mtime if (repo / s).is_file() else 0)) < 0.000001
+            for s in SOURCES
+            if (repo / s).is_file()
+        )
         if bridge_unchanged:
             print("Bridge table unchanged, skipping reindex")
             return
