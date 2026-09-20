@@ -319,3 +319,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    try:
+        import subprocess
+        subprocess.run(["bash", str(Path(__file__).resolve().parent.parent / "scripts/utils/check_rag_drift.sh")],
+                       timeout=120, capture_output=True)
+    except Exception:
+        pass

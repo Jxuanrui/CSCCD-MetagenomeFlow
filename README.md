@@ -69,7 +69,7 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 > Full details: `git log v1.1.4-baseline..HEAD` and `docs/CHANGELOG_v1.1_patch.md`.
 
-- **v1.2.1 (2026-09)** — Cleanup & RAG expansion: ~770 GB reclaimed; antiSMASH 8 full re-run; literature_kb 5.7x (open CC-audited corpus); mechanism_kb +435 records (MicrobiomeKG 2025); versioned 45-question benchmark.
+- **v1.2.1 (2026-09)** — Cleanup & RAG expansion: ~770 GB reclaimed; antiSMASH 8 full re-run (chunked-parallel, regions +41.5% vs v7: 2,378 → 3,364); literature_kb 5.7x (open CC-audited corpus); mechanism_kb +435 records (MicrobiomeKG 2025); versioned 45-question benchmark.
 - **v1.2.0 (2026-09)** — Engineering hardening & toolchain refresh: shared script library (-2,300 lines, shellcheck 0), antiSMASH 8 / SemiBin 2.5, metaSPAdes + PhaStyle opt-in tracks, remote CI, GLM dual-model MCP routing.
 - **v1.1.4 (2026-09)** — Binning-chain data-integrity remediation and reproducible Project01 MAG rebuild.
 - **v1.1.3 (2026-09)** — MetaX cross-domain verification layer, configurable kingdoms, consistency checker.
