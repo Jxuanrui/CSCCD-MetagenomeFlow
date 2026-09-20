@@ -85,8 +85,8 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 - GEM metabolic modeling (43-43c); fungal PHF database (760 genomes); 11 integration tables per dimension, auto-generated
 
 ### AI-Assisted Infrastructure
-- **RAG hybrid retrieval** (BM25 + dense vectors + RRF): **38,111 chunks** across four collections - experience_kb 1,860 / literature_kb 30,826 / skill_design_kb 130 / mechanism_kb 5,295
-- mechanism_kb dual-source: GutMGene v2.0 curated causal chains + MicrobiomeKG 2025 cohort associations (with PMIDs and effect statistics)
+- **RAG hybrid retrieval** (BM25 + dense vectors + RRF): **45,883 chunks** across five collections - experience_kb 1,963 / literature_kb 30,826 / skill_design_kb 130 / mechanism_kb 5,295 / signature_kb 7,669
+- mechanism_kb dual-source: GutMGene v2.0 curated causal chains + MicrobiomeKG 2025 cohort associations (with PMIDs and effect statistics); signature_kb: BugSigDB condition-stratified abundance-direction signatures (CVD-relevant: stroke, hypertension, heart failure)
 - Benchmark governance: versioned 45-question set with per-index fingerprints; hybrid retrieval R@3 = 0.98 / MRR = 0.917
 - MCP servers: glm-router (GLM-5.3 / GLM-5.3-Flash dual-model routing), figure-library, RAG retrieval
 
