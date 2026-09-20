@@ -162,9 +162,6 @@ README_TOKENS = (
     ("banner scripts", r"(?P<n>\d+)\s+scripts(?=\s+·)", "scripts"),
     ("banner rules", r"(?P<n>\d+)\s+Snakemake rules", "rules"),
     ("banner conda envs", r"(?P<n>\d+)\s+conda envs", "envs"),
-    ("table Analysis scripts", r"\|\s*Analysis scripts\s*\|\s*(?P<n>\d+)", "scripts"),
-    ("table Snakemake rules", r"\|\s*Snakemake rules\s*\|\s*(?P<n>\d+)", "rules"),
-    ("table Conda environments", r"\|\s*Conda environments\s*\|\s*(?P<n>\d+)", "envs"),
 )
 
 
