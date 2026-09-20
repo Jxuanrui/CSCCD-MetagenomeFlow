@@ -3,7 +3,7 @@
 > A comprehensive, reproducible metagenomics platform for parallel profiling of the gut microbiome across three kingdoms — bacteria, viruses, and fungi — from raw reads to publication-ready statistics, with AI-assisted workflow and mechanistic host-microbe interaction discovery.
 
 **Developed by:**  
-[China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases](https://example.org) (中(阿)沙心脑血管疾病联合实验室)
+[China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases](https://example.org)
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
@@ -23,9 +23,9 @@
 ║    ╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═╝                                          ║
 ║                                                                           ║
 ║    MaxMetagenome Platform                                                 ║
-║    完整宏基因组多维度分析平台  ·  版本 1.1.2                                 ║
+║    Multi-kingdom Metagenomics Analysis Platform  ·  v1.2                    ║
 ║                                                                           ║
-║    183 分析脚本  ·  143 Snakemake 规则  ·  57 conda 环境  ·  ~1.2TB 数据库  ║
+║    183 scripts  ·  143 Snakemake rules  ·  57 conda envs  ·  ~1.2TB DBs     ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -65,50 +65,35 @@ Gut microbiome research increasingly demands joint analysis of bacteria, viruses
 
 ---
 
-## 最近更新 | Recent Updates
+## Recent Updates | Recent Updates
 
-> 完整变更明细见 git 历史（`git log v1.1.4-baseline..HEAD`）与 `docs/CHANGELOG_v1.1_patch.md`。
+> Full details: `git log v1.1.4-baseline..HEAD` and `docs/CHANGELOG_v1.1_patch.md`.
 
-**🔧 v1.2.1 (2026-09-19/20)** — 清理与 RAG 扩容：
-- 磁盘清理回收 ~770G（可再生中间产物 / conda 缓存 / 测试遗留，provenance 留痕）
-- antiSMASH 8.0.4 全量重跑 Project01（分块并行方案绕过其逐记录微批缺陷），v8 较 v7 region 数 +40–45%
-- SemiBin 2.5.0 质量持平 → **生产冻结 v1.1.4 MAG 集，新项目用新链**（决策门裁决，provenance 留痕）
-- RAG 扩容：literature_kb +25,434 chunks（microbiome-fm 开源语料，CC 许可逐条审计）；mechanism_kb +435 记录（MicrobiomeKG 2025 TRAPI 收获，全部带 PMID）
-- RAG 基准题集版本化（30→45 题，结果带索引指纹）；修复 16b PHRED bug；新增 28 号脚本 level2 测试
+- **v1.2.1 (2026-09)** — Cleanup & RAG expansion: ~770 GB reclaimed; antiSMASH 8 full re-run; literature_kb 5.7x (open CC-audited corpus); mechanism_kb +435 records (MicrobiomeKG 2025); versioned 45-question benchmark.
+- **v1.2.0 (2026-09)** — Engineering hardening & toolchain refresh: shared script library (-2,300 lines, shellcheck 0), antiSMASH 8 / SemiBin 2.5, metaSPAdes + PhaStyle opt-in tracks, remote CI, GLM dual-model MCP routing.
+- **v1.1.4 (2026-09)** — Binning-chain data-integrity remediation and reproducible Project01 MAG rebuild.
+- **v1.1.3 (2026-09)** — MetaX cross-domain verification layer, configurable kingdoms, consistency checker.
+- **v1.1.1-1.1.2 (2026-08)** — Error-handling hardening, cross-domain correlation network, diagnostic/ops tools, GEM validation.
+- **v1.1 (2026-08)** — Eukaryotic QC/binning, cross-domain clustering, BGC novelty scoring, post-binning reassembly.
+- **v1.0 (2026-07)** — Initial release under the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases.
 
-**🔧 v1.2.0 (2026-09-19)** — 工程加固与工具链刷新：
-- 治理迁移 ZCode + GLM（Ponytail 极简纪律三重落地）
-- 154 个脚本接入共享库 `libcommon.sh`：净删 ~2,300 行，shellcheck 31→0 全绿，顺带修复 5 个致命 bug
-- 工具链升级：antiSMASH 7→8.0.4、SemiBin 1.5→2.5.0（均 A/B 验证、旧环境冻结）；新增 16b metaSPAdes 双组装验证轨道、67b PhaStyle 噬菌体生活方式第三票
-- 远程 CI（GitHub Actions）+ README 计数自动同步；bge-m3 A/B 评估后裁决不切换
+### Analysis Capacity
+- **181 scripts** (158 `.sh` + 16 `.R` + 7 `.py`) spanning all three kingdoms end-to-end, plus cross-domain analysis and diagnostic/ops tooling
+- **140+ scripts support `--force`** for idempotent re-runs; zero shellcheck warnings repo-wide (165/165)
+- Strain-level: inStrain microdiversity (39b-39d), WGS typing (MLST / pan-genome / SNP, 42b-42d)
+- Phage lifestyle three-vote consensus: BACPHLIP + PhaGCN3 + ProkBERT-PhaStyle (67b, opt-in)
+- GEM metabolic modeling (43-43c); fungal PHF database (760 genomes); 11 integration tables per dimension, auto-generated
 
-**🔧 v1.1.4 (2026-09-16)** — 分箱链数据完整性治理：23% 陈旧 bin 污染定位修复、Project01 MAG 重建（213 个）、4 个输出清理 bug。
+### AI-Assisted Infrastructure
+- **RAG hybrid retrieval** (BM25 + dense vectors + RRF): **38,111 chunks** across four collections - experience_kb 1,860 / literature_kb 30,826 / skill_design_kb 130 / mechanism_kb 5,295
+- mechanism_kb dual-source: GutMGene v2.0 curated causal chains + MicrobiomeKG 2025 cohort associations (with PMIDs and effect statistics)
+- Benchmark governance: versioned 45-question set with per-index fingerprints; hybrid retrieval R@3 = 0.98 / MRR = 0.917
+- MCP servers: glm-router (GLM-5.3 / GLM-5.3-Flash dual-model routing), figure-library, RAG retrieval
 
-**🔧 v1.1.3 (2026-09-15)** — MetaX 跨域验证层、kingdoms 可配置架构、一致性检查器、仓库清理。
-
-**🔧 v1.1.1–v1.1.2 (2026-08)** — 错误处理加固、98g 跨域丰度关联、8 个诊断/运维工具、GEM 模块全量验证。
-
-**🎉 v1.1 (2026-08)** — 真核 QC/分箱（79b–79f）、跨域聚类（98e/98f）、BGC 新颖性打分（28b）、bin 重装配（36b/02b）。
-
-**🎉 v1.0 (2026-07)** — 首版发布，依托中(阿)沙心脑血管疾病联合实验室。
-
-### 分析能力 | Analysis Capacity
-- **181 scripts**（158 `.sh` + 16 `.R` + 7 `.py`）覆盖三界全链路 + 跨域分析 + 诊断运维
-- **140+ 脚本支持 `--force`** 幂等重跑；全库 shellcheck 零告警（165/165）
-- 菌株级：inStrain 微多样性（39b–39d）、WGS（MLST/泛基因组/SNP，42b–42d）
-- 噬菌体生活方式三票表决：BACPHLIP + PhaGCN3 + ProkBERT-PhaStyle（67b，opt-in）
-- GEM 代谢建模（43–43c）；真菌 PHF 数据库（760 基因组）；11 张整合表 × 3 界自动生成
-
-### AI 基础设施 | AI-Assisted Infrastructure
-- **RAG 混合检索**（BM25 + 向量 + RRF）：**38,111 chunks** — experience_kb 1,860 / literature_kb 30,826 / skill_design_kb 130 / mechanism_kb 5,295
-- mechanism_kb 双源：GutMGene v2.0 策划因果 + MicrobiomeKG 2025 队列关联（含 PMID 与统计量）
-- 基准治理：45 题版本化题集 + 索引指纹戳；混合检索 R@3 = 0.98 / MRR = 0.917
-- MCP 服务：glm-router（GLM-5.3/5.3-Flash 双模型路由）、figure-library、RAG 检索
-
-### 平台成熟度 | Platform Maturity
-- Snakemake 141 规则 / 261 任务 DAG 全量验证（Test_CI_fixture 三层 CI：shellcheck + 集成测试 + DAG 连通）
-- 57 conda 环境自包含（~1.2 TB 数据库），单服务器迁移 = git clone + 0Install.sh
-- 三种运行模式：逐步调试 / Bash 流水线（断点续跑）/ Snakemake DAG（HPC 就绪）
+### Platform Maturity
+- Snakemake 141 rules / 261-job DAG fully validated (three-layer CI on Test_CI_fixture: shellcheck + integration tests + DAG connectivity)
+- 57 self-contained conda environments (~1.2 TB databases); migrating a server = `git clone` + `0Install.sh`
+- Three run modes: step-by-step (debugging) / Bash pipeline (checkpointed) / Snakemake DAG (HPC-ready)
 
 ---
 
