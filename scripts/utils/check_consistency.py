@@ -159,9 +159,9 @@ def count_repo_assets():
 README_TOKENS = (
     ("scripts badge", r"scripts-(?P<n>\d+)-blue", "scripts"),
     ("conda envs badge", r"conda%20envs-(?P<n>\d+)-orange", "envs"),
-    ("banner 分析脚本", r"(?P<n>\d+)(?=\s*分析脚本)", "scripts"),
-    ("banner Snakemake 规则", r"(?P<n>\d+)(?=\s*Snakemake\s*规则)", "rules"),
-    ("banner conda 环境", r"(?P<n>\d+)(?=\s*conda\s*环境)", "envs"),
+    ("banner scripts", r"(?P<n>\d+)\s+scripts(?=\s+·)", "scripts"),
+    ("banner rules", r"(?P<n>\d+)\s+Snakemake rules", "rules"),
+    ("banner conda envs", r"(?P<n>\d+)\s+conda envs", "envs"),
     ("table Analysis scripts", r"\|\s*Analysis scripts\s*\|\s*(?P<n>\d+)", "scripts"),
     ("table Snakemake rules", r"\|\s*Snakemake rules\s*\|\s*(?P<n>\d+)", "rules"),
     ("table Conda environments", r"\|\s*Conda environments\s*\|\s*(?P<n>\d+)", "envs"),
