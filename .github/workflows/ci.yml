@@ -1,5 +1,5 @@
 # Remote CI — only repo-contained, deterministic checks:
-#   lint        shellcheck (--severity=warning) over scripts/*.sh, honoring the
+#   lint        shellcheck (--severity=warning) over scripts/**/*.sh, honoring the
 #               root .shellcheckrc (disable=SC1091); standalone twin of
 #               scripts/tests/level1/run_shellcheck_all.sh, which needs the
 #               gitignored envs/shellcheck env.
@@ -8,9 +8,16 @@
 # local-only: they depend on Project/Test_CI_fixture data, which is gitignored.
 # Enable by mirroring this repo to GitHub (git push --mirror) or by translating
 # this file to a Gitee Go .workflow/ pipeline.
+#
+# schedule: weekly re-run guards against silent drift (shellcheck version bumps,
+# dependency updates in the consistency checker, rotting exclusion lists).
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"  # Mondays 03:00 UTC
 
 jobs:
   lint:
@@ -23,10 +30,10 @@ jobs:
             | tar -xJ -C /tmp
           sudo install -m 0755 /tmp/shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
           shellcheck --version
-      - name: shellcheck scripts/*.sh (severity=warning, per .shellcheckrc)
+      - name: shellcheck scripts (severity=warning, per .shellcheckrc) — blocking
         run: |
           mapfile -t all_sh < <( { find scripts -maxdepth 1 -name '*.sh' -type f; find scripts/utils scripts/hooks scripts/tests -maxdepth 1 -name '*.sh' -type f; } | sort -u)
-          echo "[INFO] Scanning ${#all_sh[@]} script(s) under scripts/ (severity=warning)..."
+          echo "[INFO] Scanning ${#all_sh[@]} script(s) (severity=warning)..."
           fail=0
           for f in "${all_sh[@]}"; do
             shellcheck --severity=warning "$f" || fail=1
