@@ -110,3 +110,6 @@ FigureLibrary/
 
 # ZCode client session artifacts (plans etc., machine-local)
 .zcode/
+
+# auto-mining: regenerable data artifact (see mining/seed_summary.json for provenance)
+mining/seed_registry.sqlite
