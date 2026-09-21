@@ -21,17 +21,9 @@
   - 从 CLAUDE.md §14 迁移而来
   - 包含 /mgx-* 技能族说明
 
-### 4. 变更日志
-- **docs/CHANGELOG_v1.1_patch.md** （新增，2026-08-19）
-  - v1.1.0 → v1.1.1 所有优化与更改
-  - 工程质量加固（pipefail + EXIT_CODE 冲突修复）
-  - inStrain 菌株追踪集成（39b-d）
-  - DAS_Tool R 环境 ABI 冲突修复
-  - 回归测试建议 + 升级路径
-
-### 5. AI 协作规范
-- **CLAUDE.md** — Claude Code + Codex MCP 协作协议
-  - CC = Plan/Review/Decide, Codex = Execute
+### 4. AI 协作规范
+- **CLAUDE.md** — ZCode (GLM) 主代理 + 子代理协作协议
+  - 主代理 = Plan/Review/Decide, 子代理 = Execute
   - 路由矩阵、4 阶段工作流、质量审核清单
   - No-touch 路径约束
 
