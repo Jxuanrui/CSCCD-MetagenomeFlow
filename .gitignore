@@ -113,3 +113,8 @@ FigureLibrary/
 
 # auto-mining: regenerable data artifact (see mining/seed_summary.json for provenance)
 mining/seed_registry.sqlite
+
+# auto-mining runtime state (regenerable)
+mining/incremental_state.json
+mining/incremental_last_run.json
+mining/incremental_cron.log
