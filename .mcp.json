@@ -6,6 +6,10 @@
         "/home/labuser/Course/Maxmetagenome/mcp/glm_router.py"
       ]
     },
+    "seqout": {
+      "type": "http",
+      "url": "https://seqout.org/api/mcp"
+    },
     "figure-library": {
       "command": "/home/labuser/.nvm/versions/node/v24.16.0/bin/node",
       "args": [
