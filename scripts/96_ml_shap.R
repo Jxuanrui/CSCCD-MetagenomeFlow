@@ -145,6 +145,14 @@ tryCatch({
   print(p)
   grDevices::dev.off()
   log_status("shap_summary_pdf", "OK", basename(shap_pdf))
+  shap_png <- sub("\\.pdf$", ".png", shap_pdf)
+  if (tolower(Sys.getenv("MGX_FIGURE_FORMATS", "")) %in% c("png", "pdf,png", "png,pdf") &&
+      requireNamespace("ragg", quietly = TRUE)) {
+    ragg::agg_png(shap_png, width = 10, height = 8, units = "in", res = 600)
+    print(p)
+    grDevices::dev.off()
+    log_status("shap_summary_png", "OK", basename(shap_png))
+  }
 
 }, error = function(e) {
   log_status("shap_randomForest", "FAILED", conditionMessage(e))

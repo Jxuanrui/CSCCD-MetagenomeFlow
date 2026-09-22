@@ -140,28 +140,35 @@ copy_fig() {
     fi
 }
 
+# copy_fig_pair <name_noext> <src_noext>: collect BOTH pdf and png (the gallery
+# keeps every visualization in the two formats).
+copy_fig_pair() {
+    copy_fig "$1.pdf" "$2.pdf"
+    copy_fig "$1.png" "$2.png"
+}
+
 COPIED=(); MISSING=()
-copy_fig composition_barplot.png      result/stat/bacteria/composition/barplot_composition_by_group.png
-copy_fig composition_heatmap.png      result/stat/bacteria/composition/heatmap_genus.png
-copy_fig alpha_diversity.png          result/stat/bacteria/diversity/alpha_diversity_boxplot.png
-copy_fig pcoa.png                     result/stat/bacteria/diversity/pcoa_beta_scatter.png
-copy_fig volcano.png                  result/stat/bacteria/differential/volcano_deseq2.png
-copy_fig lefse_barplot.png            result/stat/bacteria/lefse/lefse_barplot.png
-copy_fig lefse_cladogram.png          result/stat/bacteria/lefse/cladogram.png
-copy_fig core_microbiome.png          result/stat/bacteria/core/core_abundance_barplot.png
-copy_fig core_microbiome_venn.png     result/stat/bacteria/core/venn_diagram.png
-copy_fig pathway_activity.png         result/stat/bacteria/pathway/scatter_activity_composition.png
-copy_fig functional_redundancy.png    result/stat/bacteria/functional_redundancy/redundancy_correlation_scatter.png
-copy_fig functional_redundancy_heatmap.png result/stat/bacteria/functional_redundancy/redundancy_heatmap.png
-copy_fig cross_dimension_network.png  result/stat/network/cross_bac_vir/network.png
-copy_fig functional_network.png       result/stat/bacteria/functional/network/figures/network_bacteria.png
-copy_fig ml_roc.pdf                   result/stat/bacteria/ml/roc_multimodel_comparison.pdf
-copy_fig ml_feature_weights.pdf       result/stat/bacteria/ml/feature_importance_with_sd.pdf
-copy_fig shap_summary.pdf             result/stat/bacteria/ml/randomForest_shap_summary.pdf
+copy_fig_pair composition_barplot      result/stat/bacteria/composition/barplot_composition_by_group
+copy_fig_pair composition_heatmap      result/stat/bacteria/composition/heatmap_genus
+copy_fig_pair alpha_diversity          result/stat/bacteria/diversity/alpha_diversity_boxplot
+copy_fig_pair pcoa                     result/stat/bacteria/diversity/pcoa_beta_scatter
+copy_fig_pair volcano                  result/stat/bacteria/differential/volcano_deseq2
+copy_fig_pair lefse_barplot            result/stat/bacteria/lefse/lefse_barplot
+copy_fig_pair lefse_cladogram          result/stat/bacteria/lefse/cladogram
+copy_fig_pair core_microbiome          result/stat/bacteria/core/core_abundance_barplot
+copy_fig_pair core_microbiome_venn     result/stat/bacteria/core/venn_diagram
+copy_fig_pair pathway_activity         result/stat/bacteria/pathway/scatter_activity_composition
+copy_fig_pair functional_redundancy    result/stat/bacteria/functional_redundancy/redundancy_correlation_scatter
+copy_fig_pair functional_redundancy_heatmap result/stat/bacteria/functional_redundancy/redundancy_heatmap
+copy_fig_pair cross_dimension_network  result/stat/network/cross_bac_vir/network
+copy_fig_pair functional_network       result/stat/bacteria/functional/network/figures/network_bacteria
+copy_fig_pair ml_roc                   result/stat/bacteria/ml/roc_multimodel_comparison
+copy_fig_pair ml_feature_weights       result/stat/bacteria/ml/feature_importance_with_sd
+copy_fig_pair shap_summary             result/stat/bacteria/ml/randomForest_shap_summary
 copy_fig krona_plot.html              result/demo/krona_plot.html
 copy_fig multiqc_report.html          result/qc_report/multiqc_report.html
-copy_fig mining_attrs.png             "${REPO}/mining/vis/mining_attrs.png"
-copy_fig mining_overlap.png           "${REPO}/mining/vis/mining_overlap.png"
+copy_fig_pair mining_attrs            "${REPO}/mining/vis/mining_attrs"
+copy_fig_pair mining_overlap          "${REPO}/mining/vis/mining_overlap"
 
 # --- summary ---------------------------------------------------------------------
 echo ""

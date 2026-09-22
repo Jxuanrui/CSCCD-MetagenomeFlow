@@ -14,6 +14,12 @@ if (dir.exists(conda_lib)) {
   )))
 }
 
+# Optional PNG companion figures, only when MGX_FIGURE_FORMATS requests "png"
+mgx_want_png <- function() {
+  fmts <- tolower(trimws(strsplit(Sys.getenv("MGX_FIGURE_FORMATS", ""), ",")[[1]]))
+  "png" %in% fmts && requireNamespace("ragg", quietly = TRUE)
+}
+
 suppressPackageStartupMessages({
   library(SIAMCAT); library(ggplot2); library(cowplot)
   library(dplyr);   library(tidyr)
@@ -115,6 +121,8 @@ plot_roc <- function(models_found) {
     theme(legend.position = "inside", legend.position.inside = c(0.75, 0.25),
           panel.grid = element_blank(), legend.background = element_blank())
   cowplot::save_plot(roc_pdf, p, base_aspect_ratio = 1.1, base_height = 5.5, dpi = 300)
+  if (mgx_want_png()) cowplot::save_plot(sub("\\.pdf$", ".png", roc_pdf), p,
+    base_aspect_ratio = 1.1, base_height = 5.5, dpi = 600, device = ragg::agg_png)
   log_status("roc_multimodel_comparison", "OK", basename(roc_pdf))
 }
 
@@ -152,6 +160,8 @@ plot_features <- function() {
     labs(x = NULL, y = "Mean |weight|", title = "Top-20 LASSO features") +
     theme(panel.grid.major.y = element_blank())
   cowplot::save_plot(feat_pdf, p, base_aspect_ratio = 1.2, base_height = 7, dpi = 300)
+  if (mgx_want_png()) cowplot::save_plot(sub("\\.pdf$", ".png", feat_pdf), p,
+    base_aspect_ratio = 1.2, base_height = 7, dpi = 600, device = ragg::agg_png)
   log_status("feature_importance_with_sd", "OK", basename(feat_pdf))
 }
 

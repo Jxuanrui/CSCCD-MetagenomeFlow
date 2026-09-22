@@ -120,7 +120,7 @@ Diversity (91), differential abundance (92, 99b LEfSe), co-occurrence networks (
 
 ## Figure Gallery
 
-All figures below are produced by the pipeline's own plotting stack (ggplot2, shared publication theme, NPG palette, Arial, 600 dpi, PDF+PNG) from a **synthetic 24-sample demo project** — no real data is used or distributed. The entire gallery is reproducible with one command:
+All figures below are produced by the pipeline's own plotting stack (ggplot2, shared publication theme, NPG palette, Arial, 600 dpi) from a **synthetic 24-sample demo project** — no real data is used or distributed. Every figure is stored in `docs/figures/` in **both PDF and PNG** (except the natively interactive Krona HTML). The entire gallery is reproducible with one command:
 
 ```bash
 bash mcp/vis/build_gallery.sh            # ~3 min; --with-ml adds ML figures (~7 min)
@@ -137,7 +137,7 @@ The same figures can be rendered on demand for any real project through the `mgx
 | Functional profiling | Data mining registry | Interactive |
 |---|---|---|
 | <img src="docs/figures/pathway_activity.png" width="270" alt="Pathway activity-composition correlations"/><br><sub>Pathway activity (96b)</sub> | <img src="docs/figures/mining_attrs.png" width="270" alt="Seed registry attribute overview"/><br><sub>Seed registry (63,803 samples)</sub> | [Krona interactive plot](docs/figures/krona_plot.html)<br><sub>Taxonomic circle plot</sub> |
-| <img src="docs/figures/functional_redundancy.png" width="270" alt="Functional redundancy FDI scatter"/><br><sub>Redundancy FDI (96c)</sub> | <img src="docs/figures/mining_overlap.png" width="270" alt="Source overlap matrix"/><br><sub>Source overlap (3 databases)</sub> | [ML ROC comparison](docs/figures/ml_roc.pdf) · [Feature weights](docs/figures/ml_feature_weights.pdf)<br><sub>SIAMCAT ML (96, `--with-ml`)</sub> |
+| <img src="docs/figures/functional_redundancy.png" width="270" alt="Functional redundancy FDI scatter"/><br><sub>Redundancy FDI (96c)</sub> | <img src="docs/figures/mining_overlap.png" width="270" alt="Source overlap matrix"/><br><sub>Source overlap (3 databases)</sub> | <img src="docs/figures/ml_roc.png" width="270" alt="SIAMCAT multi-model ROC comparison"/><br><sub>ML ROC (96, `--with-ml`)</sub> |
 
 Additional figure families (not pictured): functional-redundancy heatmap (96c), core-microbiome Venn (99a), SHAP feature attribution (96, `--with-ml`), SpiecEasi functional co-occurrence networks (96), batch-correction evaluation (95b), cross-cohort replication with meta-analysis (97), MAG-level reports (dRep/inStrain/DRAM HTML from the 32–43c chain), and QC reports (fastp/MultiQC/Krona).
 
