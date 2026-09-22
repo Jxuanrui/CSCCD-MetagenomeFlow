@@ -19,6 +19,12 @@
         "FIGURE_LIBRARY_DIR": "/home/labuser/Course/Maxmetagenome/FigureLibrary",
         "FIGURE_WORKSPACE_DIR": "/home/labuser/Course/Maxmetagenome/FigureLibrary/workspace"
       }
+    },
+    "mgx-vis": {
+      "command": "/home/labuser/Course/Maxmetagenome/envs/rag/bin/python3",
+      "args": [
+        "/home/labuser/Course/Maxmetagenome/mcp/vis_server.py"
+      ]
     }
   }
 }

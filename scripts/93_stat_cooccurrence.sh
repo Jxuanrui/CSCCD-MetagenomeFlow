@@ -100,7 +100,11 @@ grDevices::pdf(file = NULL)
 
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0 || all(is.na(x))) y else x
 
-mm2in <- function(x) x / 25.4
+# Shared publication theme/export helpers (scripts/R/pub_theme.R); this
+# heredoc R session has no --file= arg, so locate it via REPO from the wrapper.
+pub_theme_path <- file.path(Sys.getenv("REPO"), "scripts", "R", "pub_theme.R")
+if (!file.exists(pub_theme_path)) stop("pub_theme.R not found: ", pub_theme_path)
+source(pub_theme_path)
 
 theme_pub_void <- function(base_size = 7, base_family = "Arial") {
   ggplot2::theme_void(base_size = base_size, base_family = base_family) +
@@ -113,45 +117,6 @@ theme_pub_void <- function(base_size = 7, base_family = "Arial") {
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       panel.background = ggplot2::element_rect(fill = "white", colour = NA)
     )
-}
-
-write_device <- function(open_device, draw_fn) {
-  open_device()
-  dev_id <- grDevices::dev.cur()
-  on.exit({
-    if (grDevices::dev.cur() == dev_id) {
-      try(grDevices::dev.off(), silent = TRUE)
-    }
-  }, add = TRUE)
-  draw_fn()
-  grDevices::dev.off()
-  invisible(TRUE)
-}
-
-export_pub_figure <- function(plot, path_noext, width_mm, height_mm, dpi = 600) {
-  w <- mm2in(width_mm)
-  h <- mm2in(height_mm)
-
-  write_device(function() svglite::svglite(paste0(path_noext, ".svg"), width = w, height = h), function() print(plot))
-  write_device(function() grDevices::cairo_pdf(paste0(path_noext, ".pdf"), width = w, height = h, family = "Arial"), function() print(plot))
-  write_device(function() ragg::agg_tiff(paste0(path_noext, ".tiff"), width = w, height = h, units = "in", res = dpi), function() print(plot))
-  invisible(paste0(path_noext, ".svg"))
-}
-
-export_pub_figure_base <- function(plot_fn, path_noext, width_mm, height_mm, dpi = 600) {
-  w <- mm2in(width_mm)
-  h <- mm2in(height_mm)
-
-  write_device(function() svglite::svglite(paste0(path_noext, ".svg"), width = w, height = h), plot_fn)
-  write_device(function() grDevices::cairo_pdf(paste0(path_noext, ".pdf"), width = w, height = h, family = "Arial"), plot_fn)
-  write_device(function() ragg::agg_tiff(paste0(path_noext, ".tiff"), width = w, height = h, units = "in", res = dpi), plot_fn)
-  invisible(paste0(path_noext, ".svg"))
-}
-
-npg_base <- c("#E64B35", "#4DBBD5", "#00A087", "#3C5488", "#F39B7F",
-              "#8491B4", "#91D1C2", "#DC0000", "#7E6148", "#B09C85")
-npg_pal <- function(n) {
-  if (n <= length(npg_base)) npg_base[seq_len(n)] else grDevices::colorRampPalette(npg_base)(n)
 }
 
 metadata_csv <- Sys.getenv("METADATA_CSV")

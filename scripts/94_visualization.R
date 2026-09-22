@@ -51,58 +51,16 @@ suppressPackageStartupMessages({
 
 grDevices::pdf(file = NULL)
 
-mm2in <- function(x) x / 25.4
-
-theme_pub <- function(base_size = 7, base_family = "Arial") {
-  ggplot2::theme_classic(base_size = base_size, base_family = base_family) +
-    ggplot2::theme(
-      axis.line = ggplot2::element_line(linewidth = 0.35, colour = "black"),
-      axis.ticks = ggplot2::element_line(linewidth = 0.35, colour = "black"),
-      axis.title = ggplot2::element_text(size = base_size + 1),
-      axis.text = ggplot2::element_text(size = base_size, colour = "black"),
-      legend.title = ggplot2::element_blank(),
-      legend.text = ggplot2::element_text(size = base_size),
-      legend.background = ggplot2::element_blank(),
-      legend.key = ggplot2::element_blank(),
-      strip.background = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(size = base_size + 1, face = "bold"),
-      plot.title = ggplot2::element_text(size = base_size + 2, face = "bold"),
-      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
-      panel.background = ggplot2::element_rect(fill = "white", colour = NA),
-      panel.grid = ggplot2::element_blank()
-    )
-}
-
-export_pub_figure <- function(plot, path_noext, width_mm, height_mm, dpi = 600) {
-  w <- mm2in(width_mm)
-  h <- mm2in(height_mm)
-
-  write_device <- function(open_device) {
-    open_device()
-    dev_id <- grDevices::dev.cur()
-    on.exit({
-      if (grDevices::dev.cur() == dev_id) {
-        try(grDevices::dev.off(), silent = TRUE)
-      }
-    }, add = TRUE)
-    print(plot)
-    grDevices::dev.off()
-    invisible(TRUE)
-  }
-
-  write_device(function() svglite::svglite(paste0(path_noext, ".svg"), width = w, height = h))
-  write_device(function() grDevices::cairo_pdf(paste0(path_noext, ".pdf"), width = w, height = h, family = "Arial"))
-  write_device(function() ragg::agg_tiff(paste0(path_noext, ".tiff"), width = w, height = h, units = "in", res = dpi))
-  invisible(paste0(path_noext, ".svg"))
-}
+# Shared publication theme/export helpers (scripts/R/pub_theme.R), resolved
+# from this script's own location so any cwd works.
+local({
+  f <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
+  script_dir <- if (length(f)) dirname(normalizePath(sub("^--file=", "", f[1]))) else
+    file.path(Sys.getenv("REPO"), "scripts")
+  source(file.path(script_dir, "R", "pub_theme.R"))
+})
 
 theme_set(theme_pub())
-
-npg_base <- c("#E64B35","#4DBBD5","#00A087","#3C5488","#F39B7F",
-              "#8491B4","#91D1C2","#DC0000","#7E6148","#B09C85")
-npg_pal <- function(n) {
-  if (n <= length(npg_base)) npg_base[seq_len(n)] else grDevices::colorRampPalette(npg_base)(n)
-}
 
 rank_has_values <- function(mt, rank) {
   if (!rank %in% colnames(mt$tax_table)) return(FALSE)

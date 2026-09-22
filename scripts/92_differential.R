@@ -31,6 +31,12 @@ plot_fns_available <- all(vapply(c("ggplot2", "ggrepel", "ggtext"), requireNames
 if (plot_fns_available) {
   source(file.path(repo, "scripts", "R", "plot_differential.R"))
 }
+
+# Optional PNG companion figures, only when MGX_FIGURE_FORMATS requests "png"
+mgx_want_png <- function() {
+  fmts <- tolower(trimws(strsplit(Sys.getenv("MGX_FIGURE_FORMATS", ""), ",")[[1]]))
+  "png" %in% fmts && requireNamespace("ragg", quietly = TRUE)
+}
 threads <- suppressWarnings(as.integer(Sys.getenv("THREADS", "1")))
 metadata_csv <- Sys.getenv("METADATA_CSV")
 group_col <- Sys.getenv("GROUP_COL")
@@ -508,6 +514,10 @@ for (dim in selected_dims) {
           if (nrow(volcano_df) > 0) {
             p <- plot_volcano_nature(volcano_df, method = "DESeq2")
             ggplot2::ggsave(volcano_path, p, width = 7, height = 6)
+            if (mgx_want_png()) {
+              ggplot2::ggsave(sub("\\.pdf$", ".png", volcano_path), p, width = 7, height = 6,
+                              device = ragg::agg_png, dpi = 600)
+            }
             add_status(dim, "plot", "volcano_deseq2", taxa_level, "OK", "", volcano_path)
           }
         }, error = function(e) {

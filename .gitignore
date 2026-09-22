@@ -105,6 +105,9 @@ mcp/eval/results/
 tools/ScientificFigureLibrary/
 tools/sfl_dl/
 
+# Paper2Agent 本地部署（第三方 skill 工作流，按需 git clone 还原）
+tools/Paper2Agent/
+
 # ScientificFigureLibrary 的图件模板库（用户数据，机器本地，不入库）
 FigureLibrary/
 
@@ -118,3 +121,5 @@ mining/seed_registry.sqlite
 mining/incremental_state.json
 mining/incremental_last_run.json
 mining/incremental_cron.log
+mining/projects/
+mining/vis/

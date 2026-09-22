@@ -6,6 +6,12 @@ suppressPackageStartupMessages({
   library(MASS)
 })
 
+# Optional PNG companion figures, only when MGX_FIGURE_FORMATS requests "png"
+mgx_want_png <- function() {
+  fmts <- tolower(trimws(strsplit(Sys.getenv("MGX_FIGURE_FORMATS", ""), ",")[[1]]))
+  "png" %in% fmts && requireNamespace("ragg", quietly = TRUE)
+}
+
 option_list <- list(
   make_option(c("-i", "--abundance-file"), dest="abundance_file", type="character",
               help="Feature-by-sample TSV"),
@@ -175,6 +181,10 @@ barplot <- ggplot(plot_data, aes(x=lda_score, y=feature_label, fill=enriched_gro
         legend.title=element_text(face="bold"), plot.margin=margin(8, 12, 8, 8))
 ggsave(file.path(opt$output_dir, "lefse_barplot.pdf"), barplot, width=9, height=7,
        device=cairo_pdf, limitsize=FALSE)
+if(mgx_want_png()) {
+  ggsave(file.path(opt$output_dir, "lefse_barplot.png"), barplot, width=9, height=7,
+         device=ragg::agg_png, dpi=600, limitsize=FALSE)
+}
 
 if(tolower(opt$type) == "taxonomy" && any(grepl("\\|", all_results$feature))) {
   taxonomy_results <- results
@@ -206,6 +216,10 @@ if(tolower(opt$type) == "taxonomy" && any(grepl("\\|", all_results$feature))) {
           axis.text.y=element_text(size=7.5, color="black"), legend.position="right")
   ggsave(file.path(opt$output_dir, "cladogram.pdf"), cladogram, width=10, height=8,
          device=cairo_pdf, limitsize=FALSE)
+  if(mgx_want_png()) {
+    ggsave(file.path(opt$output_dir, "cladogram.png"), cladogram, width=10, height=8,
+           device=ragg::agg_png, dpi=600, limitsize=FALSE)
+  }
 }
 
 cat(sprintf("[INFO] %d biomarkers passed KW P < 0.05 and LDA >= %.2f\n",

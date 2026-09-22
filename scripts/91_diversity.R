@@ -34,56 +34,16 @@ grDevices::pdf(file = NULL)
 
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 
-mm2in <- function(x) x / 25.4
-
-theme_pub <- function(base_size = 7, base_family = "Arial") {
-  ggplot2::theme_classic(base_size = base_size, base_family = base_family) +
-    ggplot2::theme(
-      axis.line = ggplot2::element_line(linewidth = 0.35, colour = "black"),
-      axis.ticks = ggplot2::element_line(linewidth = 0.35, colour = "black"),
-      axis.title = ggplot2::element_text(size = base_size + 1),
-      axis.text = ggplot2::element_text(size = base_size, colour = "black"),
-      legend.title = ggplot2::element_blank(),
-      legend.text = ggplot2::element_text(size = base_size),
-      legend.background = ggplot2::element_blank(),
-      legend.key = ggplot2::element_blank(),
-      strip.background = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(size = base_size + 1, face = "bold"),
-      plot.title = ggplot2::element_text(size = base_size + 2, face = "bold"),
-      panel.grid = ggplot2::element_blank()
-    )
-}
+# Shared publication theme/export helpers (scripts/R/pub_theme.R), resolved
+# from this script's own location so any cwd works.
+local({
+  f <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
+  script_dir <- if (length(f)) dirname(normalizePath(sub("^--file=", "", f[1]))) else
+    file.path(Sys.getenv("REPO"), "scripts")
+  source(file.path(script_dir, "R", "pub_theme.R"))
+})
 
 pub_pal2 <- c("#3182BD", "#D24B40")
-
-export_pub_figure <- function(plot, path_noext, width_mm, height_mm, dpi = 600) {
-  w <- mm2in(width_mm)
-  h <- mm2in(height_mm)
-
-  write_device <- function(open_device) {
-    open_device()
-    dev_id <- grDevices::dev.cur()
-    on.exit({
-      if (grDevices::dev.cur() == dev_id) {
-        try(grDevices::dev.off(), silent = TRUE)
-      }
-    }, add = TRUE)
-    print(plot)
-    grDevices::dev.off()
-    invisible(TRUE)
-  }
-
-  write_device(function() svglite::svglite(paste0(path_noext, ".svg"), width = w, height = h))
-  write_device(function() grDevices::cairo_pdf(paste0(path_noext, ".pdf"), width = w, height = h, family = "Arial"))
-  write_device(function() ragg::agg_tiff(paste0(path_noext, ".tiff"), width = w, height = h, units = "in", res = dpi))
-  invisible(paste0(path_noext, ".svg"))
-}
-
-npg_base <- c("#E64B35", "#4DBBD5", "#00A087", "#3C5488", "#F39B7F",
-              "#8491B4", "#91D1C2", "#DC0000", "#7E6148", "#B09C85")
-npg_pal <- function(n) {
-  if (n <= length(npg_base)) npg_base[seq_len(n)] else grDevices::colorRampPalette(npg_base)(n)
-}
 
 workdir <- Sys.getenv("WORKDIR")
 metadata_csv <- Sys.getenv("METADATA_CSV")
@@ -163,7 +123,13 @@ sanitize_level_name <- function(x) {
 }
 
 load_meta <- function(path, grp) {
-  meta <- read.csv(path, check.names = FALSE)
+  # Accept both comma and tab separated metadata (tab is what result/stat/
+  # metadata.tsv exports use); sniff the separator from the header line.
+  meta_sep <- if (grepl("\t", readLines(path, n = 1L, warn = FALSE))) "\t" else ","
+  meta <- read.table(path, header = TRUE, sep = meta_sep, quote = "\"", check.names = FALSE)
+  # dplyr rejects empty column names; stat metadata exports carry an unnamed
+  # first (rownames) column.
+  names(meta)[!nzchar(names(meta))] <- paste0("V", which(!nzchar(names(meta))))
   cands <- c("sample_id", "SampleID", "sample", "Sample", "id")
   sc <- (cands[cands %in% names(meta)])[1] %||% names(meta)[1]
   meta <- meta %>%

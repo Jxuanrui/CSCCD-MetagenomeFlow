@@ -113,6 +113,12 @@ suppressPackageStartupMessages({
 
 grDevices::pdf(file = NULL)
 
+# Optional PNG companion figures, only when MGX_FIGURE_FORMATS requests "png"
+mgx_want_png <- function() {
+  fmts <- tolower(trimws(strsplit(Sys.getenv("MGX_FIGURE_FORMATS", ""), ",")[[1]]))
+  "png" %in% fmts
+}
+
 ## Reuse the exact source-table map + loader from 96_stat_functional.R instead
 ## of duplicating it, following the pattern established in
 ## 96_functional_permanova.R's load_functional_api().
@@ -379,6 +385,14 @@ plot_ok <- tryCatch({
     plot_network()
     grDevices::dev.off()
   }, error = function(e) cat("[WARN] tiff export failed:", conditionMessage(e), "\n"))
+
+  if (mgx_want_png()) {
+    tryCatch({
+      ragg::agg_png(paste0(fig_path_noext, ".png"), width = 8, height = 8, units = "in", res = 600)
+      plot_network()
+      grDevices::dev.off()
+    }, error = function(e) cat("[WARN] png export failed:", conditionMessage(e), "\n"))
+  }
 
   TRUE
 }, error = function(e) {
