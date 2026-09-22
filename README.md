@@ -19,6 +19,7 @@ Developed by the [China-Saudi Arabia Joint Laboratory for Cardiovascular and Cer
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Analysis Dimensions](#analysis-dimensions)
+- [Figure Gallery](#figure-gallery)
 - [Script Index](#script-index)
 - [AI-Assisted Features](#ai-assisted-features)
 - [Repository Layout](#repository-layout)
@@ -114,6 +115,31 @@ Multiple taxonomic profilers cross-validate each other: Kraken2, MetaPhlAn4-euk,
 ### Statistics
 
 Diversity (91), differential abundance (92, 99b LEfSe), co-occurrence networks (93, FastSpar), visualization (94), batch correction and evaluation (95a/b, 10 methods), functional profiling across 20 dimension × type combinations (96 series), cross-cohort replication (97), snapshot reports (98). phyloseq objects for each kingdom feed all downstream R packages directly.
+
+---
+
+## Figure Gallery
+
+All figures below are produced by the pipeline's own plotting stack (ggplot2, shared publication theme, NPG palette, Arial, 600 dpi, PDF+PNG) from a **synthetic 24-sample demo project** — no real data is used or distributed. The entire gallery is reproducible with one command:
+
+```bash
+bash mcp/vis/build_gallery.sh            # ~3 min; --with-ml adds ML figures (~7 min)
+```
+
+The same figures can be rendered on demand for any real project through the `mgx-vis` MCP server (`vis_scan` / `vis_render` / `vis_mining`) from any agent session.
+
+| Composition & network | Diversity | Differential & biomarkers |
+|---|---|---|
+| <img src="docs/figures/composition_barplot.png" width="270" alt="Taxonomic composition stacked barplot"/><br><sub>Composition barplot (94)</sub> | <img src="docs/figures/alpha_diversity.png" width="270" alt="Alpha diversity boxplots"/><br><sub>Alpha diversity (91)</sub> | <img src="docs/figures/volcano.png" width="270" alt="DESeq2 volcano plot"/><br><sub>Volcano (92)</sub> |
+| <img src="docs/figures/composition_heatmap.png" width="270" alt="Genus composition heatmap"/><br><sub>Genus heatmap (94)</sub> | <img src="docs/figures/pcoa.png" width="270" alt="PCoA scatter with PERMANOVA"/><br><sub>PCoA + PERMANOVA (91)</sub> | <img src="docs/figures/lefse_barplot.png" width="270" alt="LEfSe LDA barplot"/><br><sub>LEfSe LDA (99b)</sub> |
+| <img src="docs/figures/cross_dimension_network.png" width="270" alt="Bacteria-virus cross-kingdom network"/><br><sub>Cross-kingdom network (93)</sub> | <img src="docs/figures/core_microbiome.png" width="270" alt="Core microbiome abundance"/><br><sub>Core microbiome (99a)</sub> | <img src="docs/figures/lefse_cladogram.png" width="270" alt="LEfSe cladogram"/><br><sub>Cladogram (99b)</sub> |
+
+| Functional profiling | Data mining registry | Interactive |
+|---|---|---|
+| <img src="docs/figures/pathway_activity.png" width="270" alt="Pathway activity-composition correlations"/><br><sub>Pathway activity (96b)</sub> | <img src="docs/figures/mining_attrs.png" width="270" alt="Seed registry attribute overview"/><br><sub>Seed registry (63,803 samples)</sub> | [Krona interactive plot](docs/figures/krona_plot.html)<br><sub>Taxonomic circle plot</sub> |
+| <img src="docs/figures/functional_redundancy.png" width="270" alt="Functional redundancy FDI scatter"/><br><sub>Redundancy FDI (96c)</sub> | <img src="docs/figures/mining_overlap.png" width="270" alt="Source overlap matrix"/><br><sub>Source overlap (3 databases)</sub> | [ML ROC comparison](docs/figures/ml_roc.pdf) · [Feature weights](docs/figures/ml_feature_weights.pdf)<br><sub>SIAMCAT ML (96, `--with-ml`)</sub> |
+
+Additional figure families (not pictured): functional-redundancy heatmap (96c), core-microbiome Venn (99a), SHAP feature attribution (96, `--with-ml`), SpiecEasi functional co-occurrence networks (96), batch-correction evaluation (95b), cross-cohort replication with meta-analysis (97), MAG-level reports (dRep/inStrain/DRAM HTML from the 32–43c chain), and QC reports (fastp/MultiQC/Krona).
 
 ---
 

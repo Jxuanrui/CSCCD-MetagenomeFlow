@@ -15,6 +15,12 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
+# Optional PNG companion figures, only when MGX_FIGURE_FORMATS requests "png"
+mgx_want_png <- function() {
+  fmts <- tolower(trimws(strsplit(Sys.getenv("MGX_FIGURE_FORMATS", ""), ",")[[1]]))
+  "png" %in% fmts && requireNamespace("ragg", quietly = TRUE)
+}
+
 option_list <- list(
   make_option(c("-f", "--functional-file"), dest="functional_file", type="character",
               help="Functional abundance TSV (features in rows, samples in columns)"),
@@ -295,6 +301,8 @@ if(nrow(scatter_data) > 0) {
          y="Maximum absolute species-function Spearman correlation") +
     theme_bw(base_size=11)
   ggsave(scatter_file, plot, width=8, height=6)
+  if(mgx_want_png()) ggsave(sub("\\.pdf$", ".png", scatter_file), plot,
+         width=8, height=6, device=ragg::agg_png, dpi=600)
 } else {
   grDevices::pdf(scatter_file, width=8, height=6)
   plot.new(); text(0.5, 0.5, "Insufficient data for redundancy-correlation scatter plot")
@@ -354,7 +362,7 @@ if(!is.null(opt$ml_importance) && nzchar(opt$ml_importance)) {
 }
 write.csv(keystone, file.path(opt$output_dir, "keystone_functions.csv"), row.names=FALSE, na="")
 
-heatmap_file <- file.path(opt$output_dir, "redundancy_heatmap.pdf")
+heatmap_file <- file.path(opt$output_dir, if (mgx_want_png()) "redundancy_heatmap.png" else "redundancy_heatmap.pdf")
 heatmap_functions <- head(fdi_table[["function"]], 30)
 heatmap_matrix <- 100 * contribution_proportion[intersect(heatmap_functions, rownames(contribution_proportion)), , drop=FALSE]
 heatmap_matrix <- heatmap_matrix[rowSums(heatmap_matrix, na.rm=TRUE) > 0, , drop=FALSE]
@@ -365,8 +373,13 @@ if(nrow(heatmap_matrix) > 0) {
   row_annotation <- data.frame(FDI=fdi_table$fdi[match(rownames(heatmap_matrix), fdi_table[["function"]])])
   rownames(row_annotation) <- rownames(heatmap_matrix)
   palette <- grDevices::colorRampPalette(c("#FFFFCC", "#FED976", "#FD8D3C", "#E31A1C", "#800026"))(100)
-  grDevices::pdf(heatmap_file, width=max(9, 0.25 * ncol(heatmap_matrix) + 5),
-                 height=max(7, 0.25 * nrow(heatmap_matrix) + 3))
+  if (mgx_want_png()) {
+    ragg::agg_png(heatmap_file, width=max(9, 0.25 * ncol(heatmap_matrix) + 5),
+                  height=max(7, 0.25 * nrow(heatmap_matrix) + 3), units="in", res=600)
+  } else {
+    grDevices::pdf(heatmap_file, width=max(9, 0.25 * ncol(heatmap_matrix) + 5),
+                   height=max(7, 0.25 * nrow(heatmap_matrix) + 3))
+  }
   if(requireNamespace("pheatmap", quietly=TRUE)) {
     pheatmap::pheatmap(heatmap_matrix, color=palette, cluster_rows=FALSE,
                        cluster_cols=FALSE, border_color=NA, angle_col=45,
@@ -378,7 +391,7 @@ if(nrow(heatmap_matrix) > 0) {
   }
   grDevices::dev.off()
 } else {
-  grDevices::pdf(heatmap_file, width=9, height=7)
+  if (mgx_want_png()) ragg::agg_png(heatmap_file, width=9, height=7, units="in", res=600) else grDevices::pdf(heatmap_file, width=9, height=7)
   plot.new(); text(0.5, 0.5, "No contributor matrix available (CV proxy mode)")
   grDevices::dev.off()
 }

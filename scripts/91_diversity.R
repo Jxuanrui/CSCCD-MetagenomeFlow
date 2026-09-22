@@ -127,9 +127,13 @@ load_meta <- function(path, grp) {
   # metadata.tsv exports use); sniff the separator from the header line.
   meta_sep <- if (grepl("\t", readLines(path, n = 1L, warn = FALSE))) "\t" else ","
   meta <- read.table(path, header = TRUE, sep = meta_sep, quote = "\"", check.names = FALSE)
-  # dplyr rejects empty column names; stat metadata exports carry an unnamed
-  # first (rownames) column.
-  names(meta)[!nzchar(names(meta))] <- paste0("V", which(!nzchar(names(meta))))
+  # Stat metadata exports carry an unnamed first (rownames) column; treat it
+  # as row names and drop it — keeping it as a data column would accumulate a
+  # duplicate column on every export_metadata round-trip.
+  if (!nzchar(names(meta)[1])) {
+    rownames(meta) <- as.character(meta[[1]])
+    meta <- meta[, -1, drop = FALSE]
+  }
   cands <- c("sample_id", "SampleID", "sample", "Sample", "id")
   sc <- (cands[cands %in% names(meta)])[1] %||% names(meta)[1]
   meta <- meta %>%
@@ -802,6 +806,28 @@ export_pcoa_scatter <- function(pcoa_df, sample_table, dimension, diversity_dir,
         ggplot2::ggplot_build(p_try)
         p_try
       }, error = function(e) p)
+    }
+
+    # PERMANOVA annotation (R2 / p) when the results table exists
+    perm_path <- file.path(diversity_dir, "permanova_results.tsv")
+    if (file.exists(perm_path)) {
+      perm <- tryCatch(
+        utils::read.table(perm_path, header = TRUE, sep = "\t", check.names = FALSE, stringsAsFactors = FALSE),
+        error = function(e) NULL
+      )
+      if (!is.null(perm) && nrow(perm) >= 1 && all(c("R2", "Pr(>F)") %in% names(perm))) {
+        grp_rows <- perm[perm$Term %in% c("group", group_col), , drop = FALSE]
+        row <- if (nrow(grp_rows)) grp_rows[1, , drop = FALSE] else perm[1, , drop = FALSE]
+        r2 <- suppressWarnings(as.numeric(row$R2))
+        pv <- suppressWarnings(as.numeric(row[["Pr(>F)"]]))
+        if (is.finite(r2) && is.finite(pv)) {
+          p_lab <- if (pv < 0.001) "p < 0.001" else sprintf("p = %.3f", pv)
+          p <- p + ggplot2::annotate(
+            "text", x = Inf, y = Inf, hjust = 1.05, vjust = 1.6, size = 2.1,
+            label = sprintf("PERMANOVA: R\u00b2 = %.2f, %s", r2, p_lab)
+          )
+        }
+      }
     }
 
     export_pub_figure(p, plot_path_noext, width_mm = 100, height_mm = 90)

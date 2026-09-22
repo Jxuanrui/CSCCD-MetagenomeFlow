@@ -14,6 +14,12 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
+# Optional PNG companion figures, only when MGX_FIGURE_FORMATS requests "png"
+mgx_want_png <- function() {
+  fmts <- tolower(trimws(strsplit(Sys.getenv("MGX_FIGURE_FORMATS", ""), ",")[[1]]))
+  "png" %in% fmts && requireNamespace("ragg", quietly = TRUE)
+}
+
 option_list <- list(
   make_option(c("-i", "--abundance-file"), dest="abundance_file", type="character",
               help="Feature-by-sample abundance TSV"),
@@ -237,6 +243,8 @@ curve_plot <- ggplot(curve_data, aes(x=threshold, y=core_count, color=scope)) +
   theme(legend.position="top", panel.grid.minor=element_blank())
 ggsave(file.path(opt$output_dir, "prevalence_curve.pdf"), curve_plot,
        width=7.5, height=5.5, device="pdf")
+if(mgx_want_png()) ggsave(file.path(opt$output_dir, "prevalence_curve.png"), curve_plot,
+       width=7.5, height=5.5, device=ragg::agg_png, dpi=600)
 
 venn_data <- data.frame(
   x=c(-0.72, 0, 0.72), y=c(0, 0, 0),
@@ -265,6 +273,8 @@ venn_plot <- ggplot() +
   theme(plot.title=element_text(hjust=0.5, face="bold"))
 ggsave(file.path(opt$output_dir, "venn_diagram.pdf"), venn_plot,
        width=7, height=5.5, device="pdf")
+if(mgx_want_png()) ggsave(file.path(opt$output_dir, "venn_diagram.png"), venn_plot,
+       width=7, height=5.5, device=ragg::agg_png, dpi=600)
 
 sample_totals <- colSums(abundance)
 core_totals <- if(length(global_features) > 0) {
@@ -302,6 +312,8 @@ bar_plot <- ggplot(bar_rows, aes(x=component, y=fraction, fill=component)) +
         strip.background=element_rect(fill="#F0F0F0"))
 ggsave(file.path(opt$output_dir, "core_abundance_barplot.pdf"), bar_plot,
        width=7.5, height=5.5, device="pdf")
+if(mgx_want_png()) ggsave(file.path(opt$output_dir, "core_abundance_barplot.png"), bar_plot,
+       width=7.5, height=5.5, device=ragg::agg_png, dpi=600)
 
 cat(sprintf("[INFO] Case/control cores: %d/%d; shared: %d; case/control specific: %d/%d\n",
             length(case_features), length(control_features), length(shared_features),

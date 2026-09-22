@@ -260,7 +260,7 @@ for (dim in dims) {
       plot_colorscale = "identity"
     ) +
       theme_pub(base_size = 7) +
-      ggplot2::labs(subtitle = paste(c(
+      ggplot2::labs(fill = "Relative abundance", subtitle = paste(c(
         rank_subtitle("Genus", genus_rank),
         if (n_samples > 40) paste0("n = ", n_samples, " samples; x-axis sample labels omitted for readability")
       ), collapse = " | "))

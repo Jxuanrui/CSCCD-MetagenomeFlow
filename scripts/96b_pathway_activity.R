@@ -14,6 +14,12 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
+# Optional PNG companion figures, only when MGX_FIGURE_FORMATS requests "png"
+mgx_want_png <- function() {
+  fmts <- tolower(trimws(strsplit(Sys.getenv("MGX_FIGURE_FORMATS", ""), ",")[[1]]))
+  "png" %in% fmts && requireNamespace("ragg", quietly = TRUE)
+}
+
 option_list <- list(
   make_option(c("--humann3-dir"), dest="humann3_dir", type="character",
               help="HUMAnN3 output directory containing pathabundance/pathcoverage files"),
@@ -327,6 +333,9 @@ if(nrow(scatter_data) > 0) {
     theme(strip.text=element_text(size=8), panel.grid.minor=element_blank())
   ggsave(scatter_file, scatter_plot, width=13, height=max(7, 2.5 * ceiling(length(unique(scatter_data$pathway)) / 4)),
          device="pdf", limitsize=FALSE)
+  if(mgx_want_png()) ggsave(sub("\\.pdf$", ".png", scatter_file), scatter_plot,
+         width=13, height=max(7, 2.5 * ceiling(length(unique(scatter_data$pathway)) / 4)),
+         device=ragg::agg_png, dpi=600, limitsize=FALSE)
 } else {
   plot_message(scatter_file, "Insufficient stratified data for activity-composition correlations")
 }
@@ -341,6 +350,8 @@ coverage_plot <- ggplot(coverage_plot_data, aes(x=value)) +
   theme_bw(base_size=11) + theme(panel.grid.minor=element_blank())
 ggsave(file.path(opt$output_dir, "completeness_distribution.pdf"), coverage_plot,
        width=8, height=5.5, device="pdf")
+if(mgx_want_png()) ggsave(file.path(opt$output_dir, "completeness_distribution.png"), coverage_plot,
+       width=8, height=5.5, device=ragg::agg_png, dpi=600)
 
 category_counts <- table(factor(completeness$category, levels=c("high", "medium", "low")))
 anomaly_count <- sum(!is.na(correlation_results$correlation) & correlation_results$correlation < 0.3)
