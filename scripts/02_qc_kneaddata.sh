@@ -91,6 +91,7 @@ mkdir -p "${TEMP_WORKDIR}"
 
 # 运行 kneaddata
 mgx_conda kneaddata \
+    kneaddata \
     --input1 "${INPUT_R1}" \
     --input2 "${INPUT_R2}" \
     --output "${TEMP_WORKDIR}" \
