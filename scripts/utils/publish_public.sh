@@ -54,6 +54,9 @@ git rm -r -q --cached . >/dev/null 2>&1 || true
 # home-relative examples; the master worktree copy is force-restored afterwards.
 sed -i 's|/home/[^/]*/Course/Maxmetagenome|~/Course/Maxmetagenome|g' \
     pipeline/config/config.yaml pipeline/config/config.test_ci.yaml 2>/dev/null || true
+# Real-cohort sample IDs (docs/comments/example commands only — verified no
+# functional strings) are neutralized to "Sample<N>" in the snapshot.
+echo "${FILES}" | xargs -d '\n' grep -l 'Harbin' 2>/dev/null | xargs -r -d '\n' sed -i 's/Harbin/Sample/g'
 echo "${FILES}" | xargs -d '\n' git add -f --
 # --no-verify: this snapshot assembles already-reviewed master content;
 # the pre-commit shellcheck scope would pull in vendored replication
