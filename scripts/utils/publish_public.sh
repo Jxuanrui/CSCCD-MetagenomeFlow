@@ -58,7 +58,9 @@ echo "${FILES}" | xargs -d '\n' git add -f --
 # --no-verify: this snapshot assembles already-reviewed master content;
 # the pre-commit shellcheck scope would pull in vendored replication
 # scripts whose legacy warnings are out of publish scope.
-git commit -q --no-verify -m "Public snapshot of master ${MASTER_SHA}"
+# Snapshot identity: GitHub noreply (master's own identity stays untouched).
+git -c user.name="Jxuanrui" -c user.email="Jxuanrui@users.noreply.github.com" \
+    commit -q --no-verify -m "Public snapshot of master ${MASTER_SHA}"
 git checkout -f -q master
 
 # Post-build verification: no excluded paths, no absolute home paths.
