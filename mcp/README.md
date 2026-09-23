@@ -178,7 +178,7 @@ python mcp/index_signature_kb.py --repo . --force
 以 stdio 方式挂载：
 
 ```bash
-claude mcp add meta-server -- python mcp/server.py --repo /home/labuser/Course/Maxmetagenome
+claude mcp add meta-server -- python mcp/server.py --repo ${PROJ_DIR}
 ```
 
 如果当前终端已经位于仓库根目录，也可以直接使用相对路径：

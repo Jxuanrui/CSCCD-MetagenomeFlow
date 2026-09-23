@@ -26,7 +26,7 @@
 ```yaml
 # 必填字段
 samplesheet: "/path/to/samplesheet.csv"  # CSV，必需包含 sample_id 列
-workdir: "/home/labuser/Course/Maxmetagenome/Project/MyAnalysis"
+workdir: "${PROJ_DIR}/Project/MyAnalysis"
 cpus: 16
 
 # 可选字段

@@ -98,7 +98,7 @@
     #   DB_BANK=/path/to/dbbank SIBLING_DB=/path/to/sibling/db bash 0Install.sh
     # 银行不存在时，各节的 方法0 cp 会失败；改用各节注释掉的 方法1 wget 下载块。
     : "${DB_BANK:=/data/mydirectory/db}"
-    : "${SIBLING_DB:=/home/labuser/Course/Metagenomics_Apptainer_pipline/db}"
+    : "${SIBLING_DB:=$HOME/Course/Metagenomics_Apptainer_pipline/db}"
     [ -d "${DB_BANK}" ]     || echo "[WARN] DB_BANK 不存在: ${DB_BANK} —— 方法0 本地快装将失败，请覆盖 DB_BANK 或改用各节方法1"
     [ -d "${SIBLING_DB}" ]  || echo "[WARN] SIBLING_DB 不存在: ${SIBLING_DB} —— 方法0 本地快装将失败，请覆盖 SIBLING_DB 或改用各节方法1"
 
@@ -1106,7 +1106,7 @@ CHECKM_CFG
 
     # Bakta 数据库（从 Binning 项目解压，约 1.6 GB）
     mkdir -p ${db}/bakta
-    tar xvzf /home/labuser/Course/Binning_Apptainer_pipline/db/bakta.tar.gz \
+    tar xvzf $HOME/Course/Binning_Apptainer_pipline/db/bakta.tar.gz \
         -C ${db}/bakta/ 2>/dev/null && echo "Bakta 数据库就绪: ${db}/bakta/" \
         || echo "bakta.tar.gz 解压失败"
 
@@ -1120,7 +1120,7 @@ CHECKM_CFG
 
     # Defense-Finder 数据库
     mkdir -p ${db}/defense-finder
-    tar xvzf /home/labuser/Course/Binning_Apptainer_pipline/db/defense-finder-db.tar.gz \
+    tar xvzf $HOME/Course/Binning_Apptainer_pipline/db/defense-finder-db.tar.gz \
         -C ${db}/defense-finder/ 2>/dev/null && echo "Defense-Finder 数据库就绪" \
         || echo "defense-finder-db.tar.gz 解压失败"
 
@@ -1133,7 +1133,7 @@ CHECKM_CFG
 
     # MobileOG 数据库（从 Binning 项目解压，约 5.8 GB）
     mkdir -p ${db}/mobileog
-    tar xvzf /home/labuser/Course/Binning_Apptainer_pipline/db/mobileOG-db.tar.gz \
+    tar xvzf $HOME/Course/Binning_Apptainer_pipline/db/mobileOG-db.tar.gz \
         -C ${db}/mobileog/ 2>/dev/null && echo "MobileOG 数据库就绪: ${db}/mobileog/" \
         || echo "mobileOG-db.tar.gz 解压失败"
 
@@ -1143,15 +1143,15 @@ CHECKM_CFG
     # 从 Binning 项目解压（碳循环/甲烷循环/硫循环）
     mkdir -p ${db}/ccyc ${db}/mcyc ${db}/scyc
 
-    tar xvzf /home/labuser/Course/Binning_Apptainer_pipline/db/ccyc-db.tar.gz \
+    tar xvzf $HOME/Course/Binning_Apptainer_pipline/db/ccyc-db.tar.gz \
         -C ${db}/ccyc/ 2>/dev/null && echo "CCyc 就绪: ${db}/ccyc/" \
         || echo "ccyc-db.tar.gz 解压失败"
 
-    tar xvzf /home/labuser/Course/Binning_Apptainer_pipline/db/mcyc-db.tar.gz \
+    tar xvzf $HOME/Course/Binning_Apptainer_pipline/db/mcyc-db.tar.gz \
         -C ${db}/mcyc/ 2>/dev/null && echo "MCyc 就绪: ${db}/mcyc/" \
         || echo "mcyc-db.tar.gz 解压失败"
 
-    tar xvzf /home/labuser/Course/Binning_Apptainer_pipline/db/scyc-db.tar.gz \
+    tar xvzf $HOME/Course/Binning_Apptainer_pipline/db/scyc-db.tar.gz \
         -C ${db}/scyc/ 2>/dev/null && echo "SCyc 就绪: ${db}/scyc/" \
         || echo "scyc-db.tar.gz 解压失败"
 
@@ -1172,7 +1172,7 @@ CHECKM_CFG
     sleep 120 && kill $SETUP_PID 2>/dev/null || true
     # 第2步：从已有 kofam_profiles 重建 KEGG HMM（替代 KEGG FTP 下载）
     # 将下面路径替换为你服务器上的 kofam_profiles 位置
-    KOFAM_DIR=/home/labuser/Course/ViOTUcluster/db/DRAM/kofam_profiles/profiles
+    KOFAM_DIR=$HOME/Course/ViOTUcluster/db/DRAM/kofam_profiles/profiles
     cd ${db}/vibrant/databases || exit
     cat ${KOFAM_DIR}/K*.hmm > kegg_temp_full.HMM
     conda run --prefix ${envs}/vibrant \
@@ -1289,7 +1289,7 @@ echo "§9 MCP / RAG 服务安装完成"
 #   - 所有数据库路径：${db}/<工具名>
 # ==============================================================================
 
-VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
+VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
 
 # --- 10.1 VirSorter2 2.2.4  [✓ 已完成] ---
@@ -1547,19 +1547,19 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 # 说明：供 75_fun_funomics.sh 使用
 #       脚本含自动回退：未检测到 funomic 命令时 → 使用 DIAMOND blastx 标记基因分类
 # 数据源：本地 tarball
-#   - /home/labuser/FunOMIC-P.tar.xz  → 功能蛋白 DIAMOND 数据库
-#   - /home/labuser/FunOMIC-T.tar.xz  → Bowtie2 分类索引
+#   - ~/FunOMIC-P.tar.xz  → 功能蛋白 DIAMOND 数据库
+#   - ~/FunOMIC-T.tar.xz  → Bowtie2 分类索引
 # 当前状态：数据库已部署；envs/funomic 已创建，但 GitHub 包仓库不可用，脚本当前走 DIAMOND 回退
 
     mkdir -p "${db}/funomic/P"
-    tar -xJf /home/labuser/FunOMIC-P.tar.xz \
+    tar -xJf ~/FunOMIC-P.tar.xz \
         --strip-components=6 \
         -C "${db}/funomic/P"
     ls -lh "${db}/funomic/P/"
     ls -lh "${db}/funomic/P/"*.dmnd
 
     mkdir -p "${db}/funomic/T"
-    tar -xJf /home/labuser/FunOMIC-T.tar.xz \
+    tar -xJf ~/FunOMIC-T.tar.xz \
         --strip-components=1 \
         -C "${db}/funomic/T"
     ls -lh "${db}/funomic/T/"
@@ -1748,23 +1748,23 @@ VIRUS_PROJ="/home/labuser/Course/Virus_Apptainer_pipline"
 #   72 PhaGCN3   — 深度学习图卷积病毒分类（补充vConTACT3）
 #
 # DB 来源：
-#   PhaBox2 DB ← /home/labuser/Course/Virus_Apptainer_pipline/db/phabox2-db/ (已复制)
-#   PhaGCN3 DB ← /home/labuser/Course/Virus_Apptainer_pipline/db/phagcn3-db/ (已复制)
-#   DRAM DB    ← /home/labuser/Course/ViOTUcluster/db/DRAM/ (rsync 中，180G)
+#   PhaBox2 DB ← $HOME/Course/Virus_Apptainer_pipline/db/phabox2-db/ (已复制)
+#   PhaGCN3 DB ← $HOME/Course/Virus_Apptainer_pipline/db/phagcn3-db/ (已复制)
+#   DRAM DB    ← $HOME/Course/ViOTUcluster/db/DRAM/ (rsync 中，180G)
 
 # --- §14.1 PhaBox2 [✓ 已完成] ---
 # 安装：conda install -c bioconda phabox=2.1.12 (Python 3.10)
 # 验证：conda run --prefix ${envs}/phabox2 phabox2 --version
     # conda create --prefix ${envs}/phabox2 python=3.10 -y
     # conda install --prefix ${envs}/phabox2 -c conda-forge -c bioconda phabox=2.1.12 -y
-    # cp -r /home/labuser/Course/Virus_Apptainer_pipline/db/phabox2-db ${db}/phabox2_db
+    # cp -r $HOME/Course/Virus_Apptainer_pipline/db/phabox2-db ${db}/phabox2_db
     # bash scripts/70_vir_phabox2.sh -t 8 -w Project/Project_example -r ${PROJ_DIR}
 
 # --- §14.2 PhaGCN3 [✓ 已完成] ---
 # 安装：conda + pytorch (CPU) + diamond + MCL + 上游源码适配
 # 验证：conda run --prefix ${envs}/phagcn3 python -c "import phagcn3; print('ok')"
     # conda create --prefix ${envs}/phagcn3 python=3.10 pytorch cpuonly diamond mcl seqkit blast -y
-    # cp -r /home/labuser/Course/Virus_Apptainer_pipline/db/phagcn3-db ${db}/phagcn3_db
+    # cp -r $HOME/Course/Virus_Apptainer_pipline/db/phagcn3-db ${db}/phagcn3_db
     # bash scripts/72_vir_phagcn3.sh -t 8 -w Project/Project_example -r ${PROJ_DIR}
 
 # --- §14.3 DRAM 1.5.0 [✓ 完成] ---
