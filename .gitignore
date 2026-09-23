@@ -128,3 +128,7 @@ mining/curation_run.jsonl
 mining/sources/raw/
 mining/curation_cron.log
 mining/snapshots/api_cache/
+
+# M4 MVP: downloaded microbiome profiles (regenerable, ~8 GB budget)
+mining/m4/profiles/
+mining/m4/annotations_cache.jsonl
