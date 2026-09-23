@@ -127,3 +127,4 @@ mining/curation.sqlite
 mining/curation_run.jsonl
 mining/sources/raw/
 mining/curation_cron.log
+mining/snapshots/api_cache/
