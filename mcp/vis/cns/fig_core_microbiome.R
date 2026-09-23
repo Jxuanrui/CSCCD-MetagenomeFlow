@@ -39,10 +39,8 @@ taxon_name <- function(lineage) {
 prev <- rowMeans(ab > 0.001) * 100          # prevalence (%) at >0.1% abundance
 mab  <- rowMeans(as.matrix(ab)) * 100       # mean relative abundance (%)
 d <- data.frame(lineage = rownames(ab), prev = prev, mab = mab)
-d <- d[d$prev >= 50, ]                      # core species
-n_core <- nrow(d)
+d <- d[d$prev >= 50, ]                      # core species — show ALL of them
 d <- d[order(d$mab, decreasing = TRUE), ]
-d <- head(d, 25)                            # top-25 core taxa by abundance
 d$name <- factor(vapply(d$lineage, taxon_name, character(1)),
                  levels = rev(vapply(d$lineage, taxon_name, character(1))))
 
@@ -56,20 +54,17 @@ p <- ggplot(d, aes(x = mab, y = name)) +
                          breaks = c(50, 75, 100),
                          name = "Prevalence (%)") +
   scale_x_continuous(expand = expansion(mult = c(0.02, 0.06))) +
-  labs(x = "Mean relative abundance (%)", y = NULL,
-       caption = sprintf(paste0(
-         "Core = prevalence \u2265 50%% at >0.1%% relative abundance\n",
-         "%d core species; top 25 by mean abundance shown"), n_core)) +
+  labs(x = "Mean relative abundance (%)", y = NULL) +
   theme_cns(y_grid = FALSE) +
   theme(axis.text.y = element_text(face = "italic", size = 6.5,
                                    lineheight = 0.85),
         legend.position = "bottom",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 7),
-        legend.key.width = unit(6, "mm"),
-        plot.caption = element_text(size = 6, colour = "grey30", hjust = 0,
-                                    lineheight = 0.9))
+        legend.key.width = unit(6, "mm"))
 
+# Height adapts to the full core list (~2.6 mm per taxon row + margins).
+fig_h <- max(70, 2.6 * nrow(d) + 20)
 export_pub_figure(p, file.path(outdir, "core_microbiome"),
-                  width_mm = CNS_W_SINGLE, height_mm = 95,
+                  width_mm = CNS_W_SINGLE, height_mm = fig_h,
                   formats = c("pdf", "png"))
