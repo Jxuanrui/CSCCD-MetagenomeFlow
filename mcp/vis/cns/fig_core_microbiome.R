@@ -64,7 +64,7 @@ p <- ggplot(d, aes(x = mab, y = name)) +
         legend.text = element_text(size = 7),
         legend.key.height = unit(12, "mm"),
         legend.key.width = unit(2.2, "mm"),
-        plot.margin = margin(2, 3, 2, 2, "mm"))
+        plot.margin = margin(4, 3, 2, 2, "mm"))
 
 export_pub_figure(p, file.path(outdir, "core_microbiome"),
                   width_mm = CNS_W_SINGLE, height_mm = 70,
