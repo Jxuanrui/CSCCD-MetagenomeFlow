@@ -418,8 +418,8 @@ agents/               ← Agent Skills 系统（Claude Code 交互式驱动）
 | 状态追踪层 | `agents/registry.yaml` | 双方 | 脚本 ready 或 integrated 时 |
 | 运行记录层 | `agents/provenance/*.json` | CC (`/mgx-learn` 或 `batch_provenance_backfill.py`) | 每次实际运行后 |
 | CC 技能层 | `.claude/skills/*.md` | CC | 架构演进时修改 |
-| 自动挖掘层 | `mining/*.py` | 主代理+子代理 | 周增量 cron / 策展批次 / 数据集编排 |
-| 挖掘数据层 | `mining/*.sqlite` + `mining/snapshots/` | mining 脚本 | cron 周一 / 策展批次（详见 `mining/README.md`） |
+| 自动挖掘层 | `mining/*.py` + `mining/m4/` | 主代理+子代理 | 周增量 cron / 策展批次 / 数据集编排 / 疾病指纹比对 |
+| 挖掘数据层 | `mining/*.sqlite` + `mining/snapshots/` | mining 脚本 | cron 周一 / 策展批次（详见 `mining/README.md`，含 scBaseCount 式循环操作手册） |
 
 ### pipeline/ 目录结构
 

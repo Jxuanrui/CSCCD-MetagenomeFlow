@@ -192,7 +192,7 @@ Every integrated script has a machine-readable skill card (`agents/skills/`) dec
 
 ### Auto-Mining Subsystem (`mining/`)
 
-An agent-driven gut-metagenome mining loop, validated end-to-end on 8 samples (M3, tag `mining-m3-pilot-v1.2.1`): weekly seqout-based discovery indexes 66,607 samples across two SQLite layers (63,803 inherited from cMD3/GMrepo/Meta2DB + 2,804 incremental), AI curation maps every sample to UBERON/MONDO, and a one-command orchestrator runs ENA download → three-gate triage → the bacteria light chain. Batch processing is deferred until a larger server arrives — measured ceiling is ~300 samples/month on the current box; `mining/README.md` carries the five-step migration runbook and the curation-index-as-work-queue contract.
+An agent-driven gut-metagenome mining loop in the spirit of scBaseCount (Arc Institute), now live end-to-end: weekly seqout-based discovery indexes 66,607 samples across two SQLite layers; AI curation maps diseases to MONDO (94.5% of case rows) and body sites to UBERON; 126,199 external records (MGnify analyses + AGP phenotypes + iMSMS IBD) are bridged into the index; and the M4 layer compares disease signatures against BugSigDB over precomputed profiles — zero local compute. First output: an independently rediscovered Crohn's-disease butyrate-producer depletion signature, 4/4 sign-consistent with known signatures. Batch reprocessing is deferred until a larger server; `mining/README.md` carries the operation manual (incl. the scBaseCount-style loop) and the five-step migration runbook.
 
 ---
 
