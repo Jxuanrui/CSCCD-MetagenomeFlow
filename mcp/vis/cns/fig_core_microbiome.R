@@ -58,10 +58,12 @@ p <- ggplot(d, aes(x = mab, y = name)) +
   theme_cns(y_grid = FALSE) +
   theme(axis.text.y = element_text(face = "italic", size = 6.5,
                                    lineheight = 0.85),
-        legend.position = "bottom",
+        legend.position = "right",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 7),
-        legend.key.width = unit(6, "mm"))
+        legend.key.height = unit(12, "mm"),
+        legend.key.width = unit(2.2, "mm"),
+        plot.margin = margin(2, 3, 2, 2, "mm"))
 
 # Height adapts to the full core list (~2.6 mm per taxon row + margins).
 fig_h <- max(70, 2.6 * nrow(d) + 20)
