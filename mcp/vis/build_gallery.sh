@@ -24,10 +24,13 @@ export MGX_FIGURE_FORMATS="pdf,png"
 export GROUP_COL="group"
 
 RUN_ML=0
+STYLE="cns"
 for arg in "$@"; do
     case "$arg" in
         --with-ml) RUN_ML=1 ;;
         --skip-ml) RUN_ML=0 ;;
+        --cns) STYLE="cns" ;;
+        --orbit0) STYLE="orbit0" ;;
         *) echo "[WARN] unknown flag: $arg" ;;
     esac
 done
@@ -187,6 +190,30 @@ if [ "${#MISSING[@]}" -gt 0 ] 2>/dev/null; then
     echo "Missing gallery files (step failed or produced no such output):"
     for f in "${MISSING[@]}"; do echo "  $f"; done
 fi
+# --- 13. CNS-style re-render (mcp/vis/cns) ---------------------------------------
+# Redraws the 18 gallery figures through the shared CNS design system
+# (mcp/vis/cns/theme_cns.R), overwriting the orbit-0 outputs in docs/figures
+# under the same names. Requires the orbit-0 steps above (RDS/ML objects).
+if [ "${STYLE}" = "cns" ]; then
+    echo "[gallery] style=cns: re-rendering figures via mcp/vis/cns"
+    CNS_FIGS="composition_barplot composition_heatmap alpha_diversity pcoa volcano \
+lefse_barplot lefse_cladogram core_microbiome core_venn pathway_activity \
+functional_redundancy redundancy_heatmap cross_dimension_network ml_roc \
+ml_feature_weights shap mining_attrs mining_overlap"
+    for fig in ${CNS_FIGS}; do
+        fig_workdir="${OUT}"
+        case "${fig}" in mining_*) fig_workdir="${REPO}" ;; esac
+        if "${RSCRIPT}" "${REPO}/mcp/vis/cns/fig_${fig}.R" "${fig_workdir}" "${FIGS}" \
+            > "${FIGS}/.cns_${fig}.log" 2>&1; then
+            echo "  cns OK   ${fig}"
+        else
+            echo "  cns FAIL ${fig} (see ${FIGS}/.cns_${fig}.log)"
+            tail -3 "${FIGS}/.cns_${fig}.log" 2>/dev/null
+        fi
+        rm -f "${FIGS}/.cns_${fig}.log"
+    done
+fi
+
 echo "Note: 99a/96b/96c figures are PNG when MGX_FIGURE_FORMATS includes png;"
 echo "installed on this host, so those gallery entries are stored as PDF."
 echo "krona_plot is an interactive HTML (a static PNG screenshot is not"
