@@ -157,8 +157,8 @@ Sample26,treat,S26,48,26.2
 **输出结果**（samplesheet 前几行）：
 ```
 sample_id,r1,r2
-Sample1,/home/.../data/Sample1_1.fastq.gz,/home/.../data/Sample1_2.fastq.gz
-Sample2,/home/.../data/Sample2_1.fastq.gz,/home/.../data/Sample2_2.fastq.gz
+Sample1,<data-dir>/Sample1_1.fastq.gz,<data-dir>/Sample1_2.fastq.gz
+Sample2,<data-dir>/Sample2_1.fastq.gz,<data-dir>/Sample2_2.fastq.gz
 ```
 
 **审核要点**：

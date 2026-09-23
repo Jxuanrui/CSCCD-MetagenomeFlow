@@ -15,7 +15,8 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BRANCH="${1:-public}"
 
 # Files/dirs that must NEVER enter the public snapshot.
-EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.omo/|\.codegraph|agents/provenance/|skills/.*\.pdf)'
+# Project/ carries production cohort metadata + machine-specific sheets.
+EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.omo/|\.codegraph|agents/provenance/|skills/.*\.pdf|Project/)'
 
 cd "${REPO}"
 
@@ -62,7 +63,7 @@ git checkout -f -q master
 
 # Post-build verification: no excluded paths, no absolute home paths.
 BAD_PATHS="$(git ls-tree -r --name-only "${BRANCH}" | grep -E "${EXCLUDE_RE}" || true)"
-BAD_HOME="$(git grep -l '/home/' "${BRANCH}" -- 2>/dev/null || true)"
+BAD_HOME="$(git grep -l '/home/' "${BRANCH}" -- 2>/dev/null | grep -v 'scripts/utils/publish_public.sh' || true)"
 if [ -n "${BAD_PATHS}" ] || [ -n "${BAD_HOME}" ]; then
     echo "[ERROR] verification failed:" >&2
     [ -n "${BAD_PATHS}" ] && echo "${BAD_PATHS}" >&2
