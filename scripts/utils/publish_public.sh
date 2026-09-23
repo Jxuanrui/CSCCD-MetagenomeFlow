@@ -57,6 +57,9 @@ sed -i 's|/home/[^/]*/Course/Maxmetagenome|~/Course/Maxmetagenome|g' \
 # Real-cohort sample IDs (docs/comments/example commands only — verified no
 # functional strings) are neutralized to "Sample<N>" in the snapshot.
 echo "${FILES}" | xargs -d '\n' grep -l 'Harbin' 2>/dev/null | xargs -r -d '\n' sed -i 's/Harbin/Sample/g'
+# Machine-specific repo paths in mined tooling become portable placeholders.
+echo "${FILES}" | xargs -d '\n' grep -l '/home/[^/]*/Course/Maxmetagenome' 2>/dev/null | \
+    xargs -r -d '\n' sed -i 's|/home/[^/]*/Course/Maxmetagenome|~/Course/Maxmetagenome|g'
 echo "${FILES}" | xargs -d '\n' git add -f --
 # --no-verify: this snapshot assembles already-reviewed master content;
 # the pre-commit shellcheck scope would pull in vendored replication
