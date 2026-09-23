@@ -125,3 +125,4 @@ mining/projects/
 mining/vis/
 mining/curation.sqlite
 mining/curation_run.jsonl
+mining/sources/raw/
