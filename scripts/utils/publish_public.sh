@@ -53,7 +53,7 @@ git rm -r -q --cached . >/dev/null 2>&1 || true
 # home-relative examples; the master worktree copy is force-restored afterwards.
 sed -i 's|/home/[^/]*/Course/Maxmetagenome|~/Course/Maxmetagenome|g' \
     pipeline/config/config.yaml pipeline/config/config.test_ci.yaml 2>/dev/null || true
-echo "${FILES}" | xargs -d '\n' git add --
+echo "${FILES}" | xargs -d '\n' git add -f --
 git commit -q -m "Public snapshot of master ${MASTER_SHA}"
 git checkout -f -q master
 
