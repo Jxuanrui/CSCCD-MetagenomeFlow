@@ -39,8 +39,9 @@ taxon_name <- function(lineage) {
 prev <- rowMeans(ab > 0.001) * 100          # prevalence (%) at >0.1% abundance
 mab  <- rowMeans(as.matrix(ab)) * 100       # mean relative abundance (%)
 d <- data.frame(lineage = rownames(ab), prev = prev, mab = mab)
-d <- d[d$prev >= 50, ]                      # core species — show ALL of them
+d <- d[d$prev >= 50, ]                      # core species
 d <- d[order(d$mab, decreasing = TRUE), ]
+d <- head(d, 10)                            # top-10 core taxa by abundance
 d$name <- factor(vapply(d$lineage, taxon_name, character(1)),
                  levels = rev(vapply(d$lineage, taxon_name, character(1))))
 
@@ -65,8 +66,6 @@ p <- ggplot(d, aes(x = mab, y = name)) +
         legend.key.width = unit(2.2, "mm"),
         plot.margin = margin(2, 3, 2, 2, "mm"))
 
-# Height adapts to the full core list (~2.6 mm per taxon row + margins).
-fig_h <- max(70, 2.6 * nrow(d) + 20)
 export_pub_figure(p, file.path(outdir, "core_microbiome"),
-                  width_mm = CNS_W_SINGLE, height_mm = fig_h,
+                  width_mm = CNS_W_SINGLE, height_mm = 70,
                   formats = c("pdf", "png"))
