@@ -67,11 +67,14 @@ p <- sv_importance(sv, kind = "beeswarm",
                       name = "Feature value", breaks = c(0, 1),
                       labels = c("low", "high")) +
   scale_x_continuous(expand = expansion(mult = c(0.03, 0.08))) +
+  ggplot2::coord_cartesian(clip = "on") +
   labs(x = "SHAP value (impact on model output)") +
   theme_cns(y_grid = FALSE) +
   theme(axis.text.y = element_text(face = "italic", size = 6.5),
         legend.position = "bottom",
-        legend.key.width = unit(6, "mm"))
+        legend.key.width = unit(4, "mm"),
+        legend.margin = margin(0, 2, 0, 0, "mm"),
+        plot.margin = margin(3, 5, 3, 2, "mm"))
 
 export_pub_figure(p, file.path(out_dir, "shap_summary"),
                   CNS_W_SINGLE, 105, formats = c("pdf", "png"))
