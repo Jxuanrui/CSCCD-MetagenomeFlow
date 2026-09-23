@@ -6,8 +6,8 @@
 #   consistency registry/scripts/skills/rules cross-check, requires issues=0.
 # Level 2 (sampled integration tests) and level 3 (Snakemake DAG dry-run) stay
 # local-only: they depend on Project/Test_CI_fixture data, which is gitignored.
-# Enable by pushing the public snapshot branch to GitHub (see scripts/utils/publish_public.sh — never `git push --mirror`, which would export private history) or by translating
-# this file to a Gitee Go .workflow/ pipeline.
+# Alternatively, translate
+#  this file to your CI platform's pipeline/ pipeline.
 #
 # schedule: weekly re-run guards against silent drift (shellcheck version bumps,
 # dependency updates in the consistency checker, rotting exclusion lists).

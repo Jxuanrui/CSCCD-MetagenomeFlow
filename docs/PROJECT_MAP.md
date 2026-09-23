@@ -514,7 +514,7 @@ bash scripts/97_stat_crosscohort.sh \
 
 ## 1.8.1 测试/CI 体系（三层金字塔）
 
-2026-07-28 搭建，本地伪CI（不依赖远程CI平台，仓库托管在 Gitee 非 GitHub）。
+2026-07-28 搭建，本地伪CI（不依赖远程CI平台，仓库不依赖远程 CI 平台）。
 
 ```
 scripts/tests/

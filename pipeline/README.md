@@ -368,4 +368,4 @@ tmp_dir: "/tmp"                # 临时目录
 启用方式（二选一）：
 
 1. 镜像推送 GitHub（Actions 直接生效）：`git remote add github <github-url> && git push --mirror github`
-2. 翻译为 Gitee Go：将 `ci.yml` 改写为 `.workflow/` 流水线，两个 job 的安装与检查命令原样保留
+2. 翻译为其他 CI 平台：将 `ci.yml` 改写为对应流水线，两个 job 的安装与检查命令原样保留
