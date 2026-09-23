@@ -45,10 +45,19 @@ if (is.na(nodes_f) || is.na(edges_f))
   stop("network nodes/edges tsv not found under result/stat/network/", call. = FALSE)
 nd <- read.delim(nodes_f, check.names = FALSE, quote = "")
 ed <- read.delim(edges_f, check.names = FALSE, quote = "")
+n_edges_total <- nrow(ed)
 
-# ---- graph ----------------------------------------------------------------------
+# Keep only the strongest ties: the full 11k-edge hairball renders as an
+# opaque PDF (6+ MB of vector arcs that some viewers show as a blank page)
+# and hides structure. Top 1,500 by |weight| preserves the backbone.
+ed$w <- abs(suppressWarnings(as.numeric(ed$weight)))
+if (nrow(ed) > 1500 && all(is.finite(ed$w))) {
+  ed <- ed[order(-ed$w), , drop = FALSE][seq_len(1500), , drop = FALSE]
+}
+# degree/labels computed on the backbone graph
 g <- graph_from_data_frame(ed[, c("from", "to")], directed = FALSE,
                            vertices = nd)
+g <- delete_vertices(g, which(degree(g) == 0))
 set.seed(42)  # reproducible FR layout
 ly <- create_layout(g, layout = "fr")
 ly$degree <- degree(g)[ly$name]
@@ -76,8 +85,9 @@ p <- ggraph(ly) +
   scale_fill_manual(values = c(Bacteria = cns_cat[1], Virus = cns_cat[2]),
                     name = NULL) +
   scale_size_continuous(range = c(1.5, 4), name = "Degree") +
-  labs(caption = sprintf("n = %d nodes / %s edges",
-                         vcount(g), format(ecount(g), big.mark = ","))) +
+  labs(caption = sprintf("n = %d nodes / %s edges (top 1,500 of %s by |weight|)",
+                         vcount(g), format(ecount(g), big.mark = ","),
+                         format(n_edges_total, big.mark = ","))) +
   coord_fixed() +
   theme_cns(y_grid = FALSE) +
   theme(axis.line = element_blank(), axis.ticks = element_blank(),

@@ -69,15 +69,6 @@ p <- ggplot(d, aes(x = lfc, y = nlp)) +
                   segment.colour = "grey50", min.segment.length = 0,
                   max.overlaps = 20, box.padding = 0.35, seed = 1) +
   scale_colour_manual(values = class_cols) +
-  annotate("text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.8,
-           label = sprintf("Up: %d", n_up), size = 7 / .pt,
-           colour = "grey30") +
-  annotate("text", x = -Inf, y = Inf, hjust = -0.5, vjust = 1.8,
-           label = sprintf("Down: %d", n_down), size = 7 / .pt,
-           colour = "grey30") +
-  annotate("text", x = Inf, y = -Inf, hjust = 1.5, vjust = -0.8,
-           label = sprintf("NS: %d", n_ns), size = 7 / .pt,
-           colour = "grey30") +
   labs(x = expression(log[2]~"fold change"),
        y = expression(-log[10]~italic("P")[adj])) +
   theme_cns()

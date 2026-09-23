@@ -1,14 +1,14 @@
 #!/usr/bin/env Rscript
 # ==============================================================================
-# fig_redundancy_heatmap.R — function x species contribution heatmap.
+# fig_redundancy_heatmap.R — function x species contribution heatmap (CNS).
 # Contribution = |Spearman rho| between KO abundance (integration tables) and
-# species relative abundance (pipeline's correlation_inference method).
-# Top-25 functions (by contributor count then FDI) x top-20 species (by mean
-# abundance), with a left annotation strip for FDI class (low/mid/high).
+# species relative abundance. READABILITY-FIRST redesign: top-10 functions x
+# top-15 species, white->blue single-hue fill with the rho value printed in
+# every cell, FDI-class strip on the left.
 #
 # Usage: Rscript fig_redundancy_heatmap.R <workdir> <out_dir>
 #   <workdir>  project directory containing result/
-#   <out_dir>  output directory (redundancy_heatmap.pdf + redundancy_heatmap.png)
+#   <out_dir>  output directory (functional_redundancy_heatmap.pdf + .png)
 # ==============================================================================
 suppressPackageStartupMessages({
   library(ggplot2)
@@ -43,27 +43,23 @@ common <- intersect(colnames(ko), colnames(sp))
 ko <- as.matrix(ko[, common, drop = FALSE])
 sp <- as.matrix(sp[, common, drop = FALSE])
 
-# ---- contribution proxy: |Spearman rho| KO x species ----------------------------
 fns <- intersect(fdi[["function"]], rownames(ko))
 M <- abs(suppressWarnings(cor(t(ko[fns, , drop = FALSE]), t(sp),
                                method = "spearman", use = "pairwise")))
 
-# top-25 functions: most contributors first, then highest FDI
+# top-10 functions (most contributors, then FDI); top-15 species by abundance
 frk <- fdi[match(fns, fdi[["function"]]), ]
 frk <- frk[order(-frk$n_contributors, -frk$fdi), ]
-f25 <- head(frk[["function"]], 25)
-# top-20 species by mean abundance, columns ordered by mean contribution
+f10 <- head(frk[["function"]], 10)
 sp_mean <- rowMeans(sp)
-s20 <- names(sort(sp_mean, decreasing = TRUE))[seq_len(20)]
-s20 <- s20[order(colMeans(M[f25, s20, drop = FALSE]), decreasing = TRUE)]
+s15 <- names(sort(sp_mean, decreasing = TRUE))[seq_len(15)]
+s15 <- s15[order(colMeans(M[f10, s15, drop = FALSE]), decreasing = TRUE)]
 
-# ---- FDI class (terciles over all functions) -------------------------------------
 q <- quantile(fdi$fdi, c(1 / 3, 2 / 3))
 fdi_class <- function(v) factor(
   ifelse(v <= q[[1]], "low", ifelse(v <= q[[2]], "mid", "high")),
   levels = c("low", "mid", "high"))
 
-# ---- long tables ------------------------------------------------------------------
 short_sp <- function(x) {
   last <- sub(".*\\|", "", x)
   parts <- strsplit(last, "_", fixed = TRUE)[[1]]
@@ -71,24 +67,25 @@ short_sp <- function(x) {
     paste(substr(parts[1], 1, 1), ". ", paste(parts[-1], collapse = " "))
   else gsub("_", " ", last)
 }
-flv <- rev(f25)                       # bottom-to-top on the y axis
-heat <- expand.grid(species = s20, function_ko = flv, stringsAsFactors = FALSE)
+
+flv <- rev(f10)  # bottom-to-top
+heat <- expand.grid(species = s15, function_ko = flv, stringsAsFactors = FALSE)
 heat$rho <- mapply(function(f, s) M[f, s], heat$function_ko, heat$species)
-heat$species_lab <- factor(short_sp(heat$species), levels = short_sp(s20))
+heat$species_lab <- factor(short_sp(heat$species), levels = short_sp(s15))
 heat$f <- factor(heat$function_ko, levels = flv)
+heat$rho_lab <- ifelse(heat$rho >= 0.005, sprintf("%.2f", heat$rho), "")
 
 anno <- data.frame(f = factor(flv, levels = flv),
                    cls = fdi_class(fdi$fdi[match(flv, fdi[["function"]])]),
                    stringsAsFactors = FALSE)
 
-# ---- panels ------------------------------------------------------------------------
-p_anno <- ggplot(anno, aes(x = "FDI\nclass", y = f, fill = cls)) +
+# ---- panels --------------------------------------------------------------------
+p_anno <- ggplot(anno, aes(x = "FDI", y = f, fill = cls)) +
   geom_tile(colour = "white", linewidth = 0.3) +
   scale_fill_manual(values = c(low = cns_cat[3], mid = cns_cat[4],
                                high = cns_cat[2]),
                     name = "FDI class", drop = FALSE,
-                    breaks = c("low", "mid", "high"),
-                    labels = c("low", "mid", "high")) +
+                    breaks = c("low", "mid", "high")) +
   scale_x_discrete(expand = c(0, 0), position = "top") +
   scale_y_discrete(expand = c(0, 0)) +
   labs(x = NULL, y = NULL) +
@@ -100,32 +97,30 @@ p_anno <- ggplot(anno, aes(x = "FDI\nclass", y = f, fill = cls)) +
         plot.margin = margin(2, 0, 2, 2, "mm"))
 
 p_heat <- ggplot(heat, aes(x = species_lab, y = f, fill = rho)) +
-  geom_tile(colour = "white", linewidth = 0.3) +
-  scale_fill_gradientn(colours = cns_seq(100), limits = c(0, 1),
-                       name = expression("|"*rho*"|"),
-                       breaks = seq(0, 1, 0.25)) +
+  geom_tile(colour = "white", linewidth = 0.4) +
+  geom_text(aes(label = rho_lab), size = 6.2 / .pt, colour = "grey25") +
+  scale_fill_gradient(low = "#F4F7FB", high = cns_cat[1],
+                      limits = c(0, 1), name = expression("|"*rho*"|"),
+                      breaks = seq(0, 1, 0.5)) +
   scale_x_discrete(expand = c(0, 0)) +
   scale_y_discrete(expand = c(0, 0)) +
-  labs(x = "Top-20 contributor species", y = NULL) +
+  labs(x = "Top-15 contributor species", y = NULL) +
   theme_cns(y_grid = FALSE) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "italic",
-                                   size = 7),
+  theme(axis.text.x = element_text(face = "italic", size = 7),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         plot.margin = margin(2, 2, 2, 0, "mm"))
 
 p <- p_anno + p_heat +
-  plot_layout(widths = c(1, 26), guides = "collect") &
+  plot_layout(widths = c(1, 14), guides = "collect") &
   theme(legend.position = "bottom", legend.box = "horizontal")
 
-export_pub_figure(p, file.path(out_dir, "redundancy_heatmap"),
-                  CNS_W_DOUBLE, 150, formats = c("pdf", "png"))
+export_pub_figure(p, file.path(out_dir, "functional_redundancy_heatmap"),
+                  CNS_W_DOUBLE, 110, formats = c("pdf", "png"))
 
 # ---- self-check -----------------------------------------------------------------
-message(sprintf("[fig_redundancy_heatmap] matrix %d functions x %d species; shown %d x %d",
-                nrow(M), ncol(M), length(f25), length(s20)))
-message(sprintf("[fig_redundancy_heatmap] FDI class colours low=%s mid=%s high=%s | fill cns_seq | %.0f x 150 mm",
-                cns_cat[3], cns_cat[4], cns_cat[2], CNS_W_DOUBLE))
+message(sprintf("[fig_redundancy_heatmap] matrix %d functions x %d species; shown %d x %d with in-cell values",
+                nrow(M), ncol(M), length(f10), length(s15)))
 for (f in c("pdf", "png"))
-  stopifnot(file.exists(file.path(out_dir, sprintf("redundancy_heatmap.%s", f))))
-message("[fig_redundancy_heatmap] OK: redundancy_heatmap.{pdf,png} written")
+  stopifnot(file.exists(file.path(out_dir, sprintf("functional_redundancy_heatmap.%s", f))))
+message("[fig_redundancy_heatmap] OK: functional_redundancy_heatmap.{pdf,png} written")
