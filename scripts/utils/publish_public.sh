@@ -60,6 +60,18 @@ echo "${FILES}" | xargs -d '\n' grep -l 'Harbin' 2>/dev/null | xargs -r -d '\n' 
 # Machine-specific repo paths in mined tooling become portable placeholders.
 echo "${FILES}" | xargs -d '\n' grep -l '/home/[^/]*/Course/Maxmetagenome' 2>/dev/null | \
     xargs -r -d '\n' sed -i 's|/home/[^/]*/Course/Maxmetagenome|~/Course/Maxmetagenome|g'
+# Development-era attributions and retired dual-agent jargon are neutralized;
+# dead /mgx-* references into the unshipped .claude/ tree drop their lines.
+echo "${FILES}" | xargs -d '\n' grep -l '^# Author: Claude Code' 2>/dev/null | \
+    xargs -r -d '\n' sed -i 's|^# Author: Claude Code.*|# Author: MaxMetagenome team|'
+echo "${FILES}" | xargs -d '\n' grep -l -E 'Codex sandbox|Codex 沙盒|Codex 沙箱|CC Bash 工具|走Codex执行' 2>/dev/null | \
+    xargs -r -d '\n' sed -i -e 's/Codex sandbox/sandboxed executor/g' \
+        -e 's/Codex 沙盒/执行沙箱/g' -e 's/Codex 沙箱/执行沙箱/g' \
+        -e 's/CC Bash 工具/宿主 Bash/g' -e 's/走Codex执行/由编程助手执行/g' \
+        -e 's/Claude Code 运行时文件/AI 客户端运行时文件/g'
+for f in agents/README.md pipeline/README.md docs/PROJECT_MAP.md; do
+    [ -f "$f" ] && sed -i -E '/(^[-|] .*|.*(技能|技能:|可调用技能)).*\/mgx-\*/d' "$f"
+done
 echo "${FILES}" | xargs -d '\n' git add -f --
 # --no-verify: this snapshot assembles already-reviewed master content;
 # the pre-commit shellcheck scope would pull in vendored replication
