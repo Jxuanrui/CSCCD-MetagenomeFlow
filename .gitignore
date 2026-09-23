@@ -123,3 +123,5 @@ mining/incremental_last_run.json
 mining/incremental_cron.log
 mining/projects/
 mining/vis/
+mining/curation.sqlite
+mining/curation_run.jsonl

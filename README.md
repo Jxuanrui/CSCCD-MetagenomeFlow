@@ -190,6 +190,10 @@ Server registration lives in a local `.mcp.json` (not shipped — paths are mach
 
 Every integrated script has a machine-readable skill card (`agents/skills/`) declaring inputs, outputs, dependencies, and known issues, so any MCP-capable coding assistant can discover and invoke the pipeline correctly. Production runs can optionally be logged to `agents/provenance/` as machine-readable JSON for reproducibility.
 
+### Auto-Mining Subsystem (`mining/`)
+
+An agent-driven gut-metagenome mining loop, validated end-to-end on 8 samples (M3, tag `mining-m3-pilot-v1.2.1`): weekly seqout-based discovery indexes 66,607 samples across two SQLite layers (63,803 inherited from cMD3/GMrepo/Meta2DB + 2,804 incremental), AI curation maps every sample to UBERON/MONDO, and a one-command orchestrator runs ENA download → three-gate triage → the bacteria light chain. Batch processing is deferred until a larger server arrives — measured ceiling is ~300 samples/month on the current box; `mining/README.md` carries the five-step migration runbook and the curation-index-as-work-queue contract.
+
 ---
 
 ## Repository Layout
@@ -201,6 +205,7 @@ CSCCD-MetagenomeFlow/
 ├── agents/                   registry.yaml, skill cards, optional run provenance records
 ├── docs/                     experience docs (RAG source), tool references
 ├── mcp/                      RAG indexers, bridges, MCP servers
+├── mining/                   auto-mining subsystem (discovery + curation + orchestrator)
 ├── db/                       ~1.2 TB analysis databases (not in git)
 ├── envs/                     57 conda environments (not in git)
 ├── 0Install.sh               environment + database installation
