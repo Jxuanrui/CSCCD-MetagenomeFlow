@@ -120,13 +120,15 @@ Diversity (91), differential abundance (92, 99b LEfSe), co-occurrence networks (
 
 ## Figure Gallery
 
-All figures below are produced by the pipeline's own plotting stack (ggplot2, shared publication theme, NPG palette, Arial, 600 dpi) from a **synthetic 24-sample demo project** — no real data is used or distributed. Every figure is stored in `docs/figures/` in **both PDF and PNG** (except the natively interactive Krona HTML). The entire gallery is reproducible with one command:
+All figures below share one **CNS-style design system** (`mcp/vis/cns/theme_cns.R`: 0.3pt axes, Arial size hierarchy, muted Nature/NEJM-leaning palette, 89/183mm column widths, 600 dpi) and are drawn from a **synthetic 24-sample demo project** — no real data is used or distributed. The set is designed to composite directly into multi-panel figures. Every figure is stored in `docs/figures/` in **both PDF and PNG** (except the natively interactive Krona HTML). The entire gallery is reproducible with one command:
 
 ```bash
-bash mcp/vis/build_gallery.sh            # ~3 min; --with-ml adds ML figures (~7 min)
+bash mcp/vis/build_gallery.sh            # CNS style (default), ~3 min
+                                         # --with-ml adds ML figures (~7 min)
+                                         # --orbit0 keeps the raw pipeline-script style
 ```
 
-The same figures can be rendered on demand for any real project through the `mgx-vis` MCP server (`vis_scan` / `vis_render` / `vis_mining`) from any agent session.
+The same figures can be rendered on demand for any real project through the `mgx-vis` MCP server (`vis_scan` / `vis_render` / `vis_mining`) from any agent session; each CNS renderer is also a standalone script (`Rscript mcp/vis/cns/fig_<name>.R <workdir> <out_dir>`).
 
 | Composition & network | Diversity | Differential & biomarkers |
 |---|---|---|
