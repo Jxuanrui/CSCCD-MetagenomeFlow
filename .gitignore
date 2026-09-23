@@ -126,3 +126,4 @@ mining/vis/
 mining/curation.sqlite
 mining/curation_run.jsonl
 mining/sources/raw/
+mining/curation_cron.log
