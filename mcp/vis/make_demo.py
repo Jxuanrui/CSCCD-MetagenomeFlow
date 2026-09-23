@@ -329,12 +329,26 @@ def gen_bacteria(rng):
     matrix = {}
     for s in SAMPLES:
         treat = GROUPS[s] == "treat"
+        # Orthogonal diversity signals (independent of TREAT_FOLD):
+        # evenness — power-flatten the base profile in treat (v^0.55 lifts
+        # rares, compresses dominants -> high Shannon/Simpson) and sharpen
+        # it in control (v^1.7); richness — each control sample randomly
+        # loses ~a quarter of its rarest taxa (with jitter so Observed has
+        # within-group variance).
+        flatten = 0.55 if treat else 1.7
+        even_sigma = 0.30 if treat else 0.55
         col = {}
         for sp in SPECIES:
             name = sp[5]
             fold = TREAT_FOLD.get(name, 1.0) if treat else 1.0
-            v = base[name] * lognorm(rng, 0, 0.55) * fold
+            v = (base[name] ** flatten) * lognorm(rng, 0, even_sigma) * fold
             col[name] = 0.0 if v < 1e-4 else v
+        if not treat:
+            ranked = sorted(col, key=col.get)
+            n_drop = len(ranked) // 4 + rng.randint(-2, 3)
+            for name in ranked[:max(1, n_drop)]:
+                if col[name] < 0.5:  # never drop established base taxa
+                    col[name] = 0.0
         total = sum(col.values())
         matrix[s] = {n: 100.0 * v / total for n, v in col.items()}
     return matrix
