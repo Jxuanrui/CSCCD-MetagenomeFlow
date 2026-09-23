@@ -63,9 +63,6 @@ sv <- shapviz(sv_shap, X = sv_fval)
 
 p <- sv_importance(sv, kind = "beeswarm",
                    size = 6.5 / .pt, alpha = 0.85) +
-  scale_fill_gradient(low = cns_cat[1], high = cns_cat[2],
-                      name = "Feature value", breaks = c(0, 1),
-                      labels = c("low", "high")) +
   scale_x_continuous(expand = expansion(mult = c(0.03, 0.08))) +
   ggplot2::coord_cartesian(clip = "on") +
   labs(x = "SHAP value (impact on model output)") +

@@ -85,15 +85,11 @@ p <- ggraph(ly) +
   scale_fill_manual(values = c(Bacteria = cns_cat[1], Virus = cns_cat[2]),
                     name = NULL) +
   scale_size_continuous(range = c(1.5, 4), name = "Degree") +
-  labs(caption = sprintf("n = %d nodes / %s edges (top 1,500 of %s by |weight|)",
-                         vcount(g), format(ecount(g), big.mark = ","),
-                         format(n_edges_total, big.mark = ","))) +
   coord_fixed() +
   theme_cns(y_grid = FALSE) +
   theme(axis.line = element_blank(), axis.ticks = element_blank(),
         axis.text = element_blank(), axis.title = element_blank(),
-        legend.position = "bottom", legend.box = "horizontal",
-        plot.caption = element_text(size = 6.5, colour = "grey40", hjust = 0))
+        legend.position = "bottom", legend.box = "horizontal")
 
 export_pub_figure(p, file.path(out_dir, "cross_dimension_network"),
                   CNS_W_DOUBLE, 150, formats = c("pdf", "png"))

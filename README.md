@@ -137,7 +137,7 @@ The same figures can be rendered on demand for any real project through the `mgx
 | Functional profiling | Data mining registry | Interactive |
 |---|---|---|
 | <img src="docs/figures/pathway_activity.png" width="270" alt="Pathway activity butterfly bubbles"/><br><sub>Pathway activity (96b)</sub> | <img src="docs/figures/mining_attrs.png" width="270" alt="Seed registry attribute overview"/><br><sub>Seed registry (63,803 samples)</sub> | [Krona interactive plot](docs/figures/krona_plot.html)<br><sub>Taxonomic circle plot</sub> |
-| <img src="docs/figures/functional_redundancy_heatmap.png" width="270" alt="Function-species contribution heatmap with in-cell values"/><br><sub>Redundancy contribution (96c)</sub> | <img src="docs/figures/mining_overlap.png" width="270" alt="Source overlap matrix"/><br><sub>Source overlap (3 databases)</sub> | <img src="docs/figures/ml_roc.png" width="270" alt="SIAMCAT multi-model ROC comparison"/><br><sub>ML ROC (96, `--with-ml`)</sub> |
+| <img src="docs/figures/ml_feature_weights.png" width="270" alt="Top-20 SIAMCAT feature weights lollipop"/><br><sub>ML feature weights (96)</sub> | <img src="docs/figures/mining_overlap.png" width="270" alt="Source overlap matrix"/><br><sub>Source overlap (3 databases)</sub> | <img src="docs/figures/ml_roc.png" width="270" alt="SIAMCAT multi-model ROC comparison"/><br><sub>ML ROC (96, `--with-ml`)</sub> |
 
 Additional figure families (not pictured): SpiecEasi functional co-occurrence networks (96), batch-correction evaluation (95b), cross-cohort replication with meta-analysis (97), MAG-level reports (dRep/inStrain/DRAM HTML from the 32–43c chain), and QC reports (fastp/MultiQC/Krona).
 

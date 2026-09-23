@@ -81,7 +81,7 @@ run_step "93_cooccurrence_cross_bac_vir" "cross_dimension_network.png" \
     bash "${REPO}/scripts/93_stat_cooccurrence.sh" -w "${OUT}" -r "${REPO}" -t 4 \
          -m "${META}" -g group -n cross_bac_vir --force
 
-run_step "99b_lefse" "lefse_barplot.png / lefse_cladogram.png" \
+run_step "99b_lefse" "lefse_barplot.png" \
     "${RSCRIPT}" "${REPO}/scripts/99b_lefse.R" \
          -i "${OUT}/result/metaphlan4/merged/taxonomy.tsv" \
          -m "${META}" -o "${OUT}/result/stat/bacteria/lefse" -d bacteria -y taxonomy
@@ -157,12 +157,8 @@ copy_fig_pair alpha_diversity          result/stat/bacteria/diversity/alpha_dive
 copy_fig_pair pcoa                     result/stat/bacteria/diversity/pcoa_beta_scatter
 copy_fig_pair volcano                  result/stat/bacteria/differential/volcano_deseq2
 copy_fig_pair lefse_barplot            result/stat/bacteria/lefse/lefse_barplot
-copy_fig_pair lefse_cladogram          result/stat/bacteria/lefse/cladogram
 copy_fig_pair core_microbiome          result/stat/bacteria/core/core_abundance_barplot
-copy_fig_pair core_microbiome_venn     result/stat/bacteria/core/venn_diagram
 copy_fig_pair pathway_activity         result/stat/bacteria/pathway/scatter_activity_composition
-copy_fig_pair functional_redundancy    result/stat/bacteria/functional_redundancy/redundancy_correlation_scatter
-copy_fig_pair functional_redundancy_heatmap result/stat/bacteria/functional_redundancy/redundancy_heatmap
 copy_fig_pair cross_dimension_network  result/stat/network/cross_bac_vir/network
 copy_fig_pair functional_network       result/stat/bacteria/functional/network/figures/network_bacteria
 copy_fig_pair ml_roc                   result/stat/bacteria/ml/roc_multimodel_comparison
@@ -197,8 +193,8 @@ fi
 if [ "${STYLE}" = "cns" ]; then
     echo "[gallery] style=cns: re-rendering figures via mcp/vis/cns"
     CNS_FIGS="composition_barplot composition_heatmap alpha_diversity pcoa volcano \
-lefse_barplot lefse_cladogram core_microbiome core_venn pathway_activity \
-functional_redundancy redundancy_heatmap cross_dimension_network ml_roc \
+lefse_barplot core_microbiome pathway_activity \
+cross_dimension_network ml_roc \
 ml_feature_weights shap mining_attrs mining_overlap"
     for fig in ${CNS_FIGS}; do
         fig_workdir="${OUT}"
