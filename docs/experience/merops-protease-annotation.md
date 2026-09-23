@@ -27,7 +27,7 @@ MEROPS 的核心价值在于按 catalytic mechanism 和 family 层级组织蛋�
 bash scripts/86_fun_merops.sh \
   -t 16 \
   -w /path/to/project \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 脚本会自动查找 `db/merops/*.dmnd` 并输出精简的 DIAMOND 命中表。

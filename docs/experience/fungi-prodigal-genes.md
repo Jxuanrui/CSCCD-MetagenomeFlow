@@ -26,7 +26,7 @@ bash scripts/80_fun_prodigal.sh \
   -s sample \
   -t 1 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 如果只是为了让后续 eggNOG、KEGG、dbCAN、VFDB、AMR 和 MEROPS 注释顺利接上，最关键的是确保 `.faa` 完整生成；`.fna` 和 `.gff` 也应保留，便于后续追踪基因来源和核酸层分析。

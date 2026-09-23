@@ -2,7 +2,7 @@
 tool: "PHOLD 1.0+"
 dimension: "virome"
 category: "annotation"
-author: "labuser"
+author: "team"
 date: "2026-06-14"
 tags: [phold, viral-dark-matter, structure-search, pharokka, annotation]
 scenario: [virome, votu-representatives, structural-annotation]
@@ -51,7 +51,7 @@ bash scripts/65_vir_phold.sh \
 ## Verified
 
 - validated — 已通过实际运行验证
-- 2026-06-15 — User: labuser, Sample: all, Params: none, Exit: 0, Duration: 1800s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
+- 2026-06-15 — User: local, Sample: all, Params: none, Exit: 0, Duration: 1800s, Workdir: ${PROJ_DIR}/Project/Project_example
 
 ## References（可选）
 

@@ -26,7 +26,7 @@ bash scripts/74_fun_blast_gutdb.sh \
   -s sample \
   -t 16 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 如果要离线复现核心参数，最关键的是确认这里用的是 `blastx` 而不是 `blastp`，因为输入是 reads 而非蛋白序列。

@@ -2,7 +2,7 @@
 tool: "pharokka"
 dimension: "virome"
 category: "annotation"
-author: "labuser"
+author: "team"
 date: "2026-06-13"
 tags: [parameter-tuning, phage-annotation, gene-prediction, functional-annotation]
 scenario: [gut-microbiome, assembled-contigs, virus-catalogue]
@@ -56,7 +56,7 @@ PHAROKKA 输出的 `prodigal-gv.faa` 是 vConTACT3 基因共享网络分析（�
 ## Verified
 
 - validated — 已通过实际运行验证
-- 2026-06-15 — User: labuser, Sample: all, Params: n_cds=565, Exit: 0, Duration: 3600s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
+- 2026-06-15 — User: local, Sample: all, Params: n_cds=565, Exit: 0, Duration: 3600s, Workdir: ${PROJ_DIR}/Project/Project_example
 
 ## References（可选）
 

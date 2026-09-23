@@ -2,7 +2,7 @@
 tool: "fastp"
 dimension: "bacteria"
 category: "quality-control"
-author: "labuser"
+author: "team"
 date: "2026-06-12"
 tags: [parameter-tuning, quality-control, adapter-trimming, paired-end]
 scenario: [gut-microbiome, paired-end, shotgun-metagenomics]
@@ -63,7 +63,7 @@ fastp \
 ## Verified
 
 - validated — 已通过实际运行验证
-- 2026-06-12 — User: labuser, Sample: S01, Params: threads=16, qualified_quality_phred=20, unqualified_percent_limit=40, length_required=50, detect_adapter_for_pe=true, Exit: 0, Duration: 18s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
+- 2026-06-12 — User: local, Sample: S01, Params: threads=16, qualified_quality_phred=20, unqualified_percent_limit=40, length_required=50, detect_adapter_for_pe=true, Exit: 0, Duration: 18s, Workdir: ${PROJ_DIR}/Project/Project_example
 
 ## References（可选）
 

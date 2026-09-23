@@ -2,7 +2,7 @@
 tool: "humann3"
 dimension: "bacteria"
 category: "functional"
-author: "labuser"
+author: "team"
 date: "2026-06-11"
 tags: [speed-mode, pathway-profiling, prescreen-threshold]
 scenario: [gut-microbiome, high-depth, paired-end]
@@ -61,7 +61,7 @@ humann \
 ## Verified
 
 - validated — 已通过实际运行验证
-- 2026-06-14 — User: labuser, Sample: S01-S06 ×6, Params: none, Durations: S01=1988s S02=2111s S03=1843s S04=2384s S05=1934s S06=2032s, Exit: 0, Duration: 1988s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
+- 2026-06-14 — User: local, Sample: S01-S06 ×6, Params: none, Durations: S01=1988s S02=2111s S03=1843s S04=2384s S05=1934s S06=2032s, Exit: 0, Duration: 1988s, Workdir: ${PROJ_DIR}/Project/Project_example
 
 ## References（可选）
 

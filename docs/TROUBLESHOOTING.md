@@ -323,7 +323,7 @@ ERROR : Installation issue: starter-suid doesn't have setuid bit set
 
 **原因**: VirSorter2 依赖 Apptainer/Singularity 容器，与 Codex 沙盒冲突
 
-**解决**: 见 `docs/experience/apptainer-codex-sandbox-conflict.md`
+**解决**: 见 `docs/experience/apptainer-sandbox-noprivs-conflict.md`
 
 **预防**: VirSorter2 任务必须通过 CC Bash 工具执行，不能通过 Codex
 

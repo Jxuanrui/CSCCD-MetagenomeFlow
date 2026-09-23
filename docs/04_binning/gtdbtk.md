@@ -19,7 +19,7 @@
 
 ```bash
 # 设置数据库路径（激活环境后）
-export GTDBTK_DATA_PATH=/home/labuser/Course/Maxmetagenome/db/gtdbtk
+export GTDBTK_DATA_PATH=${PROJ_DIR}/db/gtdbtk
 ```
 
 ## 关键参数

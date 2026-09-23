@@ -287,9 +287,8 @@ rm -rf Project/*/temp/megahit/intermediate_contigs
 rm -rf Project/*/temp/bowtie2/*.sam  # 保留 .bam 即可
 ```
 
-**自动清理脚本**:
+**按需手动清理**（仓库不内置自动清理脚本）:
 ```bash
-# scripts/cleanup_intermediate.sh
 find Project/*/temp -name "*intermediate*" -delete
 find Project/*/temp -name "*.sam" -delete  # 保留 .bam
 find Project/*/logs -name "*.log" -mtime +30 -delete

@@ -366,9 +366,9 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 资料 | 路径 | 适用场景 |
 |------|------|---------|
 | EasyMetagenome | GitHub 重新下载（原 `Reference/EasyMetagenome.zip` 已于 2026-09-21 清理）| 宏基因组全流程，MetaPhlAn4/HUMAnN4/组装/Binning/统计 |
-| Metagenomics_Apptainer_pipline | `/home/labuser/Course/Metagenomics_Apptainer_pipline/` | Centrifuger 分类、宏基因组组装、功能注释 |
-| Binning_Apptainer_pipline | `/home/labuser/Course/Binning_Apptainer_pipline/` | MAG 挖掘、Binning、CheckM2、dRep |
-| Virus_Apptainer_pipline | `/home/labuser/Course/Virus_Apptainer_pipline/` | 宏病毒组全流程（geNomad/VirSorter2/CheckV/iPHoP） |
+| Metagenomics_Apptainer_pipline | `~/Course/Metagenomics_Apptainer_pipline/` | Centrifuger 分类、宏基因组组装、功能注释 |
+| Binning_Apptainer_pipline | `~/Course/Binning_Apptainer_pipline/` | MAG 挖掘、Binning、CheckM2、dRep |
+| Virus_Apptainer_pipline | `~/Course/Virus_Apptainer_pipline/` | 宏病毒组全流程（geNomad/VirSorter2/CheckV/iPHoP） |
 | WGS 单菌分析资料 | `~/Course/Maxmetagenome/Reference/WGS_prokaryote.pipeline.v0.7.sh` | 单菌/分离株 WGS：组装、MLST、泛基因组、系统发育树、变异检测 |
 
 ### Step 2 — 网络检索最新实践

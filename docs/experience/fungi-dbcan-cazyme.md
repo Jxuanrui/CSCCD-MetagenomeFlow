@@ -27,7 +27,7 @@ scenario: [mycobiome, fungal-proteins, carbohydrate-active-enzyme]
 bash scripts/83_fun_dbcan.sh \
   -t 16 \
   -w /path/to/project \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 如果手工直跑，建议启用全部工具证据通道，并把 `overview.txt` 作为主结果。

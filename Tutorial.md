@@ -21,7 +21,7 @@
 每个步骤包含：
 - **目的**：这一步做什么、为什么不能跳过
 - **执行方式**：实际运行命令（模式一：单样本手动）
-- **LLM 调用方式**：可直接在 Claude Code 中粘贴的 Prompt
+- **LLM 调用方式**：可直接粘贴给 AI 编程助手（任意 MCP 客户端）的 Prompt
 - **输出结果**：预期文件结构和内容格式
 - **审核要点**：判断结果是否正确的具体指标
 
@@ -59,7 +59,7 @@ source ~/Course/Maxmetagenome/scripts/activate.sh
 
 **输出结果**：
 ```
-[MaxMetagenome] 环境已激活  PROJ_DIR=/home/labuser/Course/Maxmetagenome
+[MaxMetagenome] 环境已激活  PROJ_DIR=${PROJ_DIR}
 ```
 
 **审核要点**：
@@ -2274,7 +2274,7 @@ result/cross_domain/
 
 **场景**：启动耗时后台任务（如 kneaddata rush 批量，~2-3小时）后，让 LLM 定时自动检查进度，无需手动反复询问。
 
-**操作方式**（在 Claude Code 中直接说）：
+**操作方式**（对 AI 编程助手直接说）：
 ```
 请设置每30分钟查看一次 kneaddata 进度，任务完成后自动取消定时任务
 ```
@@ -2293,7 +2293,7 @@ result/cross_domain/
 **优点**：
 - 无需人工守候长耗时任务
 - 完成后自动触发后续操作（验证 + 文档更新 + commit）
-- 定时任务持久化（写入 `.claude/scheduled_tasks.json`），Claude Code 重启后继续有效
+- 定时任务由客户端持久化，AI 编程助手重启后继续有效
 
 **注意事项**：
 - 定时任务最长7天后自动到期

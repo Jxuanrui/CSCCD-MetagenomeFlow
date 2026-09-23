@@ -26,7 +26,7 @@ bash scripts/77_fun_microfisher.sh \
   -s sample \
   -t 16 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 这个结果适合回答“样本里有哪些真菌门/属/种被 Kraken2 命中”，不适合作为正式物种丰度主表；正式分析仍建议和 FunOMIC 或 DIAMOND 结果互相参照。

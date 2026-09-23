@@ -27,7 +27,7 @@ KEGG-only 注释不应替代 eggNOG。更稳妥的做法是先用 eggNOG 获得�
 bash scripts/82_fun_kegg.sh \
   -t 16 \
   -w /path/to/project \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 脚本会自动选择 `db/kegg/` 下的第一个 `.dmnd` 数据库，合并所有真菌 `.faa`，并输出 BLAST m6 风格结果表。

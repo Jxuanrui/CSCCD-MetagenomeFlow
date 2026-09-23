@@ -27,7 +27,7 @@ AMRFinderPlus 在这里用于从真菌蛋白集合中筛查已知耐药相关标
 bash scripts/85_fun_amr.sh \
   -t 16 \
   -w /path/to/project \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 脚本使用蛋白输入、NCBI AMRFinderPlus 数据库和较严格的相似性阈值。

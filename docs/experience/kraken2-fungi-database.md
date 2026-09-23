@@ -63,7 +63,7 @@ bash scripts/71_fun_kraken2_fungi.sh \
   -s sample \
   -t 16 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome \
+  -r ${PROJ_DIR} \
   --confidence 0.1 \
   --read-len 150
 ```

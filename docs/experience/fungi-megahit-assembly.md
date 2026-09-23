@@ -26,7 +26,7 @@ bash scripts/78_fun_megahit.sh \
   -s sample \
   -t 16 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 如果目标是尽量捕获低覆盖真菌 contig，经验上 `--min-contig-len 500` 更有利于保留弱信号；但需要注意，当前 `78_fun_megahit.sh` 的实际实现写死为 `--min-contig-len 1000`。因此这份经验更接近“推荐策略”，而不是对当前脚本参数的逐字复述。

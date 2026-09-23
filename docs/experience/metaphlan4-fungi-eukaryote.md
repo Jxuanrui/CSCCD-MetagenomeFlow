@@ -26,7 +26,7 @@ bash scripts/72_fun_metaphlan4_euk.sh \
   -s sample \
   -t 16 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 如果目标是“先判断样本里是否有真菌，再决定是否投入 FunOMIC、BLAST 或组装”，它通常比 FunOMIC 更快，也更适合大队列前置筛查；但不要把极低丰度真菌阳性直接当作最终结论。

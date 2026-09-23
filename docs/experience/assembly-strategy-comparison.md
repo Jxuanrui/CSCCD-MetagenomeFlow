@@ -2,7 +2,7 @@
 tool: "assembly-strategy"
 dimension: "bacteria,virome,fungi"
 category: "assembly"
-author: "labuser"
+author: "team"
 date: "2026-06-17"
 tags: [assembly-strategy, co-assembly, per-sample, votu, scaffolding, gap-filling]
 scenario: [gut-microbiome, multi-sample, short-read, hybrid]

@@ -28,7 +28,7 @@ bash scripts/71_fun_kraken2_fungi.sh \
   -s sample \
   -t 16 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome \
+  -r ${PROJ_DIR} \
   --confidence 0.1 \
   --read-len 150
 
@@ -59,7 +59,7 @@ bash scripts/79_fun_eukfinder.sh \
   -s sample \
   -t 16 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 Eukfinder 输出的真核 contigs 进入 binning 后，应使用 CheckM-Euk 或 BUSCO 做质量评估；不要用只面向原核 MAG 的 CheckM1/CheckM2 阈值直接定级。

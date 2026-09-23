@@ -2,7 +2,7 @@
 tool: "bacphlip"
 dimension: "virome"
 category: "virus-lifestyle"
-author: "labuser"
+author: "team"
 date: "2026-06-13"
 tags: [parameter-tuning, lifestyle-prediction, lytic-lysogenic, phage-ecology]
 scenario: [gut-microbiome, assembled-contigs, virus-catalogue]
@@ -59,7 +59,7 @@ awk 'NR==1 || $2>0.9 || $3>0.9' bacphlip_results.tsv | \
 ## Verified
 
 - validated — 已通过实际运行验证
-- 2026-06-15 — User: labuser, Sample: all, Params: n_predictions=77, Exit: 0, Duration: 120s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
+- 2026-06-15 — User: local, Sample: all, Params: n_predictions=77, Exit: 0, Duration: 120s, Workdir: ${PROJ_DIR}/Project/Project_example
 
 ## References（可选）
 

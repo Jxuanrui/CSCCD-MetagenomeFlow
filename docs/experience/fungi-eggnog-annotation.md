@@ -27,7 +27,7 @@ scenario: [mycobiome, fungal-proteins, functional-annotation]
 bash scripts/81_fun_eggnog.sh \
   -t 16 \
   -w /path/to/project \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 如果需要手工直跑 eggNOG-mapper，建议显式声明蛋白输入、DIAMOND 模式和真菌相关 tax scope。

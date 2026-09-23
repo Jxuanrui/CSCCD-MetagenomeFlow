@@ -45,7 +45,7 @@ bash scripts/75_fun_funomics.sh \
   -s sample \
   -t 16 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 若 FunOMIC 命令暂不可用，允许使用 FunOMIC-P DIAMOND 数据库作为过渡结果，但正式报告应标注这是 fallback 模式。

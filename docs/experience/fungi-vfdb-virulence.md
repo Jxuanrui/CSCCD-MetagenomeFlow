@@ -27,7 +27,7 @@ VFDB 命中不是“真菌致病性”的直接判定。它更适合作为功能
 bash scripts/84_fun_vfdb.sh \
   -t 16 \
   -w /path/to/project \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 脚本会合并所有 `result/fungi/prodigal/*/*.faa`，并对 `db/vfdb/*.dmnd` 执行 `diamond blastp`。

@@ -182,10 +182,13 @@ Retrieval is hybrid BM25 + dense vectors with reciprocal rank fusion (`BAAI/bge-
 - **glm-router** — GLM-5.3 / GLM-5.3-Flash dual-model routing (flagship for planning and review, Flash for high-frequency mechanical execution)
 - **figure-library** — scientific figure template store
 - **RAG retrieval** — the five collections above, via the official Model Context Protocol
+- **mgx-vis** — publication figure orchestration (see [Figure Gallery](#figure-gallery))
+
+Server registration lives in a local `.mcp.json` (not shipped — paths are machine-specific). Register `mcp/glm_router.py`, `mcp/server.py`, and `mcp/vis_server.py` with your MCP client using your own interpreter paths; `glm-router` reads its API key from the `GLM_API_KEY` environment variable, never from the repo.
 
 ### Agent Workflow
 
-The CLAUDE.md governance file defines the collaboration protocol (planning, review gates, provenance logging). Every integrated script has a skill card (`agents/skills/`) declaring inputs, outputs, dependencies, and known issues; every production run can be logged to `agents/provenance/` as machine-readable JSON. The `/mgx-*` skill files in `.claude/` (from the Claude Code era) remain as reference material.
+Every integrated script has a machine-readable skill card (`agents/skills/`) declaring inputs, outputs, dependencies, and known issues, so any MCP-capable coding assistant can discover and invoke the pipeline correctly. Production runs can optionally be logged to `agents/provenance/` as machine-readable JSON for reproducibility.
 
 ---
 
@@ -195,13 +198,12 @@ The CLAUDE.md governance file defines the collaboration protocol (planning, revi
 CSCCD-MetagenomeFlow/
 ├── scripts/                  183 scripts + scripts/utils/ helpers
 ├── pipeline/                 Snakefile, config, hardware profiles, 11 rule files
-├── agents/                   registry.yaml, 138 skill cards, provenance records
+├── agents/                   registry.yaml, skill cards, optional run provenance records
 ├── docs/                     experience docs (RAG source), tool references
 ├── mcp/                      RAG indexers, bridges, MCP servers
 ├── db/                       ~1.2 TB analysis databases (not in git)
 ├── envs/                     57 conda environments (not in git)
 ├── 0Install.sh               environment + database installation
-├── CLAUDE.md                 agent governance and collaboration protocol
 └── Tutorial.md               per-script documentation (Chinese)
 ```
 

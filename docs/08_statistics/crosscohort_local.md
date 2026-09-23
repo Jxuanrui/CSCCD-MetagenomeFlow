@@ -142,16 +142,10 @@ ${WORKDIR}/result/viz_crosscohort/
 
 ---
 
-## 测试框架
+## 本地多队列测试（使用 mock 数据）
 
-### 快速测试（使用 mock 数据）
-
-```bash
-bash scripts/test_97_crosscohort.sh
-```
-
-**测试内容**：
-1. 复制 `Project_example` 3 份 → `Cohort_A/B/C`
+手动搭建多队列测试布局（仓库不再内置专用测试脚本）：
+1. 复制 `Project_example` 3 份 → `Cohort_A/B/C`（作为 WORKDIR 的兄弟目录）
 2. 修改 metadata 添加 `cohort` 列
 3. 运行本地多队列模式（3 个队列）
 4. 验证 8 个可视化输出

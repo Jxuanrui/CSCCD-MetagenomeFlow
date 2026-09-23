@@ -26,7 +26,7 @@ bash scripts/73_fun_humann4_fungi.sh \
   -s sample \
   -t 1 \
   -w Project/Project_example \
-  -r /home/labuser/Course/Maxmetagenome
+  -r ${PROJ_DIR}
 ```
 
 如果只是想知道真菌在某些 MetaCyc pathway 中是否有贡献，这一步比重跑 HUMAnN3 更省时，也不会引入新的 prescreen 或数据库版本偏差。

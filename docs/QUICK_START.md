@@ -43,7 +43,7 @@ cp /path/to/your/*.fastq.gz Project/MyAnalysis/data/
 samples: "Sample1,Sample2,Sample3"
 
 # 工作目录（绝对路径）
-workdir: "/home/labuser/Course/Maxmetagenome/Project/MyAnalysis"
+workdir: "${PROJ_DIR}/Project/MyAnalysis"
 
 # CPU 核心数（根据服务器配置调整）
 cpus: 16

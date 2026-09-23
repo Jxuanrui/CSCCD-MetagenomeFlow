@@ -2,7 +2,7 @@
 tool: "metaphlan4"
 dimension: "bacteria"
 category: "taxonomy"
-author: "labuser"
+author: "team"
 date: "2026-06-11"
 tags: [parameter-tuning, species-profiling, strain-analysis]
 scenario: [gut-microbiome, high-depth, paired-end]
@@ -67,10 +67,10 @@ metaphlan merged.fastq.gz \
 
 **Status**: validated — 已通过实际运行验证
 
-- 2026-06-12 — User: labuser, Sample: S01, Params: database=mpa_vOct22_CHOCOPhlAnSGB_202212, threads=16, input_type=fastq, Exit: 0, Duration: 84s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
+- 2026-06-12 — User: local, Sample: S01, Params: database=mpa_vOct22_CHOCOPhlAnSGB_202212, threads=16, input_type=fastq, Exit: 0, Duration: 84s, Workdir: ${PROJ_DIR}/Project/Project_example
   - Metrics: n_species=28, n_genus=45, total_taxa=125, top_phylum=Firmicutes (78.9%)
   - 合并双端后单文件输入方式工作正常，SAM 文件已保留供 StrainPhlAn4 使用
-- 2026-06-12 — User: labuser, Sample: S01, Params: threads=16, database=mpa_vOct22_CHOCOPhlAnSGB_202212, input_type=fastq, analysis_type=rel_ab, Exit: 0, Duration: 84s, Workdir: /home/labuser/Course/Maxmetagenome/Project/Project_example
+- 2026-06-12 — User: local, Sample: S01, Params: threads=16, database=mpa_vOct22_CHOCOPhlAnSGB_202212, input_type=fastq, analysis_type=rel_ab, Exit: 0, Duration: 84s, Workdir: ${PROJ_DIR}/Project/Project_example
 
 ## References（可选）
 

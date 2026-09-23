@@ -5,8 +5,8 @@ Batch backfill provenance records from Snakemake run outputs.
 Usage:
     python scripts/batch_provenance_backfill.py \
         --workdir Project/Project_example \
-        --repo /home/labuser/Course/Maxmetagenome \
-        --user labuser \
+        --repo ${PROJ_DIR} \
+        --user local \
         --date 20260617
 
 Generates provenance JSON for all completed steps based on:
