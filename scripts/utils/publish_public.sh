@@ -49,9 +49,13 @@ echo "[publish] rebuilding orphan branch ${BRANCH} from master ${MASTER_SHA} ($(
 git branch -D "${BRANCH}" >/dev/null 2>&1 || true
 git checkout --orphan "${BRANCH}" >/dev/null 2>&1
 git rm -r -q --cached . >/dev/null 2>&1 || true
+# Machine-specific runtime paths in shipped config templates become generic
+# home-relative examples; the master worktree copy is force-restored afterwards.
+sed -i 's|/home/[^/]*/Course/Maxmetagenome|~/Course/Maxmetagenome|g' \
+    pipeline/config/config.yaml pipeline/config/config.test_ci.yaml 2>/dev/null || true
 echo "${FILES}" | xargs -d '\n' git add --
 git commit -q -m "Public snapshot of master ${MASTER_SHA}"
-git checkout -q master
+git checkout -f -q master
 
 # Post-build verification: no excluded paths, no absolute home paths.
 BAD_PATHS="$(git ls-tree -r --name-only "${BRANCH}" | grep -E "${EXCLUDE_RE}" || true)"
