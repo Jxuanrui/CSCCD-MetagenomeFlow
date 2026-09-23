@@ -68,10 +68,12 @@ p <- sv_importance(sv, kind = "beeswarm",
   labs(x = "SHAP value (impact on model output)") +
   theme_cns(y_grid = FALSE) +
   theme(axis.text.y = element_text(face = "italic", size = 6.5),
-        legend.position = "bottom",
-        legend.key.width = unit(4, "mm"),
-        legend.margin = margin(0, 2, 0, 0, "mm"),
-        plot.margin = margin(3, 5, 3, 2, "mm"))
+        legend.position = "right",
+        legend.key.height = unit(14, "mm"),
+        legend.key.width = unit(2.2, "mm"),
+        legend.title = element_text(size = 7.5, angle = 0),
+        legend.margin = margin(0, 0, 0, 0, "mm"),
+        plot.margin = margin(3, 6, 3, 2, "mm"))
 
 export_pub_figure(p, file.path(out_dir, "shap_summary"),
                   CNS_W_SINGLE, 105, formats = c("pdf", "png"))
