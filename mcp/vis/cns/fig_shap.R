@@ -66,6 +66,7 @@ p <- sv_importance(sv, kind = "beeswarm",
   scale_fill_gradient(low = cns_cat[1], high = cns_cat[2],
                       name = "Feature value", breaks = c(0, 1),
                       labels = c("low", "high")) +
+  scale_x_continuous(expand = expansion(mult = c(0.03, 0.08))) +
   labs(x = "SHAP value (impact on model output)") +
   theme_cns(y_grid = FALSE) +
   theme(axis.text.y = element_text(face = "italic", size = 6.5),
