@@ -76,7 +76,7 @@ p <- sv_importance(sv, kind = "beeswarm",
         plot.margin = margin(3, 6, 3, 2, "mm"))
 
 export_pub_figure(p, file.path(out_dir, "shap_summary"),
-                  CNS_W_SINGLE, 105, formats = c("pdf", "png"))
+                  120, 105, formats = c("pdf", "png"))
 
 message(sprintf("[fig_shap] shapviz beeswarm: %d features x %d samples",
                 ncol(sv_shap), nrow(sv_shap)))
