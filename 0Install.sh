@@ -94,13 +94,29 @@
     db=${PROJ_DIR}/db             # 数据库目录
     tools=${PROJ_DIR}/tools       # 辅助脚本目录
 
-    # 本地数据库银行（"方法0"快装复制源）——迁移新服务器时用环境变量覆盖：
-    #   DB_BANK=/path/to/dbbank SIBLING_DB=/path/to/sibling/db bash 0Install.sh
-    # 银行不存在时，各节的 方法0 cp 会失败；改用各节注释掉的 方法1 wget 下载块。
+    # --- 安装模式开关 ---
+    # online（默认）：所有数据库节走官方源下载（原各节注释的"官方地址"块自动执行）
+    # bank：走 DB_BANK/SIBLING_DB 本地数据库银行快装（原"方法0"复制块，行为与历史版本一致）
+    # 用法：bash 0Install.sh online | bash 0Install.sh bank | INSTALL_MODE=bank bash 0Install.sh
+    case "${1:-}" in
+        online|bank) INSTALL_MODE="${1}" ;;
+        *) : "${INSTALL_MODE:=online}" ;;
+    esac
+    case "${INSTALL_MODE}" in
+        online) echo "[INFO] install mode: online (official sources)" ;;
+        bank)   echo "[INFO] install mode: bank (local database bank)" ;;
+        *) echo "[WARN] 未知 INSTALL_MODE='${INSTALL_MODE}'，回退为 online"; INSTALL_MODE=online ;;
+    esac
+
+    # 本地数据库银行（bank 模式"方法0"快装复制源）——迁移新服务器时用环境变量覆盖：
+    #   INSTALL_MODE=bank DB_BANK=/path/to/dbbank SIBLING_DB=/path/to/sibling/db bash 0Install.sh
+    # online 模式不使用银行；bank 模式下银行不存在时，各节 方法0 cp 会失败。
     : "${DB_BANK:=/data/mydirectory/db}"
     : "${SIBLING_DB:=$HOME/Course/Metagenomics_Apptainer_pipline/db}"
-    [ -d "${DB_BANK}" ]     || echo "[WARN] DB_BANK 不存在: ${DB_BANK} —— 方法0 本地快装将失败，请覆盖 DB_BANK 或改用各节方法1"
-    [ -d "${SIBLING_DB}" ]  || echo "[WARN] SIBLING_DB 不存在: ${SIBLING_DB} —— 方法0 本地快装将失败，请覆盖 SIBLING_DB 或改用各节方法1"
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        [ -d "${DB_BANK}" ]     || echo "[WARN] DB_BANK 不存在: ${DB_BANK} —— 方法0 本地快装将失败，请覆盖 DB_BANK 或改用 INSTALL_MODE=online"
+        [ -d "${SIBLING_DB}" ]  || echo "[WARN] SIBLING_DB 不存在: ${SIBLING_DB} —— 方法0 本地快装将失败，请覆盖 SIBLING_DB 或改用 INSTALL_MODE=online"
+    fi
 
     mkdir -p ${envs} ${db} ${tools}
     echo "项目根目录: ${PROJ_DIR}"
@@ -183,15 +199,41 @@
     # 创建数据库目录
     mkdir -p ${db}/kneaddata/{human,mouse,rat}
 
-    # ----
-    # 方法0：从百度云链接进行下载配置
-    # ----
-    cp ${DB_BANK}/kneaddata/human/* ${db}/kneaddata/human/
-    cp ${DB_BANK}/kneaddata/mouse/* ${db}/kneaddata/mouse/
-    cp ${DB_BANK}/kneaddata/rat/*   ${db}/kneaddata/rat/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从百度云链接进行下载配置（bank 模式）
+        # ----
+        cp ${DB_BANK}/kneaddata/human/* ${db}/kneaddata/human/
+        cp ${DB_BANK}/kneaddata/mouse/* ${db}/kneaddata/mouse/
+        cp ${DB_BANK}/kneaddata/rat/*   ${db}/kneaddata/rat/
+    else
+        # ----
+        # 方法2：官方地址下载（online 模式）
+        # ----
+        # 人类基因组 hg37（Huttenhower Lab）
+        conda run --prefix ${envs}/kneaddata kneaddata_database --download human_genome bowtie2 ${db}/kneaddata/human
+
+        # 人类基因组 hg39/T2T（更新版本，3.6 GB）
+        wget -c https://huttenhower.sph.harvard.edu/kneadData_databases/Homo_sapiens_hg39_T2T_Bowtie2_v0.1.tar.gz \
+            -O ${db}/kneaddata/human/Homo_sapiens_hg39_T2T_Bowtie2_v0.1.tar.gz
+        tar xvzf ${db}/kneaddata/human/Homo_sapiens_hg39_T2T_Bowtie2_v0.1.tar.gz \
+            -C ${db}/kneaddata/human/ && rm -f ${db}/kneaddata/human/*.tar.gz
+
+        # 小鼠基因组 C57BL/6NJ（官方，2.83 GB）
+        wget -c http://huttenhower.sph.harvard.edu/kneadData_databases/mouse_C57BL_6NJ_Bowtie2_v0.1.tar.gz \
+            -O ${db}/kneaddata/mouse/mouse_C57BL_6NJ_Bowtie2_v0.1.tar.gz
+        tar xvzf ${db}/kneaddata/mouse/mouse_C57BL_6NJ_Bowtie2_v0.1.tar.gz \
+            -C ${db}/kneaddata/mouse/ && rm -f ${db}/kneaddata/mouse/*.tar.gz
+
+        # 大鼠基因组 Rnor_6.0（bowtie2 index，S3）
+        wget -c https://genome-idx.s3.amazonaws.com/bt/Rnor_6.0.zip \
+            -O ${db}/kneaddata/rat/Rnor_6.0.zip
+        unzip ${db}/kneaddata/rat/Rnor_6.0.zip -d ${db}/kneaddata/rat/ \
+            && rm -f ${db}/kneaddata/rat/Rnor_6.0.zip
+    fi
 
     # ----
-    # 方法1：NMDC 国内镜像下载（国内服务器推荐，速度较快）
+    # 方法1：NMDC 国内镜像下载（备用，国内服务器较快，按需解注释）
     # ----
     # 人类基因组 hg37（3.44 GB）
     # wget -c ftp://download.nmdc.cn/tools/meta/kneaddata/human_genome/Homo_sapiens_hg37_and_human_contamination_Bowtie2_v0.1.tar.gz \
@@ -204,30 +246,6 @@
     #     -O ${db}/kneaddata/mouse/mouse_C57BL_6NJ_Bowtie2_v0.1.tar.gz
     # tar xvzf ${db}/kneaddata/mouse/mouse_C57BL_6NJ_Bowtie2_v0.1.tar.gz \
     #     -C ${db}/kneaddata/mouse/ && rm -f ${db}/kneaddata/mouse/*.tar.gz
-
-    # ----
-    # 方法2：官方地址下载
-    # ----
-    # 人类基因组 hg37（Huttenhower Lab）
-    # kneaddata_database --download human_genome bowtie2 ${db}/kneaddata/human
-
-    # 人类基因组 hg39/T2T（更新版本，3.6 GB）
-    # wget -c https://huttenhower.sph.harvard.edu/kneadData_databases/Homo_sapiens_hg39_T2T_Bowtie2_v0.1.tar.gz \
-    #     -O ${db}/kneaddata/human/Homo_sapiens_hg39_T2T_Bowtie2_v0.1.tar.gz
-    # tar xvzf ${db}/kneaddata/human/Homo_sapiens_hg39_T2T_Bowtie2_v0.1.tar.gz \
-    #     -C ${db}/kneaddata/human/ && rm -f ${db}/kneaddata/human/*.tar.gz
-
-    # 小鼠基因组 C57BL/6NJ（官方，2.83 GB）
-    # wget -c http://huttenhower.sph.harvard.edu/kneadData_databases/mouse_C57BL_6NJ_Bowtie2_v0.1.tar.gz \
-    #     -O ${db}/kneaddata/mouse/mouse_C57BL_6NJ_Bowtie2_v0.1.tar.gz
-    # tar xvzf ${db}/kneaddata/mouse/mouse_C57BL_6NJ_Bowtie2_v0.1.tar.gz \
-    #     -C ${db}/kneaddata/mouse/ && rm -f ${db}/kneaddata/mouse/*.tar.gz
-
-    # 大鼠基因组 Rnor_6.0（bowtie2 index，S3）
-    # wget -c https://genome-idx.s3.amazonaws.com/bt/Rnor_6.0.zip \
-    #     -O ${db}/kneaddata/rat/Rnor_6.0.zip
-    # unzip ${db}/kneaddata/rat/Rnor_6.0.zip -d ${db}/kneaddata/rat/ \
-    #     && rm -f ${db}/kneaddata/rat/Rnor_6.0.zip
 
     echo "KneadData 参考数据库就绪: ${db}/kneaddata/"
     ls ${db}/kneaddata/human/ ${db}/kneaddata/mouse/ ${db}/kneaddata/rat/
@@ -247,8 +265,9 @@
         bowtie2 diamond -c bioconda -c conda-forge
 
     # pip 安装 humann 和 metaphlan（biobakery channel 版本与 Python 3.9 不兼容）
-    conda run --prefix ${envs}/humann4 pip install humann
-    conda run --prefix ${envs}/humann4 pip install metaphlan
+    # 版本固定为本仓库实测通过版本（docs/manifests/envs/humann4.txt）
+    conda run --prefix ${envs}/humann4 pip install humann==3.9
+    conda run --prefix ${envs}/humann4 pip install metaphlan==4.2.4
 
     # 安装 StrainPhlAn4 运行时必须依赖（ 补充，mamba 求解更稳定）
     # 注意：不能用 conda install ncurses=5（会破坏 python 3.9 环境），samtools 必须 >=1.15
@@ -270,34 +289,36 @@
     # 注：服务器现有 humann3 数据库（chocophlan v201901 + uniref90），humann v3.9 可直接使用
     mkdir -p ${db}/humann4/{chocophlan,uniref,utility_mapping}
 
-    # ----
-    # 方法0：从本服务器复制（最快）
-    # ----
-    cp -r ${DB_BANK}/humann3/chocophlan/*    ${db}/humann4/chocophlan/
-    cp -r ${DB_BANK}/humann3/uniref/*        ${db}/humann4/uniref/
-    cp -r ${DB_BANK}/humann3/utility_mapping/* ${db}/humann4/utility_mapping/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（最快，bank 模式）
+        # ----
+        cp -r ${DB_BANK}/humann3/chocophlan/*    ${db}/humann4/chocophlan/
+        cp -r ${DB_BANK}/humann3/uniref/*        ${db}/humann4/uniref/
+        cp -r ${DB_BANK}/humann3/utility_mapping/* ${db}/humann4/utility_mapping/
+    else
+        # ----
+        # 方法1：官方下载（humann v3.9 兼容版本，online 模式）
+        # ----
+        # chocophlan 全库（42 GB）
+        wget -c http://huttenhower.sph.harvard.edu/humann_data/chocophlan/chocophlan.v201901_v31.tar.gz \
+            -O ${db}/humann4/chocophlan.tar.gz
+        tar xvzf ${db}/humann4/chocophlan.tar.gz -C ${db}/humann4/chocophlan/ \
+            && rm -f ${db}/humann4/chocophlan.tar.gz
+        # uniref90 diamond 索引（893 MB）
+        wget -c http://huttenhower.sph.harvard.edu/humann_data/uniprot/uniref_annotated/uniref90_annotated_v201901b.tar.gz \
+            -O ${db}/humann4/uniref90.tar.gz
+        tar xvzf ${db}/humann4/uniref90.tar.gz -C ${db}/humann4/uniref/ \
+            && rm -f ${db}/humann4/uniref90.tar.gz
+        # utility_mapping（2.7 GB）
+        wget -c http://huttenhower.sph.harvard.edu/humann_data/full_mapping_v201901b.tar.gz \
+            -O ${db}/humann4/mapping.tar.gz
+        tar xvzf ${db}/humann4/mapping.tar.gz -C ${db}/humann4/utility_mapping/ \
+            && rm -f ${db}/humann4/mapping.tar.gz
+    fi
 
     # ----
-    # 方法1：官方下载（humann v3.9 兼容版本）
-    # ----
-    # chocophlan 全库（42 GB）
-    # wget -c http://huttenhower.sph.harvard.edu/humann_data/chocophlan/chocophlan.v201901_v31.tar.gz \
-    #     -O ${db}/humann4/chocophlan.tar.gz
-    # tar xvzf ${db}/humann4/chocophlan.tar.gz -C ${db}/humann4/chocophlan/ \
-    #     && rm -f ${db}/humann4/chocophlan.tar.gz
-    # uniref90 diamond 索引（893 MB）
-    # wget -c http://huttenhower.sph.harvard.edu/humann_data/uniprot/uniref_annotated/uniref90_annotated_v201901b.tar.gz \
-    #     -O ${db}/humann4/uniref90.tar.gz
-    # tar xvzf ${db}/humann4/uniref90.tar.gz -C ${db}/humann4/uniref/ \
-    #     && rm -f ${db}/humann4/uniref90.tar.gz
-    # utility_mapping（2.7 GB）
-    # wget -c http://huttenhower.sph.harvard.edu/humann_data/full_mapping_v201901b.tar.gz \
-    #     -O ${db}/humann4/mapping.tar.gz
-    # tar xvzf ${db}/humann4/mapping.tar.gz -C ${db}/humann4/utility_mapping/ \
-    #     && rm -f ${db}/humann4/mapping.tar.gz
-
-    # ----
-    # 方法2：NMDC 国内镜像
+    # 方法2：NMDC 国内镜像（备用，按需解注释）
     # ----
     # wget -c ftp://download.nmdc.cn/tools/meta/humann3/chocophlan.v201901_v31.tar.gz \
     #     -O ${db}/humann4/chocophlan.tar.gz
@@ -325,13 +346,27 @@
     # 注：服务器现有 mpa_vOct22_CHOCOPhlAnSGB_202212 版本
     mkdir -p ${db}/metaphlan4
 
-    # ----
-    # 方法0：从本服务器复制（最快）
-    # ----
-    cp ${DB_BANK}/metaphlan4/* ${db}/metaphlan4/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（最快，bank 模式）
+        # ----
+        cp ${DB_BANK}/metaphlan4/* ${db}/metaphlan4/
+    else
+        # ----
+        # 方法2：官方下载（online 模式）
+        # ----
+        wget -c http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vOct22_CHOCOPhlAnSGB_202403.tar \
+            -O ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403.tar
+        tar xvf ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403.tar -C ${db}/metaphlan4/ \
+            && rm -f ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403.tar
+        wget -c http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar \
+            -O ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar
+        tar xvf ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar -C ${db}/metaphlan4/ \
+            && rm -f ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar
+    fi
 
     # ----
-    # 方法1：NMDC 国内镜像（202403 最新版，推荐）
+    # 方法1：NMDC 国内镜像（备用，202403 最新版，按需解注释）
     # ----
     # wget -c ftp://download.nmdc.cn/tools/meta/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403.tar \
     #     -O ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403.tar
@@ -341,18 +376,6 @@
     #     -O ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar.gz
     # tar xvzf ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar.gz -C ${db}/metaphlan4/ \
     #     && rm -f ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar.gz
-
-    # ----
-    # 方法2：官方下载
-    # ----
-    # wget -c http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vOct22_CHOCOPhlAnSGB_202403.tar \
-    #     -O ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403.tar
-    # tar xvf ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403.tar -C ${db}/metaphlan4/ \
-    #     && rm -f ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403.tar
-    # wget -c http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar \
-    #     -O ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar
-    # tar xvf ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar -C ${db}/metaphlan4/ \
-    #     && rm -f ${db}/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202403_bt2.tar
 
     echo "MetaPhlAn4 数据库就绪: ${db}/metaphlan4/"
 
@@ -378,28 +401,30 @@
     # 注：服务器现有 k2_pluspf_20240112（pluspf 完整版）
     mkdir -p ${db}/kraken2/{pluspf,pluspf16g}
 
-    # ----
-    # 方法0：从本服务器复制（最快）
-    # ----
-    cp ${DB_BANK}/kraken2/pluspf/* ${db}/kraken2/pluspf/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（最快，bank 模式）
+        # ----
+        cp ${DB_BANK}/kraken2/pluspf/* ${db}/kraken2/pluspf/
+    else
+        # ----
+        # 方法1：官方 S3 下载（online 模式）
+        # ----
+        v=20251015
+        # PlusPF-16（压缩 11.2 GB，解压 14.9 GB，适合内存 ≤ 32 GB）
+        wget -c https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_16_GB_${v}.tar.gz \
+            -O ${db}/kraken2/k2_pluspf_16_GB_${v}.tar.gz
+        tar xvzf ${db}/kraken2/k2_pluspf_16_GB_${v}.tar.gz -C ${db}/kraken2/pluspf16g/ \
+            && rm -f ${db}/kraken2/k2_pluspf_16_GB_${v}.tar.gz
+        # PlusPF 完整版（压缩 77.5 GB，解压 100.6 GB，适合内存 ≥ 128 GB）
+        wget -c https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_${v}.tar.gz \
+            -O ${db}/kraken2/k2_pluspf_${v}.tar.gz
+        tar xvzf ${db}/kraken2/k2_pluspf_${v}.tar.gz -C ${db}/kraken2/pluspf/ \
+            && rm -f ${db}/kraken2/k2_pluspf_${v}.tar.gz
+    fi
 
     # ----
-    # 方法1：官方 S3 下载
-    # ----
-    # v=20251015
-    # PlusPF-16（压缩 11.2 GB，解压 14.9 GB，适合内存 ≤ 32 GB）
-    # wget -c https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_16_GB_${v}.tar.gz \
-    #     -O ${db}/kraken2/k2_pluspf_16_GB_${v}.tar.gz
-    # tar xvzf ${db}/kraken2/k2_pluspf_16_GB_${v}.tar.gz -C ${db}/kraken2/pluspf16g/ \
-    #     && rm -f ${db}/kraken2/k2_pluspf_16_GB_${v}.tar.gz
-    # PlusPF 完整版（压缩 77.5 GB，解压 100.6 GB，适合内存 ≥ 128 GB）
-    # wget -c https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_${v}.tar.gz \
-    #     -O ${db}/kraken2/k2_pluspf_${v}.tar.gz
-    # tar xvzf ${db}/kraken2/k2_pluspf_${v}.tar.gz -C ${db}/kraken2/pluspf/ \
-    #     && rm -f ${db}/kraken2/k2_pluspf_${v}.tar.gz
-
-    # ----
-    # 方法2：NMDC 国内镜像
+    # 方法2：NMDC 国内镜像（备用，按需解注释，v 取值见方法1）
     # ----
     # wget -c ftp://download.nmdc.cn/tools/meta/kraken2/k2_pluspf_16_GB_${v}.tar.gz \
     #     -O ${db}/kraken2/k2_pluspf_16_GB_${v}.tar.gz
@@ -435,7 +460,7 @@
 
     # 创建独立 conda 环境（Python 3.9），通过 pip 安装（conda channel 版本绑定 Python 2.7）
     conda create --prefix ${envs}/eggnog python=3.9 -y
-    conda run --prefix ${envs}/eggnog pip install eggnog-mapper
+    conda run --prefix ${envs}/eggnog pip install eggnog-mapper==2.1.13
     conda run --prefix ${envs}/eggnog emapper.py --data_dir ${db}/eggnog --version 2>&1 | grep "Installed eggNOG DB"
 
 
@@ -443,27 +468,29 @@
 
     mkdir -p ${db}/eggnog
 
-    # ----
-    # 方法0：从本服务器复制（最快，约 59 GB）
-    # ----
-    cp ${DB_BANK}/eggnog/eggnog.db                    ${db}/eggnog/
-    cp ${DB_BANK}/eggnog/eggnog_proteins.dmnd          ${db}/eggnog/
-    cp ${DB_BANK}/eggnog/eggnog.taxa.db                ${db}/eggnog/
-    cp ${DB_BANK}/eggnog/eggnog.taxa.db.traverse.pkl   ${db}/eggnog/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（最快，约 59 GB，bank 模式）
+        # ----
+        cp ${DB_BANK}/eggnog/eggnog.db                    ${db}/eggnog/
+        cp ${DB_BANK}/eggnog/eggnog_proteins.dmnd          ${db}/eggnog/
+        cp ${DB_BANK}/eggnog/eggnog.taxa.db                ${db}/eggnog/
+        cp ${DB_BANK}/eggnog/eggnog.taxa.db.traverse.pkl   ${db}/eggnog/
+    else
+        # ----
+        # 方法2：官方脚本下载（eggnog.db 6.3G + eggnog_proteins.dmnd 4.9G，解压后约 48 GB，online 模式）
+        # ----
+        conda run --prefix ${envs}/eggnog \
+            download_eggnog_data.py -y -f --data_dir ${db}/eggnog
+    fi
 
     # ----
-    # 方法1：NMDC 国内镜像
+    # 方法1：NMDC 国内镜像（备用，按需解注释）
     # ----
     # wget -c ftp://download.nmdc.cn/tools/meta/eggnog/eggnog.tar.gz \
     #     -O ${db}/eggnog/eggnog.tar.gz
     # tar xvzf ${db}/eggnog/eggnog.tar.gz -C ${db}/eggnog/ \
     #     && rm -f ${db}/eggnog/eggnog.tar.gz
-
-    # ----
-    # 方法2：官方脚本下载（eggnog.db 6.3G + eggnog_proteins.dmnd 4.9G，解压后约 48 GB）
-    # ----
-    # conda run --prefix ${envs}/eggnog \
-    #     download_eggnog_data.py -y -f --data_dir ${db}/eggnog
 
     # 数据库通过 --data_dir 参数在运行时指定，无需软链接或复制至 site-packages
     # 使用示例：
@@ -497,21 +524,23 @@
 
     mkdir -p ${db}/checkm
 
-    # ----
-    # 方法0：从本服务器复制（1.7 GB）
-    # ----
-    cp -r ${DB_BANK}/checkm/* ${db}/checkm/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（1.7 GB，bank 模式）
+        # ----
+        cp -r ${DB_BANK}/checkm/* ${db}/checkm/
+    else
+        # ----
+        # 方法1：官方下载（275 MB 压缩，解压 1.4 GB，online 模式）
+        # ----
+        wget -c https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz \
+            -O ${db}/checkm/checkm_data_2015_01_16.tar.gz
+        tar xvf ${db}/checkm/checkm_data_2015_01_16.tar.gz -C ${db}/checkm/ \
+            && rm -f ${db}/checkm/checkm_data_2015_01_16.tar.gz
+    fi
 
     # ----
-    # 方法1：官方下载（275 MB 压缩，解压 1.4 GB）
-    # ----
-    # wget -c https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz \
-    #     -O ${db}/checkm/checkm_data_2015_01_16.tar.gz
-    # tar xvf ${db}/checkm/checkm_data_2015_01_16.tar.gz -C ${db}/checkm/ \
-    #     && rm -f ${db}/checkm/checkm_data_2015_01_16.tar.gz
-
-    # ----
-    # 方法2：NMDC 镜像
+    # 方法2：NMDC 镜像（备用，按需解注释）
     # ----
     # wget -c ftp://download.nmdc.cn/tools/meta/checkm/checkm_data_2015_01_16.tar.gz \
     #     -O ${db}/checkm/checkm_data_2015_01_16.tar.gz
@@ -540,7 +569,7 @@ CHECKM_CFG
     conda create --prefix ${envs}/drep python=3.9 -y
     conda install --prefix ${envs}/drep -y \
         hmmer prodigal mash fastani -c bioconda -c conda-forge
-    conda run --prefix ${envs}/drep pip install drep checkm-genome networkx
+    conda run --prefix ${envs}/drep pip install drep==3.6.2 checkm-genome==1.2.5 networkx==3.2.1
     # 设置 checkm 数据库路径（drep 内部调用 checkm）
     bash ${PROJ_DIR}/scripts/checkm_config.sh
     conda run --prefix ${envs}/drep dRep -h 2>&1 | head -3
@@ -566,21 +595,23 @@ CHECKM_CFG
 
     mkdir -p ${db}/gtdbtk
 
-    # ----
-    # 方法0：从本服务器复制（160 GB）
-    # ----
-    cp -r ${DB_BANK}/gtdbtk-2.3.2/* ${db}/gtdbtk/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（160 GB，bank 模式）
+        # ----
+        cp -r ${DB_BANK}/gtdbtk-2.3.2/* ${db}/gtdbtk/
+    else
+        # ----
+        # 方法1：官方下载（online 模式）
+        # ----
+        wget -c https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_package/full_package/gtdbtk_data.tar.gz \
+            -O ${db}/gtdbtk/gtdbtk_data.tar.gz
+        tar xvzf ${db}/gtdbtk/gtdbtk_data.tar.gz -C ${db}/gtdbtk/ --strip 1 \
+            && rm -f ${db}/gtdbtk/gtdbtk_data.tar.gz
+    fi
 
     # ----
-    # 方法1：官方下载
-    # ----
-    # wget -c https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_package/full_package/gtdbtk_data.tar.gz \
-    #     -O ${db}/gtdbtk/gtdbtk_data.tar.gz
-    # tar xvzf ${db}/gtdbtk/gtdbtk_data.tar.gz -C ${db}/gtdbtk/ --strip 1 \
-    #     && rm -f ${db}/gtdbtk/gtdbtk_data.tar.gz
-
-    # ----
-    # 方法2：NMDC 镜像
+    # 方法2：NMDC 镜像（备用，按需解注释）
     # ----
     # wget -c ftp://download.nmdc.cn/tools/meta/gtdbtk/gtdbtk_data.tar.gz \
     #     -O ${db}/gtdbtk/gtdbtk_data.tar.gz
@@ -599,7 +630,7 @@ CHECKM_CFG
         "scikit-learn=0.23.2" "numpy<1.24" h5py diamond pandas scipy \
         -c conda-forge -c bioconda
     conda run --prefix ${envs}/checkm2 pip install \
-        checkm2 tensorflow-cpu wrapt requests
+        checkm2==1.0.1 tensorflow-cpu==2.13.1 wrapt==2.0.1 requests==2.32.3
     conda run --prefix ${envs}/checkm2 checkm2 -h 2>&1 | grep -v "tensorflow\|cuda\|CPU\|Warning\|AVX" | head -5
 
 
@@ -607,19 +638,21 @@ CHECKM_CFG
 
     mkdir -p ${db}/checkm2
 
-    # ----
-    # 方法0：从本服务器复制（2.9 GB）
-    # ----
-    cp -r ${DB_BANK}/checkm2/* ${db}/checkm2/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（2.9 GB，bank 模式）
+        # ----
+        cp -r ${DB_BANK}/checkm2/* ${db}/checkm2/
+    else
+        # ----
+        # 方法1：官方下载（online 模式）
+        # ----
+        conda run --prefix ${envs}/checkm2 \
+            checkm2 database --download --path ${db}/checkm2
+    fi
 
     # ----
-    # 方法1：官方下载
-    # ----
-    # conda run --prefix ${envs}/checkm2 \
-    #     checkm2 database --download --path ${db}/checkm2
-
-    # ----
-    # 方法2：NMDC 镜像
+    # 方法2：NMDC 镜像（备用，按需解注释）
     # ----
     # wget -c ftp://download.nmdc.cn/tools/meta/checkm2/uniref100.KO.1.dmnd.tar.gz \
     #     -O ${db}/checkm2/uniref100.KO.1.dmnd.tar.gz
@@ -654,7 +687,7 @@ CHECKM_CFG
     # VIBRANT 数据库
     mkdir -p ${db}/vibrant
     # ----
-    # 方法0：本服务器无现成数据库，请使用方法1或方法2
+    # 方法0：本服务器无现成数据库，无 bank 快装路径 —— online/bank 两种模式均走官方下载
     # ----
     # 方法1：官方自动下载（约 12 GB）
     # 注：VIBRANT 数据库下载脚本为 download-db.sh，不是 vibrant-setup.py
@@ -669,7 +702,7 @@ CHECKM_CFG
     # CheckV 数据库
     mkdir -p ${db}/checkv
     # ----
-    # 方法0：本服务器无现成数据库，请使用方法1或方法2
+    # 方法0：本服务器无现成数据库，无 bank 快装路径 —— online/bank 两种模式均走官方下载
     # ----
     # 方法1：官方自动下载（约 2 GB）
     conda run --prefix ${envs}/checkv checkv download_database ${db}/checkv
@@ -691,16 +724,21 @@ CHECKM_CFG
 
     # CARD 数据库
     mkdir -p ${db}/card
-    # ----
-    # 方法0：从本服务器复制（48 MB）
-    # ----
-    cp ${DB_BANK}/card/* ${db}/card/
-    # 方法1：官方下载
-    # wget -c https://card.mcmaster.ca/latest/data \
-    #     -O ${db}/card/card-data.tar.gz
-    # tar xvf ${db}/card/card-data.tar.gz -C ${db}/card/ \
-    #     && rm -f ${db}/card/card-data.tar.gz
-    # 方法2：NMDC 镜像
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（48 MB，bank 模式）
+        # ----
+        cp ${DB_BANK}/card/* ${db}/card/
+    else
+        # ----
+        # 方法1：官方下载（online 模式）
+        # ----
+        wget -c https://card.mcmaster.ca/latest/data \
+            -O ${db}/card/card-data.tar.gz
+        tar xvf ${db}/card/card-data.tar.gz -C ${db}/card/ \
+            && rm -f ${db}/card/card-data.tar.gz
+    fi
+    # 方法2：NMDC 镜像（备用，按需解注释）
     # wget -c ftp://download.nmdc.cn/tools/meta/card/card-data.tar.gz \
     #     -O ${db}/card/card-data.tar.gz
     # tar xvf ${db}/card/card-data.tar.gz -C ${db}/card/ \
@@ -722,16 +760,21 @@ CHECKM_CFG
 
     # dbCAN3 数据库
     mkdir -p ${db}/dbcan3
-    # ----
-    # 方法0：从本服务器复制（3.5 GB）
-    # ----
-    cp ${DB_BANK}/dbcan3/* ${db}/dbcan3/
-    # 方法1：官方下载
-    # wget -c https://bcb.unl.edu/dbCAN2/download/CAZyDB.07262023.fa \
-    #     -O ${db}/dbcan3/CAZyDB.07262023.fa
-    # wget -c https://bcb.unl.edu/dbCAN2/download/dbCAN-HMMdb-V12.txt \
-    #     -O ${db}/dbcan3/dbCAN-HMMdb-V12.txt
-    # 方法2：NMDC 镜像
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制（3.5 GB，bank 模式）
+        # ----
+        cp ${DB_BANK}/dbcan3/* ${db}/dbcan3/
+    else
+        # ----
+        # 方法1：官方下载（online 模式）
+        # ----
+        wget -c https://bcb.unl.edu/dbCAN2/download/CAZyDB.07262023.fa \
+            -O ${db}/dbcan3/CAZyDB.07262023.fa
+        wget -c https://bcb.unl.edu/dbCAN2/download/dbCAN-HMMdb-V12.txt \
+            -O ${db}/dbcan3/dbCAN-HMMdb-V12.txt
+    fi
+    # 方法2：NMDC 镜像（备用，按需解注释）
     # wget -c ftp://download.nmdc.cn/tools/meta/dbcan3/CAZyDB.07262023.fa \
     #     -O ${db}/dbcan3/CAZyDB.07262023.fa
     echo "dbCAN3 数据库就绪: ${db}/dbcan3/"
@@ -771,7 +814,7 @@ CHECKM_CFG
     # antiSMASH 数据库（自动下载，约 10 GB）
     mkdir -p ${db}/antismash
     # ----
-    # 方法0：本服务器无现成数据库，请使用方法1或方法2
+    # 方法0：本服务器无现成数据库，无 bank 快装路径 —— online/bank 两种模式均走官方下载
     # ----
     # 方法1：官方自动下载
     conda run --prefix ${envs}/antismash \
@@ -974,22 +1017,27 @@ CHECKM_CFG
 
     mkdir -p ${db}/centrifuger
 
-    # ----
-    # 方法0：从 Apptainer 项目复制（最快）
-    # ----
-    cp -r ${SIBLING_DB}/centrifuger/* ${db}/centrifuger/
-
-    # ----
-    # 方法1：官方下载
-    # ----
-    # wget -c https://genome-idx.s3.amazonaws.com/centrifuger/cfr_gtdb_r226+refseq_hvfc.tar.gz \
-    #     -O ${db}/centrifuger/cfr_gtdb_r226+refseq_hvfc.tar.gz
-    # tar xvzf ${db}/centrifuger/cfr_gtdb_r226+refseq_hvfc.tar.gz -C ${db}/centrifuger/ \
-    #     && rm -f ${db}/centrifuger/*.tar.gz
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从 Apptainer 项目复制（最快，bank 模式）
+        # ----
+        cp -r ${SIBLING_DB}/centrifuger/* ${db}/centrifuger/
+    else
+        # ----
+        # 方法1：官方下载（online 模式）
+        # ----
+        wget -c https://genome-idx.s3.amazonaws.com/centrifuger/cfr_gtdb_r226+refseq_hvfc.tar.gz \
+            -O ${db}/centrifuger/cfr_gtdb_r226+refseq_hvfc.tar.gz
+        tar xvzf ${db}/centrifuger/cfr_gtdb_r226+refseq_hvfc.tar.gz -C ${db}/centrifuger/ \
+            && rm -f ${db}/centrifuger/*.tar.gz
+    fi
     echo "Centrifuger 数据库就绪: ${db}/centrifuger/"
 
 
 # --- 7.5 功能注释数据库（从 Apptainer 项目复制）---
+# 注：本组数据库（vfdb/bacmet/merops/kegg/amrfinder/sarg/phi/mvirdb/tcdb/ncyc/pcyc）
+#     脚本内无官方在线下载源，online/bank 两种模式均从 ${SIBLING_DB} 本地复制；
+#     外部部署需自备 SIBLING_DB 或按各数据库官网手工下载。
 
     # VFDB 毒力因子（2.0 GB）
     mkdir -p ${db}/vfdb
@@ -1051,17 +1099,19 @@ CHECKM_CFG
 
     mkdir -p ${db}/genomad
 
-    # ----
-    # 方法0：从压缩包解压（Apptainer 项目有 tar.gz）
-    # ----
-    tar xvzf ${SIBLING_DB}/genomad.tar.gz \
-        -C ${db}/genomad/ 2>/dev/null \
-        || echo "genomad.tar.gz 解压失败，请使用方法1"
-
-    # ----
-    # 方法1：官方下载
-    # ----
-    # conda run --prefix ${envs}/genomad genomad download-database ${db}/genomad
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从压缩包解压（Apptainer 项目有 tar.gz，bank 模式）
+        # ----
+        tar xvzf ${SIBLING_DB}/genomad.tar.gz \
+            -C ${db}/genomad/ 2>/dev/null \
+            || echo "genomad.tar.gz 解压失败，请使用方法1"
+    else
+        # ----
+        # 方法1：官方下载（online 模式）
+        # ----
+        conda run --prefix ${envs}/genomad genomad download-database ${db}/genomad
+    fi
     echo "genomad 数据库就绪: ${db}/genomad/"
 
 
@@ -1162,6 +1212,7 @@ CHECKM_CFG
     # 推荐方法0：使用本服务器已有 kofam_profiles 直接构建（约 30 分钟）
     mkdir -p ${db}/vibrant
 
+    if [ "${INSTALL_MODE}" = "bank" ]; then
     # ----
     # 方法0：使用已有 kofam_profiles 构建（需 ViOTUcluster 或类似项目的 kofam 数据）
     # ----
@@ -1184,6 +1235,12 @@ CHECKM_CFG
     rm -f kegg_temp_full.HMM kegg_temp.HMM vog_temp.HMM vog.hmm.tar.gz profiles.tar.gz Pfam-A.hmm
     rm -rf profiles/ VOG*.hmm
     echo "VIBRANT 数据库就绪: ${db}/vibrant/ ($(du -sh ${db}/vibrant/ | awk '{print $1}'))"
+    else
+    # ----
+    # online 模式：db/vibrant 已由 §5.1 的官方 download-db.sh 下载完成，此处不重复
+    # ----
+    echo "[INFO] online 模式：VIBRANT 数据库由 §5.1 官方 download-db.sh 获取，跳过本地 kofam 重建"
+    fi
 
     # ----
     # 方法1：官方自动下载（KEGG 来自日本 FTP，可能极慢）
@@ -1204,20 +1261,22 @@ CHECKM_CFG
     # 注：从 Apptainer 项目解压（3.9 GB），无需网络下载
     mkdir -p ${db}/antismash
 
-    # ----
-    # 方法0：从 Apptainer 项目解压（推荐）
-    # ----
-    # 注：解压后数据库实际路径为 ${db}/antismash/antismash-db/
-    # 使用时：antismash --databases ${db}/antismash/antismash-db
-    tar xzf ${SIBLING_DB}/antismash-db.tar.gz \
-        -C ${db}/antismash/ \
-        && echo "antiSMASH 数据库就绪: ${db}/antismash/antismash-db/ ($(ls ${db}/antismash/antismash-db/ | wc -l) 个模块)"
-
-    # ----
-    # 方法1：官方自动下载（约 10 GB）
-    # ----
-    # conda run --prefix ${envs}/antismash \
-    #     download-antismash-databases --database-dir ${db}/antismash
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从 Apptainer 项目解压（推荐，bank 模式）
+        # ----
+        # 注：解压后数据库实际路径为 ${db}/antismash/antismash-db/
+        # 使用时：antismash --databases ${db}/antismash/antismash-db
+        tar xzf ${SIBLING_DB}/antismash-db.tar.gz \
+            -C ${db}/antismash/ \
+            && echo "antiSMASH 数据库就绪: ${db}/antismash/antismash-db/ ($(ls ${db}/antismash/antismash-db/ | wc -l) 个模块)"
+    else
+        # ----
+        # 方法1：官方自动下载（约 10 GB，online 模式；§5.5 已下载过则此处为幂等更新）
+        # ----
+        conda run --prefix ${envs}/antismash \
+            download-antismash-databases --database-dir ${db}/antismash
+    fi
 
     # ----
     # 方法2：NMDC 镜像
@@ -1252,7 +1311,7 @@ CHECKM_CFG
 # --- 9.1 创建 RAG conda 环境 ---
 
     conda create --prefix ${envs}/rag python=3.10 -y 2>/dev/null
-    conda run --prefix ${envs}/rag pip install -q chromadb sentence-transformers requests
+    conda run --prefix ${envs}/rag pip install -q chromadb==1.5.9 sentence-transformers==5.5.1 requests==2.34.2
 
     # 验证安装
     conda run --prefix ${envs}/rag python -c "
@@ -1305,6 +1364,7 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
     mkdir -p ${db}/virsorter2
     # ----
     # 方法1：官方在线 setup（推荐，自动下载所有模型文件）
+    # 注：无 bank 快装路径 —— online/bank 两种模式均走官方下载
     # ----
     conda run --prefix ${envs}/virsorter2 \
         virsorter setup -d ${db}/virsorter2 -j 4
@@ -1343,16 +1403,19 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     # PHAROKKA 数据库（从 Virus 项目解压，550 MB）
     mkdir -p ${db}/pharokka
-    # ----
-    # 方法0：从 Virus_Apptainer_pipline 解压（推荐）
-    # ----
-    tar xzf ${VIRUS_PROJ}/db/pharokka-db.tar.gz \
-        -C ${db}/pharokka/ --strip-components=1 \
-        && echo "PHAROKKA 数据库就绪: ${db}/pharokka/"
-    # ----
-    # 方法1：官方自动下载
-    # ----
-    # conda run --prefix ${envs}/pharokka install_databases.py -d ${db}/pharokka
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从 Virus_Apptainer_pipline 解压（推荐，bank 模式）
+        # ----
+        tar xzf ${VIRUS_PROJ}/db/pharokka-db.tar.gz \
+            -C ${db}/pharokka/ --strip-components=1 \
+            && echo "PHAROKKA 数据库就绪: ${db}/pharokka/"
+    else
+        # ----
+        # 方法1：官方自动下载（online 模式）
+        # ----
+        conda run --prefix ${envs}/pharokka install_databases.py -d ${db}/pharokka
+    fi
     echo "PHAROKKA 数据库就绪: ${db}/pharokka/"
 
 
@@ -1366,16 +1429,19 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     # PHOLD 数据库（从 Virus 项目解压，解压约 32 GB，耗时较长）
     mkdir -p ${db}/phold
-    # ----
-    # 方法0：从 Virus_Apptainer_pipline 解压（推荐，约 20-30 分钟）
-    # ----
-    tar xzf ${VIRUS_PROJ}/db/phold-db.tar.gz \
-        -C ${db}/phold/ --strip-components=1 \
-        && echo "PHOLD 数据库就绪: ${db}/phold/"
-    # ----
-    # 方法1：官方自动下载
-    # ----
-    # conda run --prefix ${envs}/phold phold install -d ${db}/phold
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从 Virus_Apptainer_pipline 解压（推荐，约 20-30 分钟，bank 模式）
+        # ----
+        tar xzf ${VIRUS_PROJ}/db/phold-db.tar.gz \
+            -C ${db}/phold/ --strip-components=1 \
+            && echo "PHOLD 数据库就绪: ${db}/phold/"
+    else
+        # ----
+        # 方法1：官方自动下载（online 模式）
+        # ----
+        conda run --prefix ${envs}/phold phold install -d ${db}/phold
+    fi
     echo "PHOLD 数据库就绪: ${db}/phold/"
 
 
@@ -1386,7 +1452,7 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
     # 注：bacphlip 官方 conda 包名为 bacphlip，python 3.8 更稳定
     conda install --prefix ${envs}/bacphlip -y \
         python=3.8 -c conda-forge
-    conda run --prefix ${envs}/bacphlip pip install bacphlip
+    conda run --prefix ${envs}/bacphlip pip install bacphlip==0.9.6
     # 安装 hmmer（bacphlip 依赖 hmmscan）
     conda install --prefix ${envs}/bacphlip -y hmmer -c bioconda -c conda-forge
     conda run --prefix ${envs}/bacphlip python -m bacphlip --version 2>&1 | head -1
@@ -1404,16 +1470,19 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
     # iPHoP 数据库（294 GB，Virus 项目已解压，直接软链接节省磁盘）
     # 注：目录结构为 iphop-db/Jun_2025_pub_rw/
     mkdir -p ${db}/iphop
-    # ----
-    # 方法0：软链接 Virus 项目已解压目录（推荐，节省 294 GB）
-    # ----
-    ln -sfn ${VIRUS_PROJ}/db/iphop-db/Jun_2025_pub_rw \
-        ${db}/iphop/Jun_2025_pub_rw \
-        && echo "iPHoP 数据库软链接就绪: ${db}/iphop/"
-    # ----
-    # 方法1：官方下载（需要大量时间和磁盘，不推荐）
-    # ----
-    # conda run --prefix ${envs}/iphop iphop download --db_dir ${db}/iphop
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：软链接 Virus 项目已解压目录（推荐，节省 294 GB，bank 模式）
+        # ----
+        ln -sfn ${VIRUS_PROJ}/db/iphop-db/Jun_2025_pub_rw \
+            ${db}/iphop/Jun_2025_pub_rw \
+            && echo "iPHoP 数据库软链接就绪: ${db}/iphop/"
+    else
+        # ----
+        # 方法1：官方下载（online 模式；需要大量时间和磁盘，约 294 GB）
+        # ----
+        conda run --prefix ${envs}/iphop iphop download --db_dir ${db}/iphop
+    fi
     echo "iPHoP 数据库就绪: ${db}/iphop/"
 
 
@@ -1427,17 +1496,20 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     # vConTACT3 数据库（从 Virus 项目解压，3.4 GB）
     mkdir -p ${db}/vcontact3
-    # ----
-    # 方法0：从 Virus_Apptainer_pipline 解压（推荐）
-    # ----
-    tar xzf ${VIRUS_PROJ}/db/vcontact3-db.tar.gz \
-        -C ${db}/vcontact3/ --strip-components=1 \
-        && echo "vConTACT3 数据库就绪: ${db}/vcontact3/"
-    # ----
-    # 方法1：官方构建
-    # ----
-    # conda run --prefix ${envs}/vcontact3 \
-    #     vcontact3 prepare_databases --db-path ${db}/vcontact3/
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从 Virus_Apptainer_pipline 解压（推荐，bank 模式）
+        # ----
+        tar xzf ${VIRUS_PROJ}/db/vcontact3-db.tar.gz \
+            -C ${db}/vcontact3/ --strip-components=1 \
+            && echo "vConTACT3 数据库就绪: ${db}/vcontact3/"
+    else
+        # ----
+        # 方法1：官方构建（online 模式）
+        # ----
+        conda run --prefix ${envs}/vcontact3 \
+            vcontact3 prepare_databases --db-path ${db}/vcontact3/
+    fi
     echo "vConTACT3 数据库就绪: ${db}/vcontact3/"
 
 
@@ -1445,18 +1517,23 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 # 说明：envs/checkv 已安装（§5.1），仅缺数据库（2 GB）
 
     mkdir -p ${db}/checkv
-    # ----
-    # 方法0：从 Virus_Apptainer_pipline 解压（推荐，2.1 GB tar.gz）
-    # 注：tar 内顶层目录为 checkv-db/，用 --strip-components=1 直接解压到 ${db}/checkv/
-    # ----
-    tar xzf ${VIRUS_PROJ}/db/checkv-db.tar.gz \
-        -C ${db}/checkv/ --strip-components=1 \
-        && echo "CheckV 数据库就绪: ${db}/checkv/"
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从 Virus_Apptainer_pipline 解压（推荐，2.1 GB tar.gz，bank 模式）
+        # 注：tar 内顶层目录为 checkv-db/，用 --strip-components=1 直接解压到 ${db}/checkv/
+        # ----
+        tar xzf ${VIRUS_PROJ}/db/checkv-db.tar.gz \
+            -C ${db}/checkv/ --strip-components=1 \
+            && echo "CheckV 数据库就绪: ${db}/checkv/"
+    else
+        # ----
+        # 方法1：官方自动下载（online 模式；§5.1 已执行过 checkv download_database，
+        # 此处不重复下载，如需强制重建可手动运行下面命令）
+        # ----
+        # conda run --prefix ${envs}/checkv checkv download_database ${db}/checkv
+        echo "[INFO] online 模式：CheckV 数据库已由 §5.1 官方 checkv download_database 获取"
+    fi
     ls ${db}/checkv/ 2>/dev/null | head -5
-    # ----
-    # 方法1：官方自动下载
-    # ----
-    # conda run --prefix ${envs}/checkv checkv download_database ${db}/checkv
 
 
 # --- 10.10 VOG 数据库  [✓ 已完成] ---
@@ -1466,6 +1543,7 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
     # ----
     # 方法0：从 Virus_Apptainer_pipline 解压（推荐，2.4 GB tar.gz）
     # 注：解压后结构为 vog/vog.hmm.gz, vog/vog.dmnd, vog/misc/ 等
+    # 注：脚本内无官方在线下载源，online/bank 两种模式均走本地 tar 解压
     # ----
     tar xzf ${VIRUS_PROJ}/db/vog.tar.gz \
         -C ${db}/vogdb/ --strip-components=1 \
@@ -1492,25 +1570,28 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     mkdir -p ${db}/fungi
 
-    # ----
-    # 方法0：从本服务器复制并构建 DMND（推荐，19G fasta → ~8G DMND，需数小时）
-    # ----
-    if [ ! -f "${db}/fungi/gut_fungi.dmnd" ]; then
-        cp ${DB_BANK}/fungi_human_gut_reference/combined.fasta ${db}/fungi/combined.fasta
-        conda run --prefix ${envs}/assembly diamond makedb \
-            --in ${db}/fungi/combined.fasta \
-            -d ${db}/fungi/gut_fungi \
-            --threads "$(nproc)" --ignore-warnings
-        echo "肠道真菌 DIAMOND DB 构建完成"
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ----
+        # 方法0：从本服务器复制并构建 DMND（推荐，19G fasta → ~8G DMND，需数小时，bank 模式）
+        # ----
+        if [ ! -f "${db}/fungi/gut_fungi.dmnd" ]; then
+            cp ${DB_BANK}/fungi_human_gut_reference/combined.fasta ${db}/fungi/combined.fasta
+            conda run --prefix ${envs}/assembly diamond makedb \
+                --in ${db}/fungi/combined.fasta \
+                -d ${db}/fungi/gut_fungi \
+                --threads "$(nproc)" --ignore-warnings
+            echo "肠道真菌 DIAMOND DB 构建完成"
+        fi
+    else
+        # ----
+        # 方法1：官方 NCBI 数据集下载（online 模式）
+        # ----
+        # 使用 ncbi_datasets 工具下载肠道真菌基因组集合，合并后构建 DMND
+        # 注：以下命令需在 ${db}/fungi 目录下执行（ncbi_datasets 工具位于 envs/assembly）
+        datasets download genome taxon fungi --refseq --annotated --include genome
+        unzip ncbi_dataset.zip && cat ncbi_dataset/data/*/*.fna > combined.fasta
+        conda run --prefix ${envs}/assembly diamond makedb --in combined.fasta -d gut_fungi --threads "$(nproc)" --ignore-warnings
     fi
-
-    # ----
-    # 方法1：官方 NCBI 数据集下载
-    # ----
-    # 使用 ncbi_datasets 工具下载肠道真菌基因组集合，合并后构建 DMND
-    # datasets download genome taxon fungi --refseq --annotated --include genome
-    # unzip ncbi_dataset.zip && cat ncbi_dataset/data/*/*.fna > combined.fasta
-    # conda run --prefix ${envs}/assembly diamond makedb --in combined.fasta -d gut_fungi --threads $(nproc) --ignore-warnings
 
     ls -lh ${db}/fungi/gut_fungi.dmnd 2>/dev/null
 
@@ -1803,19 +1884,21 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     mkdir -p ${db}/uniprot_sprot
 
-    # ---- 方法0：从参考项目复制（推荐，已完成）----
-    cp -r ${SIBLING_DB}/uniprot_sprot/* \
-        ${db}/uniprot_sprot/
-    echo "UniProt Swiss-Prot 就绪: ${db}/uniprot_sprot/"
-
-    # ---- 方法1：官方下载（已注释，仅在 db 损坏时重建）----
-    # wget -c https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz \
-    #     -O ${db}/uniprot_sprot/uniprot_sprot.fasta.gz
-    # gzip -dk ${db}/uniprot_sprot/uniprot_sprot.fasta.gz
-    # conda run --prefix ${envs}/assembly diamond makedb \
-    #     --in ${db}/uniprot_sprot/uniprot_sprot.fasta \
-    #     --db ${db}/uniprot_sprot/uniprot_sprot.dmnd \
-    #     --threads 16
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ---- 方法0：从参考项目复制（推荐，已完成，bank 模式）----
+        cp -r ${SIBLING_DB}/uniprot_sprot/* \
+            ${db}/uniprot_sprot/
+        echo "UniProt Swiss-Prot 就绪: ${db}/uniprot_sprot/"
+    else
+        # ---- 方法1：官方下载 + DIAMOND 建库（online 模式）----
+        wget -c https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz \
+            -O ${db}/uniprot_sprot/uniprot_sprot.fasta.gz
+        gzip -dk ${db}/uniprot_sprot/uniprot_sprot.fasta.gz
+        conda run --prefix ${envs}/assembly diamond makedb \
+            --in ${db}/uniprot_sprot/uniprot_sprot.fasta \
+            --db ${db}/uniprot_sprot/uniprot_sprot.dmnd \
+            --threads 16
+    fi
     ls -lh ${db}/uniprot_sprot/
 
 # --- §15.2 Pfam-A HMM 数据库 [✓ 已完成] ---
@@ -1825,16 +1908,18 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     mkdir -p ${db}/pfam
 
-    # ---- 方法0：从参考项目复制（推荐，已完成，含 hmmpress 索引）----
-    cp -r ${SIBLING_DB}/pfam/* \
-        ${db}/pfam/
-    echo "Pfam-A 就绪: ${db}/pfam/"
-
-    # ---- 方法1：官方下载 + hmmpress（已注释）----
-    # wget -c https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz \
-    #     -O ${db}/pfam/Pfam-A.hmm.gz
-    # gzip -dk ${db}/pfam/Pfam-A.hmm.gz
-    # conda run --prefix ${envs}/assembly hmmpress ${db}/pfam/Pfam-A.hmm
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        # ---- 方法0：从参考项目复制（推荐，已完成，含 hmmpress 索引，bank 模式）----
+        cp -r ${SIBLING_DB}/pfam/* \
+            ${db}/pfam/
+        echo "Pfam-A 就绪: ${db}/pfam/"
+    else
+        # ---- 方法1：官方下载 + hmmpress（online 模式）----
+        wget -c https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz \
+            -O ${db}/pfam/Pfam-A.hmm.gz
+        gzip -dk ${db}/pfam/Pfam-A.hmm.gz
+        conda run --prefix ${envs}/assembly hmmpress ${db}/pfam/Pfam-A.hmm
+    fi
     ls -lh ${db}/pfam/
 
 # --- §15.3 MGE 可移动遗传元素数据库组 [✓ 已完成] ---
@@ -1843,30 +1928,35 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     # ── ISfinder（插入序列，2.7 MB .faa + 16 MB .udb）──
     mkdir -p ${db}/ISfinder
-    cp -r ${SIBLING_DB}/ISfinder/* \
-        ${db}/ISfinder/
-    echo "ISfinder 就绪: ${db}/ISfinder/"
-
-    # ---- 方法1：官方下载 + DIAMOND 建库 ----
-    # wget -c https://isfinder.biotoul.fr/download/ISfinder.faa -O ${db}/ISfinder/ISfinder.faa
-    # conda run --prefix ${envs}/assembly diamond makedb \
-    #     --in ${db}/ISfinder/ISfinder.faa \
-    #     --db ${db}/ISfinder/ISfinder.dmnd --threads 16
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        cp -r ${SIBLING_DB}/ISfinder/* \
+            ${db}/ISfinder/
+        echo "ISfinder 就绪: ${db}/ISfinder/"
+    else
+        # ---- 方法1：官方下载 + DIAMOND 建库（online 模式）----
+        wget -c https://isfinder.biotoul.fr/download/ISfinder.faa -O ${db}/ISfinder/ISfinder.faa
+        conda run --prefix ${envs}/assembly diamond makedb \
+            --in ${db}/ISfinder/ISfinder.faa \
+            --db ${db}/ISfinder/ISfinder.dmnd --threads 16
+    fi
 
     # ── ICEberg（整合接合元件，33 MB .fasta）──
     mkdir -p ${db}/ICEberg
-    cp -r ${SIBLING_DB}/ICEberg/* \
-        ${db}/ICEberg/
-    echo "ICEberg 就绪: ${db}/ICEberg/"
-
-    # ---- 方法1：官方下载 + BLAST 建库 ----
-    # wget -c https://db-mml.sjtu.edu.cn/ICEberg2/download/ICEberg.fasta \
-    #     -O ${db}/ICEberg/ICEberg.fasta
-    # conda run --prefix ${envs}/assembly makeblastdb \
-    #     -in ${db}/ICEberg/ICEberg.fasta -dbtype prot \
-    #     -out ${db}/ICEberg/blast/ICEberg
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        cp -r ${SIBLING_DB}/ICEberg/* \
+            ${db}/ICEberg/
+        echo "ICEberg 就绪: ${db}/ICEberg/"
+    else
+        # ---- 方法1：官方下载 + BLAST 建库（online 模式）----
+        wget -c https://db-mml.sjtu.edu.cn/ICEberg2/download/ICEberg.fasta \
+            -O ${db}/ICEberg/ICEberg.fasta
+        conda run --prefix ${envs}/assembly makeblastdb \
+            -in ${db}/ICEberg/ICEberg.fasta -dbtype prot \
+            -out ${db}/ICEberg/blast/ICEberg
+    fi
 
     # ── integrall（整合子，30 MB .ffn + BLAST 索引）──
+    # 注：脚本内无官方在线下载源，online/bank 两种模式均从 ${SIBLING_DB} 复制
     mkdir -p ${db}/integrall
     cp -r ${SIBLING_DB}/integrall/* \
         ${db}/integrall/
@@ -1874,15 +1964,17 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     # ── transposase-db（转座酶 HMM，4.3 MB .hmm + hmmpress 索引）──
     mkdir -p ${db}/transposase-db
-    cp -r ${SIBLING_DB}/transposase-db/* \
-        ${db}/transposase-db/
-    echo "transposase-db 就绪: ${db}/transposase-db/"
-
-    # ---- 方法1：官方下载 + hmmpress ----
-    # wget -c https://github.com/cjmateos/transposase-db/raw/main/transposase.hmm.gz \
-    #     -O ${db}/transposase-db/transposase.hmm.gz
-    # gzip -dk ${db}/transposase-db/transposase.hmm.gz
-    # conda run --prefix ${envs}/assembly hmmpress ${db}/transposase-db/transposase.hmm
+    if [ "${INSTALL_MODE}" = "bank" ]; then
+        cp -r ${SIBLING_DB}/transposase-db/* \
+            ${db}/transposase-db/
+        echo "transposase-db 就绪: ${db}/transposase-db/"
+    else
+        # ---- 方法1：官方下载 + hmmpress（online 模式）----
+        wget -c https://github.com/cjmateos/transposase-db/raw/main/transposase.hmm.gz \
+            -O ${db}/transposase-db/transposase.hmm.gz
+        gzip -dk ${db}/transposase-db/transposase.hmm.gz
+        conda run --prefix ${envs}/assembly hmmpress ${db}/transposase-db/transposase.hmm
+    fi
     ls -lh ${db}/transposase-db/
 
 # --- §15.4 FeGenie（铁代谢基因预测）[✓ 已完成] ---
@@ -1976,15 +2068,18 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
     conda run --prefix ${envs}/sylph sylph --version
 
     # 数据库下载（GTDB-R220，113,104 个物种代表基因组，-c200 灵敏版，13.1GB）
-    # 主站较慢时改用 Google Cloud 镜像（实测更快）：
-    # wget -c https://storage.googleapis.com/sylph-stuff/gtdb-r220-c200-dbv1.syldb \
-    #     -O ${db}/sylph/gtdb-r220-c200-dbv1.syldb
+    if [ "${INSTALL_MODE}" = "online" ]; then
+        # Google Cloud 镜像（官方维护，实测比主站更快）：
+        wget -c https://storage.googleapis.com/sylph-stuff/gtdb-r220-c200-dbv1.syldb \
+            -O ${db}/sylph/gtdb-r220-c200-dbv1.syldb
+
+        # taxonomy metadata（sylph-tax 用于把 genome ID 转成物种名，含 GTDB_r220/r214/
+        # FungiRefSeq 等全部支持的分类体系，体积小，直接用官方下载子命令即可）：
+        conda run --prefix ${envs}/sylph sylph-tax download --download-to ${db}/sylph
+    fi
+    # 主站备用（较慢，按需解注释）：
     # wget -c http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r220-c200-dbv1.syldb \
     #     -O ${db}/sylph/gtdb-r220-c200-dbv1.syldb
-
-    # taxonomy metadata（sylph-tax 用于把 genome ID 转成物种名，含 GTDB_r220/r214/
-    # FungiRefSeq 等全部支持的分类体系，体积小，直接用官方下载子命令即可）：
-    # conda run --prefix ${envs}/sylph sylph-tax download --download-to ${db}/sylph
 
     echo "[INFO] sylph + sylph-tax 已安装于 envs/sylph"
     echo "       数据库路径: ${db}/sylph/gtdb-r220-c200-dbv1.syldb"

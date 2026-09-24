@@ -67,6 +67,21 @@ source scripts/activate.sh
 bash scripts/checkm_config.sh
 ```
 
+### Install Footprint
+
+What `bash 0Install.sh` (default `INSTALL_MODE=online`, official sources) costs on a fresh machine — all figures are order-of-magnitude:
+
+| Resource | Scale |
+|----------|-------|
+| Disk — conda envs (`miniforge3/` + `envs/`, 57 environments) | ~60 GB |
+| Disk — databases (`db/`, 58 database directories) | ~1.2 TB |
+| Network download | ~0.5–1 TB total, dozens of official sources |
+| Wall time | hours at 100 MB/s sustained; days on slower links (database downloads dominate) |
+
+With a local database bank (`INSTALL_MODE=bank` + `DB_BANK`/`SIBLING_DB`), the database stage collapses to local copies. Per-database provenance: `docs/manifests/databases.yaml`; per-env software locks: `docs/manifests/envs/`.
+
+Zero-database demo path: `bash mcp/vis/build_gallery.sh` renders the full figure gallery with only the `r_stat` env — no `db/` content required.
+
 ### Run Modes
 
 **Step-by-step** — debugging, fine-grained control:
