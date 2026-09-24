@@ -262,14 +262,46 @@ bash scripts/checkm_config.sh
 
 ## Tools & References
 
-MetaPhlAn4 · StrainPhlAn4 · HUMAnN3 · Kraken2/Bracken · Centrifuger · sylph · MetaX · MEGAHIT · metaSPAdes · Prodigal · CD-HIT · Salmon · eggNOG-mapper · AMRFinderPlus · CARD/RGI · dbCAN3 · antiSMASH 8 · Defense-Finder · NCyc · PCyc · SCyc · BacMet · VFDB · CoverM · MetaBAT2 · MaxBin2 · SemiBin 2.5 · QuickBin · DAS_Tool · CheckM2 · GUNC · dRep · GTDB-Tk · Prokka · mlst · Roary · Snippy · geNomad · VirSorter2 · CheckV · vclust · PHAROKKA · PHOLD · VOGDB · BACPHLIP · PhaGCN3 · PhaStyle · iPHoP · vConTACT3 · DRAM · PhaBox2 · FunOMIC · CCMetagen · MicroFisher · Eukfinder · Tiara · BUSCO · MetaEuk · MEROPS · GutMGene v2.0 · MicrobiomeKG · BugSigDB · SIAMCAT · DESeq2 · ANCOM-BC2 · MaAsLin2 · MMUPHin · ConQuR · FastSpar · MBECS
+**Taxonomic profiling**
 
----
+[![MetaPhlAn4](https://img.shields.io/badge/MetaPhlAn4-2F5C9E)](https://huttenhower.sph.harvard.edu/metaphlan/) [![StrainPhlAn4](https://img.shields.io/badge/StrainPhlAn4-2F5C9E)](https://huttenhower.sph.harvard.edu/strainphlan/) [![Kraken2](https://img.shields.io/badge/Kraken2-2F5C9E)](https://ccb.jhu.edu/software/kraken2/) [![Bracken](https://img.shields.io/badge/Bracken-2F5C9E)](https://ccb.jhu.edu/software/bracken/) [![Centrifuger](https://img.shields.io/badge/Centrifuger-2F5C9E)](https://ccb.jhu.edu/software/centrifuger/)  
+[![sylph](https://img.shields.io/badge/sylph-2F5C9E)](https://github.com/bluenote-1577/sylph) ![MetaX](https://img.shields.io/badge/MetaX-2F5C9E)  
 
-## Community
+**Assembly & quantification**
 
-<p align="center">
-  <img src="docs/figures/wechat.jpg" width="320" alt="WeChat official account 肠动心弦 QR card">
-</p>
+[![MEGAHIT](https://img.shields.io/badge/MEGAHIT-1B9E9E)](https://github.com/voutcn/megahit) [![metaSPAdes](https://img.shields.io/badge/metaSPAdes-1B9E9E)](https://github.com/ablab/spades) [![Prodigal](https://img.shields.io/badge/Prodigal-1B9E9E)](https://github.com/hyattpd/Prodigal) [![CD-HIT](https://img.shields.io/badge/CD-HIT-1B9E9E)](http://weizhongli-lab.org/cd-hit/) [![Salmon](https://img.shields.io/badge/Salmon-1B9E9E)](https://salmon.readthedocs.io/)  
 
-<p align="center"><em>Scan to follow the WeChat official account <b>肠动心弦</b> — tutorials, release notes, and metagenomics how-tos (Chinese).</em></p>
+**MAG recovery & QC**
+
+[![CoverM](https://img.shields.io/badge/CoverM-C0392B)](https://github.com/wwood/CoverM) [![MetaBAT2](https://img.shields.io/badge/MetaBAT2-C0392B)](https://bitbucket.org/berkeleylab/metabat/) [![MaxBin2](https://img.shields.io/badge/MaxBin2-C0392B)](https://sourceforge.net/projects/maxbin/) [![SemiBin 2.5](https://img.shields.io/badge/SemiBin%202.5-C0392B)](https://github.com/BigDataBiology/SemiBin) ![QuickBin](https://img.shields.io/badge/QuickBin-C0392B)  
+[![DAS Tool](https://img.shields.io/badge/DAS%20Tool-C0392B)](https://github.com/cmks/DAS_Tool) [![CheckM2](https://img.shields.io/badge/CheckM2-C0392B)](https://github.com/chklovski/CheckM2) [![GUNC](https://img.shields.io/badge/GUNC-C0392B)](https://grp-bork.embl-community.io/gunc/) [![dRep](https://img.shields.io/badge/dRep-C0392B)](https://drep.readthedocs.io/) [![GTDB-Tk](https://img.shields.io/badge/GTDB-Tk-C0392B)](https://ecogenomics.github.io/GTDB-Tk/)  
+
+**MAG annotation & comparison**
+
+[![Prokka](https://img.shields.io/badge/Prokka-E3A008)](https://github.com/tseemann/prokka) [![mlst](https://img.shields.io/badge/mlst-E3A008)](https://github.com/tseemann/mlst) [![Roary](https://img.shields.io/badge/Roary-E3A008)](https://sanger-pathogens.github.io/Roary/) [![Snippy](https://img.shields.io/badge/Snippy-E3A008)](https://github.com/tseemann/snippy)  
+
+**Functional annotation**
+
+[![eggNOG-mapper](https://img.shields.io/badge/eggNOG-mapper-7B5EA7)](http://eggnog-mapper.embl.de/) [![AMRFinderPlus](https://img.shields.io/badge/AMRFinderPlus-7B5EA7)](https://github.com/ncbi/amr/) [![CARD/RGI](https://img.shields.io/badge/CARD%2FRGI-7B5EA7)](https://card.mcmaster.ca/) [![dbCAN3](https://img.shields.io/badge/dbCAN3-7B5EA7)](https://bcb.unl.edu/dbCAN2/) [![antiSMASH 8](https://img.shields.io/badge/antiSMASH%208-7B5EA7)](https://antismash.secondarymetabolites.org/)  
+[![Defense-Finder](https://img.shields.io/badge/Defense-Finder-7B5EA7)](https://github.com/mdmparis/defense-finder) ![NCyc](https://img.shields.io/badge/NCyc-7B5EA7) ![PCyc](https://img.shields.io/badge/PCyc-7B5EA7) ![SCyc](https://img.shields.io/badge/SCyc-7B5EA7) [![BacMet](https://img.shields.io/badge/BacMet-7B5EA7)](http://bacmet.biomedicine.gu.se/)  
+[![VFDB](https://img.shields.io/badge/VFDB-7B5EA7)](http://www.mgc.ac.cn/VFs/)  
+
+**Virome**
+
+[![geNomad](https://img.shields.io/badge/geNomad-5E8C61)](https://portal.nersc.gov/genomad/) [![VirSorter2](https://img.shields.io/badge/VirSorter2-5E8C61)](https://github.com/Virsorter/VirSorter2) [![CheckV](https://img.shields.io/badge/CheckV-5E8C61)](https://bitbucket.org/berkeleylab/checkv/) ![vclust](https://img.shields.io/badge/vclust-5E8C61) [![PHAROKKA](https://img.shields.io/badge/PHAROKKA-5E8C61)](https://github.com/gbouras13/pharokka)  
+[![PHOLD](https://img.shields.io/badge/PHOLD-5E8C61)](https://github.com/gbouras13/phold) [![VOGDB](https://img.shields.io/badge/VOGDB-5E8C61)](https://vogdb.org/) [![BACPHLIP](https://img.shields.io/badge/BACPHLIP-5E8C61)](https://github.com/adamhockenberry/bacphlip) ![PhaGCN3](https://img.shields.io/badge/PhaGCN3-5E8C61) ![PhaStyle](https://img.shields.io/badge/PhaStyle-5E8C61)  
+[![iPHoP](https://img.shields.io/badge/iPHoP-5E8C61)](https://bitbucket.org/srouxjgi/iphop/) ![vConTACT3](https://img.shields.io/badge/vConTACT3-5E8C61) [![DRAM](https://img.shields.io/badge/DRAM-5E8C61)](https://github.com/WrightonLabCSU/DRAM) ![PhaBOX2](https://img.shields.io/badge/PhaBOX2-5E8C61)  
+
+**Mycobiome**
+
+![FunOMIC](https://img.shields.io/badge/FunOMIC-C96DA8) [![CCMetagen](https://img.shields.io/badge/CCMetagen-C96DA8)](https://github.com/vrmarcelino/CCMetagen) ![MicroFisher](https://img.shields.io/badge/MicroFisher-C96DA8) ![Eukfinder](https://img.shields.io/badge/Eukfinder-C96DA8) [![Tiara](https://img.shields.io/badge/Tiara-C96DA8)](https://github.com/lubianat/tiara)  
+[![BUSCO](https://img.shields.io/badge/BUSCO-C96DA8)](https://busco.ezlab.org/) [![MetaEuk](https://img.shields.io/badge/MetaEuk-C96DA8)](https://metaek.sourceforge.net/)  
+
+**Knowledge bases**
+
+[![MEROPS](https://img.shields.io/badge/MEROPS-8A8F98)](https://www.ebi.ac.uk/merops/) [![GutMGene v2.0](https://img.shields.io/badge/GutMGene%20v2.0-8A8F98)](https://bioinfo.uth.edu/gutmgene/) ![MicrobiomeKG](https://img.shields.io/badge/MicrobiomeKG-8A8F98) [![BugSigDB](https://img.shields.io/badge/BugSigDB-8A8F98)](https://bugsigdb.org/)  
+
+**Statistics & ML**
+
+[![SIAMCAT](https://img.shields.io/badge/SIAMCAT-0059B3)](https://siamcat.embl.de/) [![DESeq2](https://img.shields.io/badge/DESeq2-0059B3)](https://bioconductor.org/packages/DESeq2/) [![ANCOM-BC2](https://img.shields.io/badge/ANCOM-BC2-0059B3)](https://bioconductor.org/packages/ancombc/) [![MaAsLin2](https://img.shields.io/badge/MaAsLin2-0059B3)](https://huttenhower.sph.harvard.edu/maaslin/) [![MMUPHin](https://img.shields.io/badge/MMUPHin-0059B3)](https://github.com/biobakery/mmuphin)  
+![ConQuR](https://img.shields.io/badge/ConQuR-0059B3) [![FastSpar](https://img.shields.io/badge/FastSpar-0059B3)](https://github.com/scwatts/fastspar) ![MBECS](https://img.shields.io/badge/MBECS-0059B3)  
