@@ -1,0 +1,50 @@
+---
+# manifest.yaml — Wacker et al. 2026 Nature Communications replication skill metadata
+
+id: "Wacker2026_NatCommun"
+pmid: null
+doi: "10.1038/s41467-026-74033-9"
+title: "TOFU-MAaPO: fast, scalable and reproducible analysis of large metagenome sequence data from the Sequence Read Archive"
+journal: "Nature Communications"
+volume: null
+year: 2026
+impact_factor: null
+paper_type: tool_paper
+primary_dimension: multiomics
+cross_dimensions: [bacteria, virome, statistics]
+dimension: statistics
+keywords: [TOFU-MAaPO, nextflow, SRA, metagenome-reanalysis, MAGs, metagenomics, metaSPAdes, MEGAHIT, GTDB-Tk, MetaPhlAn4, Kraken2]
+citation_in_scripts: []
+
+code_availability:
+  github: "https://github.com/ikmb/TOFU-MAaPO"
+  zenodo: null
+  local_original: null
+  local_adapted: null
+  analysis_repo: "https://github.com/ikmb/TOFUpaper"
+
+replication:
+  replicated_by: "Codex"
+  replicated_date: "2026-06-16"
+  data_accessibility: "partial"
+  code_accessibility: "full"
+  environment_reproducibility: "medium"
+  result_verifiability: "medium"
+  method_fidelity: "medium"
+
+coverage:
+  implemented: []
+  new_scripts: []
+  gaps:
+    - name: "Workflow framework mismatch"
+      description: "Paper implementation is Nextflow-based, while CSCCD-MetagenomeFlow uses Snakemake and does not vendor the original workflow here."
+      paper_section: "Pipeline architecture"
+      priority: high
+    - name: "Large-scale benchmark rerun"
+      description: "The reported 16,462-sample SRA benchmark is not rerun inside this skill package."
+      paper_section: "Results"
+      priority: medium
+    - name: "Exact container stack capture"
+      description: "Docker and Apptainer execution are referenced from upstream repositories only."
+      paper_section: "Methods > Reproducible execution"
+      priority: medium

@@ -1,0 +1,39 @@
+id: "60_vir_votu_table"
+script: "scripts/60_vir_votu_table.sh"
+tool: "biostack"
+tool_version: "~"
+conda_env: "envs/assembly"
+description: "Generate vOTU abundance matrix with taxonomic annotations (Salmon reports + geNomad)."
+dimension: "virome"
+category: "table_generation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "salmon_reports"
+    path_pattern: "{workdir}/result/virus/salmon/{sample}/report.tsv"
+    required: true
+    is_expand: true
+  - name: "taxonomy"
+    path_pattern: "{workdir}/result/virus/votu/genomad/virus_taxonomy.tsv"
+    required: true
+
+outputs:
+  - name: "abundance_table"
+    path_pattern: "{workdir}/result/virus/votu/table/vOTU_table_ann.txt"
+    description: "vOTU abundance matrix with taxonomy annotation."
+
+depends_on:
+  - "57_vir_votu_genomad"
+  - "59_vir_salmon_quant"
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_votu_table"

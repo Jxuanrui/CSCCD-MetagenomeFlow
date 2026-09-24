@@ -1,0 +1,88 @@
+---
+# params.yaml — paper-aligned configuration summary for TOFU-MAaPO
+
+sra_download:
+  tool: "SRA Toolkit"
+  paper_recommended:
+    source_repository: "NCBI Sequence Read Archive"
+    staging_mode: "parallelized download under Nextflow orchestration"
+    resumable: true
+  project_current:
+    script: null
+    matches_paper: false
+    deviation_notes: "Reference-only skill package; CSCCD-MetagenomeFlow does not embed the Nextflow fetch layer."
+
+quality_control:
+  tool: fastp
+  paper_recommended:
+    adapter_trimming: true
+    quality_filtering: true
+    per_sample_html_json_reports: true
+  project_current:
+    script: null
+    matches_paper: partial
+    deviation_notes: "Equivalent QC concepts exist in CSCCD-MetagenomeFlow, but this package does not wire them to TOFU-MAaPO."
+
+host_removal:
+  tool: Bowtie2
+  paper_recommended:
+    enabled: true
+    purpose: "remove host-derived reads before downstream analysis"
+  project_current:
+    script: null
+    matches_paper: partial
+    deviation_notes: "Host removal is conceptually shared, implementation framework differs."
+
+assembly:
+  tool: "metaSPAdes / MEGAHIT"
+  paper_recommended:
+    assemblers:
+      - metaSPAdes
+      - MEGAHIT
+    profile_selection: "workflow-configurable"
+  project_current:
+    script: null
+    matches_paper: partial
+
+binning_ensemble:
+  tool: "MetaBAT2 + MaxBin2 + SemiBin2 + DAS_Tool"
+  paper_recommended:
+    binners:
+      - MetaBAT2
+      - MaxBin2
+      - SemiBin2
+    consolidation: "DAS_Tool"
+    rationale: "ensemble binning to increase high-quality MAG recovery"
+  project_current:
+    script: null
+    matches_paper: partial
+    deviation_notes: "CSCCD-MetagenomeFlow covers overlapping tools but not the paper's exact Nextflow orchestration."
+
+mag_quality:
+  tool: CheckM2
+  paper_recommended:
+    completeness_min: 50
+    contamination_max: 5
+    quality_label: "high-quality candidate threshold used in package metadata"
+  project_current:
+    script: null
+    matches_paper: partial
+
+taxonomy:
+  tool: GTDB-Tk
+  paper_recommended:
+    classify_bins: true
+  project_current:
+    script: null
+    matches_paper: partial
+
+abundance_profiling:
+  tool: "MetaPhlAn4 / Kraken2"
+  paper_recommended:
+    assembly_free_branch: true
+    profilers:
+      - MetaPhlAn4
+      - Kraken2
+  project_current:
+    script: null
+    matches_paper: partial

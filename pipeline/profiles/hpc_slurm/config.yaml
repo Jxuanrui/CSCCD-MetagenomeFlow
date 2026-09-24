@@ -1,0 +1,12 @@
+# Profile: hpc_slurm — HPC cluster with SLURM scheduler
+# Adjust --jobs to the number of concurrent SLURM jobs you want to submit
+# Each job requests cores = threads_per_job (set in config/config.yaml)
+executor: slurm
+jobs: 20
+rerun-incomplete: true
+printshellcmds: false
+# SLURM default resources (override per-rule if needed):
+# default-resources:
+#   slurm_partition: normal
+#   runtime: 240      # minutes
+#   mem_mb: 32000

@@ -1,0 +1,72 @@
+id: "79d_fun_metabat2"
+script: "scripts/79d_fun_metabat2.sh"
+tool: "metabat2"
+tool_version: "2.18"
+conda_env: "envs/metawrap"
+description: "MetaBAT2 binning on eukaryotic candidate contigs based on tetranucleotide frequency + coverage depth. VEBA binning-eukaryotic methodology reference (no source code reused)."
+dimension: "fungi"
+category: "binning"
+rule_type: "per_sample"
+
+inputs:
+  - name: "tiara_confirmed_fasta"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/tiara_confirmed_eukaryota.fa"
+    required: true
+  - name: "depth_table"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/coverm/{sample}.depth.tsv"
+    required: true
+
+outputs:
+  - name: "bins"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/metabat2/bin.*.fa"
+    description: "MetaBAT2 output bins (one file per bin)"
+  - name: "bin_summary"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/metabat2/{sample}.tsv"
+    description: "Contig-to-bin assignment table"
+
+depends_on:
+  - "79c_fun_coverm_depth"
+required_by:
+  - "79e_fun_euk_qc_per_bin"
+
+params:
+  sample: "{sample}"
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  min_contig_len: "1500"
+  force: "false"
+
+benchmarks:
+  typical_runtime_min: 2-5
+  typical_input_size_mb: 10-50
+  peak_memory_gb: 2
+
+workflow:
+  - stage: "MetaBAT2 binning"
+    description: "Run metabat2 with --minContig 1500 on eukaryotic contigs + depth"
+  - stage: "Bin extraction"
+    description: "Extract bins to individual FASTA files"
+
+validation:
+  test_samples: ["Sample4"]
+  success_cases:
+    - sample: "Sample4"
+      bins_generated: 1
+      bin_size_mb: 8.2
+      contigs_binned: 2000
+      total_contigs: 2939
+      notes: "Single dominant eukaryotic species recovered"
+  zero_bin_cases:
+    - sample: "Sample10"
+      bins_generated: 0
+      reason: "Insufficient contig diversity for binning"
+      notes: "Expected outcome, script exits 0"
+
+known_issues:
+  - description: "0 bins generated when candidate pool is too small or homogeneous"
+    workaround: "Not an error; script exits 0 gracefully. Downstream rules skip automatically."
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_metabat2_euk"

@@ -1,0 +1,40 @@
+# Skills 生命周期配置
+# 控制发现引擎的行为、频率、评分阈值等
+
+discovery:
+  frequency_days: 14            # 每两周运行一次发现扫描
+  method: "bash"                # 执行方式: bash discover.sh
+
+scoring:
+  min_relevance_score: 30       # 最低进入月报的评分
+  top_n_for_report: 15          # 月报最多列出的候选数
+  max_review_cycles: 3          # 暂缓最多出现3次，之后自动排除
+
+sources:
+  github:
+    enabled: true
+    max_results_per_query: 50
+    aggregation_repos:
+      - "GPTomics/bioSkills"
+      - "FridrichMethod/awesome-skills"
+      - "jaechang-hits/SciAgent-Skills"
+      - "Yuan1z0825/nature-skills"
+      - "crazymsn/academic-skills"
+
+  skill_hubs:
+    skillsmp:
+      enabled: true
+      base_url: "https://skillsmp.com/api/v1/skills/search"
+      max_results: 50
+    skills_sh:
+      enabled: true
+      base_url: "https://skills.sh/api/skills"
+      max_results: 30
+
+  web_search:
+    enabled: true
+    queries_per_cycle: 3
+
+report:
+  output_dir: "skills/discovery/report"
+  file_prefix: "monthly_report"

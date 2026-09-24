@@ -1,0 +1,39 @@
+id: "33_bac_metabat2"
+name: "MetaBAT2 Binning"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::metabat2"
+
+inputs:
+  - name: contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+  - name: depth
+    path_pattern: "{workdir}/result/binning/coverm/{sample}/depth.txt"
+    required: true
+    description: "CoverM depth table (metabat format)"
+
+outputs:
+  - name: tsv
+    path_pattern: "{workdir}/result/binning/metabat2/{sample}/{sample}.tsv"
+    description: "Contig2bin table for DAS_Tool"
+  - name: bins
+    path_pattern: "{workdir}/result/binning/metabat2/{sample}/bin.{n}.fa"
+    description: "Individual bin FASTA files"
+
+depends_on:
+  - "32_bac_coverm_depth"
+
+conda_env: "envs/metawrap"
+
+parameters:
+  min_contig_len: 1500
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "metabat2-utils needed for contig2bin generation; may not be in PATH from metawrap env"
+    workaround: "Check envs/metawrap/bin/metabat2-utils exists; fallback to manual awk parsing"

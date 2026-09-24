@@ -1,0 +1,59 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+description: CSCCD-MetagenomeFlow Snakemake pipeline configuration
+type: object
+required:
+  - workdir
+  - repo
+anyOf:
+  - required: [samplesheet]
+  - required: [samples]
+properties:
+  samplesheet:
+    type: string
+    description: Path to samplesheet CSV (requires a sample_id column)
+  samples:
+    type: array
+    items:
+      type: string
+    description: Inline sample-id list, used only when samplesheet is absent
+  workdir:
+    type: string
+    description: Project working directory (absolute path)
+  repo:
+    type: string
+    description: CSCCD-MetagenomeFlow repository root (absolute path)
+  threads_per_job:
+    type: integer
+    minimum: 1
+    description: Threads each tool uses internally (-t / --nproc)
+  max_jobs:
+    type: integer
+    minimum: 1
+    description: Concurrent jobs (informational; -j/profile controls the actual budget)
+  cpus:
+    type: integer
+    minimum: 1
+    description: Legacy alias for threads_per_job
+  humann_speed:
+    type: string
+    enum: [standard, balanced, fast]
+  metadata:
+    type: string
+    description: Metadata CSV for the statistics modules
+  group_col:
+    type: string
+    description: Column in metadata holding the biological group
+  force:
+    type: boolean
+  kingdoms:
+    type: array
+    items:
+      type: string
+      enum: [bacteria, virome, fungi]
+    minItems: 1
+    uniqueItems: true
+    description: Dimension groups to run; statistics/cross-domain run only when all three are selected
+  rag_refresh:
+    type: string
+    enum: ["true", "false"]
+additionalProperties: true

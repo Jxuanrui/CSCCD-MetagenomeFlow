@@ -1,0 +1,39 @@
+id: "78_fun_megahit"
+script: "scripts/78_fun_megahit.sh"
+tool: "MEGAHIT"
+tool_version: "1.2.9"
+conda_env: "envs/assembly"
+description: "Fungal metagenome assembly from clean reads using the meta-sensitive preset."
+dimension: "mycobiome"
+category: "assembly"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "contigs"
+    path_pattern: "{workdir}/result/fungi/assembly/{sample}/{sample}.contigs.fa"
+    description: "Assembled fungal contigs with minimum length 1 kb."
+
+depends_on:
+  - "02_qc_kneaddata"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_megahit"
+

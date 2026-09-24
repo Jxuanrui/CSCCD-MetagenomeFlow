@@ -1,0 +1,45 @@
+# params.yaml — Camargo2023_NatBiotechnol key parameters
+
+tool: geNomad
+version_paper: "1.5.2"
+
+paper_recommended:
+  min_contig_length: 2500
+  virus_score_threshold: 0.7
+  plasmid_score_threshold: 0.7
+  min_hallmark_genes: 1
+  marker_evalue: 1e-3
+  splits: 0  # number of splits for large contigs; 0=no splitting
+  relaxed_mode: false
+  conservative_mode: false
+  note: "Default settings for standard metagenome analysis; --relaxed for virus discovery, --conservative for precision"
+
+project_current:
+  script: scripts/52_vir_genomad.sh
+  matches_paper: true
+  min_contig_length: 1500  # CSCCD-MetagenomeFlow uses 1.5kb (slightly more permissive than paper 2.5kb)
+  deviation_notes: "CSCCD-MetagenomeFlow min_contig_length=1500 to capture shorter viral fragments; paper uses 2500bp"
+
+benchmarks:
+  virus_MCC: 0.953
+  plasmid_MCC: 0.778
+  virus_precision: 0.987
+  virus_recall: 0.923
+  vs_VirSorter2: "Comparable precision, higher recall"
+  vs_VIBRANT: "Higher MCC (0.953 vs ~0.92 on prokaryotic viruses)"
+  vs_DeepVirFinder: "Substantially more accurate (DNN+CRF vs DNN only)"
+
+database:
+  name: "genomad_db"
+  version_paper: "v1.0"
+  marker_proteins: 200000
+  download_size: "~3.5 GB compressed"
+  installation: "genomad download-database"
+
+key_design_choices:
+  - choice: "Deep learning (CNN) + Conditional Random Field ensemble"
+    rationale: "CRF captures gene order dependencies (e.g., integrase-excisionase clusters); outperforms HMM-only methods"
+  - choice: "200k+ marker proteins vs k-mer only"
+    rationale: "Gene content more robust to sequence divergence; enables functional annotation simultaneously"
+  - choice: "Unified plasmid+virus classification"
+    rationale: "Many mobile elements ambiguous (prophages, conjugative transposons); single framework needed"

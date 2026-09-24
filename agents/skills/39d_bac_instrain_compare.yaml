@@ -1,0 +1,43 @@
+id: "39d_bac_instrain_compare"
+name: "inStrain Cross-Sample popANI Comparison"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::instrain_compare"
+
+inputs:
+  - name: profiles
+    path_pattern: "{workdir}/result/binning/instrain_profile/*/output/*_genome_info.tsv"
+    required: true
+    description: "All per-sample inStrain profile directories (script auto-discovers valid ones)"
+  - name: combined_stb
+    path_pattern: "{workdir}/result/binning/instrain_map/combined_mags.stb"
+    required: true
+    description: "Scaffold-to-bin mapping file (shared reference)"
+
+outputs:
+  - name: comparisonsTable
+    path_pattern: "{workdir}/result/binning/instrain_compare/output/comparisonsTable.tsv"
+    description: "Pairwise sample comparison metrics (popANI, coverage overlap, etc.)"
+  - name: genomeWide_compare
+    path_pattern: "{workdir}/result/binning/instrain_compare/output/*_genomeWide_compare.tsv"
+    description: "Per-genome pairwise popANI matrix (≥99.999% = same strain)"
+
+depends_on:
+  - "39c_bac_instrain_profile"
+
+conda_env: "envs/instrain"
+
+parameters:
+  min_cov: 5
+  threads: 16
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 20
+
+known_issues:
+  - description: "Requires N≥2 valid profiles; script gracefully skips with warning if N<2"
+    workaround: "Check log for '[instrain_compare] WARNING: 样本数 < 2，跳过跨样本比较' message"
+  - description: "popANI threshold interpretation: ≥99.999% = same strain (inStrain default), lower values = distinct strains of same species"
+    workaround: "Post-process comparisonsTable.tsv with custom threshold if needed"

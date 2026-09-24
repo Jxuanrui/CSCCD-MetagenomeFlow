@@ -1,0 +1,100 @@
+# method_graph.yaml — Beghini2021_eLife
+# HUMAnN3 functional profiling DAG
+
+nodes:
+  - id: clean_reads
+    type: method_node
+    description: "Host-filtered paired-end metagenomic reads after kneaddata QC"
+    script: scripts/02_qc_kneaddata.sh
+
+  - id: taxonomic_prescreen
+    type: method_node
+    tool: MetaPhlAn4
+    script: scripts/11_bac_metaphlan4.sh
+    description: "Species-level taxonomic profile used to restrict nucleotide search space"
+    paper_section: "Methods > Taxonomic profiling"
+    config:
+      type: config_node
+      taxonomic_profile: "MetaPhlAn relative abundance profile"
+      project_profile_version: "mpa_vOct22"
+
+  - id: nucleotide_alignment
+    type: method_node
+    tool: "Bowtie2 against ChocoPhlAn"
+    description: "Species-aware nucleotide search against pangenomes for known community members"
+    paper_section: "Methods > Nucleotide-level functional assignment"
+    config:
+      type: config_node
+      database: "db/humann4/chocophlan"
+      bypass_nucleotide_index: true
+
+  - id: translated_search
+    type: method_node
+    tool: "DIAMOND against UniRef90"
+    description: "Translated search for reads not assigned during nucleotide alignment"
+    paper_section: "Methods > Translated search"
+    config:
+      type: config_node
+      database: "db/humann4/uniref"
+      protein_reference: "UniRef90"
+
+  - id: gene_family_quantification
+    type: method_node
+    tool: HUMAnN3
+    description: "Combine nucleotide and translated hits into gene family abundance profiles"
+    paper_section: "Methods > Gene family abundance estimation"
+
+  - id: pathway_reconstruction
+    type: method_node
+    tool: MinPath
+    description: "Infer parsimonious MetaCyc pathways from EC/gene family evidence"
+    paper_section: "Methods > Pathway reconstruction"
+    config:
+      type: config_node
+      pathway_algorithm: MinPath
+      stratified_output: true
+
+  - id: humann3_pipeline
+    type: method_node
+    tool: HUMAnN
+    version: "3.x"
+    script: scripts/13_bac_humann3.sh
+    paper_section: "Methods > HUMAnN workflow"
+    config:
+      type: config_node
+      taxonomic_profile_input: true
+      speed_modes: [standard, balanced, fast]
+
+  - id: fungi_pathway_extraction
+    type: method_node
+    tool: "grep/awk post-processing"
+    script: scripts/73_fun_humann4_fungi.sh
+    description: "Extract fungi-stratified pathways from HUMAnN stratified outputs when eukaryotic taxa are present"
+    paper_section: "Project adaptation"
+    note: "Cross-dimension reuse of HUMAnN stratification for fungi summaries"
+
+edges:
+  - from: clean_reads
+    to: taxonomic_prescreen
+  - from: clean_reads
+    to: nucleotide_alignment
+  - from: taxonomic_prescreen
+    to: nucleotide_alignment
+  - from: nucleotide_alignment
+    to: translated_search
+  - from: nucleotide_alignment
+    to: gene_family_quantification
+  - from: translated_search
+    to: gene_family_quantification
+  - from: gene_family_quantification
+    to: pathway_reconstruction
+  - from: pathway_reconstruction
+    to: humann3_pipeline
+  - from: humann3_pipeline
+    to: fungi_pathway_extraction
+
+performance_benchmarks:
+  runtime_16_cores: "<1 hour per sample for 95% of pathways quantified"
+  functional_resolution: "gene families + pathway abundance + pathway coverage"
+  stratification: "species-contributor profiles retained"
+  integration_gain: "taxonomic prescreen sharply reduces nucleotide search space"

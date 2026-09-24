@@ -1,0 +1,42 @@
+id: "55_vir_prodigal_gv"
+script: "scripts/55_vir_prodigal_gv.sh"
+tool: "Prodigal-gv"
+tool_version: "2.11.0"
+conda_env: "envs/assembly"
+description: "Viral gene prediction with Prodigal-gv (genetic code 15, auto-detect)."
+dimension: "virome"
+category: "gene_prediction"
+rule_type: "per_sample"
+
+inputs:
+  - name: "viral_contigs"
+    path_pattern: "{workdir}/result/virus/checkv/{sample}/viruses.fna"
+    required: true
+
+outputs:
+  - name: "faa"
+    path_pattern: "{workdir}/result/virus/prodigal/{sample}/{sample}.faa"
+    description: "Predicted viral proteins (amino acid)."
+  - name: "fna"
+    path_pattern: "{workdir}/result/virus/prodigal/{sample}/{sample}.fna"
+    description: "Predicted viral CDSs (nucleotide)."
+  - name: "gff"
+    path_pattern: "{workdir}/result/virus/prodigal/{sample}/{sample}.gff"
+    description: "GFF gene annotation."
+
+depends_on:
+  - "54_vir_checkv_contig"
+required_by:
+  - "58_vir_salmon_build"
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_prodigal_gv"

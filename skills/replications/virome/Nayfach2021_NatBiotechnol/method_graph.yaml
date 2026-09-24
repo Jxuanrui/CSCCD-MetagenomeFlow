@@ -1,0 +1,99 @@
+# method_graph.yaml — Nayfach2021_NatBiotechnol
+# CheckV viral genome quality assessment DAG
+
+nodes:
+  - id: viral_contigs
+    type: method_node
+    description: "Putative viral contigs from geNomad and VirSorter2 intersection"
+    script: scripts/54_vir_checkv_contig.sh
+
+  - id: terminal_repeat_scan
+    type: method_node
+    tool: CheckV
+    description: "Detect direct terminal repeats and inverted terminal repeats to flag complete/circular genomes"
+    paper_section: "Methods > Complete genome identification"
+    config:
+      type: config_node
+      dtr_itr_detection: true
+      minimum_repeat_length: "tool default"
+
+  - id: gene_calling_annotation
+    type: method_node
+    tool: "Prodigal + CheckV HMM profiles"
+    description: "Predict genes and annotate viral/host marker genes for boundary and contamination assessment"
+    paper_section: "Methods > Gene prediction and HMM annotation"
+    config:
+      type: config_node
+      marker_database: "checkv_hmms"
+      host_virus_marker_profiles: true
+
+  - id: completeness_estimation
+    type: method_node
+    tool: "AAI-based completeness estimator"
+    description: "Estimate genome completeness by average amino-acid identity to complete viral references and expected genome length"
+    paper_section: "Methods > Completeness estimation"
+    config:
+      type: config_node
+      database: "db/checkv"
+      estimation_modes: [AAI, HMM]
+      sensitivity: "92%"
+      specificity: "99.7%"
+
+  - id: provirus_boundary_detection
+    type: method_node
+    tool: CheckV
+    description: "Identify host-virus transitions in proviral contigs and excise provirus regions"
+    paper_section: "Methods > Provirus identification"
+    config:
+      type: config_node
+      recall: "90%"
+      evidence: [host_genes, viral_genes, GC_shift]
+
+  - id: checkv_contig_qc
+    type: method_node
+    tool: CheckV
+    version: "1.0.x"
+    script: scripts/54_vir_checkv_contig.sh
+    paper_section: "Methods > CheckV end-to-end workflow"
+    config:
+      type: config_node
+      quality_thresholds:
+        completeness_min: 50
+        contamination_max: 5
+      output: "quality_summary.tsv"
+
+  - id: checkv_vmag_qc
+    type: method_node
+    tool: CheckV
+    version: "1.0.x"
+    script: scripts/62_vir_checkv_mag.sh
+    description: "Per-bin CheckV evaluation for viral MAGs followed by medium/high-quality retention"
+    paper_section: "Methods > Viral genome quality categories"
+    config:
+      type: config_node
+      accepted_quality_labels: [Complete, High-quality, Medium-quality]
+
+edges:
+  - from: viral_contigs
+    to: terminal_repeat_scan
+  - from: viral_contigs
+    to: gene_calling_annotation
+  - from: terminal_repeat_scan
+    to: completeness_estimation
+  - from: gene_calling_annotation
+    to: completeness_estimation
+  - from: gene_calling_annotation
+    to: provirus_boundary_detection
+  - from: completeness_estimation
+    to: checkv_contig_qc
+  - from: provirus_boundary_detection
+    to: checkv_contig_qc
+  - from: completeness_estimation
+    to: checkv_vmag_qc
+
+performance_benchmarks:
+  completeness_sensitivity: 0.92
+  completeness_specificity: 0.997
+  provirus_recall: 0.90
+  complete_genome_signal: "DTR/ITR detection enriches closed viral genomes"
+  contamination_detection: "host-virus boundary modeling reduces bacterial flank carryover"

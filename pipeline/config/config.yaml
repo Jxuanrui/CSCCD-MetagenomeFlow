@@ -1,0 +1,30 @@
+samplesheet: "~/Course/CSCCD-MetagenomeFlow/Project/Project01/samplesheet.csv"
+
+workdir: "~/Course/CSCCD-MetagenomeFlow/Project/Project01"
+repo: "~/Course/CSCCD-MetagenomeFlow"
+
+# Thread configuration
+# threads_per_job: threads each tool uses internally (-t / -p / --nproc)
+# Profile local_48c: cores=44, threads_per_job=12 → 3 concurrent jobs
+# Profile local_96c: cores=92, threads_per_job=16 → 5 concurrent jobs
+threads_per_job: 16
+max_jobs: 3
+
+# Legacy field (backward compat)
+cpus: 16
+
+humann_speed: "standard"
+
+# metadata for statistical analysis (91-98)
+metadata: "~/Course/CSCCD-MetagenomeFlow/Project/Project01/metadata.csv"
+group_col: "group"
+
+# Force re-run all steps ignoring existing outputs
+# Set to true to regenerate all results (123/125 scripts support --force)
+force: false
+
+# Dimension groups to run. Omit or list all three for the full pipeline.
+# A partial list runs only the selected dimension analyses (plus shared
+# preprocessing); the statistics / cross-domain / integration layers assume
+# all three dimensions and run only when all three are selected.
+# kingdoms: ["bacteria", "virome", "fungi"]

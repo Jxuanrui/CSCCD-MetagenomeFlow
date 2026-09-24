@@ -1,0 +1,36 @@
+id: "95a_stat_batch_correct"
+script: "scripts/95a_stat_batch_correct.sh"
+tool: "Rscript"
+tool_version: "MMUPHin, ConQuR, sva, MBECS, phyloseq, tidyverse"
+conda_env: "envs/r_stat"
+description: "Apply multiple microbiome batch-correction methods and write corrected abundance matrices."
+dimension: "statistics"
+category: "batch_correction"
+rule_type: "aggregate"
+
+inputs:
+  - name: "bacteria_taxonomy"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy.tsv"
+    required: true
+
+outputs:
+  - name: "corrected_matrices_done"
+    path_pattern: "{workdir}/result/stat/bacteria/batch/corrected_matrices.done"
+    description: "Batch correction sentinel."
+
+depends_on:
+  - "11b_bac_metaphlan4_merge"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-08"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_batch_correct"

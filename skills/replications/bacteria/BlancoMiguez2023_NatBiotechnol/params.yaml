@@ -1,0 +1,49 @@
+# params.yaml — BlancoMiguez2023_NatBiotechnol key parameters
+
+tool: MetaPhlAn4
+version_paper: "4.0.0"
+
+paper_recommended:
+  min_alignment_len: 0  # accept all read lengths after quality filtering
+  min_mapq: 5  # minimum MAPQ for confident marker assignment
+  analysis_type: "rel_ab_w_read_stats"
+  stat_q: 0.2  # quantile for nucleotide coverage filtering
+  nproc: 4  # threads for Bowtie2
+  bt2_ps: "very-sensitive"
+  bowtie2_db: "mpa_vJan21_CHOCOPhlAnSGB_202103"
+  note: "Default MetaPhlAn 4 parameters for standard metagenome profiling"
+
+project_current:
+  script: scripts/11_bac_metaphlan4.sh
+  matches_paper: true
+  deviation_notes: null  # CSCCD-MetagenomeFlow uses MetaPhlAn4 defaults
+
+database:
+  name: "mpa_vJan21_CHOCOPhlAnSGB_202103"
+  version_paper: "Jan 2021 CHOCOPhlAn SGB"
+  reference_genomes: 1600000
+  marker_genes: 1010000
+  sgbs_total: 26970
+  ksgbs_known: 21978  # known SGBs with NCBI taxonomy
+  usgbs_unknown: 4992  # uncharacterized SGBs from MAGs
+  download_size: "~15 GB"
+
+key_improvements_over_metaphlan3:
+  - improvement: "SGB framework replaces traditional clade markers"
+    impact: "Captures uncharacterized species (uSGBs) from MAGs; 20% more reads explained in gut"
+  - improvement: "Integrated MAG database"
+    impact: ">5M additional genomes from metagenome assemblies"
+  - improvement: "Enhanced eukaryote markers"
+    impact: "Better fungi/protozoa detection; still limited in low-abundance environments"
+
+benchmarks:
+  gut_read_assignment_gain: "+20%"
+  rumen_read_assignment_gain: "+42%"
+  soil_read_assignment_gain: "+45%"
+  precision_at_species_level: ">95%"
+  note: "Benchmarked against CAMI synthetic datasets and matched isolate WGS"
+
+backward_compatibility:
+  metaphlan3_compatible: false
+  reason: "SGB assignment incompatible with MetaPhlAn 3 clade markers; profiles cannot be directly compared"
+  migration_path: "Re-profile all samples with MetaPhlAn 4 for consistent cohort analysis"

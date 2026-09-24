@@ -1,0 +1,42 @@
+id: "54_vir_checkv_contig"
+script: "scripts/54_vir_checkv_contig.sh"
+tool: "CheckV + seqkit"
+tool_version: "CheckV 1.0.3"
+conda_env: "envs/checkv"
+description: "Merge geNomad + VirSorter2 virus contigs, then run CheckV for quality assessment."
+dimension: "virome"
+category: "quality_control"
+rule_type: "per_sample"
+
+inputs:
+  - name: "genomad_summary"
+    path_pattern: "{workdir}/result/virus/genomad/{sample}/summary/virus_summary.tsv"
+    required: true
+  - name: "virscore_boundary"
+    path_pattern: "{workdir}/result/virus/virsorter2/{sample}/final-viral-boundary.tsv"
+    required: true
+
+outputs:
+  - name: "quality_summary"
+    path_pattern: "{workdir}/result/virus/checkv/{sample}/quality_summary.tsv"
+    description: "CheckV quality summary (completeness, contamination, MIUViG grade)."
+
+depends_on:
+  - "52_vir_genomad"
+  - "53_vir_virsorter2"
+required_by:
+  - "55_vir_prodigal_gv"
+  - "56_vir_votu_gen"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_checkv_contig"

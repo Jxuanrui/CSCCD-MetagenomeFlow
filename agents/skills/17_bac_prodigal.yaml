@@ -1,0 +1,56 @@
+id: "17_bac_prodigal"
+script: "scripts/17_bac_prodigal.sh"
+tool: "prodigal"
+tool_version: "2.6.3"
+conda_env: "envs/assembly"
+description: "Prokaryotic gene prediction in metagenomics mode (-p meta). Outputs protein (.faa), nucleotide (.fna), and GFF coordinates for downstream annotation and quantification."
+dimension: "bacteria"
+category: "assembly"
+rule_type: "per_sample"
+
+inputs:
+  - name: "contigs"
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+
+outputs:
+  - name: "faa"
+    path_pattern: "{workdir}/result/assembly/prodigal/{sample}/{sample}.faa"
+    description: "Protein sequences. Input for eggNOG (21), KEGG (22), AMRFinder (23), CARD (24), dbCAN (25), VFDB (26), BacMet (27)."
+  - name: "fna"
+    path_pattern: "{workdir}/result/assembly/prodigal/{sample}/{sample}.fna"
+    description: "Nucleotide gene sequences. Input for CD-HIT (18) clustering and Salmon (19-20) quantification."
+  - name: "gff"
+    path_pattern: "{workdir}/result/assembly/prodigal/{sample}/{sample}.gff"
+    description: "GFF3 gene coordinates. Contains partial/complete flags (partial=00 = complete gene)."
+
+depends_on:
+  - "16_bac_megahit"
+required_by:
+  - "18_bac_cdhit"
+  - "21_bac_eggnog"
+  - "22_bac_kegg"
+  - "23_bac_amrfinder"
+  - "24_bac_card"
+  - "25_bac_dbcan"
+  - "26_bac_vfdb"
+  - "27_bac_bacmet"
+
+params:
+  mode: "-p meta"
+  note: "Prodigal is single-threaded; -t parameter is accepted but ignored for pipeline consistency."
+
+benchmarks:
+  typical_runtime_min: 10
+  peak_memory_gb: 2
+  note: "Single-threaded. Runtime scales linearly with contig file size (~10min per GB of contigs)."
+
+known_issues:
+  - description: "Prodigal -p meta does not support --trans_table; custom translation tables are ignored in meta mode."
+    workaround: "Use default genetic code (11) for bacteria. For viral/fungal contigs use separate Prodigal-gv script (55)."
+  - description: "No multi-threading support. For very large assemblies (>5G contigs), split contigs and run in parallel."
+    workaround: "Use seqkit split + parallel, then cat results. Not needed for typical per-sample assemblies."
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "pipeline/rules/bacteria_assembly.smk::prodigal"

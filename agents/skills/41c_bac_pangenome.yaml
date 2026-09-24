@@ -1,0 +1,37 @@
+id: "41c_bac_pangenome"
+name: "Pan-Genome Analysis with Roary"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::bac_pangenome"
+
+inputs:
+  - name: prokka_gff
+    path_pattern: "{workdir}/result/binning/prokka/*.gff"
+    required: true
+    description: "GFF annotation files from Prokka (at least 3 required)"
+
+outputs:
+  - name: summary
+    path_pattern: "{workdir}/result/wgs/pangenome/summary_statistics.txt"
+    description: "Roary pan-genome summary: core/accessory/unique gene counts"
+  - name: presence_absence
+    path_pattern: "{workdir}/result/wgs/pangenome/gene_presence_absence.csv"
+    description: "Gene presence/absence matrix across all genomes"
+
+depends_on:
+  - "41_bac_prokka"
+
+conda_env: "envs/prokaWGS"
+
+parameters:
+  identity: 95
+  core_definition: 99
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "Requires at least 3 GFF files; exits gracefully with FAILED sentinel if fewer"
+    workaround: "Ensure Prokka produced GFF for at least 3 MAGs"

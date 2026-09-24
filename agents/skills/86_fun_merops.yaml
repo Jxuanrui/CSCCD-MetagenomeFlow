@@ -1,0 +1,37 @@
+id: "86_fun_merops"
+script: "scripts/86_fun_merops.sh"
+tool: "DIAMOND blastp"
+tool_version: "2.x"
+conda_env: "envs/assembly"
+description: "Aggregate protease annotation against the MEROPS database."
+dimension: "mycobiome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "faa_files"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.faa"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "merops_hits"
+    path_pattern: "{workdir}/result/fungi/merops/merops_hits.tsv"
+    description: "MEROPS best-hit protease annotation table."
+
+depends_on:
+  - "80_fun_prodigal"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_merops"
+

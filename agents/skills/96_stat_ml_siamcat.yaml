@@ -1,0 +1,39 @@
+id: "96_stat_ml_siamcat"
+script: "scripts/96_stat_ml_siamcat.sh"
+tool: "Rscript"
+tool_version: "SIAMCAT, phyloseq, tidyverse"
+conda_env: "envs/r_stat"
+description: "Train and evaluate SIAMCAT biomarker models and export model comparison outputs."
+dimension: "statistics"
+category: "machine_learning"
+rule_type: "aggregate"
+
+inputs:
+  - name: "diff_summary"
+    path_pattern: "{workdir}/result/stat/differential_summary.tsv"
+    required: true
+
+outputs:
+  - name: "siamcat_done"
+    path_pattern: "{workdir}/result/stat/bacteria/ml/siamcat_done.txt"
+    description: "Default bacteria SIAMCAT sentinel."
+
+depends_on:
+  - "92_stat_differential"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-08"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_ml_siamcat"
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"

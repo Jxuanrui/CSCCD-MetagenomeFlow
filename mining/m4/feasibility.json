@@ -1,0 +1,218 @@
+{
+ "generated_at": "2026-09-23T08:40:13Z",
+ "registry_join": {
+  "curation_rows": 66607,
+  "registry_metagenomic_runs": 5517,
+  "distinct_runs_in_seed_lists": 88516,
+  "note": "profile-ready = curation key with >=1 in_seed_registry Metagenomic analysis (legacy pipelines V1-V5 only; no V6/mOTUs re-annotations exist for these runs)"
+ },
+ "diseases": [
+  {
+   "disease": "Healthy",
+   "n_case_profile_ready": 0,
+   "n_healthy_pool": 1834,
+   "n_healthy_same_study": 0,
+   "case_studies": {},
+   "healthy_studies": {
+    "MehtaRS_2018": 928,
+    "BackhedF_2015": 400,
+    "NielsenHB_2014": 243,
+    "QinJ_2012": 74
+   },
+   "meets_10_10": false
+  },
+  {
+   "disease": "immune",
+   "n_case_profile_ready": 152,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "2019_Guillen_HIV": 152
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Inflammatory Bowel Disease;Ulcerative Colitis",
+   "n_case_profile_ready": 127,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "NielsenHB_2014": 127
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Type 2 Diabetes Mellitus",
+   "n_case_profile_ready": 124,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "QinJ_2012": 71,
+    "KarlssonFH_2013": 53
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Hypertension",
+   "n_case_profile_ready": 99,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "LiJ_2017": 99
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Hypertension;Borderline Hypertension",
+   "n_case_profile_ready": 56,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "LiJ_2017": 56
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Metabolic Syndrome",
+   "n_case_profile_ready": 50,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "LiSS_2016": 50
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Glucose Intolerance",
+   "n_case_profile_ready": 49,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "KarlssonFH_2013": 49
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Escherichia coli Infection",
+   "n_case_profile_ready": 42,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "LomanNJ_2013": 42
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Diarrhea;Cholera",
+   "n_case_profile_ready": 38,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "DavidLA_2015": 38
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Inflammatory Bowel Disease;Crohn Disease",
+   "n_case_profile_ready": 21,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "NielsenHB_2014": 21
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Parasite Present",
+   "n_case_profile_ready": 19,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "RosaBA_2018": 19
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Crohn Disease",
+   "n_case_profile_ready": 11,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "(unset)": 11
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  },
+  {
+   "disease": "Irritable Bowel Syndrome",
+   "n_case_profile_ready": 7,
+   "n_healthy_pool": 0,
+   "n_healthy_same_study": 0,
+   "case_studies": {
+    "(unset)": 7
+   },
+   "healthy_studies": {},
+   "meets_10_10": false
+  }
+ ],
+ "meets_10case_10healthy": [],
+ "imsms": {
+  "samples_with_tax_url": 1638,
+  "participants_earliest_sample": {
+   "CD": 65,
+   "UC": 38,
+   "nonIBD": 27
+  },
+  "note": "diagnosis from hmp2_metadata.csv (External ID, data_type=metagenomics); longestitudinal repeats deduplicated to earliest week per participant"
+ },
+ "blocked": {
+  "Type 2 Diabetes Mellitus": "V1 analyses only -> family-rank OTU tables (no genus/species)",
+  "Inflammatory Bowel Disease;Ulcerative Colitis (NielsenHB_2014)": "V3 analyses FTP-pruned (ERP002061 results 404); would also be the only same-study control pair",
+  "BackhedF_2015 healthy pool": "excluded as controls: infant cohort (median age 0.3 y)"
+ },
+ "selected_cohorts": {
+  "crohn_disease_imsms": {
+   "source": "imsms",
+   "display": "Crohn Disease (iMSMS)",
+   "n_case": 65,
+   "n_control": 27
+  },
+  "ulcerative_colitis_imsms": {
+   "source": "imsms",
+   "display": "Ulcerative Colitis (iMSMS)",
+   "n_case": 38,
+   "n_control": 27
+  },
+  "hypertension_mgnify": {
+   "source": "mgnify",
+   "display": "Hypertension",
+   "n_case": 99,
+   "n_control": 250,
+   "control_study": "MehtaRS_2018"
+  },
+  "hiv_infection_mgnify": {
+   "source": "mgnify",
+   "display": "HIV infection",
+   "n_case": 152,
+   "n_control": 250,
+   "control_study": "MehtaRS_2018"
+  }
+ },
+ "caveats": [
+  "No registry disease meets >=10 case AND >=10 healthy profile-ready threshold; demonstration cohorts picked by max(case, control) per task instructions.",
+  "MGnify arm compares across studies (e.g. LiJ_2017 China vs MehtaRS_2018 USA) and across pipeline versions (V3 Greengenes OTUs vs V4.1 SILVA MAPseq): batch effects expected.",
+  "Legacy profiles are rRNA-derived OTU/SSU tables (hundreds to ~100k assignments/sample), NOT WGS mOTUs species profiles; species rank only where the table resolves it.",
+  "MGnify healthy controls subsampled deterministically (stride) to 250 of 928: ftp.ebi.ac.uk throttled to ~45 s/request, www.ebi.ac.uk API file proxy used instead."
+ ]
+}

@@ -1,0 +1,105 @@
+---
+# manifest.yaml — Jie et al. 2026 Nature Genetics
+# Format: RO-Crate provenance + PaperBench rubric + nf-core meta.yml fusion
+
+id: "Jie2026_NatGenet"
+pmid: null
+doi: "10.1038/s41588-026-02639-2"
+title: "Genomic landscape of the human vaginal microbiome is linked to host genetics and population of origin"
+journal: "Nature Genetics"
+volume: null
+year: 2026
+impact_factor: 31.7
+paper_type: application_paper        # tool_paper | benchmark_paper | application_paper | review
+primary_dimension: bacteria
+cross_dimensions: [virome, statistics]
+dimension: bacteria                  # kept for backward compat
+keywords: [vaginal-microbiome, MAG-catalog, GVMG, M-GWAS, host-genetics, large-scale-metagenomics, multi-omics]
+citation_in_scripts: [16, 17, 18, 32, 33, 34, 36, 37, 38, 40, 52, 53, 54]
+
+code_availability:
+  github: null
+  zenodo: null
+  ncbi_bioproject: "PRJNA833221"
+  local_original: null
+  local_adapted:  null
+
+scale:
+  total_metagenomes: 13632
+  inhouse_chinese: 10665
+  public_datasets: 2967
+  bacterial_isolates: 1433
+  total_mags: 65055
+  prokaryotic_species: 890
+  eukaryotic_species: 11
+  viral_taxonomic_units: 6590
+  protein_coding_sequences: 53679109
+
+replication:
+  replicated_by: "JiXuanRui"
+  replicated_date: "2026-06-16"
+  data_accessibility: "none"         # large private cohort; not publicly downloadable
+  code_accessibility: "none"         # no GitHub repository
+  environment_reproducibility: "high"   # all tools available in CSCCD-MetagenomeFlow envs/
+  result_verifiability: "low"        # cannot reproduce exact catalog without original data
+  method_fidelity: "high"            # pipeline matches paper: same tools, same params
+
+coverage:
+  implemented:
+    - id: "16"
+      script: "scripts/16_bac_megahit.sh"
+      paper_section: "Methods > Metagenome assembly > MEGAHIT"
+    - id: "17"
+      script: "scripts/17_bac_prodigal.sh"
+      paper_section: "Methods > Gene prediction > Prodigal"
+    - id: "18"
+      script: "scripts/18_bac_cdhit.sh"
+      paper_section: "Methods > Gene catalog construction"
+    - id: "32"
+      script: "scripts/32_bac_coverm_depth.sh"
+      paper_section: "Methods > Binning > Coverage calculation"
+    - id: "33"
+      script: "scripts/33_bac_metabat2.sh"
+      paper_section: "Methods > Binning > MetaBAT2"
+    - id: "34"
+      script: "scripts/34_bac_maxbin2.sh"
+      paper_section: "Methods > Binning > MaxBin2"
+    - id: "36"
+      script: "scripts/36_bac_dastool.sh"
+      paper_section: "Methods > Binning > DAS_Tool integration"
+    - id: "37"
+      script: "scripts/37_bac_checkm2.sh"
+      paper_section: "Methods > MAG quality assessment > CheckM2"
+    - id: "38"
+      script: "scripts/38_bac_drep.sh"
+      paper_section: "Methods > MAG dereplication > dRep"
+    - id: "40"
+      script: "scripts/40_bac_gtdbtk.sh"
+      paper_section: "Methods > Taxonomic classification > GTDB-Tk"
+    - id: "52"
+      script: "scripts/52_vir_genomad.sh"
+      paper_section: "Methods > Viral identification > geNomad"
+    - id: "53"
+      script: "scripts/53_vir_virsorter2.sh"
+      paper_section: "Methods > Viral identification > VirSorter2 (paper uses VIBRANT)"
+    - id: "54"
+      script: "scripts/54_vir_checkv_contig.sh"
+      paper_section: "Methods > Viral quality assessment > CheckV"
+  new_scripts: []
+  gaps:
+    - name: "CONCOCT binning"
+      description: "Paper uses 3-tool ensemble (MetaBAT2+MaxBin2+CONCOCT); CSCCD-MetagenomeFlow adds SemiBin2 but lacks CONCOCT"
+      paper_section: "Methods > Genome binning"
+      priority: low
+    - name: "metaSPAdes assembly"
+      description: "Paper uses metaSPAdes for paired-end; CSCCD-MetagenomeFlow uses MEGAHIT only"
+      paper_section: "Methods > Metagenome assembly"
+      priority: medium
+    - name: "M-GWAS pipeline"
+      description: "Host genetics GWAS analysis (GATK + imputation); requires WGS cohort data"
+      paper_section: "Methods > Metagenome-wide GWAS"
+      priority: low
+    - name: "DeepVirFinder + VIBRANT"
+      description: "Paper uses 3-tool virus consensus; CSCCD-MetagenomeFlow uses geNomad+VirSorter2"
+      paper_section: "Methods > Viral identification"
+      priority: low

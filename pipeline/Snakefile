@@ -1,0 +1,211 @@
+# MaxMetagenome — Snakemake Pipeline (Mode 1)
+# Usage: snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 16
+# Resume:  snakemake ... -j 16 --rerun-incomplete
+
+configfile: "pipeline/config/config.yaml"
+
+import csv, os
+
+from snakemake.utils import validate
+
+_SCHEMA = os.path.join(
+    os.path.dirname(os.path.abspath(workflow.snakefile)),
+    "config", "config.schema.yaml",
+)
+validate(config, _SCHEMA)
+
+def _load_samples(cfg):
+    sheet = cfg.get("samplesheet", "")
+    if sheet and os.path.exists(sheet):
+        with open(sheet) as fh:
+            return [row["sample_id"] for row in csv.DictReader(fh)]
+    return cfg["samples"]
+
+SAMPLES  = _load_samples(config)
+WORKDIR  = config["workdir"]
+REPO     = config["repo"]
+# threads_per_job: threads each tool uses internally (passed to -t / --nproc)
+# Align with Mode 2 Bash pipeline -t parameter
+CPUS     = config.get("threads_per_job", config.get("cpus", 8))
+
+include: "rules/preprocessing.smk"
+include: "rules/bacteria_taxonomy.smk"
+include: "rules/bacteria_assembly.smk"
+include: "rules/bacteria_annotation.smk"
+include: "rules/bacteria_binning.smk"
+include: "rules/bacteria_gem.smk"
+include: "rules/virome.smk"
+include: "rules/mycobiome.smk"
+include: "rules/statistics.smk"
+include: "rules/crosscohort.smk"
+include: "rules/rag.smk"
+
+RAG_REFRESH = config.get("rag_refresh", "false").lower() == "true"
+
+ALL_KINGDOMS = ("bacteria", "virome", "fungi")
+KINGDOMS = tuple(k for k in config.get("kingdoms", ALL_KINGDOMS))
+FULL_RUN = set(KINGDOMS) == set(ALL_KINGDOMS)
+STAT_DIMENSIONS = ["bacteria", "fungi", "virus"]
+STAT_FUNC_DIMENSIONS = ["bacteria"] * 9 + ["fungi"] * 6 + ["virus"] * 5
+STAT_FUNC_TYPES = [
+    "pathway", "kegg_ko", "cog", "cazyme", "arg", "vfdb", "defense", "ncyc", "pcyc",
+    "kegg_ko", "cog", "cazyme", "vfdb", "amr", "merops",
+    "phrog", "vog", "lifestyle", "host_genus", "viral_family",
+]
+
+
+def _e(pattern, **fills):
+    return expand(pattern, workdir=WORKDIR, **fills)
+
+
+def _ez(pattern, dimension, func_type):
+    return expand(pattern, zip, workdir=[WORKDIR] * len(dimension), dimension=dimension, func_type=func_type)
+
+
+def _all_targets():
+    """Rule-all targets; dimension groups are selectable via config `kingdoms`.
+
+    Preprocessing always runs. A dimension group runs only when its kingdom is
+    selected. The statistics / cross-domain / integration layers assume all
+    three dimensions and are included only on a full run, so a partial run is
+    not blocked by an unselected dimension's outputs.
+    """
+    shared = [
+        _e("{workdir}/result/fastp/{sample}/{sample}.json", sample=SAMPLES),
+        _e("{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
+           sample=SAMPLES),
+    ]
+
+    bacteria = [
+        _e("{workdir}/result/metaphlan4/{sample}/{sample}_profile.txt", sample=SAMPLES),
+        WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv",
+        WORKDIR + "/result/strainphlan4/consensus_markers/.done",
+        _e("{workdir}/result/centrifuger/{sample}/{sample}.kreport.tsv", sample=SAMPLES),
+        WORKDIR + "/result/sylph/merged/sylph_profile_merged.tsv",
+        _e("{workdir}/result/humann3/{sample}/{sample}_pathabundance.tsv", sample=SAMPLES),
+        WORKDIR + "/result/annotation/eggnog/eggnog.emapper.annotations",
+        WORKDIR + "/result/annotation/kegg/kegg_diamond.tsv",
+        WORKDIR + "/result/annotation/amrfinder/amrfinder_results.tsv",
+        WORKDIR + "/result/annotation/card/rgi_results.txt",
+        WORKDIR + "/result/annotation/card/summary/card_summary_report.txt",
+        WORKDIR + "/result/annotation/dbcan/overview.txt",
+        WORKDIR + "/result/annotation/vfdb/vfdb_hits.tsv",
+        WORKDIR + "/result/annotation/bacmet/bacmet_hits.tsv",
+        WORKDIR + "/result/annotation/defense_finder/defense_finder_systems.tsv",
+        WORKDIR + "/result/annotation/ncyc/ncyc_hits.tsv",
+        WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
+        WORKDIR + "/result/annotation/scyc/scyc_hits.tsv",
+        WORKDIR + "/result/annotation/pfam/pfam_hits.tblout",
+        WORKDIR + "/result/annotation/pfam/pfam_hits.domtblout",
+        WORKDIR + "/result/annotation/uniprot_sprot/sprot_hits.tsv",
+        _e("{workdir}/result/annotation/antismash/{sample}/antismash_done.txt", sample=SAMPLES),
+        _e("{workdir}/result/annotation/antismash/{sample}/{sample}.bgc_novelty.tsv", sample=SAMPLES),
+        _e("{workdir}/result/binning/dastool/{sample}/{sample}_DASTool_contig2bin.tsv", sample=SAMPLES),
+        _e("{workdir}/result/binning/reassembly/{sample}/{sample}.reassembly_done.txt", sample=SAMPLES),
+        WORKDIR + "/result/binning/checkm2/quality_report.tsv",
+        WORKDIR + "/result/binning/drep/drep_done.txt",
+        _e("{workdir}/result/binning/coverm_quant/{sample}.tsv", sample=SAMPLES),
+        WORKDIR + "/result/binning/instrain_compare/output/strain_comparison_summary.tsv",
+        WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
+        WORKDIR + "/result/binning/prokka/prokka_summary.tsv",
+        WORKDIR + "/result/gem/carveme/carveme_done.txt",
+        WORKDIR + "/result/gem/fba/fba_done.txt",
+        WORKDIR + "/result/wgs/mlst/mlst.tsv",
+        WORKDIR + "/result/wgs/pangenome/summary_statistics.txt",
+        WORKDIR + "/result/wgs/snippy/core.tsv",
+        WORKDIR + "/result/integration/bacteria/mge_plasmid_summary.tsv",
+        WORKDIR + "/result/integration/bacteria/mag_integration_table.tsv",
+    ]
+
+    fungi = [
+        _e("{workdir}/result/fungi/kraken2/{sample}/{sample}.report", sample=SAMPLES),
+        _e("{workdir}/result/fungi/metaphlan4/{sample}/{sample}_profile.txt", sample=SAMPLES),
+        _e("{workdir}/result/fungi/humann4/{sample}/{sample}_fungi_pathabundance.tsv", sample=SAMPLES),
+        _e("{workdir}/result/fungi/blast_gutdb/{sample}/{sample}_blast.tsv", sample=SAMPLES),
+        _e("{workdir}/result/fungi/funomic/{sample}/{sample}_classification.tsv", sample=SAMPLES),
+        _e("{workdir}/result/fungi/phf_profiler/{sample}/{sample}.rc", sample=SAMPLES),
+        WORKDIR + "/result/fungi/phf_profiler/merged_abundance.tsv",
+        WORKDIR + "/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv",
+        WORKDIR + "/result/fungi/metaphlan4/merged/taxonomy.tsv",
+        _e("{workdir}/result/fungi/microfisher/{sample}/{sample}_fungal_profile.tsv", sample=SAMPLES),
+        _e("{workdir}/result/fungi/assembly/{sample}/{sample}.contigs.fa", sample=SAMPLES),
+        _e("{workdir}/result/fungi/eukfinder/{sample}/results.txt", sample=SAMPLES),
+        _e("{workdir}/result/fungi/veba_qc/{sample}/{sample}.veba_qc.done", sample=SAMPLES),
+        _e("{workdir}/result/fungi/veba_qc/{sample}/euk_mags/{sample}.euk_mags_summary.tsv", sample=SAMPLES),
+        _e("{workdir}/result/fungi/veba_qc/{sample}/euk_mags/{sample}.metaeuk_done.txt", sample=SAMPLES),
+        _e("{workdir}/result/fungi/prodigal/{sample}/{sample}.faa", sample=SAMPLES),
+        WORKDIR + "/result/fungi/eggnog/eggnog.emapper.annotations",
+        WORKDIR + "/result/fungi/kegg/kegg_diamond.tsv",
+        WORKDIR + "/result/fungi/dbcan/overview.txt",
+        WORKDIR + "/result/fungi/vfdb/vfdb_hits.tsv",
+        WORKDIR + "/result/fungi/amr/amrfinder_results.tsv",
+        WORKDIR + "/result/fungi/merops/merops_hits.tsv",
+    ]
+
+    virome = [
+        _e("{workdir}/result/virus/checkv/{sample}/quality_summary.tsv", sample=SAMPLES),
+        WORKDIR + "/result/virus/votu/votu_representatives.tsv",
+        WORKDIR + "/result/virus/votu/genomad/virus_taxonomy.tsv",
+        WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
+        WORKDIR + "/result/virus/vmag/checkv/quality_summary.tsv",
+        _e("{workdir}/result/virus/coverm_quant/{sample}.tsv", sample=SAMPLES),
+        WORKDIR + "/result/virus/pharokka/pharokka_cds_final_merged_output.tsv",
+        WORKDIR + "/result/virus/phold/vOTU_phold.tsv",
+        WORKDIR + "/result/virus/vog/vog_annot.tsv",
+        WORKDIR + "/result/virus/bacphlip/bacphlip_results.tsv",
+        WORKDIR + "/result/virus/iphop/Host_prediction_to_genus_m90.csv",
+        WORKDIR + "/result/virus/vcontact3/exports/final_assignments.csv",
+    ]
+
+    full_run = [
+        WORKDIR + "/result/cross_domain/cluster/genome_clusters.tsv",
+        WORKDIR + "/result/cross_domain/orthogroup/orthogroup_table.tsv",
+        WORKDIR + "/result/cross_domain/correlation/network_summary.txt",
+        WORKDIR + "/result/stat/metadata.tsv",
+        WORKDIR + "/result/stat/metadata_qc_report.txt",
+        WORKDIR + "/result/stat/metadata_status.tsv",
+        WORKDIR + "/result/stat/diversity_alpha_summary.tsv",
+        WORKDIR + "/result/stat/differential_summary.tsv",
+        WORKDIR + "/result/stat/network/network_summary.txt",
+        WORKDIR + "/result/stat/bacteria/batch/corrected_matrices.done",
+        WORKDIR + "/result/stat/bacteria/batch/evaluation_report.tsv",
+        WORKDIR + "/result/stat/bacteria/ml/siamcat_done.txt",
+        WORKDIR + "/result/stat/report/report.done",
+        WORKDIR + "/result/stat/composition_done.txt",
+        _ez("{workdir}/result/stat/{dimension}/functional/{func_type}/{dimension}_functional_{func_type}_done.txt",
+            STAT_FUNC_DIMENSIONS, STAT_FUNC_TYPES),
+        _e("{workdir}/result/stat/{dimension}/functional/{dimension}_permanova_done.txt",
+           dimension=STAT_DIMENSIONS),
+        _e("{workdir}/result/stat/{dimension}/functional/network/{dimension}_functional_network_done.txt",
+           dimension=STAT_DIMENSIONS),
+        _e("{workdir}/result/stat/{dimension}/functional/00_summary/{dimension}_summary_done.txt",
+           dimension=STAT_DIMENSIONS),
+        WORKDIR + "/result/stat/cross_dimension/functional/cross_dimension_functional_done.txt",
+        WORKDIR + "/result/stat/bacteria/lefse/.done",
+        WORKDIR + "/result/stat/virus/lefse/.done",
+        WORKDIR + "/result/stat/fungi/lefse/.done",
+        WORKDIR + "/result/stat/bacteria/core_microbiome/core_microbiome_summary.txt",
+        WORKDIR + "/result/stat/fungi/core_microbiome/core_microbiome_summary.txt",
+        WORKDIR + "/result/stat/virus/core_microbiome/core_microbiome_summary.txt",
+        WORKDIR + "/result/stat/bacteria/functional_redundancy/functional_redundancy_summary.txt",
+        WORKDIR + "/result/stat/fungi/functional_redundancy/functional_redundancy_summary.txt",
+        WORKDIR + "/result/stat/virus/functional_redundancy/functional_redundancy_summary.txt",
+        WORKDIR + "/result/stat/bacteria/pathway_activity/pathway_completeness_summary.csv",
+        WORKDIR + "/result/stat/downstream_summary.tsv",
+    ]
+
+    targets = list(shared)
+    if "bacteria" in KINGDOMS:
+        targets += bacteria
+    if "fungi" in KINGDOMS:
+        targets += fungi
+    if "virome" in KINGDOMS:
+        targets += virome
+    if FULL_RUN:
+        targets += full_run
+    return targets
+
+
+rule all:
+    input:
+        _all_targets()

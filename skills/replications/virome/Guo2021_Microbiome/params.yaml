@@ -1,0 +1,69 @@
+# params.yaml — Guo2021_Microbiome key parameters
+
+virus_calling:
+  tool: VirSorter2
+  version_paper: "2.2.2"
+
+  paper_recommended:
+    min_length: 5000
+    min_score: 0.5
+    include_groups:
+      - dsDNAphage
+      - ssDNA
+      - RNA
+      - NCLDV
+      - lavidaviridae
+    use_conda_off: true
+    note: "Recommended defaults emphasize robust viral evidence on longer contigs"
+
+  project_current:
+    script: scripts/53_vir_virsorter2.sh
+    matches_paper: partial
+    min_length: 1000
+    deviation_notes: "Project uses --min-length 1000 in the current script to keep short gut virome fragments; task target notes 1500, but repository implementation is presently more permissive."
+
+classifier_scope:
+  tool: "VirSorter2 classifier ensemble"
+  paper_recommended:
+    classifier_count: 5
+    feature_types: [hallmark_HMMs, k-mers, coding_features]
+    final_score_threshold: 0.5
+  project_current:
+    script: scripts/53_vir_virsorter2.sh
+    matches_paper: true
+    deviation_notes: null
+
+downstream_filtering:
+  tool: "VirSorter2 + geNomad"
+  paper_recommended:
+    manual_review: "recommended for ambiguous predictions near score cutoff"
+    false_positive_control: "combine score and hallmark evidence"
+  project_current:
+    script: scripts/54_vir_checkv_contig.sh
+    matches_paper: partial
+    deviation_notes: "CSCCD-MetagenomeFlow uses consensus with geNomad followed by CheckV instead of paper-style expert review."
+
+benchmarks:
+  dsDNA_recall: "95.4%"
+  dsDNA_precision: "90.1%"
+  RNA_advantage: "higher recall than DeepVirFinder"
+  ssDNA_advantage: "higher recall than DeepVirFinder"
+  note: "VirSorter2 is designed for breadth across diverse virus classes, not only tailed dsDNA phages."
+
+database:
+  name: "virsorter2"
+  version_paper: "2021 classifier/HMM release"
+  local_path: "db/virsorter2"
+  components:
+    - "group-specific models"
+    - "hallmark-gene lists"
+    - "viral and Pfam HMM collections"
+  installation: "virsorter setup -d db/virsorter2"
+
+key_design_choices:
+  - choice: "Five parallel classifiers for distinct virus groups"
+    rationale: "A single phage-centric model misses RNA, ssDNA, and giant viruses with different gene-content signatures."
+  - choice: "HMM hallmark genes plus sequence composition features"
+    rationale: "Hallmark genes improve biological specificity while k-mer/coding features preserve sensitivity on divergent contigs."
+  - choice: "Final viral score thresholding"
+    rationale: "A calibrated score allows flexible recall/precision tuning across discovery vs conservative workflows."

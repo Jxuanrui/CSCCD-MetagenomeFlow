@@ -1,0 +1,50 @@
+{
+ "disease_term": "HIV infection",
+ "matched_conditions": [
+  "HIV infection",
+  "HIV infection,Antimicrobial agent",
+  "HIV infection,Diabetes mellitus",
+  "HIV infection,Methamphetamine dependence",
+  "HIV-1 infection"
+ ],
+ "n_matched_signatures": 96,
+ "n_signatures_dropped_non_gut_site": 0,
+ "bugsigdb_taxa_union": 277,
+ "our_sig_taxa": 154,
+ "overlap": 70,
+ "sign_consistent": 31,
+ "sign_discordant": 39,
+ "novel_taxa": 84,
+ "jaccard": 0.1939,
+ "p_hypergeometric_overlap": 1.0,
+ "enrichment_universe": {
+  "tested_taxa": 154,
+  "tested_in_bugsigdb": 70
+ },
+ "taxa_match_rate": 0.4545,
+ "sig_taxa_match_rate": 0.4545,
+ "verdict": "novel candidates",
+ "verdict_rule": "replicates known iff matched signatures exist AND sign_consistent>=3 AND overlap>=5 AND hypergeometric p<0.05; else novel candidates",
+ "top_novel_taxa": [
+  "agathobacter",
+  "marvinbryantia",
+  "shuttleworthia",
+  "soleaferrea",
+  "acetitomaculum",
+  "intestinimonas",
+  "negativibacillus",
+  "fibrobacter",
+  "tyzzerella",
+  "erysipelatoclostridium"
+ ],
+ "example_pmids": [
+  "24399150",
+  "24451087",
+  "26258571",
+  "27477587",
+  "28118207",
+  "28362071",
+  "28388647",
+  "29411528"
+ ]
+}

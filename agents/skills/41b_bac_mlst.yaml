@@ -1,0 +1,33 @@
+id: "41b_bac_mlst"
+name: "MLST Multi-Locus Sequence Typing"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::bac_mlst"
+
+inputs:
+  - name: drep_genomes
+    path_pattern: "{workdir}/result/binning/drep/dereplicated_genomes/*.fa"
+    required: true
+    description: "Dereplicated MAGs from dRep"
+
+outputs:
+  - name: mlst_tsv
+    path_pattern: "{workdir}/result/wgs/mlst/mlst.tsv"
+    description: "MLST results: FILE, SCHEME, ST, ALLELES columns"
+
+depends_on:
+  - "38_bac_drep"
+
+conda_env: "envs/prokaWGS"
+
+parameters:
+  scheme: "auto"
+
+benchmarks:
+  typical_runtime_min: 5
+  peak_memory_gb: 2
+
+known_issues:
+  - description: "mlst scheme auto-detection may fail for poorly-assembled MAGs"
+    workaround: "Specify --scheme explicitly if auto fails"

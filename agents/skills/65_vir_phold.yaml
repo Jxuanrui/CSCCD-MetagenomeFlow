@@ -1,0 +1,40 @@
+id: "65_vir_phold"
+script: "scripts/65_vir_phold.sh"
+tool: "PHOLD"
+tool_version: "1.2+"
+conda_env: "envs/phold"
+description: "Structural dark matter ORF annotation (ProstT5 + Foldseek, complements PHAROKKA)."
+dimension: "virome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+
+outputs:
+  - name: "phold_tsv"
+    path_pattern: "{workdir}/result/virus/phold/vOTU_phold.tsv"
+    description: "PHOLD structural annotation results."
+
+depends_on:
+  - "56_vir_votu_gen"
+  - "64_vir_pharokka"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "PHOLD recommends GPU for ProstT5; CPU mode is slower but functional."
+  - "PHOLD database (phold install) must be pre-downloaded."
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_phold"

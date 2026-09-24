@@ -1,0 +1,36 @@
+id: "95b_stat_batch_evaluate"
+script: "scripts/95b_stat_batch_evaluate.sh"
+tool: "Rscript"
+tool_version: "vegan, cluster, ggplot2, patchwork"
+conda_env: "envs/r_stat"
+description: "Evaluate batch-corrected matrices and rank methods by batch removal versus biological signal retention."
+dimension: "statistics"
+category: "batch_correction"
+rule_type: "aggregate"
+
+inputs:
+  - name: "corrected_matrices_done"
+    path_pattern: "{workdir}/result/stat/bacteria/batch/corrected_matrices.done"
+    required: true
+
+outputs:
+  - name: "evaluation_report"
+    path_pattern: "{workdir}/result/stat/bacteria/batch/evaluation_report.tsv"
+    description: "Batch correction evaluation sentinel."
+
+depends_on:
+  - "95a_stat_batch_correct"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-08"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_batch_evaluate"

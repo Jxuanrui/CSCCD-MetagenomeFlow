@@ -1,0 +1,68 @@
+---
+# params.yaml — 文献推荐参数（用于跨文献参数对比聚合）
+# /mgx-ask 可横向查询多篇文献对同一工具的参数建议
+
+profiling:
+  tool: bowtie2
+  paper_recommended:
+    preset: "--end-to-end --fast"
+    no_discordant: true
+    multimapping_k: 1000               # Step5 re-mapping
+    min_score: null                    # Not specified, using bowtie2 default
+  project_current:
+    script: scripts/74e_fun_phf_profiler.sh
+    matches_paper: true
+
+  tool: GPA.py
+  paper_recommended:
+    identity_threshold: 0.95           # -s 0.95
+    algorithm: "Singular+Escrow"
+    singular_definition: "reads mapping to exactly one genome cluster"
+    escrow_definition: "reads mapping to multiple clusters, distributed by singular proportions"
+    normalization: "by cluster gene total length (clu.uniq_gene.sum)"
+  project_current:
+    script: scripts/74e_fun_phf_profiler.sh
+    matches_paper: true
+
+database:
+  genome_catalog:
+    paper_total: 760                   # CGF 709 + PHF 502, after dereplication
+    project_cgf: 709                   # NCBI download (51 withdrawn)
+    project_phf: "included in db.fungi.fa.gz"
+    local_gene_set: "db/gut_fungi_db/db.fungi.fa.gz"
+
+  taxonomy:
+    n_clusters: 317
+    levels: 7                          # Phylum → species
+    local_file: "db/gut_fungi_db/db.fungi.taxonomy.tsv"
+
+  host_filter:
+    human: "CHM13v2 T2T assembly"
+    bacterial: "UHGG (Unified Human Gut Genome)"
+    rrna: "fungi_target (ITS/18S/28S)"
+
+quality_control:
+  read_qc:
+    tool: fastp
+    min_length: 50
+    qualified_quality_phred: 20
+    matches_paper: true               # standard settings
+
+assembly:                             # Only for MAG path, not profiling path
+  tool: MEGAHIT
+  min_contig_length: 1500
+  matches_paper: true
+
+annotation:
+  gene_prediction:
+    tool: Prodigal
+    mode: meta
+    genetic_code: 11
+    note: "Paper uses custom pipeline; Prodigal meta mode is project's adaptation"
+    matches_paper: partial
+
+  functional:
+    eggnog_version: "5.0.2"
+    kegg_version: "current"
+    cazy: "dbCAN3"
+    matches_paper: true

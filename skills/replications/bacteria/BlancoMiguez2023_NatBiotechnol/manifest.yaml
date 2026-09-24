@@ -1,0 +1,57 @@
+---
+# manifest.yaml — Blanco-Míguez et al. 2023 Nature Biotechnology
+# MetaPhlAn 4: extending metagenomic taxonomic profiling with uncharacterized species
+
+id: "BlancoMiguez2023_NatBiotechnol"
+pmid: "37687556"
+doi: "10.1038/s41587-023-01688-w"
+title: "Extending and improving metagenomic taxonomic profiling with uncharacterized species using MetaPhlAn 4"
+journal: "Nature Biotechnology"
+volume: 41
+issue: 11
+pages: "1633-1644"
+year: 2023
+impact_factor: 36.6
+paper_type: tool_paper
+primary_dimension: bacteria
+cross_dimensions: [fungi, statistics]
+dimension: bacteria
+keywords: [MetaPhlAn4, SGB, metagenomics, taxonomic-profiling, marker-genes, uncharacterized-species, MAGs]
+citation_in_scripts: [11, "11b", 72]  # 11_bac_metaphlan4, 11b_bac_metaphlan4_merge, 72_fun_metaphlan4_euk
+
+code_availability:
+  github: "https://github.com/biobakery/MetaPhlAn"
+  zenodo: null
+  local_original: null
+  local_adapted: null
+
+replication:
+  replicated_by: "JiXuanRui"
+  replicated_date: "2026-06-16"
+  data_accessibility: "partial"       # ChocoPhlAn DB downloadable; test data available
+  code_accessibility: "full"          # Full GitHub source, BioConda installable
+  environment_reproducibility: "high" # envs/humann4 contains MetaPhlAn4 (4.x)
+  result_verifiability: "medium"      # Can verify SGB assignments; exact profiles depend on DB version
+  method_fidelity: "high"             # Using official biobakery MetaPhlAn4 binary
+
+coverage:
+  implemented:
+    - id: "11"
+      script: "scripts/11_bac_metaphlan4.sh"
+      paper_section: "Methods > Metagenomic profiling with MetaPhlAn 4"
+    - id: "11b"
+      script: "scripts/11b_bac_metaphlan4_merge.sh"
+      paper_section: "Methods > Merged sample profiles"
+    - id: "72"
+      script: "scripts/72_fun_metaphlan4_euk.sh"
+      paper_section: "Methods > Eukaryote profiling (--kingdom Eukaryota)"
+  new_scripts: []
+  gaps:
+    - name: "StrainPhlAn integration"
+      description: "Strain-level phylogenetics (script 12 exists but tool paper connection not documented)"
+      paper_section: "Methods > Strain-level profiling"
+      priority: low
+    - name: "PhyloPhlAn tree construction"
+      description: "Phylogenetic placement using MetaPhlAn marker genes"
+      paper_section: "Methods > Phylogenetic analysis"
+      priority: low

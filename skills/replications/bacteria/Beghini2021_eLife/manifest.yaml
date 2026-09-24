@@ -1,0 +1,55 @@
+---
+# manifest.yaml — Beghini et al. 2021 eLife
+# HUMAnN3: functional profiling within the bioBakery 3 framework
+
+id: "Beghini2021_eLife"
+pmid: "33830980"
+doi: "10.7554/eLife.65088"
+title: "Integrating taxonomic, functional, and strain-level profiling of diverse microbial communities with bioBakery 3"
+journal: "eLife"
+volume: 10
+issue: null
+pages: "e65088"
+year: 2021
+impact_factor: 7.7
+paper_type: tool_paper
+primary_dimension: bacteria
+cross_dimensions: [fungi]
+dimension: bacteria
+keywords: [HUMAnN3, bioBakery3, functional-profiling, MetaPhlAn4, ChocoPhlAn, UniRef90, MinPath, pathways, stratified-abundance, fungi]
+citation_in_scripts: [13, 73]  # 13_bac_humann3.sh, 73_fun_humann4_fungi.sh
+
+code_availability:
+  github: "https://github.com/biobakery/biobakery"
+  portal: "https://huttenhower.sph.harvard.edu/humann/"
+  pypi: "https://pypi.org/project/humann/"
+  local_original: null
+  local_adapted: null
+
+replication:
+  replicated_by: "JiXuanRui"
+  replicated_date: "2026-06-16"
+  data_accessibility: "full"          # ChocoPhlAn/UniRef DBs downloadable
+  code_accessibility: "full"          # Official HUMAnN package and docs available
+  environment_reproducibility: "high" # envs/humann4 in project, HUMAnN3-compatible scripts
+  result_verifiability: "medium"      # Functional abundance depends on DB versions and speed mode
+  method_fidelity: "medium"           # Core HUMAnN logic retained, project adds pragmatic speed adaptations
+
+coverage:
+  implemented:
+    - id: "13"
+      script: "scripts/13_bac_humann3.sh"
+      paper_section: "Methods > Integrated taxonomic and functional profiling"
+    - id: "73"
+      script: "scripts/73_fun_humann4_fungi.sh"
+      paper_section: "Project adaptation > Stratified pathway extraction"
+  new_scripts: []
+  gaps:
+    - name: "Exact paper runtime benchmark setup"
+      description: "Paper benchmark reports <1 h/sample with 16 cores under specific evaluation conditions; project speed modes adapt thresholds and input handling for large gut cohorts"
+      paper_section: "Results > Computational performance"
+      priority: medium
+    - name: "Strain-level branch outside HUMAnN core"
+      description: "bioBakery 3 includes strain-level profiling context; this skill package documents the functional HUMAnN component only"
+      paper_section: "Results > Strain-level profiling"
+      priority: low

@@ -1,0 +1,52 @@
+---
+# manifest.yaml — Guo et al. 2021 Microbiome
+# VirSorter2: multi-classifier viral sequence detection for diverse DNA and RNA viruses
+
+id: "Guo2021_Microbiome"
+pmid: "33522966"
+doi: "10.1186/s40168-020-00990-y"
+title: "VirSorter2: a multi-classifier, expert-guided approach to detect diverse DNA and RNA viruses"
+journal: "Microbiome"
+volume: 9
+issue: 1
+pages: "37"
+year: 2021
+impact_factor: 13.8
+paper_type: tool_paper
+primary_dimension: virome
+cross_dimensions: []
+dimension: virome
+keywords: [VirSorter2, virus-identification, multi-classifier, HMM, k-mer, RNA-virus, ssDNA, dsDNA, NCLDV, lavidaviridae]
+citation_in_scripts: [53]  # 53_vir_virsorter2.sh
+
+code_availability:
+  github: "https://github.com/jiarong/VirSorter2"
+  portal: null
+  pypi: null
+  local_original: null
+  local_adapted: null
+
+replication:
+  replicated_by: "JiXuanRui"
+  replicated_date: "2026-06-16"
+  data_accessibility: "full"          # models and HMM DB downloadable
+  code_accessibility: "full"          # official GitHub + conda package
+  environment_reproducibility: "high" # envs/virsorter2 in project
+  result_verifiability: "medium"      # Scores depend on DB/model release, outputs stable
+  method_fidelity: "high"             # Official VirSorter2 run mode used
+
+coverage:
+  implemented:
+    - id: "53"
+      script: "scripts/53_vir_virsorter2.sh"
+      paper_section: "Methods > VirSorter2 prediction workflow"
+  new_scripts: []
+  gaps:
+    - name: "Expert-guided post hoc curation"
+      description: "Paper discusses score interpretation across virus groups; CSCCD-MetagenomeFlow relies on caller intersection with geNomad instead of manual expert curation"
+      paper_section: "Methods > Expert-guided framework"
+      priority: medium
+    - name: "5 kb recommended input length"
+      description: "Project lowers the minimum length to capture shorter gut viral fragments, trading some precision for recall before CheckV QC"
+      paper_section: "Methods > Benchmark design"
+      priority: medium
