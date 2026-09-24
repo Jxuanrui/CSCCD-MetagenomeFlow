@@ -45,7 +45,9 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 
 ### Recent Updates
 
-> Details: `git log v1.1.4-baseline..HEAD`
+> Details: `git log v1.1.4-baseline..HEAD` (private dev history)
+
+- **v1.3.0 (2026-09)** — First public release. mgx-vis MCP visualization module (publication PDF+PNG, CNS design system, 14-figure gallery reproducible from synthetic demo data); agent-driven metagenome mining loop; GitHub publishing pipeline with leak verification; environment lock manifests.
 
 - **v1.2.1 (2026-09)** — Cleanup & RAG expansion: ~770 GB reclaimed; antiSMASH 8 full re-run (regions +41.5%); literature_kb 5.7x; mechanism_kb +435 records; BugSigDB signature_kb added.
 - **v1.2.0 (2026-09)** — Engineering hardening: shared script library (-2,300 lines, shellcheck clean), antiSMASH 8 / SemiBin 2.5, metaSPAdes + PhaStyle opt-in tracks, remote CI, GLM dual-model routing.

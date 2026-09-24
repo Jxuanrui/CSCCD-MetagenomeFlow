@@ -12,7 +12,14 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BRANCH="${1:-public}"
+BRANCH="public"
+TAG=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --tag) TAG="${2:?--tag needs a value}"; shift 2 ;;
+        *) echo "[WARN] unknown arg: $1" >&2; shift ;;
+    esac
+done
 
 # Files/dirs that must NEVER enter the public snapshot.
 # Project/ carries production cohort metadata + machine-specific sheets.
@@ -81,6 +88,13 @@ git -c user.name="Jxuanrui" -c user.email="Jxuanrui@users.noreply.github.com" \
     commit -q --no-verify -m "Public snapshot of master ${MASTER_SHA}"
 git checkout -f -q master
 
+# Optional release tag on the snapshot commit (public tag only — never
+# points into private master history).
+if [ -n "${TAG}" ]; then
+    git tag -f "${TAG}" "${BRANCH}" >/dev/null
+    echo "[publish] tag ${TAG} -> $(git rev-parse --short "${BRANCH}")"
+fi
+
 # Post-build verification: no excluded paths, no absolute home paths.
 BAD_PATHS="$(git ls-tree -r --name-only "${BRANCH}" | grep -E "${EXCLUDE_RE}" || true)"
 BAD_HOME="$(git grep -l '/home/' "${BRANCH}" -- 2>/dev/null | grep -v 'scripts/utils/publish_public.sh' || true)"
@@ -92,4 +106,4 @@ if [ -n "${BAD_PATHS}" ] || [ -n "${BAD_HOME}" ]; then
 fi
 
 echo "[publish] ${BRANCH} ready: $(git rev-parse --short "${BRANCH}") — single clean commit"
-echo "[publish] push with:  git push <remote> ${BRANCH}:main    (never --mirror)"
+echo "[publish] push with:  git push <remote> ${BRANCH}:main --force${TAG:+ echo "[publish] push with:  git push <remote> ${BRANCH}:main    (never --mirror)"echo "[publish] push with:  git push <remote> ${BRANCH}:main    (never --mirror)" git push <remote> ${TAG}}    (never --mirror)"
