@@ -1,0 +1,47 @@
+id: "80b_fun_metaeuk"
+script: "scripts/80b_fun_metaeuk.sh"
+tool: "Prodigal or MetaEuk"
+tool_version: "Prodigal 2.6.3 / MetaEuk"
+conda_env: "envs/assembly or envs/metaeuk"
+description: "Predict fungal coding sequences from assembled contigs using Prodigal by default or MetaEuk when configured."
+dimension: "fungi"
+category: "gene_prediction"
+rule_type: "per_sample"
+
+inputs:
+  - name: "contigs"
+    path_pattern: "{workdir}/result/fungi/assembly/{sample}/{sample}.contigs.fa"
+    required: true
+
+outputs:
+  - name: "protein_fasta"
+    path_pattern: "{workdir}/result/fungi/metaeuk/{sample}/{sample}.fas"
+    description: "Primary protein FASTA sentinel for MetaEuk/Prodigal gene prediction output."
+  - name: "faa_compat"
+    path_pattern: "{workdir}/result/fungi/metaeuk/{sample}/{sample}_metaeuk.faa"
+    description: "Downstream-compatible protein FASTA."
+
+depends_on:
+  - "78_fun_megahit"
+required_by:
+  - "98d_fun_integration_tables"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  method: "{fun_metaeuk_method}"
+  db: "{fun_metaeuk_db}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "The script currently reads {sample}_fungi.contigs.fa internally, while the pipeline assembly output pattern is {sample}.contigs.fa."
+  - "When running in default prodigal mode, the script writes {sample}_metaeuk.faa and may not create {sample}.fas unless the wrapper handles it."
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_metaeuk"

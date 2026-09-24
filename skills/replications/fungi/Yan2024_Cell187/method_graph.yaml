@@ -1,0 +1,106 @@
+# method_graph.yaml — 分析步骤 DAG
+# 格式：xKG节点分类（method_node | config_node | db_node）
+
+nodes:
+  - id: read_qc
+    type: method_node
+    tool: fastp
+    version: "0.22.0"
+    script: scripts/01_qc_fastp.sh
+    paper_section: "Methods > Raw data quality control"
+
+  - id: host_removal
+    type: method_node
+    tool: kneaddata + bowtie2
+    version: "0.12.4"
+    script: scripts/02_qc_kneaddata.sh
+    paper_section: "Methods > Host read removal"
+    config:
+      type: config_node
+      reference_db: "Human T2T CHM13v2 genome"
+
+  - id: phf_db_index
+    type: method_node
+    rule_type: one_time_build
+    tool: bowtie2-build
+    version: "2.4.5"
+    script: scripts/74a_fun_gut_db_build.sh
+    paper_section: "Methods > Metagenomics mapping"
+    databases:
+      - type: db_node
+        name: "Gut Fungi Gene Set"
+        source: "760 genomes (CGF 709 + PHF 502, dereplicated)"
+        local_path: "db/gut_fungi_db/db.fungi.fa.gz"
+      - type: db_node
+        name: "UHGG bacterial filter"
+        local_path: "db/gut_fungi_db/db.uhgg.fa.gz"
+      - type: db_node
+        name: "Human CHM13v2 filter"
+        local_path: "db/gut_fungi_db/db.human_chm13v2.fa.gz"
+      - type: db_node
+        name: "rRNA filter"
+        local_path: "db/gut_fungi_db/db.fungi_target.fa.gz"
+
+  - id: fungi_profiling
+    type: method_node
+    tool: "bowtie2 + GPA.py"
+    script: scripts/74e_fun_phf_profiler.sh
+    paper_section: "Methods > Metagenomics mapping and quantification"
+    config:
+      type: config_node
+      step1: "Map reads to fungi gene set (extract fungi reads)"
+      step2: "Remove human host reads"
+      step3: "Remove bacterial reads (UHGG)"
+      step4: "Remove rRNA reads"
+      step5: "Re-map with -k 1000 (allow multi-mapping for Escrow)"
+      step6: "GPA.py: Singular reads → direct count; Escrow reads → proportional by singular; normalize by cluster gene length"
+      identity_threshold: 0.95          # GPA.py -s 0.95
+      algorithm: "Singular+Escrow"
+      bowtie2_mode: "--end-to-end --fast"
+      multimapping_k: 1000
+
+  - id: abundance_aggregation
+    type: method_node
+    tool: python3
+    script: scripts/74f_fun_phf_aggregate.sh
+    paper_section: "Methods > Abundance matrix construction"
+    config:
+      type: config_node
+      taxonomy_levels: [Phylum, subPhylum, Class, Order, family, genus, species]
+      output: "cluster × samples relative abundance matrix"
+
+  - id: diversity_analysis
+    type: method_node
+    tool: "vegan + phyloseq (R)"
+    script: scripts/91_stat_diversity.sh
+    paper_section: "Methods > Diversity analysis"
+    status: "not_paper_specific"        # general pipeline step
+
+  - id: differential_analysis
+    type: method_node
+    tool: "LEfSe / ANCOM-BC2 / MaAsLin2"
+    script: scripts/92_stat_differential.sh
+    paper_section: "Methods > Differential abundance"
+    status: "not_paper_specific"
+
+  - id: smgc_annotation
+    type: method_node
+    tool: antiSMASH
+    script: null                        # GAP — not yet implemented
+    paper_section: "Methods > SMGC annotation"
+    status: "gap"
+
+edges:
+  - from: read_qc
+    to: host_removal
+  - from: host_removal
+    to: fungi_profiling
+  - from: phf_db_index
+    to: fungi_profiling
+    type: prerequisite
+  - from: fungi_profiling
+    to: abundance_aggregation
+  - from: abundance_aggregation
+    to: diversity_analysis
+  - from: abundance_aggregation
+    to: differential_analysis

@@ -1,0 +1,194 @@
+# method_graph.yaml — Jie2026_NatGenet analysis DAG
+# xKG node types: method_node | config_node | code_node | db_node
+
+nodes:
+  - id: qc
+    type: method_node
+    tool: fastp
+    version: "0.20.1"
+    script: scripts/01_qc_fastp.sh
+    paper_section: "Methods > Preprocessing > Read quality control"
+    config:
+      type: config_node
+      length_required: 51
+
+  - id: host_removal
+    type: method_node
+    tool: bowtie2
+    version: "2.4.2"
+    script: scripts/02_qc_kneaddata.sh
+    paper_section: "Methods > Preprocessing > Host read removal"
+    config:
+      type: config_node
+      mode: "--end-to-end --very-sensitive"
+      reference_genomes: [GRCh38, CHM13v2.0]
+
+  - id: assembly_pe
+    type: method_node
+    tool: metaSPAdes
+    version: "3.14.0"
+    script: null
+    paper_section: "Methods > Metagenome assembly > paired-end"
+    config:
+      type: config_node
+      k: "21,33,55,77"
+      memory_gb: 81
+    note: "metaSPAdes not in CSCCD-MetagenomeFlow; MEGAHIT used instead"
+
+  - id: assembly_se
+    type: method_node
+    tool: MEGAHIT
+    version: "1.2.9"
+    script: scripts/16_bac_megahit.sh
+    paper_section: "Methods > Metagenome assembly > single-end"
+    config:
+      type: config_node
+      preset: "meta-sensitive"
+      min_contig_len: 100
+
+  - id: coverage_calc
+    type: method_node
+    tool: BWA + Mash
+    version: "BWA 0.7.19"
+    script: scripts/32_bac_coverm_depth.sh
+    paper_section: "Methods > Genome binning > Coverage calculation"
+    config:
+      type: config_node
+      nearest_neighbors: 19  # Mash to find 19 closest samples
+
+  - id: binning_metabat2
+    type: method_node
+    tool: MetaBAT2
+    version: "2.15"
+    script: scripts/33_bac_metabat2.sh
+    paper_section: "Methods > Genome binning > MetaBAT2"
+
+  - id: binning_maxbin2
+    type: method_node
+    tool: MaxBin2
+    version: "2.2.7"
+    script: scripts/34_bac_maxbin2.sh
+    paper_section: "Methods > Genome binning > MaxBin2"
+
+  - id: binning_concoct
+    type: method_node
+    tool: CONCOCT
+    version: "1.1.0"
+    script: null
+    paper_section: "Methods > Genome binning > CONCOCT"
+    note: "CONCOCT not integrated in CSCCD-MetagenomeFlow; SemiBin2 used as substitute"
+
+  - id: bin_integration
+    type: method_node
+    tool: DAS_Tool
+    script: scripts/36_bac_dastool.sh
+    paper_section: "Methods > Genome binning > DAS_Tool bin refinement"
+
+  - id: mag_qc
+    type: method_node
+    tool: CheckM2
+    version: "1.0.1"
+    script: scripts/37_bac_checkm2.sh
+    paper_section: "Methods > MAG quality assessment"
+    config:
+      type: config_node
+      completeness_min: 50
+      contamination_max: 5
+      quality_score_min: 50
+      database: "uniref100.KO.1.dmnd"
+
+  - id: mag_derep
+    type: method_node
+    tool: dRep
+    script: scripts/38_bac_drep.sh
+    paper_section: "Methods > MAG dereplication"
+    config:
+      type: config_node
+      ani_threshold: 0.99
+
+  - id: taxonomy
+    type: method_node
+    tool: GTDB-Tk
+    script: scripts/40_bac_gtdbtk.sh
+    paper_section: "Methods > Taxonomic classification"
+
+  - id: gene_prediction
+    type: method_node
+    tool: Prodigal
+    version: "2.6.3"
+    script: scripts/17_bac_prodigal.sh
+    paper_section: "Methods > Gene prediction"
+    config:
+      type: config_node
+      mode: "-p meta"
+
+  - id: annotation
+    type: method_node
+    tool: "KEGG + CAZy + VFDB + AMRFinder"
+    scripts: [scripts/22_bac_kegg.sh, scripts/25_bac_dbcan.sh, scripts/26_bac_vfdb.sh, scripts/23_bac_amrfinder.sh]
+    paper_section: "Methods > Functional annotation"
+
+  - id: virus_identification
+    type: method_node
+    tool: "geNomad + DeepVirFinder + VIBRANT"
+    scripts: [scripts/52_vir_genomad.sh, scripts/53_vir_virsorter2.sh]
+    paper_section: "Methods > Viral identification"
+    note: "Paper uses VIBRANT; CSCCD-MetagenomeFlow uses VirSorter2 as substitute"
+
+  - id: virus_qc
+    type: method_node
+    tool: CheckV
+    script: scripts/54_vir_checkv_contig.sh
+    paper_section: "Methods > Viral quality assessment"
+    config:
+      type: config_node
+      completeness_min: 50
+
+  - id: gwas
+    type: method_node
+    tool: "GATK + 4D-SZ imputation panel"
+    script: null
+    paper_section: "Methods > Metagenome-wide genome-wide association study"
+    note: "Requires host WGS cohort; not implemented in CSCCD-MetagenomeFlow"
+
+edges:
+  - from: qc
+    to: host_removal
+  - from: host_removal
+    to: assembly_pe
+  - from: host_removal
+    to: assembly_se
+  - from: assembly_pe
+    to: coverage_calc
+  - from: assembly_se
+    to: coverage_calc
+  - from: coverage_calc
+    to: binning_metabat2
+  - from: coverage_calc
+    to: binning_maxbin2
+  - from: coverage_calc
+    to: binning_concoct
+  - from: binning_metabat2
+    to: bin_integration
+  - from: binning_maxbin2
+    to: bin_integration
+  - from: binning_concoct
+    to: bin_integration
+  - from: bin_integration
+    to: mag_qc
+  - from: mag_qc
+    to: mag_derep
+  - from: mag_derep
+    to: taxonomy
+  - from: mag_derep
+    to: gene_prediction
+  - from: gene_prediction
+    to: annotation
+  - from: assembly_pe
+    to: virus_identification
+  - from: assembly_se
+    to: virus_identification
+  - from: virus_identification
+    to: virus_qc
+  - from: taxonomy
+    to: gwas

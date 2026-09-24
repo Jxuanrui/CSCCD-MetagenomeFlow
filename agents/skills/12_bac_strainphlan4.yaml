@@ -1,0 +1,44 @@
+id: "12_bac_strainphlan4"
+script: "scripts/12_bac_strainphlan4.sh"
+tool: "StrainPhlAn4"
+tool_version: "4.2.4"
+conda_env: "envs/humann4"
+description: "Extract consensus markers from MetaPhlAn4 SAM files and prepare strain-level phylogeny inputs."
+dimension: "bacteria"
+category: "taxonomy"
+rule_type: "aggregate"
+
+inputs:
+  - name: "sam_files"
+    path_pattern: "{workdir}/result/metaphlan4/{sample}/{sample}.sam.bz2"
+    required: true
+
+outputs:
+  - name: "markers_done"
+    path_pattern: "{workdir}/result/strainphlan4/consensus_markers/.done"
+    description: "Sentinel created after marker extraction and clade detection complete."
+  - name: "clades_detected"
+    path_pattern: "{workdir}/result/strainphlan4/clades_detected.txt"
+    description: "Candidate clades detected across samples for later tree building."
+
+depends_on:
+  - "11_bac_metaphlan4"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "Without a -c CLADE argument the script stops after generating clade candidates; the Snakemake sentinel therefore tracks only Steps 1-2, not final tree construction."
+  - "At least two samples are required for phylogeny building; single-sample runs only produce consensus markers."
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "strainphlan4"

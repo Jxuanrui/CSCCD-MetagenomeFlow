@@ -1,0 +1,37 @@
+id: "52_vir_genomad"
+script: "scripts/52_vir_genomad.sh"
+tool: "geNomad"
+tool_version: "1.10+"
+conda_env: "envs/genomad"
+description: "Virus/plasmid identification via geNomad (neural network + marker genes)."
+dimension: "virome"
+category: "virus_identification"
+rule_type: "per_sample"
+
+inputs:
+  - name: "assembly_contigs"
+    path_pattern: "{workdir}/result/virus/assembly/{sample}/{sample}.contigs.fa"
+    required: true
+
+outputs:
+  - name: "virus_summary"
+    path_pattern: "{workdir}/result/virus/genomad/{sample}/summary/virus_summary.tsv"
+    description: "Virus prediction summary table."
+
+depends_on:
+  - "51_vir_megahit"
+required_by:
+  - "54_vir_checkv_contig"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_genomad"

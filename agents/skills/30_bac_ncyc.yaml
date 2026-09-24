@@ -1,0 +1,36 @@
+id: "30_bac_ncyc"
+name: "NCyc Nitrogen Cycling Gene Annotation (DIAMOND)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::ncyc"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: hits
+    path_pattern: "{workdir}/result/annotation/ncyc/ncyc_hits.tsv"
+    description: "DIAMOND blastp hits against NCyc DB (BLAST m6 format)"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/assembly"
+db_path: "db/ncyc"
+
+parameters:
+  evalue: "1e-5"
+  max_target_seqs: 1
+  mode: "sensitive"
+
+benchmarks:
+  typical_runtime_min: 15
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "NCyc covers 9 nitrogen cycling categories: nitrogen fixation, nitrification, denitrification, etc."
+    workaround: "Map sseqid to NCyc gene family using the NCyc sequence header annotations"

@@ -1,0 +1,9 @@
+taxon	rank	direction	p	q	median_case	median_control	mean_log1p_case	mean_log1p_control	prevalence_case	prevalence_control	rank_biserial	in_bugsigdb	bugsigdb_direction
+asaccharobacter celatus	species	decreased	0.000599	0.030274	0	0	0.000157	0.007391	0.015385	0.222222	-0.210256	False	
+ruminococcus bicirculans	species	decreased	0.000483	0.030274	0	0.0287	0.082925	0.189732	0.230769	0.62963	-0.394872	False	
+adlercreutzia	genus	decreased	0.002335	0.033716	0	0	9.7e-05	0.003558	0.030769	0.222222	-0.198291	True	decreased
+asaccharobacter	genus	decreased	0.000599	0.033716	0	0	0.000157	0.007391	0.015385	0.222222	-0.210256	True	decreased
+gemmiger	genus	decreased	0.00281	0.033716	0	0.00259	0.037112	0.035628	0.261538	0.592593	-0.341311	True	decreased
+ruminococcus	genus	decreased	0.002142	0.033716	0	0.195	0.157421	0.491791	0.476923	0.777778	-0.391453	True	decreased
+sellimonas	genus	decreased	0.002706	0.033716	0	0	0.000409	0.014232	0.046154	0.259259	-0.215954	False	
+gemmiger formicilis	species	decreased	0.001064	0.035812	0	0.00259	0.005955	0.035628	0.246154	0.592593	-0.37037	False	

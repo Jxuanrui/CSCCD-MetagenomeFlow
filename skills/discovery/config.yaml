@@ -1,0 +1,61 @@
+# Skills 发现引擎 — 配置
+# 定义数据源、查询参数和评分权重
+
+scoring_weights:
+  domain_keywords: 0.40
+  quality_signals: 0.30
+  ecosystem_influence: 0.20
+  negative_signals: -0.10
+
+domain_keywords:
+  tier1:                          # +30 分/命中
+    - "microbiome"
+    - "metagenom"
+    - "gut"
+    - "bacteria"
+    - "fungus"
+    - "fungi"
+    - "virus"
+    - "virome"
+
+  tier2:                          # +15 分/命中
+    - "taxonomy"
+    - "diversity"
+    - "abundance"
+    - "annotation"
+    - "pathway"
+    - "assembly"
+    - "binning"
+    - "kegg"
+    - "cazy"
+    - "amr"
+    - "lipid"
+    - "metabolom"
+
+  tier3:                          # +10 分/命中
+    - "kraken"
+    - "metaphlan"
+    - "humann"
+    - "qiime"
+    - "dada2"
+    - "phyloseq"
+    - "picrust"
+    - "lefse"
+    - "maaslin"
+    - "vegan"
+    - "spieceasi"
+
+quality_signals:
+  stars_per_point: 100            # stars/100 分，上限 20 分
+  max_stars_score: 20
+  recent_update_months: 3         # 3 个月内更新 +10 分
+  recent_update_score: 10
+  has_open_source_license: true   # MIT/Apache/BSD +5 分
+  license_score: 5
+
+negative_signals:
+  stale_months: 12                # 超 1 年未更新 -10 分
+  stale_penalty: -10
+  short_description_chars: 50     # description 过短 -5 分
+  short_description_penalty: -5
+  irrelevant_domain_penalty: -20

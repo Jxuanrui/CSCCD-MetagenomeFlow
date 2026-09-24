@@ -1,0 +1,44 @@
+id: "98c_vir_integration_tables"
+script: "scripts/98c_vir_integration_tables.sh"
+tool: "Python"
+tool_version: "3"
+conda_env: "envs/assembly"
+description: "Integrate viral vOTU abundance and annotation outputs into normalized functional and annotation summary tables."
+dimension: "virome"
+category: "integration"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_table"
+    path_pattern: "{workdir}/result/virus/votu/table/vOTU_table_ann.txt"
+    required: true
+  - name: "pharokka_dir"
+    path_pattern: "{workdir}/result/virus/pharokka/"
+    required: true
+
+outputs:
+  - name: "integration_done"
+    path_pattern: "{workdir}/result/integration/virus/.done"
+    description: "Sentinel marking viral integration table generation complete."
+
+depends_on:
+  - "60_vir_votu_table"
+  - "64_vir_pharokka"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "The script currently expects result/virus/votu/votu_table.tsv, while the upstream declared output is result/virus/votu/table/vOTU_table_ann.txt."
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/statistics.smk::vir_integration_tables"

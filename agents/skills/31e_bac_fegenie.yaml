@@ -1,0 +1,76 @@
+id: "31e_bac_fegenie"
+name: "FeGenie Iron Metabolism Gene Prediction"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::fegenie"
+
+description: |
+  Iron metabolism gene prediction using FeGenie 1.2 HMM profiles.
+  Identifies 10 functional categories of iron-related genes:
+  - Iron acquisition: siderophore biosynthesis/transport, heme uptake (FepA/FhuA/HemR/IroN)
+  - Iron storage: ferritin, bacterioferritin (bfr/ftn)
+  - Iron regulation: Fur/DtxR regulators
+  - Iron oxidation/reduction: Fe(II) oxidase (Cyc2/MtoA), Fe(III) reductase (FeoAB/FbpABC)
+  - Magnetosome formation (mam genes)
+
+inputs:
+  - name: nr_proteins
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "CD-HIT dereplicated NR protein set"
+
+outputs:
+  - name: fegenie_summary
+    path_pattern: "{workdir}/result/annotation/fegenie/FeGenie-geneSummary.csv"
+    description: "Per-gene iron metabolism classification with HMM scores"
+  - name: fegenie_presence
+    path_pattern: "{workdir}/result/annotation/fegenie/FeGenie-presenceAbsence.csv"
+    description: "Presence/absence matrix across 10 functional categories"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/fegenie"
+
+databases:
+  - name: FeGenie_HMMs
+    path: "conda built-in (envs/fegenie/share/fegenie-1.2/hmms/iron/)"
+    size: "~20MB"
+    note: "10 subdirectories for iron acquisition, storage, regulation, oxidation/reduction, etc."
+
+parameters:
+  method: "hmmsearch"
+  evalue_cutoff: "1e-5"
+  coverage_cutoff: 0.7
+
+benchmarks:
+  typical_runtime_min: 20
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "FeGenie requires specific protein naming format (prodigal-style headers)"
+    workaround: "Script uses CD-HIT NR proteins which preserve prodigal headers"
+  - description: "Output CSV may have inconsistent column counts if gene names contain commas"
+    workaround: "Parse with proper CSV library, not simple split"
+
+scientific_context: |
+  Iron metabolism is critical in gut microbiome-host interactions:
+  - Host nutritional immunity: lactoferrin limits free iron during inflammation
+  - Pathogen competition: siderophore-mediated iron scavenging (enterobactin/aerobactin)
+  - Anaerobic metabolism: Fe(III) reduction coupled with H2 metabolism
+  - Oxidative stress: ferritin protects against iron-catalyzed ROS
+
+  FeGenie complements general functional annotation:
+  - eggNOG/KEGG: broad functional categories (e.g., "iron transport")
+  - Pfam-A: domain-level (e.g., PF01032 = FecA iron-citrate receptor)
+  - FeGenie: fine-grained iron metabolism classification (10 categories) + oxidoreductase subtypes
+
+  Relationship with other annotations:
+  - SCyc (31b): sulfur cycle genes may interact with FeS cluster biosynthesis
+  - NCyc (30): nitrogen fixation requires Fe-containing nitrogenase
+  - VFDB (26): many virulence factors are iron acquisition systems (e.g., IucA/IucC)
+
+references:
+  - "Garber et al. 2020 Frontiers in Microbiology (FeGenie)"
+  - "https://github.com/Arkadiy-Garber/FeGenie"

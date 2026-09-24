@@ -1,0 +1,42 @@
+id: "58_vir_salmon_build"
+script: "scripts/58_vir_salmon_build.sh"
+tool: "Salmon"
+tool_version: "1.10+"
+conda_env: "envs/assembly"
+description: "Build Salmon gentrome+decoy index from vOTU + CDS sequences."
+dimension: "virome"
+category: "quantification"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+  - name: "cds_files"
+    path_pattern: "{workdir}/result/virus/prodigal/{sample}/{sample}.fna"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "index_info"
+    path_pattern: "{workdir}/result/virus/salmon/index/info.json"
+    description: "Salmon index JSON (confirms index ready)."
+
+depends_on:
+  - "55_vir_prodigal_gv"
+  - "56_vir_votu_gen"
+required_by:
+  - "59_vir_salmon_quant"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_salmon_build"

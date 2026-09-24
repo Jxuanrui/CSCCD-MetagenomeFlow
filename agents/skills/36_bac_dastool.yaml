@@ -1,0 +1,49 @@
+id: "36_bac_dastool"
+name: "DAS_Tool Multi-Binner Integration"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::dastool"
+
+inputs:
+  - name: contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+  - name: metabat2_tsv
+    path_pattern: "{workdir}/result/binning/metabat2/{sample}/{sample}.tsv"
+    required: false
+    description: "MetaBAT2 contig2bin (≥1 of 3 binners required)"
+  - name: maxbin2_tsv
+    path_pattern: "{workdir}/result/binning/maxbin2/{sample}/{sample}.maxbin2.tsv"
+    required: false
+  - name: semibin2_tsv
+    path_pattern: "{workdir}/result/binning/semibin2/{sample}/{sample}.semibin2.tsv"
+    required: false
+
+outputs:
+  - name: contig2bin
+    path_pattern: "{workdir}/result/binning/dastool/{sample}/{sample}_DASTool_contig2bin.tsv"
+    description: "Integrated contig2bin table"
+  - name: bins
+    path_pattern: "{workdir}/result/binning/dastool/{sample}/bins/*.fa"
+    description: "Refined bin FASTA files"
+
+depends_on:
+  - "33_bac_metabat2"
+  - "34_bac_maxbin2"
+  - "35_bac_semibin2"
+
+conda_env: "envs/dastool"
+
+parameters:
+  score_threshold: 0.3
+
+benchmarks:
+  typical_runtime_min: 10
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "Requires ≥2 binner outputs; -l labels must match -i inputs order exactly"
+    workaround: "Script auto-detects available binners and builds label/input lists dynamically"
+  - description: "Historically the script did not clear <sample>_DASTool_bins/ before running and DAS_Tool does not clear it either, so bins from earlier runs accumulated. Confirmed on Project01: Sample2 held 123 .fa files for a 52-bin result (71 stale), Sample3 +55, Sample10 +61. Downstream CheckM2 therefore scored phantom bins and inflated those MAG sets."
+    workaround: "Fixed in a55b744 (rm -rf the dir before running; two consecutive runs now both give 52). For existing contaminated dirs, keep only the .fa files named in <sample>_DASTool_summary.tsv, then re-run checkm2 -> drep for the affected samples."

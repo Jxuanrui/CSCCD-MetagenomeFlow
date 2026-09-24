@@ -1,0 +1,96 @@
+# params.yaml — Jie2026_NatGenet key parameters for cross-paper comparison
+# Purpose: reference parameter values from this paper vs CSCCD-MetagenomeFlow defaults
+
+tools:
+  fastp:
+    paper_recommended:
+      version: "0.20.1"
+      length_required: 51
+      note: "Minimum read length 51bp; removes short reads before mapping"
+    project_current:
+      script: scripts/01_qc_fastp.sh
+      matches_paper: true
+      deviation_notes: "CSCCD-MetagenomeFlow uses fastp default 15bp; paper uses stricter 51bp"
+
+  bowtie2_host_removal:
+    paper_recommended:
+      version: "2.4.2"
+      mode: "--end-to-end --very-sensitive"
+      references: [GRCh38, CHM13v2.0]
+      note: "Two-pass: first remove GRCh38+CHM13v2, public data uses CHM13v2 only"
+    project_current:
+      script: scripts/02_qc_kneaddata.sh
+      matches_paper: false
+      deviation_notes: "CSCCD-MetagenomeFlow uses KneadData (Bowtie2 wrapper); human ref configurable; CHM13v2 not default"
+
+  megahit:
+    paper_recommended:
+      version: "1.2.9"
+      preset: "meta-sensitive"
+      min_contig_len: 100
+      target: "single-end reads"
+    project_current:
+      script: scripts/16_bac_megahit.sh
+      matches_paper: true
+      deviation_notes: null
+
+  metaSPAdes:
+    paper_recommended:
+      version: "3.14.0"
+      k: "21,33,55,77"
+      memory_gb: 81
+      target: "paired-end reads"
+    project_current:
+      script: null
+      matches_paper: false
+      deviation_notes: "CSCCD-MetagenomeFlow does not have metaSPAdes; only MEGAHIT used"
+
+  metabat2:
+    paper_recommended:
+      version: "2.15"
+      strategy: "multicoverage + single-coverage combined"
+      nearest_samples_mash: 19
+    project_current:
+      script: scripts/33_bac_metabat2.sh
+      matches_paper: true
+      deviation_notes: "Mash-based 19-nearest-neighbor multi-coverage not implemented; single-coverage only"
+
+  drep:
+    paper_recommended:
+      ani_threshold: 0.99
+      purpose: "within-sample deduplication after initial derep"
+    project_current:
+      script: scripts/38_bac_drep.sh
+      matches_paper: false
+      deviation_notes: "CSCCD-MetagenomeFlow uses 97% ANI threshold (standard for species); paper uses 99% for tighter clustering"
+
+  checkm2:
+    paper_recommended:
+      version: "1.0.1"
+      database: "uniref100.KO.1.dmnd"
+      completeness_min: 50
+      contamination_max: 5
+      quality_score_min: 50
+      formula: "completeness - 5 * contamination >= 50"
+    project_current:
+      script: scripts/37_bac_checkm2.sh
+      matches_paper: true
+      deviation_notes: null
+
+  checkv:
+    paper_recommended:
+      completeness_min: 50
+      contamination_max: 5
+    project_current:
+      script: scripts/54_vir_checkv_contig.sh
+      matches_paper: true
+      deviation_notes: null
+
+key_findings_for_design:
+  # Parameter choices that affect result quality — inform CSCCD-MetagenomeFlow defaults
+  - finding: "Multi-coverage binning via Mash 19-NN outperforms single-coverage for large cohorts"
+    implication: "Consider implementing Mash NN for multi-sample binning (32_bac_coverm_depth.sh)"
+  - finding: "dRep 99% ANI recovers 39,816 preliminary genomes before quality filtering"
+    implication: "99% ANI is more conservative than our 97%; appropriate for catalog with known strain variation"
+  - finding: "fastp --length_required 51 reduces spurious alignments in high-host samples"
+    implication: "Vaginal microbiome has high host DNA; gut samples may be less affected"

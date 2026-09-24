@@ -1,0 +1,37 @@
+id: "53_vir_virsorter2"
+script: "scripts/53_vir_virsorter2.sh"
+tool: "VirSorter2"
+tool_version: "2.2.4+"
+conda_env: "envs/virsorter2"
+description: "Viral contig prediction via VirSorter2 (complements geNomad intersection)."
+dimension: "virome"
+category: "virus_identification"
+rule_type: "per_sample"
+
+inputs:
+  - name: "assembly_contigs"
+    path_pattern: "{workdir}/result/virus/assembly/{sample}/{sample}.contigs.fa"
+    required: true
+
+outputs:
+  - name: "viral_boundary"
+    path_pattern: "{workdir}/result/virus/virsorter2/{sample}/final-viral-boundary.tsv"
+    description: "VirSorter2 viral boundary / classification results."
+
+depends_on:
+  - "51_vir_megahit"
+required_by:
+  - "54_vir_checkv_contig"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_virsorter2"

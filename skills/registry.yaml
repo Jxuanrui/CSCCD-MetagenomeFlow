@@ -1,0 +1,714 @@
+# Skills Management System — 技能注册表
+# 管理所有已采纳的外部技能（文章写作/科学绘图/文献管理/分析技术等）
+# 状态流转: discovered → proposed → adopted / excluded
+---
+last_updated: "2026-09-21"
+total_adopted: 67
+total_native: 22
+total_proposed: 0
+total_excluded: 0
+
+# ─── 技能包入口 ──────────────────────────────────────────
+
+plugin_packages:
+  - name: "nature-skills"
+    status: "installed"
+    installed_date: "2026-06-09"
+    skills_count: 9
+    install_command: "claude plugin marketplace add Yuan1z0825/nature-skills && claude plugin install nature-skills@nature-skills"
+    homepage: "https://github.com/Yuan1z0825/nature-skills"
+
+  - name: "SciAgent-Skills"
+    status: "installed"
+    installed_date: "2026-06-09"
+    skills_count: 199
+    install_command: "claude plugin marketplace add jaechang-hits/SciAgent-Skills && claude plugin install sciagent-skills"
+    homepage: "https://github.com/jaechang-hits/SciAgent-Skills"
+
+  - name: "awesome-skills"
+    status: "installed"
+    installed_date: "2026-06-09"
+    skills_count: 1976
+    install_command: "curl -fsSL https://raw.githubusercontent.com/FridrichMethod/awesome-skills/main/install.sh | bash -s -- --claude-only"
+    homepage: "https://github.com/FridrichMethod/awesome-skills"
+    note: "聚合 15 个上游来源，含 bioSkills + SciAgent-Skills + K-Dense-AI 等"
+
+  - name: "mattpocock-skills"
+    status: "installed"
+    installed_date: "2026-09-21"
+    skills_count: 25
+    install_command: "git clone --depth 1 https://github.com/mattpocock/skills /tmp/mattpocock-skills && cp -r /tmp/mattpocock-skills/skills/engineering/*/ /tmp/mattpocock-skills/skills/productivity/*/ .zcode/skills/"
+    homepage: "https://github.com/mattpocock/skills"
+    license: "MIT"
+    note: "ZCode 工作区级部署（.zcode/skills/，25 个稳定技能：engineering 18 + productivity 7）；跳过 in-progress(9, 作者标记实验性) 与 misc(4, TS/Claude-Code 专属)；.gitignore 现忽略 .zcode/，如需团队共享需加白名单例外"
+
+# ─── 分类级别入口 ─────────────────────────────────────────
+
+categories:
+  - id: "bio-metagenomics"
+    name: "宏基因组分析技能包"
+    source: "bioSkills (GPTomics)"
+    category: "analysis"
+    subcategory: "metagenomics"
+    skills_count: 7
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "bash /tmp/bioSkills/install-claude.sh --categories metagenomics"
+    description: "Kraken2/MetaPhlAn/HUMAnN 分类、丰度估计、功能谱分析、耐药检测、污染控制"
+    tags: ["metagenomics", "kraken", "metaphlan", "humann", "abundance"]
+
+  - id: "bio-microbiome"
+    name: "微生物组分析技能包"
+    source: "bioSkills (GPTomics)"
+    category: "analysis"
+    subcategory: "microbiome"
+    skills_count: 32
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "bash /tmp/bioSkills/install-claude.sh --categories microbiome"
+    description: "DADA2/Phyloseq/QIIME2 扩增子、差异丰度、多样性分析、功能预测"
+    tags: ["microbiome", "dada2", "phyloseq", "qiime2", "diversity", "asv"]
+
+  - id: "bio-data-visualization"
+    name: "生物信息可视化技能包"
+    source: "bioSkills (GPTomics)"
+    category: "visualization"
+    subcategory: "bioinformatics"
+    skills_count: 20
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "bash /tmp/bioSkills/install-claude.sh --categories data-visualization"
+    description: "ggplot2/matplotlib 热图、火山图、PCA、Circos、网络图、Upset 等 20 种科学图表"
+    tags: ["visualization", "ggplot2", "matplotlib", "heatmap", "network"]
+
+  - id: "bio-pathway-analysis"
+    name: "通路与富集分析技能包"
+    source: "bioSkills (GPTomics)"
+    category: "methodology"
+    subcategory: "statistics"
+    skills_count: 6
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "bash /tmp/bioSkills/install-claude.sh --categories pathway-analysis"
+    description: "KEGG/GO/GSEA/Reactome/WikiPathways 富集分析与可视化"
+    tags: ["pathway", "kegg", "go", "gsea", "enrichment"]
+
+  - id: "bio-phylogenetics"
+    name: "系统发育分析技能包"
+    source: "bioSkills (GPTomics)"
+    category: "methodology"
+    subcategory: "phylogenetics"
+    skills_count: 8
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "bash /tmp/bioSkills/install-claude.sh --categories phylogenetics"
+    description: "IQ-TREE2/BEAST2/MrBayes 系统发育推断、树可视化、分歧时间估计"
+    tags: ["phylogenetics", "tree", "iqtree", "beast", "divergence"]
+
+  - id: "bio-workflows"
+    name: "生物信息工作流技能包"
+    source: "bioSkills (GPTomics)"
+    category: "methodology"
+    subcategory: "workflow"
+    skills_count: 40
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "bash /tmp/bioSkills/install-claude.sh --categories workflows"
+    description: "40 种标准生信流程模板（RNA-seq/ATAC-seq/ChIP-seq/宏基因组/单细胞等）"
+    tags: ["workflow", "pipeline", "rnaseq", "metagenomics", "scrnaseq"]
+
+  - id: "sciagent-genomics-bioinfo"
+    name: "基因组学与生物信息学技能包"
+    source: "SciAgent-Skills"
+    category: "analysis"
+    subcategory: "bioinformatics"
+    skills_count: 65
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install sciagent-skills"
+    description: "65 个基因组学技能（Scanpy/BioPython/pysam/KEGG），BixBench 92% 准确率"
+    tags: ["genomics", "bioinformatics", "scanpy", "biopython"]
+
+  - id: "sciagent-structural-biology"
+    name: "结构生物学与药物发现技能包"
+    source: "SciAgent-Skills"
+    category: "analysis"
+    subcategory: "structural_bio"
+    skills_count: 26
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    description: "分子对接、蛋白质结构预测、药物筛选"
+    tags: ["structural-biology", "drug-discovery", "docking"]
+
+  - id: "sciagent-scientific-computing"
+    name: "科学计算技能包"
+    source: "SciAgent-Skills"
+    category: "methodology"
+    subcategory: "computation"
+    skills_count: 24
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    description: "高性能计算、数值分析、数据处理管线"
+    tags: ["scientific-computing", "hpc", "numerical"]
+
+  - id: "sciagent-biostatistics"
+    name: "生物统计技能包"
+    source: "SciAgent-Skills"
+    category: "methodology"
+    subcategory: "statistics"
+    skills_count: 12
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    tags: ["biostatistics", "statistics", "experimental-design"]
+
+  - id: "sciagent-scientific-writing"
+    name: "科学写作技能包"
+    source: "SciAgent-Skills"
+    category: "writing"
+    subcategory: "scientific"
+    skills_count: 21
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    tags: ["scientific-writing", "manuscript", "paper"]
+
+  - id: "sciagent-systems-biology"
+    name: "系统生物学与多组学技能包"
+    source: "SciAgent-Skills"
+    category: "analysis"
+    subcategory: "multi_omics"
+    skills_count: 11
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    tags: ["systems-biology", "multi-omics", "integration"]
+
+  - id: "sciagent-data-visualization"
+    name: "数据可视化技能包"
+    source: "SciAgent-Skills"
+    category: "visualization"
+    subcategory: "general"
+    skills_count: 5
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    tags: ["visualization", "plots", "scientific-figures"]
+
+  - id: "sciagent-cell-biology"
+    name: "细胞生物学技能包"
+    source: "SciAgent-Skills"
+    category: "analysis"
+    subcategory: "cell_biology"
+    skills_count: 15
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    tags: ["cell-biology", "imaging", "cytopathology"]
+
+  - id: "sciagent-proteomics"
+    name: "蛋白质组学技能包"
+    source: "SciAgent-Skills"
+    category: "analysis"
+    subcategory: "proteomics"
+    skills_count: 10
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    tags: ["proteomics", "mass-spectrometry", "protein-engineering"]
+
+# ─── 原始单技能条目（保留 existing）─────────────────────────
+
+skills:
+  - id: "nature-polishing"
+    name: "Nature 学术写作润色"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "writing"
+    subcategory: "polishing"
+    tags: ["nature", "academic-writing", "english-polish"]
+    description: "Polish academic prose to Nature-level English. Also supports Chinese-to-English academic translation with Nature journal style."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+  - id: "nature-writing"
+    name: "Nature 论文章节撰写"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "writing"
+    subcategory: "drafting"
+    tags: ["nature", "drafting", "manuscript"]
+    description: "Draft manuscript sections (abstract, introduction, results, discussion) from scratch following Nature-level structure."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+  - id: "nature-figure"
+    name: "Nature 风格科学绘图"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "visualization"
+    subcategory: "figure"
+    tags: ["nature", "figure", "python", "r", "plot"]
+    description: "Generate publication-grade scientific figures in Python/R following Nature journal style guidelines."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+  - id: "nature-citation"
+    name: "Nature 引用检索"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "citation"
+    subcategory: "reference"
+    tags: ["nature", "citation", "reference", "export"]
+    description: "Nature/CNS citation retrieval with export to ENW, RIS, Zotero RDF formats."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+  - id: "nature-data"
+    name: "数据可用性与 FAIR 检查"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "data"
+    subcategory: "fair"
+    tags: ["nature", "data", "fair", "availability"]
+    description: "Generate Data Availability statements and perform FAIR metadata checks for research data."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+  - id: "nature-reader"
+    name: "双语论文阅读器"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "literature"
+    subcategory: "reading"
+    tags: ["nature", "reading", "bilingual", "paper"]
+    description: "Bilingual (CN/EN) full-paper Markdown reader with source anchors and figure awareness."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+  - id: "nature-response"
+    name: "审稿回复信撰写"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "writing"
+    subcategory: "response"
+    tags: ["nature", "reviewer", "response-letter"]
+    description: "Draft point-by-point reviewer response letters with structured rebuttal format."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+  - id: "nature-paper2ppt"
+    name: "论文→PPT 生成"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "visualization"
+    subcategory: "presentation"
+    tags: ["nature", "ppt", "presentation", "journal-club"]
+    description: "Convert research papers into Chinese PPTX presentations for journal clubs and seminars."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+  - id: "nature-academic-search"
+    name: "多源文献检索"
+    source:
+      type: "github"
+      repo: "Yuan1z0825/nature-skills"
+      stars: 16000
+    category: "citation"
+    subcategory: "search"
+    tags: ["nature", "literature-search", "pubmed", "crossref"]
+    description: "Multi-source literature search across PubMed, CrossRef, and arXiv with unified results."
+    status: "adopted"
+    adopted_date: "2026-06-09"
+    install_method: "claude plugin install nature-skills@nature-skills"
+    update_available: false
+    notes: "首批种子技能"
+
+# ─── Native CSCCD-MetagenomeFlow 技能（.claude/skills/*.md）──────────
+
+  - id: "mgx-ask"
+    name: "mgx-ask"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-ask.md"
+    category: "mgx-core"
+    subcategory: "rag"
+    tags: ["native", "rag", "maxmetagenome"]
+    description: "Query the CSCCD-MetagenomeFlow RAG knowledge base for analysis guidance, parameter recommendations, or literature methods."
+    status: "adopted"
+    adopted_date: "2026-06-10"
+    install_method: "built-in (.claude/skills/mgx-ask.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-index"
+    name: "mgx-index"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-index.md"
+    category: "mgx-core"
+    subcategory: "rag"
+    tags: ["native", "rag", "maxmetagenome"]
+    description: "Trigger incremental or full RAG knowledge base rebuild after adding new docs, scripts, or skill packages."
+    status: "adopted"
+    adopted_date: "2026-06-15"
+    install_method: "built-in (.claude/skills/mgx-index.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-integrate"
+    name: "mgx-integrate"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-integrate.md"
+    category: "mgx-core"
+    subcategory: "pipeline-integration"
+    tags: ["native", "snakemake", "maxmetagenome"]
+    description: "Integrate a newly delivered and tested bash script into the CSCCD-MetagenomeFlow architecture (skill card + Snakemake rule + registry update)."
+    status: "adopted"
+    adopted_date: "2026-06-06"
+    install_method: "built-in (.claude/skills/mgx-integrate.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-learn"
+    name: "mgx-learn"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-learn.md"
+    category: "mgx-core"
+    subcategory: "provenance"
+    tags: ["native", "provenance", "maxmetagenome"]
+    description: "Record a completed analysis run into provenance store (agents/provenance/)."
+    status: "adopted"
+    adopted_date: "2026-06-06"
+    install_method: "built-in (.claude/skills/mgx-learn.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-plan"
+    name: "mgx-plan"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-plan.md"
+    category: "mgx-core"
+    subcategory: "planning"
+    tags: ["native", "planning", "maxmetagenome"]
+    description: "Plan a complete analysis strategy for given samples, consulting the skill library and registry."
+    status: "adopted"
+    adopted_date: "2026-06-06"
+    install_method: "built-in (.claude/skills/mgx-plan.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-replicate"
+    name: "mgx-replicate"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-replicate.md"
+    category: "mgx-core"
+    subcategory: "literature"
+    tags: ["native", "literature", "maxmetagenome"]
+    description: "Convert a high-impact paper (PDF/DOI/PMID/GitHub) into an executable skill package under skills/replications/."
+    status: "adopted"
+    adopted_date: "2026-06-15"
+    install_method: "built-in (.claude/skills/mgx-replicate.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-review"
+    name: "mgx-review"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-review.md"
+    category: "mgx-core"
+    subcategory: "pipeline-integration"
+    tags: ["native", "snakemake", "maxmetagenome"]
+    description: "Review a Snakemake rule for correctness against the bash script and skill card."
+    status: "adopted"
+    adopted_date: "2026-06-06"
+    install_method: "built-in (.claude/skills/mgx-review.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-run"
+    name: "mgx-run"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-run.md"
+    category: "mgx-core"
+    subcategory: "execution"
+    tags: ["native", "codex", "maxmetagenome"]
+    description: "Execute a specific CSCCD-MetagenomeFlow analysis step for given samples via Codex."
+    status: "adopted"
+    adopted_date: "2026-06-06"
+    install_method: "built-in (.claude/skills/mgx-run.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-status"
+    name: "mgx-status"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-status.md"
+    category: "mgx-core"
+    subcategory: "reporting"
+    tags: ["native", "status", "maxmetagenome"]
+    description: "Report current CSCCD-MetagenomeFlow project status — scripts integrated, in-progress, not started, and recent runs."
+    status: "adopted"
+    adopted_date: "2026-06-06"
+    install_method: "built-in (.claude/skills/mgx-status.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-tune"
+    name: "mgx-tune"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-tune.md"
+    category: "mgx-core"
+    subcategory: "hardware-tuning"
+    tags: ["native", "performance", "maxmetagenome"]
+    description: "Detect server hardware and current load, then recommend and optionally apply optimal Snakemake parallel parameters (threads_per_job, -j) for CSCCD-MetagenomeFlow."
+    status: "adopted"
+    adopted_date: "2026-07-04"
+    install_method: "built-in (.claude/skills/mgx-tune.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill. Previously excluded from git via .gitignore by mistake; fixed 2026-07-04, now tracked like all other native skills."
+
+  - id: "mgx-welcome"
+    name: "mgx-welcome"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-welcome.md"
+    category: "mgx-core"
+    subcategory: "onboarding"
+    tags: ["native", "onboarding", "maxmetagenome"]
+    description: "CSCCD-MetagenomeFlow 项目欢迎页与功能导览。用户首次部署或想了解平台概览时触发。输出平台 logo、功能介绍、三大分析维度、运行模式和可用命令。"
+    status: "adopted"
+    adopted_date: "2026-06-12"
+    install_method: "built-in (.claude/skills/mgx-welcome.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-plot-composition"
+    name: "mgx-plot-composition"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-plot-composition.md"
+    category: "mgx-viz"
+    subcategory: "composition"
+    tags: ["native", "visualization", "maxmetagenome"]
+    description: "Plot CSCCD-MetagenomeFlow species or vOTU composition as stacked bar charts and alluvial diagrams using taxonomy or vOTU tables."
+    status: "adopted"
+    adopted_date: "2026-06-11"
+    install_method: "built-in (.claude/skills/mgx-plot-composition.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-plot-diversity"
+    name: "mgx-plot-diversity"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-plot-diversity.md"
+    category: "mgx-viz"
+    subcategory: "diversity"
+    tags: ["native", "visualization", "maxmetagenome"]
+    description: "Plot CSCCD-MetagenomeFlow alpha-diversity boxplots and richness curves from alpha_diversity.tsv plus abundance tables."
+    status: "adopted"
+    adopted_date: "2026-06-11"
+    install_method: "built-in (.claude/skills/mgx-plot-diversity.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-plot-heatmap"
+    name: "mgx-plot-heatmap"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-plot-heatmap.md"
+    category: "mgx-viz"
+    subcategory: "heatmap"
+    tags: ["native", "visualization", "maxmetagenome"]
+    description: "Build annotated abundance heatmaps for CSCCD-MetagenomeFlow outputs with ComplexHeatmap, using taxonomy or KEGG tables plus sample metadata."
+    status: "adopted"
+    adopted_date: "2026-06-11"
+    install_method: "built-in (.claude/skills/mgx-plot-heatmap.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-plot-network"
+    name: "mgx-plot-network"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-plot-network.md"
+    category: "mgx-viz"
+    subcategory: "network"
+    tags: ["native", "visualization", "maxmetagenome"]
+    description: "Visualize CSCCD-MetagenomeFlow co-occurrence networks from result/stat/network node and edge tables in a ggraph or igraph publication style."
+    status: "adopted"
+    adopted_date: "2026-06-11"
+    install_method: "built-in (.claude/skills/mgx-plot-network.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-plot-ordination"
+    name: "mgx-plot-ordination"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-plot-ordination.md"
+    category: "mgx-viz"
+    subcategory: "ordination"
+    tags: ["native", "visualization", "maxmetagenome"]
+    description: "Draw CSCCD-MetagenomeFlow beta-diversity ordination plots with PCoA or NMDS from taxonomy or vOTU abundance tables, including group ellipses and PERMANOVA."
+    status: "adopted"
+    adopted_date: "2026-06-11"
+    install_method: "built-in (.claude/skills/mgx-plot-ordination.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-plot-phylotree"
+    name: "mgx-plot-phylotree"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-plot-phylotree.md"
+    category: "mgx-viz"
+    subcategory: "phylogenetics"
+    tags: ["native", "visualization", "maxmetagenome"]
+    description: "Render a GTDB-based phylogenetic classification tree with side annotations or heatmap blocks from gtdbtk summary tables using ggtree."
+    status: "adopted"
+    adopted_date: "2026-06-11"
+    install_method: "built-in (.claude/skills/mgx-plot-phylotree.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-plot-volcano"
+    name: "mgx-plot-volcano"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-plot-volcano.md"
+    category: "mgx-viz"
+    subcategory: "differential"
+    tags: ["native", "visualization", "maxmetagenome"]
+    description: "Plot differential-abundance volcano and lollipop charts from CSCCD-MetagenomeFlow differential result tables, prioritizing merged per-feature outputs under result/stat/diff."
+    status: "adopted"
+    adopted_date: "2026-06-11"
+    install_method: "built-in (.claude/skills/mgx-plot-volcano.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill"
+
+  - id: "mgx-lefse"
+    name: "mgx-lefse"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-lefse.md"
+    category: "mgx-analysis"
+    subcategory: "differential_analysis"
+    tags: ["native", "lefse", "biomarker", "maxmetagenome"]
+    description: "Run LEfSe-like biomarker discovery (script 99b) on a bacteria/virus/fungi abundance table, or explain how to tune LDA threshold and prevalence."
+    status: "adopted"
+    adopted_date: "2026-07-13"
+    install_method: "built-in (.claude/skills/mgx-lefse.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill; wraps script 99b_lefse.sh"
+
+  - id: "mgx-core"
+    name: "mgx-core"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-core.md"
+    category: "mgx-analysis"
+    subcategory: "ecological_analysis"
+    tags: ["native", "core-microbiome", "maxmetagenome"]
+    description: "Run core-microbiome identification (script 99a) on a taxonomy/abundance table across bacteria/virus/fungi, or explain prevalence/abundance threshold tuning."
+    status: "adopted"
+    adopted_date: "2026-07-13"
+    install_method: "built-in (.claude/skills/mgx-core.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill; wraps script 99a_core_microbiome.sh"
+
+  - id: "mgx-redundancy"
+    name: "mgx-redundancy"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-redundancy.md"
+    category: "mgx-analysis"
+    subcategory: "functional_ecology"
+    tags: ["native", "functional-redundancy", "fdi", "maxmetagenome"]
+    description: "Run functional redundancy / FDI analysis (script 96c) linking a functional abundance table with taxonomy, across bacteria/virus/fungi."
+    status: "adopted"
+    adopted_date: "2026-07-13"
+    install_method: "built-in (.claude/skills/mgx-redundancy.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill; wraps script 96c_functional_redundancy.sh"
+
+  - id: "mgx-pathway"
+    name: "mgx-pathway"
+    origin: "native"
+    source:
+      type: "native"
+      path: ".claude/skills/mgx-pathway.md"
+    category: "mgx-analysis"
+    subcategory: "functional_analysis"
+    tags: ["native", "pathway-activity", "humann3", "maxmetagenome"]
+    description: "Run HUMAnN3 pathway activity analysis (script 96b) linking pathway completeness with species-level contributors, bacteria dimension only."
+    status: "adopted"
+    adopted_date: "2026-07-13"
+    install_method: "built-in (.claude/skills/mgx-pathway.md)"
+    update_available: false
+    notes: "Native CSCCD-MetagenomeFlow skill; wraps script 96b_pathway_activity.sh"
+

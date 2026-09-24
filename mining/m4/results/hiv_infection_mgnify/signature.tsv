@@ -1,0 +1,163 @@
+taxon	rank	direction	p	q	median_case	median_control	mean_log1p_case	mean_log1p_control	prevalence_case	prevalence_control	rank_biserial	in_bugsigdb	bugsigdb_direction
+blautia	genus	decreased	0.0	0.0	0.0	1.418474	0.0	0.905581	0.0	1.0	-1.0	True	increased
+faecalibacterium	genus	decreased	0.0	0.0	0.0	6.104647	0.0	1.93397	0.0	1.0	-1.0	True	decreased
+subdoligranulum	genus	decreased	0.0	0.0	0.0	1.444249	0.0	0.89481	0.0	0.996	-0.996	True	decreased
+bacteroides	genus	decreased	0.0	0.0	0.0	9.103893	0.0	2.31066	0.0	0.992	-0.992	True	decreased
+lachnoclostridium	genus	decreased	0.0	0.0	0.0	0.569123	0.0	0.476487	0.0	0.988	-0.988	True	increased
+roseburia	genus	decreased	0.0	0.0	0.0	1.632744	0.0	0.957465	0.0	0.988	-0.988	True	decreased
+agathobacter	genus	decreased	0.0	0.0	0.0	0.760537	0.0	0.601289	0.0	0.984	-0.984	False	
+akkermansia	genus	decreased	0.0	0.0	0.0	0.326418	0.0	0.442371	0.0	0.984	-0.984	True	decreased
+anaerostipes	genus	decreased	0.0	0.0	0.0	0.585622	0.0	0.51501	0.0	0.984	-0.984	True	decreased
+collinsella	genus	decreased	0.0	0.0	0.0	0.32602	0.0	0.3724	0.0	0.984	-0.984	True	increased
+parabacteroides	genus	decreased	0.0	0.0	0.0	0.752763	0.0	0.587454	0.0	0.984	-0.984	True	decreased
+alistipes	genus	decreased	0.0	0.0	0.0	1.124385	0.0	0.779753	0.0	0.98	-0.98	True	decreased
+butyricicoccus	genus	decreased	0.0	0.0	0.0	0.277617	0.0	0.260132	0.0	0.98	-0.98	True	increased
+dorea	genus	decreased	0.0	0.0	0.0	0.359504	0.0	0.319094	0.0	0.98	-0.98	True	increased
+fusicatenibacter	genus	decreased	0.0	0.0	0.0	0.605352	0.0	0.481886	0.0	0.98	-0.98	True	decreased
+oscillibacter	genus	decreased	0.0	0.0	0.0	0.228321	0.0	0.217464	0.0	0.98	-0.98	True	decreased
+lachnospira	genus	decreased	0.0	0.0	0.0	0.381534	0.0	0.385983	0.0	0.968	-0.968	True	decreased
+eggerthella	genus	decreased	0.0	0.0	0.0	0.212968	0.0	0.210186	0.0	0.952	-0.952	True	increased
+barnesiella	genus	decreased	0.0	0.0	0.0	0.141818	0.0	0.207529	0.0	0.948	-0.948	True	decreased
+streptococcus	genus	decreased	0.0	0.0	0.0	0.079437	0.0	0.153868	0.0	0.948	-0.948	True	increased
+enterorhabdus	genus	decreased	0.0	0.0	0.0	0.081474	0.0	0.092383	0.0	0.944	-0.944	True	increased
+marvinbryantia	genus	decreased	0.0	0.0	0.0	0.08814	0.0	0.096517	0.0	0.936	-0.936	False	
+odoribacter	genus	decreased	0.0	0.0	0.0	0.127055	0.0	0.208687	0.0	0.936	-0.936	True	decreased
+holdemanella	genus	decreased	0.0	0.0	0.0	0.049252	0.0	0.116854	0.0	0.92	-0.92	True	increased
+phascolarctobacterium	genus	decreased	0.0	0.0	0.0	0.212743	0.0	0.243898	0.0	0.92	-0.92	True	decreased
+ruminococcus	genus	decreased	0.0	0.0	0.0	0.078037	0.0	0.087706	0.0	0.9	-0.9	True	decreased
+ruminiclostridium	genus	decreased	0.0	0.0	0.0	0.039916	0.0	0.05472	0.0	0.896	-0.896	True	mixed
+shuttleworthia	genus	decreased	0.0	0.0	0.0	0.048987	0.0	0.051818	0.0	0.892	-0.892	False	
+soleaferrea	genus	decreased	0.0	0.0	0.0	0.050953	0.0	0.059593	0.0	0.892	-0.892	False	
+acetitomaculum	genus	decreased	0.0	0.0	0.0	0.031222	0.0	0.044161	0.0	0.872	-0.872	False	
+oribacterium	genus	decreased	0.0	0.0	0.0	0.029333	0.0	0.033092	0.0	0.872	-0.872	True	increased
+intestinimonas	genus	decreased	0.0	0.0	0.0	0.018019	0.0	0.025481	0.0	0.864	-0.864	False	
+moryella	genus	decreased	0.0	0.0	0.0	0.029992	0.0	0.032964	0.0	0.86	-0.86	True	increased
+negativibacillus	genus	decreased	0.0	0.0	0.0	0.050035	0.0	0.086642	0.0	0.86	-0.86	False	
+catenibacterium	genus	decreased	0.0	0.0	0.0	0.030394	0.0	0.092794	0.0	0.852	-0.852	True	increased
+sutterella	genus	decreased	0.0	0.0	0.0	0.105779	0.0	0.229151	0.0	0.848	-0.848	True	increased
+dialister	genus	decreased	0.0	0.0	0.0	0.024007	0.0	0.215077	0.0	0.844	-0.844	True	decreased
+fibrobacter	genus	decreased	0.0	0.0	0.0	0.044771	0.0	0.052382	0.0	0.844	-0.844	False	
+lactobacillus	genus	decreased	0.0	0.0	0.0	0.024235	0.0	0.037555	0.0	0.844	-0.844	True	increased
+tyzzerella	genus	decreased	0.0	0.0	0.0	0.028934	0.0	0.062867	0.0	0.84	-0.84	False	
+erysipelatoclostridium	genus	decreased	0.0	0.0	0.0	0.035671	0.0	0.052515	0.0	0.832	-0.832	False	
+parasutterella	genus	decreased	0.0	0.0	0.0	0.089896	0.0	0.183454	0.0	0.828	-0.828	True	decreased
+turicibacter	genus	decreased	0.0	0.0	0.0	0.022667	0.0	0.058678	0.0	0.824	-0.824	True	mixed
+alloprevotella	genus	decreased	0.0	0.0	0.0	0.021507	0.0	0.120614	0.0	0.82	-0.82	True	increased
+cetobacterium	genus	decreased	0.0	0.0	0.0	0.022353	0.0	0.042917	0.0	0.82	-0.82	False	
+ruminococcus	species	decreased	0.0	0.0	0.0	0.032332	0.0	0.047006	0.0	0.816	-0.816	True	decreased
+megamonas	genus	decreased	0.0	0.0	0.0	0.023184	0.0	0.058511	0.0	0.8	-0.8	True	increased
+prevotella	genus	decreased	0.0	0.0	0.0	0.021028	0.0	0.058166	0.0	0.8	-0.8	True	increased
+veillonella	genus	decreased	0.0	0.0	0.0	0.022559	0.0	0.052952	0.0	0.8	-0.8	True	increased
+eubacterium	genus	decreased	0.0	0.0	0.0	0.024092	0.0	0.035314	0.0	0.784	-0.784	True	mixed
+flavonifractor	genus	decreased	0.0	0.0	0.0	0.012093	0.0	0.017119	0.0	0.748	-0.748	False	
+bifidobacterium	genus	decreased	0.0	0.0	0.0	0.108246	0.0	0.319461	0.0	0.744	-0.744	True	decreased
+desulfotomaculum	genus	decreased	0.0	0.0	0.0	0.014885	0.0	0.038419	0.0	0.74	-0.74	False	
+bacteroides	species	decreased	0.0	0.0	0.0	0.017039	0.0	0.025349	0.0	0.74	-0.74	True	decreased
+butyricimonas	genus	decreased	0.0	0.0	0.0	0.05722	0.0	0.090936	0.0	0.72	-0.72	False	
+haemophilus	genus	decreased	0.0	0.0	0.0	0.013321	0.0	0.03464	0.0	0.72	-0.72	True	increased
+eubacterium eligens	species	decreased	0.0	0.0	0.0	0.019895	0.0	0.032305	0.0	0.72	-0.72	False	
+succiniclasticum	genus	decreased	0.0	0.0	0.0	0.020621	0.0	0.034586	0.0	0.712	-0.712	False	
+macellibacteroides	genus	decreased	0.0	0.0	0.0	0.013076	0.0	0.019348	0.0	0.708	-0.708	False	
+paraprevotella	genus	decreased	0.0	0.0	0.0	0.018928	0.0	0.143688	0.0	0.708	-0.708	True	decreased
+romboutsia	genus	decreased	0.0	0.0	0.0	0.021657	0.0	0.067473	0.0	0.7	-0.7	True	decreased
+solobacterium	genus	decreased	0.0	0.0	0.0	0.014284	0.0	0.028096	0.0	0.7	-0.7	True	mixed
+pygmaiobacter	genus	decreased	0.0	0.0	0.0	0.009048	0.0	0.012326	0.0	0.676	-0.676	False	
+clostridium	genus	decreased	0.0	0.0	0.0	0.007593	0.0	0.017126	0.0	0.672	-0.672	True	decreased
+holdemania	genus	decreased	0.0	0.0	0.0	0.009142	0.0	0.018467	0.0	0.656	-0.656	True	decreased
+hydrogenoanaerobacterium	genus	decreased	0.0	0.0	0.0	0.00912	0.0	0.012119	0.0	0.656	-0.656	False	
+butyrivibrio	genus	decreased	0.0	0.0	0.0	0.007987	0.0	0.124898	0.0	0.652	-0.652	True	increased
+oscillospira	genus	decreased	0.0	0.0	0.0	0.00729	0.0	0.013675	0.0	0.644	-0.644	True	decreased
+pseudobutyrivibrio	genus	decreased	0.0	0.0	0.0	0.008497	0.0	0.013839	0.0	0.64	-0.64	False	
+akkermansia muciniphila	species	decreased	0.0	0.0	0.0	0.023636	0.0	0.093032	0.0	0.636	-0.636	True	increased
+papillibacter	genus	decreased	0.0	0.0	0.0	0.008068	0.0	0.013645	0.0	0.628	-0.628	False	
+eisenbergiella	genus	decreased	0.0	0.0	0.0	0.007134	0.0	0.015332	0.0	0.624	-0.624	False	
+bilophila	genus	decreased	0.0	0.0	0.0	0.010737	0.0	0.026511	0.0	0.62	-0.62	True	decreased
+sellimonas	genus	decreased	0.0	0.0	0.0	0.007025	0.0	0.012649	0.0	0.616	-0.616	False	
+senegalimassilia	genus	decreased	0.0	0.0	0.0	0.008465	0.0	0.022737	0.0	0.616	-0.616	True	increased
+mogibacterium	genus	decreased	0.0	0.0	0.0	0.006024	0.0	0.009883	0.0	0.612	-0.612	True	increased
+caproiciproducens	genus	decreased	0.0	0.0	0.0	0.007463	0.0	0.014227	0.0	0.608	-0.608	False	
+anaerosporobacter	genus	decreased	0.0	0.0	0.0	0.006163	0.0	0.019118	0.0	0.604	-0.604	False	
+porphyromonas	genus	decreased	0.0	0.0	0.0	0.005517	0.0	0.009252	0.0	0.592	-0.592	True	mixed
+tannerella	genus	decreased	0.0	0.0	0.0	0.006999	0.0	0.014242	0.0	0.592	-0.592	False	
+collinsella aerofaciens	species	decreased	0.0	0.0	0.0	0.00915	0.0	0.027378	0.0	0.596	-0.596	True	increased
+coprothermobacter	genus	decreased	0.0	0.0	0.0	0.006145	0.0	0.01206	0.0	0.58	-0.58	False	
+actinomyces	genus	decreased	0.0	0.0	0.0	0.005576	0.0	0.016758	0.0	0.576	-0.576	True	mixed
+desulfovibrio	genus	decreased	0.0	0.0	0.0	0.008565	0.0	0.076837	0.0	0.568	-0.568	True	increased
+anaerotruncus	genus	decreased	0.0	0.0	0.0	0.005484	0.0	0.010673	0.0	0.564	-0.564	False	
+megasphaera	genus	decreased	0.0	0.0	0.0	0.005517	0.0	0.016468	0.0	0.564	-0.564	True	increased
+peptococcus	genus	decreased	0.0	0.0	0.0	0.006497	0.0	0.03331	0.0	0.564	-0.564	True	increased
+syntrophococcus	genus	decreased	0.0	0.0	0.0	0.006177	0.0	0.010751	0.0	0.564	-0.564	False	
+anaerovorax	genus	decreased	0.0	0.0	0.0	0.005063	0.0	0.008196	0.0	0.552	-0.552	False	
+sedimentibacter	genus	decreased	0.0	0.0	0.0	0.004854	0.0	0.010152	0.0	0.552	-0.552	False	
+faecalitalea	genus	decreased	0.0	0.0	0.0	0.005244	0.0	0.014181	0.0	0.548	-0.548	False	
+symbiothrix	genus	decreased	0.0	0.0	0.0	0.005481	0.0	0.008873	0.0	0.544	-0.544	False	
+saccharofermentans	genus	decreased	0.0	0.0	0.0	0.004378	0.0	0.010861	0.0	0.54	-0.54	False	
+stoquefichus	genus	decreased	0.0	0.0	0.0	0.004854	0.0	0.0097	0.0	0.54	-0.54	False	
+fournierella	genus	decreased	0.0	0.0	0.0	0.005087	0.0	0.021112	0.0	0.536	-0.536	False	
+clostridium	species	decreased	0.0	0.0	0.0	0.004487	0.0	0.008183	0.0	0.536	-0.536	True	decreased
+faecalibaculum	genus	decreased	0.0	0.0	0.0	0.003232	0.0	0.009684	0.0	0.528	-0.528	False	
+cellulosilyticum	genus	decreased	0.0	0.0	0.0	0.000243	0.0	0.011869	0.0	0.504	-0.504	False	
+parabacteroides distasonis	species	decreased	0.0	0.0	0.0	0.000146	0.0	0.00885	0.0	0.5	-0.5	True	decreased
+caldicoprobacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.007981	0.0	0.472	-0.472	False	
+pseudopedobacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.010161	0.0	0.472	-0.472	False	
+howardella	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.018318	0.0	0.464	-0.464	False	
+methanobrevibacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.133469	0.0	0.46	-0.46	True	decreased
+phocea	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.006159	0.0	0.444	-0.444	False	
+dysgonomonas	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.005324	0.0	0.44	-0.44	False	
+slackia	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.021609	0.0	0.436	-0.436	True	increased
+fastidiosipila	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.007734	0.0	0.432	-0.432	False	
+syntrophorhabdus	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.013967	0.0	0.432	-0.432	False	
+clostridiaceae bacterium djf vr09	species	decreased	0.0	0.0	0.0	0.0	0.0	0.005275	0.0	0.412	-0.412	False	
+peptoclostridium	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.004464	0.0	0.4	-0.4	False	
+fusobacterium	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.021683	0.0	0.384	-0.384	True	increased
+prolixibacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.009564	0.0	0.38	-0.38	False	
+terrisporobacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.009064	0.0	0.376	-0.376	False	
+intestinibacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.008279	0.0	0.372	-0.372	False	
+coprobacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.031475	0.0	0.36	-0.36	False	
+alistipes	species	decreased	0.0	0.0	0.0	0.0	0.0	0.00746	0.0	0.364	-0.364	True	decreased
+fusicatenibacter saccharivorans	species	decreased	0.0	0.0	0.0	0.0	0.0	0.00434	0.0	0.364	-0.364	False	
+paludibacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.004779	0.0	0.356	-0.356	False	
+dorea longicatena	species	decreased	0.0	0.0	0.0	0.0	0.0	0.004709	0.0	0.36	-0.36	True	increased
+pseudoflavonifractor	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.003392	0.0	0.352	-0.352	False	
+faecalibacterium prausnitzii	species	decreased	0.0	0.0	0.0	0.0	0.0	0.004237	0.0	0.356	-0.356	True	decreased
+clostridium leptum	species	decreased	0.0	0.0	0.0	0.0	0.0	0.005974	0.0	0.352	-0.352	False	
+eubacterium siraeum	species	decreased	0.0	0.0	0.0	0.0	0.0	0.009294	0.0	0.348	-0.348	False	
+prevotella	species	decreased	0.0	0.0	0.0	0.0	0.0	0.003725	0.0	0.344	-0.344	True	increased
+anaerofilum	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.003406	0.0	0.328	-0.328	False	
+coprococcus	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.005074	0.0	0.32	-0.32	True	decreased
+erysipelothrix	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.006618	0.0	0.316	-0.316	False	
+solibacillus	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.005487	0.0	0.316	-0.316	False	
+coprococcus catus	species	decreased	0.0	0.0	0.0	0.0	0.0	0.004657	0.0	0.316	-0.316	False	
+libanicoccus	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.007563	0.0	0.312	-0.312	False	
+roseburia	species	decreased	0.0	0.0	0.0	0.0	0.0	0.003251	0.0	0.308	-0.308	True	decreased
+pseudomonas	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.004121	0.0	0.304	-0.304	True	decreased
+victivallis	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.02382	0.0	0.304	-0.304	True	mixed
+dielma	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002805	0.0	0.3	-0.3	True	increased
+pseudobutyrivibrio	species	decreased	0.0	0.0	0.0	0.0	0.0	0.002764	0.0	0.296	-0.296	False	
+brachymonas	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.010747	0.0	0.292	-0.292	False	
+methanosphaera	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.035146	0.0	0.292	-0.292	False	
+vestibaculum	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.003186	0.0	0.292	-0.292	False	
+armantifilum	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002658	0.0	0.288	-0.288	False	
+alistipes finegoldii	species	decreased	0.0	0.0	0.0	0.0	0.0	0.003123	0.0	0.284	-0.284	False	
+competibacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.00349	0.0	0.28	-0.28	False	
+robinsoniella	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.003719	0.0	0.28	-0.28	False	
+ruminococcaceae bacterium	species	decreased	0.0	0.0	0.0	0.0	0.0	0.006179	0.0	0.268	-0.268	False	
+dorea formicigenerans	species	decreased	0.0	0.0	0.0	0.0	0.0	0.002237	0.0	0.256	-0.256	True	increased
+acetanaerobacterium	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002927	0.0	0.252	-0.252	False	
+gemmatirosa	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.005389	0.0	0.248	-0.248	False	
+syntrophomonas	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.003184	0.0	0.248	-0.248	False	
+roseburia faecis	species	decreased	0.0	0.0	0.0	0.0	0.0	0.003224	0.0	0.248	-0.248	False	
+acidaminobacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.003064	0.0	0.24	-0.24	False	
+blautia massiliensis	species	decreased	0.0	0.0	0.0	0.0	0.0	0.002353	0.0	0.236	-0.236	False	
+acetivibrio	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002416	0.0	0.232	-0.232	False	
+lactococcus	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.003271	0.0	0.232	-0.232	False	
+dietzia	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002306	0.0	0.22	-0.22	False	
+anaerofustis	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002362	0.0	0.216	-0.216	False	
+rikenella	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002099	0.0	0.216	-0.216	False	
+roseburia inulinivorans	species	decreased	0.0	0.0	0.0	0.0	0.0	0.002103	0.0	0.216	-0.216	True	decreased
+acetatifactor	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.001614	0.0	0.212	-0.212	False	
+oscillibacter	species	decreased	0.0	0.0	0.0	0.0	0.0	0.001507	0.0	0.208	-0.208	True	decreased
+ruminococcus bromii	species	decreased	0.0	0.0	0.0	0.0	0.0	0.002922	0.0	0.208	-0.208	False	
+gemella	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002174	0.0	0.208	-0.208	False	
+nocardia	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.001736	0.0	0.204	-0.204	False	
+sporobacter	genus	decreased	0.0	0.0	0.0	0.0	0.0	0.002038	0.0	0.2	-0.2	True	decreased

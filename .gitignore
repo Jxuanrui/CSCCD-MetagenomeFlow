@@ -1,0 +1,134 @@
+
+# ==============================================================================
+*~
+*.conda
+.conda/
+# conda 临时文件
+# Conda 工具环境（~23G）
+db/
+docs/tools_ref/*.auto.md
+.DS_Store
+envs/
+*.log
+# MaxMetagenome .gitignore
+mcp/chromadb_data/
+mcp/chroma_data/
+mcp/chroma_db/
+mcp/data/
+miniforge3/
+# Miniforge3 自包含环境（~27G）
+Project/*/data/
+Project/*/result/
+Project/*/temp/
+Project/*/logs/
+/Project/_archive_*/
+# 从项目目录迁移出的归档数据（二进制，体积大，不入库）
+*.pyc
+__pycache__/
+*.pyo
+# Python 缓存
+Reference/
+Rlib/
+# R 包库（~1.4G）
+.snakemake/
+# Snakemake 运行时缓存
+*.swo
+*.swp
+*.tar.gz
+# tool_learner 缓存已合并至 docs/tools_ref/（动态学习内容不入库）
+# 分析项目数据（测序数据/中间文件/结果体积过大，不入库）
+# 参考项目（大型 zip，体积过大不入库）
+# 只追踪脚本、文档、配置文件；排除所有大型二进制/环境/数据库目录
+# 所有数据库（~700G）
+# 日志
+# 系统文件
+Project/*/localDB/
+# Project 内本地数据库副本（二进制，体积大）
+skills/discovery/report/
+# Agent discovery 自动生成报告（非手工内容）
+skills/replications/**/code/original/
+# 原始论文代码 git clone 副本（只追踪适配版本）
+skills/replications/**/code/adapted/**/*.bz2
+skills/replications/**/code/adapted/**/*.tar.gz
+skills/replications/**/code/adapted/**/*.zip
+# 文献复现目录下的二进制数据文件（bz2/tar.gz/zip）
+*.md~
+# 编辑器临时 md 文件
+九种 RAG 架构详解.md
+.tmp/
+
+# ==============================================================================
+# 防止工具在项目根目录创建临时文件/目录（2026-06-17 路径清理后添加）
+# ==============================================================================
+
+# R 默认图形设备：未指定输出设备时在 cwd 生成空 Rplots.pdf（已在脚本中修复 cwd）
+/Rplots.pdf
+
+# PhyloPhlAn/StrainPhlAn4 默认数据库目录（已在脚本中修复，但仍防御）
+/phylophlan_databases/
+
+# Eukfinder 日志（应在 Project/*/logs/fungi/ 下，但 Eukfinder 会在调用目录写日志）
+/Long_seqs_*.log
+
+# 统计脚本测试数据（应在 temp/ 下，但历史遗留问题）
+/Project/*/test_data/
+
+# 其他可能的临时数据库目录
+/*_database/
+/*_databases/
+/*_db/
+
+# 临时文件模式
+/*.tmp
+/*.temp
+/*.cache
+
+# 根目录 temp/ 与 logs/（工作临时区，内容不入库；由 *.log 等模式覆盖不到的非日志文件防御）
+/temp/
+/logs/
+
+# Omo codegraph 符号链接（指向 ~/.omo，机器本地）
+/.codegraph
+
+# Claude Code 运行时文件（session lock，不入库）
+.claude/scheduled_tasks.lock
+
+# RAG 索引缓存（可通过 mcp/indexer.py / mcp/bm25_index.py 重建，不入库）
+mcp/bm25_data/*.pkl
+# RAG benchmark 运行产物（带时间戳的结果 JSON，不入库）
+mcp/eval/results/
+
+# OpenCode 运行时目录（不入库）
+.omo/
+
+# ScientificFigureLibrary 本地部署（Node 构建产物，体积大，不入库；由 tools/sfl_dl 的 Release ZIP 还原）
+tools/ScientificFigureLibrary/
+tools/sfl_dl/
+
+# Paper2Agent 本地部署（第三方 skill 工作流，按需 git clone 还原）
+tools/Paper2Agent/
+
+# ScientificFigureLibrary 的图件模板库（用户数据，机器本地，不入库）
+FigureLibrary/
+
+# ZCode client session artifacts (plans etc., machine-local)
+.zcode/
+
+# auto-mining: regenerable data artifact (see mining/seed_summary.json for provenance)
+mining/seed_registry.sqlite
+
+# auto-mining runtime state (regenerable)
+mining/incremental_state.json
+mining/incremental_last_run.json
+mining/incremental_cron.log
+mining/projects/
+mining/vis/
+mining/curation.sqlite
+mining/curation_run.jsonl
+mining/sources/raw/
+mining/curation_cron.log
+mining/snapshots/api_cache/
+
+# M4 MVP: downloaded microbiome profiles (regenerable, ~8 GB budget)
+mining/m4/profiles/
+mining/m4/annotations_cache.jsonl

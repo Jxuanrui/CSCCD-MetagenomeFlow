@@ -1,0 +1,300 @@
+{
+ "objective": "Blind-test baseline: how well a deterministic mapping pipeline (BioSample raw text -> ZOOMA -> ontology term) reproduces cMD3 human curation for body_site (UBERON) and disease (MONDO).",
+ "generated_at": "2026-09-21T13:51:29",
+ "module": "mining/blindtest/zooma_map.py",
+ "method": {
+  "fields": {
+   "body_site": "UBERON",
+   "disease": "MONDO"
+  },
+  "endpoints": {
+   "seqout_raw": "https://seqout.org/api/sample-detail/{accession}",
+   "zooma": "https://www.ebi.ac.uk/spot/zooma/v2/api/services/annotate?propertyValue=...&filter=ontologies:[uberon|mondo]",
+   "ols4_search": "https://www.ebi.ac.uk/ols4/api/search?q=&ontology=&exact=true",
+   "ols4_term": "https://www.ebi.ac.uk/ols4/api/terms?iri="
+  },
+  "zooma_confidence_ladder": [
+   "filtered=ontologies:[target]; tier HIGH",
+   "filtered; tier GOOD",
+   "unfiltered, keep only target-ontology IRIs; tier HIGH",
+   "unfiltered; tier GOOD"
+  ],
+  "ambiguity_rule": "winning tier contains >1 distinct target-ontology term -> ambiguous (top-ranked term kept as prediction)",
+  "healthy_rule": "MONDO has no 'healthy' term: raw disease values normalizing to healthy/normal/control/none are mapped to pseudo-label 'healthy' by rule",
+  "disease_text_fallback": "if the sample has no disease-ish attribute, the project title (<=300 chars) is used as disease text; per-sample source recorded",
+  "tissue_attribute_keys": [
+   "body_site",
+   "body site",
+   "host_body_site",
+   "body_location",
+   "environment_material",
+   "environmental_medium",
+   "tissue",
+   "tissue_type",
+   "tissue_type_ontology",
+   "host_tissue_sampled",
+   "anatomical_location",
+   "host_anatomical_location",
+   "anatomy",
+   "isolation_source",
+   "sample_type",
+   "source",
+   "specimen",
+   "organ",
+   "description",
+   "title",
+   "sample_title"
+  ],
+  "disease_attribute_keys": [
+   "disease",
+   "host_disease",
+   "disease_status",
+   "disease_state",
+   "disease_phenotype",
+   "host_disease_status",
+   "condition",
+   "host_condition",
+   "condition_group",
+   "phenotype",
+   "host_phenotype",
+   "health_state",
+   "host_health",
+   "clinical_condition",
+   "diagnosis"
+  ],
+  "agreement_definition": "ontology-ID match OR case/underscore-normalized label match; multi-part gold ('A;B') matches if any part matches",
+  "rate_denominator": "n_with_raw_text = rows where raw candidate text existed; agreement/no-hit/ambiguous/mismatch rates partition this denominator; coverage losses (no_raw_field, fetch_error) reported separately",
+  "politeness": "seqout sleep 2.6 s; ZOOMA/OLS4 sleep 0.35/0.3 s; all responses disk-cached"
+ },
+ "sampling": {
+  "n_total": 300,
+  "seed": 20260921,
+  "universe": "seed_runs rows with cMD3 in seed_sources_all, non-empty sample_accession, non-null disease (9,053 of 32,042 cMD3 rows; alias-keyed rows lack accessions)",
+  "stratification": {
+   "healthy": 150,
+   "disease": 150,
+   "distinct_nonhealthy_diseases": 99,
+   "rule": "1 row per distinct non-healthy disease (99), filled to 150 with a 2nd row from random diseases; 150 healthy"
+  },
+  "gold": "cMD3 body_site / disease free-text as registered in seed_copy (isolated copy of seed_registry.sqlite)"
+ },
+ "results": {
+  "body_site": {
+   "n_with_raw_text": 300,
+   "n_mapped": 203,
+   "n_agree": 164,
+   "n_mismatch": 12,
+   "n_ambiguous": 27,
+   "n_no_hit": 97,
+   "n_no_raw_field": 0,
+   "n_fetch_error": 0,
+   "n_gold_missing": 0,
+   "agreement_pct": 54.7,
+   "no_hit_rate_pct": 32.3,
+   "ambiguous_rate_pct": 9.0,
+   "mismatch_rate_pct": 4.0,
+   "agreement_pct_of_mapped": 80.8
+  },
+  "disease": {
+   "n_with_raw_text": 299,
+   "n_mapped": 55,
+   "n_agree": 0,
+   "n_mismatch": 9,
+   "n_ambiguous": 46,
+   "n_no_hit": 244,
+   "n_no_raw_field": 1,
+   "n_fetch_error": 0,
+   "n_gold_missing": 0,
+   "agreement_pct": 0.0,
+   "no_hit_rate_pct": 81.6,
+   "ambiguous_rate_pct": 15.4,
+   "mismatch_rate_pct": 3.0,
+   "agreement_pct_of_mapped": 0.0,
+   "by_disease_text_source": {
+    "sample_attrs": {
+     "n_with_raw_text": 0,
+     "n_mapped": 0,
+     "n_agree": 0,
+     "n_mismatch": 0,
+     "n_ambiguous": 0,
+     "n_no_hit": 0,
+     "n_no_raw_field": 0,
+     "n_fetch_error": 0,
+     "n_gold_missing": 0
+    },
+    "project_title": {
+     "n_with_raw_text": 299,
+     "n_mapped": 55,
+     "n_agree": 0,
+     "n_mismatch": 9,
+     "n_ambiguous": 46,
+     "n_no_hit": 244,
+     "n_no_raw_field": 1,
+     "n_fetch_error": 0,
+     "n_gold_missing": 0,
+     "agreement_pct": 0.0,
+     "no_hit_rate_pct": 81.6,
+     "ambiguous_rate_pct": 15.4,
+     "mismatch_rate_pct": 3.0,
+     "agreement_pct_of_mapped": 0.0
+    }
+   }
+  }
+ },
+ "gold_normalization": {
+  "body_site_parts_resolved_to_iri": "300/300",
+  "disease_parts_resolved_to_iri": "251/450"
+ },
+ "observations": {
+  "note": "coverage audit of the 300 raw seqout payloads; not part of the mapping pipeline \u2014 quantifies where disease text actually lives",
+  "disease_attr_present": 0,
+  "sample_desc_disease_kw": 56,
+  "experiment_title_disease_kw": 42,
+  "project_title_disease_kw": 146
+ },
+ "failure_taxonomy": {
+  "note": "per-field bucket counts over n_total=300",
+  "body_site": {
+   "agree": 164,
+   "mismatch": 12,
+   "ambiguous": 27,
+   "ambiguous_agree": 0,
+   "no_hit": 97,
+   "no_raw_field": 0,
+   "fetch_error": 0,
+   "gold_missing": 0
+  },
+  "disease": {
+   "agree": 0,
+   "mismatch": 9,
+   "ambiguous": 42,
+   "ambiguous_agree": 4,
+   "no_hit": 244,
+   "no_raw_field": 1,
+   "fetch_error": 0,
+   "gold_missing": 0
+  }
+ },
+ "top_mismatches": {
+  "body_site": [
+   {
+    "count": 4,
+    "gold": "oral cavity",
+    "gold_iri": "http://purl.obolibrary.org/obo/UBERON_0000167",
+    "predicted": "saliva",
+    "predicted_iri": "http://purl.obolibrary.org/obo/UBERON_0001836",
+    "example_acc": "SAMEA4031761",
+    "raw_attr": "environment_material",
+    "raw_text": "saliva"
+   },
+   {
+    "count": 4,
+    "gold": "vagina",
+    "gold_iri": "http://purl.obolibrary.org/obo/UBERON_0000996",
+    "predicted": "Postcommissural fornix",
+    "predicted_iri": "http://purl.obolibrary.org/obo/UBERON_0003016",
+    "example_acc": "SRS064376",
+    "raw_attr": "isolation_source",
+    "raw_text": "G_DNA_Posterior fornix"
+   },
+   {
+    "count": 2,
+    "gold": "oral cavity",
+    "gold_iri": "http://purl.obolibrary.org/obo/UBERON_0000167",
+    "predicted": "supragingival dental plaque",
+    "predicted_iri": "http://purl.obolibrary.org/obo/UBERON_0016485",
+    "example_acc": "SRS022083",
+    "raw_attr": "isolation_source",
+    "raw_text": "G_DNA_Supragingival plaque"
+   },
+   {
+    "count": 1,
+    "gold": "oral cavity",
+    "gold_iri": "http://purl.obolibrary.org/obo/UBERON_0000167",
+    "predicted": "parakeratinized epithelium of gingiva",
+    "predicted_iri": "http://purl.obolibrary.org/obo/UBERON_0013195",
+    "example_acc": "SRS014473",
+    "raw_attr": "isolation_source",
+    "raw_text": "G_DNA_Attached/Keratinized gingiva"
+   },
+   {
+    "count": 1,
+    "gold": "oral cavity",
+    "gold_iri": "http://purl.obolibrary.org/obo/UBERON_0000167",
+    "predicted": "dorsum of tongue",
+    "predicted_iri": "http://purl.obolibrary.org/obo/UBERON_0009471",
+    "example_acc": "SAMN06350077",
+    "raw_attr": "isolation_source",
+    "raw_text": "tongue dorsum"
+   }
+  ],
+  "disease": [
+   {
+    "count": 2,
+    "gold": "Type 2 Diabetes Mellitus",
+    "gold_iri": "http://purl.obolibrary.org/obo/MONDO_0005148",
+    "predicted": "colorectal cancer",
+    "predicted_iri": "http://purl.obolibrary.org/obo/MONDO_0005575",
+    "example_acc": "SAMEA3541522",
+    "raw_attr": "project_title",
+    "raw_text": "Metagenomic analysis of fecal microbiome as a tool towards targeted non-invasive biomarkers for colorectal cancer",
+    "disease_source": "project_title"
+   },
+   {
+    "count": 2,
+    "gold": "Healthy",
+    "gold_iri": null,
+    "predicted": "inflammatory bowel disease",
+    "predicted_iri": "http://purl.obolibrary.org/obo/MONDO_0005265",
+    "example_acc": "SAMN07200335",
+    "raw_attr": "project_title",
+    "raw_text": "Longitudinal Stool Study of patients with IBD and controls",
+    "disease_source": "project_title"
+   },
+   {
+    "count": 2,
+    "gold": "Parasite Present",
+    "gold_iri": null,
+    "predicted": "intestinal helminthiasis",
+    "predicted_iri": "http://purl.obolibrary.org/obo/MONDO_0024271",
+    "example_acc": "SAMN07688522",
+    "raw_attr": "project_title",
+    "raw_text": "Microbiome and Worm Infection",
+    "disease_source": "project_title"
+   },
+   {
+    "count": 2,
+    "gold": "Colorectal Carcinoma;Type 2 Diabetes Mellitus",
+    "gold_iri": "http://purl.obolibrary.org/obo/MONDO_0024331",
+    "predicted": "colorectal cancer",
+    "predicted_iri": "http://purl.obolibrary.org/obo/MONDO_0005575",
+    "example_acc": "SAMEA3541469",
+    "raw_attr": "project_title",
+    "raw_text": "Metagenomic analysis of fecal microbiome as a tool towards targeted non-invasive biomarkers for colorectal cancer",
+    "disease_source": "project_title"
+   },
+   {
+    "count": 1,
+    "gold": "Healthy",
+    "gold_iri": null,
+    "predicted": "intestinal helminthiasis",
+    "predicted_iri": "http://purl.obolibrary.org/obo/MONDO_0024271",
+    "example_acc": "SAMN07688529",
+    "raw_attr": "project_title",
+    "raw_text": "Microbiome and Worm Infection",
+    "disease_source": "project_title"
+   }
+  ]
+ },
+ "selftext_fallback": false,
+ "caveats": [
+  "cMD3 gold is already human-normalized vocabulary (e.g. 'feces', 'Colorectal Carcinoma'), while the pipeline starts from raw submitter free text ('G_DNA_Stool', 'stool sample'); disagreement therefore conflates ontology-mapping error with raw-text noise.",
+  "Sampling restricted to rows with a BioSample/Sample accession (9,053/32,042 cMD3 rows); alias-keyed rows could not be fetched.",
+  "body_site gold in the registry carries no UBERON IDs (body_site_uberon is NULL); gold was normalized via OLS4 exact label search at scoring time.",
+  "'Healthy' has no MONDO term; both gold and prediction rely on a keyword rule, so healthy agreement is partly by construction.",
+  "body_site mismatches are dominated by granularity, not error: raw sub-site text ('saliva', 'tongue dorsum', 'posterior fornix') maps to a precise UBERON term while cMD3 keeps coarse buckets ('oral cavity', 'vagina'); ID/label equality cannot see this containment.",
+  "BioSample attributes essentially never carry disease in this sample (see observations.disease_attr_present); the only deterministic disease route left is the study-level project title, which (a) ZOOMA mostly cannot map (long sentences) and (b) mispredicts controls inside case/control studies by construction.",
+  "MONDO label/synonym variance (e.g. 'colorectal carcinoma' vs 'colorectal cancer', cMD3 'Parasite Present' vs MONDO 'intestinal helminthiasis') makes some matches look like mismatches under strict ID-or-label equality.",
+  "ZOOMA GOOD-tier singletons were accepted; stricter HIGH-only settings trade no-hit rate for precision."
+ ]
+}

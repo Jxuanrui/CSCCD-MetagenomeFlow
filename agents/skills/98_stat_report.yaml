@@ -1,0 +1,43 @@
+id: "98_stat_report"
+script: "scripts/98_stat_report.sh"
+tool: "bash"
+tool_version: "bash"
+conda_env: "envs/r_stat"
+description: "Generate a markdown snapshot report summarizing statistical outputs and figures."
+dimension: "statistics"
+category: "report"
+rule_type: "aggregate"
+
+inputs:
+  - name: "diversity_sentinel"
+    path_pattern: "{workdir}/result/stat/diversity_alpha_summary.tsv"
+    required: true
+  - name: "diff_summary"
+    path_pattern: "{workdir}/result/stat/differential_summary.tsv"
+    required: true
+  - name: "siamcat_done"
+    path_pattern: "{workdir}/result/stat/bacteria/ml/siamcat_done.txt"
+    required: true
+
+outputs:
+  - name: "report_done"
+    path_pattern: "{workdir}/result/stat/report/report.done"
+    description: "Report completion sentinel."
+
+depends_on:
+  - "91_stat_diversity"
+  - "92_stat_differential"
+  - "96_stat_ml_siamcat"
+
+params:
+  threads: "1"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-08"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_report"

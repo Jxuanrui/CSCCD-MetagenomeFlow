@@ -1,0 +1,37 @@
+id: "84_fun_vfdb"
+script: "scripts/84_fun_vfdb.sh"
+tool: "DIAMOND blastp"
+tool_version: "2.x"
+conda_env: "envs/assembly"
+description: "Aggregate fungal virulence factor annotation against VFDB."
+dimension: "mycobiome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "faa_files"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.faa"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "vfdb_hits"
+    path_pattern: "{workdir}/result/fungi/vfdb/vfdb_hits.tsv"
+    description: "VFDB best-hit annotation table."
+
+depends_on:
+  - "80_fun_prodigal"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_vfdb"
+

@@ -1,0 +1,72 @@
+# params.yaml — Nayfach2021_NatBiotechnol key parameters
+
+quality_assessment:
+  tool: CheckV
+  version_paper: "1.0.1"
+
+  paper_recommended:
+    workflow: "end_to_end"
+    min_length: 5000
+    completeness_method_priority: [AAI, HMM]
+    complete_genome_signals: [DTR, ITR]
+    quality_cutoffs:
+      medium_quality_completeness: 50
+      high_quality_completeness: 90
+      contamination_max: 5
+    note: "Paper benchmarks emphasize contigs >=5 kb for stable completeness estimation"
+
+  project_current:
+    script: scripts/54_vir_checkv_contig.sh
+    matches_paper: partial
+    min_length: null
+    deviation_notes: "CSCCD-MetagenomeFlow does not enforce a CheckV-side minimum contig length, preserving shorter gut phage fragments from upstream virus callers."
+
+vmag_filtering:
+  tool: CheckV
+  paper_recommended:
+    accepted_quality_labels:
+      - Complete
+      - High-quality
+      - Medium-quality
+    contamination_max: 5
+    completeness_min: 50
+    provirus_trimming: true
+  project_current:
+    script: scripts/62_vir_checkv_mag.sh
+    matches_paper: true
+    deviation_notes: null
+
+upstream_context:
+  tool: "geNomad + VirSorter2"
+  paper_recommended:
+    input_type: "viral contigs or proviruses identified upstream"
+    host_contamination_control: "remove bacterial flanks before downstream cataloging"
+  project_current:
+    script: scripts/54_vir_checkv_contig.sh
+    matches_paper: true
+    deviation_notes: "Project intersects geNomad and VirSorter2 predictions before CheckV, increasing precision before QC."
+
+benchmarks:
+  completeness_sensitivity: "92%"
+  completeness_specificity: "99.7%"
+  provirus_recall: "90%"
+  quality_tiers: "Complete / High-quality / Medium-quality / Low-quality / Not-determined"
+  note: "AAI-based estimates are most accurate when close complete references exist; HMM fallback supports novel viruses."
+
+database:
+  name: "checkv"
+  version_paper: "2021 reference release"
+  local_path: "db/checkv"
+  components:
+    - "complete viral genome reference set"
+    - "checkv_hmms marker profiles"
+    - "expected genome length tables"
+  installation: "checkv download_database db/checkv"
+
+key_design_choices:
+  - choice: "AAI-based completeness estimation instead of single-copy marker completeness"
+    rationale: "Viruses lack universal single-copy genes, so expected genome length inferred from related complete genomes is more robust."
+  - choice: "DTR/ITR detection for complete genomes"
+    rationale: "Terminal repeats are strong sequence-level evidence for closed circular or linear viral genomes."
+  - choice: "Host-virus boundary detection for proviruses"
+    rationale: "Prophage-containing contigs are common in metagenomes; trimming host flanks reduces contamination in downstream catalogs."

@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Script: scripts/hooks/pre-commit
+# Purpose: Two advisory/blocking gates on the staged diff:
+#            1. Ponytail net-line-growth warning (advisory, all file types)
+#            2. shellcheck on staged .sh files (blocking)
+# Installed via: scripts/install_git_hooks.sh (symlinks this file into
+#                .git/hooks/pre-commit)
+#
+# Scope: only files touched by this commit (git diff --cached), not a full
+# repo scan -- this is what lets pre-existing scripts stay untouched
+# by the new check while any file someone actually edits must pass.
+# ==============================================================================
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# ── Gate 1: Ponytail net-line-growth advisory (2026-09-19, CLAUDE.md §11.1) ──
+# Warn (never block) when the staged diff adds far more than it deletes.
+# Legitimate growth (new feature scripts, DB assembly) is fine -- the warning
+# exists to make net growth a conscious decision, not an accident.
+PONYTAIL_THRESHOLD=200
+NUMSTAT="$(git diff --cached --numstat || true)"
+if [ -n "${NUMSTAT}" ]; then
+    ADDED=$(awk '{a+=$1} END{print a+0}' <<<"${NUMSTAT}")
+    DELETED=$(awk '{d+=$2} END{print d+0}' <<<"${NUMSTAT}")
+    NET=$((ADDED - DELETED))
+    if [ "${NET}" -gt "${PONYTAIL_THRESHOLD}" ]; then
+        echo "[PONYTAIL] 本次提交净增 ${NET} 行 (+${ADDED}/-${DELETED})，超过 ${PONYTAIL_THRESHOLD} 行阈值。"
+        echo "[PONYTAIL] 依据 CLAUDE.md §11.1 决策阶梯自查：能否复用既有实现？能否删除等量旧代码？"
+        echo "[PONYTAIL] 若为授权的功能新增/数据装配提交，忽略本告警继续即可（本门不阻断）。"
+    fi
+fi
+
+# ── Gate 2: shellcheck on staged .sh files (blocking) ──
+SHELLCHECK="${REPO_ROOT}/envs/shellcheck/bin/shellcheck"
+
+if [ ! -x "${SHELLCHECK}" ]; then
+    echo "[WARN] envs/shellcheck not found -- skipping shellcheck for this commit."
+    echo "[HINT] Set it up with: mamba create -y --prefix \"${REPO_ROOT}/envs/shellcheck\" -c conda-forge \"shellcheck>=0.9\""
+    exit 0
+fi
+
+mapfile -t STAGED_SH < <(git diff --cached --name-only --diff-filter=ACM -- '*.sh')
+if [ ${#STAGED_SH[@]} -eq 0 ]; then
+    exit 0
+fi
+
+echo "[INFO] Running shellcheck on ${#STAGED_SH[@]} staged script(s)..."
+
+FAILED=0
+for f in "${STAGED_SH[@]}"; do
+    [ -f "${f}" ] || continue
+    if ! "${SHELLCHECK}" --severity=warning "${f}"; then
+        FAILED=1
+    fi
+done
+
+## 2026-07-28: .shellcheckrc exclude list finalized against a full-repo scan
+## (127 scripts, 264 findings; see .shellcheckrc header). Now blocking.
+if [ "${FAILED}" -ne 0 ]; then
+    echo ""
+    echo "[BLOCK] shellcheck 检查未通过，请修复上方问题后重新提交。"
+    echo "[HINT]  临时跳过（不推荐）: git commit --no-verify"
+    exit 1
+fi
+exit 0

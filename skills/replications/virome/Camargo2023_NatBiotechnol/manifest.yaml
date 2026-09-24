@@ -1,0 +1,55 @@
+---
+# manifest.yaml — Camargo et al. 2023 Nature Biotechnology
+# geNomad: identification of mobile genetic elements with deep learning + CRF
+
+id: "Camargo2023_NatBiotechnol"
+pmid: "37904079"
+doi: "10.1038/s41587-023-01953-y"
+title: "Identification of mobile genetic elements with geNomad"
+journal: "Nature Biotechnology"
+volume: 42
+issue: 8
+pages: "1303-1312"
+year: 2023
+impact_factor: 36.6
+paper_type: tool_paper
+primary_dimension: virome
+cross_dimensions: [bacteria]
+dimension: virome
+keywords: [geNomad, virus-identification, plasmid-identification, deep-learning, CRF, mobile-genetic-elements, phage, metagenomics]
+citation_in_scripts: [52, 57]  # 52_vir_genomad.sh, 57_vir_votu_genomad.sh
+
+code_availability:
+  github: "https://github.com/apcamargo/genomad"
+  portal: "https://portal.nersc.gov/genomad/"
+  pypi: "https://pypi.org/project/genomad/"
+  local_original: null
+  local_adapted: null
+
+replication:
+  replicated_by: "JiXuanRui"
+  replicated_date: "2026-06-16"
+  data_accessibility: "full"         # geNomad DB downloadable; test data on GitHub
+  code_accessibility: "full"         # Full GitHub + PyPI; conda installable
+  environment_reproducibility: "high" # envs/virus contains geNomad
+  result_verifiability: "medium"     # Output format stable; exact scores depend on DB version
+  method_fidelity: "high"            # Using official geNomad binary v1.x
+
+coverage:
+  implemented:
+    - id: "52"
+      script: "scripts/52_vir_genomad.sh"
+      paper_section: "Methods > Sequence classification with geNomad"
+    - id: "57"
+      script: "scripts/57_vir_votu_genomad.sh"
+      paper_section: "Methods > Taxonomic annotation of viral sequences"
+  new_scripts: []
+  gaps:
+    - name: "Plasmid identification pipeline"
+      description: "geNomad also classifies plasmids (paper Figs 2-3); CSCCD-MetagenomeFlow only uses virus output"
+      paper_section: "Results > Plasmid classification"
+      priority: low
+    - name: "Lifestyle prediction integration with 67_bacphlip"
+      description: "geNomad predicts temperate/virulent lifestyle; complements BACPHLIP (script 67)"
+      paper_section: "Results > Integrative virus taxonomy"
+      priority: medium

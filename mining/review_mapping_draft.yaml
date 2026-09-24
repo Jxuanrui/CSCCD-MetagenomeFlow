@@ -1,0 +1,579 @@
+# DRAFT human-review mapping table for review_queue leftovers.
+# Generated 2026-09-23 from curation.sqlite review_queue (read-only);
+# all term IDs label-verified against EBI OLS4. Proposals are drafts
+# for human review - not applied to the database.
+# 57 entries: 49 disease + 8 body_site. Sorted by occurrence_count desc.
+entries:
+  - raw_value: "frailty"
+    field: "disease"
+    occurrence_count: 2398
+    proposal:
+      - term_id: "HP:0033675"
+        label: "Frailty"
+        confidence: "medium"
+        source: "ols4"
+    notes: "MONDO has no 'frailty' term (verified: MONDO:0005588 is chemotherapy-induced oral mucositis, NOT frailty). Best available exact term is HP:0033675 (MeSH D000073496 / SNOMED 248279007 cross-referenced). Out-of-target ontology (HP not MONDO) so medium; consider requesting MONDO inclusion. Highest-volume value in the queue (2398) - worth a human decision early."
+  - raw_value: "Colorectal Neoplasms"
+    field: "disease"
+    occurrence_count: 546
+    proposal:
+      - term_id: "MONDO:0005335"
+        label: "colorectal neoplasm"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005575"
+        label: "colorectal cancer"
+        confidence: "medium"
+        source: "editorial"
+    notes: "MeSH heading; OLS4 exact-synonym hit on MONDO:0005335. One-to-many by intent: umbrella term covers cancer + precursors. If cohorts are CRC patients specifically, prefer MONDO:0005575."
+  - raw_value: "pulmonary"
+    field: "disease"
+    occurrence_count: 532
+    proposal: []
+    notes: "Unmappable: organ-system adjective, no specific diagnosis; needs chart/study review. Rollup-only option for cohort-level analyses: MONDO:0005087 (respiratory system disorder) (low confidence, editorial)."
+  - raw_value: "neurological"
+    field: "disease"
+    occurrence_count: 483
+    proposal: []
+    notes: "Unmappable: organ-system adjective, not a diagnosis; needs study review. Rollup-only option: MONDO:0005071 (nervous system disorder) (low, editorial)."
+  - raw_value: "Preterm Birth"
+    field: "disease"
+    occurrence_count: 448
+    proposal:
+      - term_id: "HP:0001622"
+        label: "Premature birth"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "NCIT:C92861"
+        label: "Preterm Birth"
+        confidence: "medium"
+        source: "ols4"
+    notes: "MONDO lacks a preterm-birth term (OLS4 mondo search returns nothing sensible). These are likely infant microbiome cohorts where preterm birth is the cohort-defining condition. HPO:0001622 is the standard term; NCIT:C92861 has the exact label. Out-of-target ontology -> medium."
+  - raw_value: "dermatologic"
+    field: "disease"
+    occurrence_count: 324
+    proposal: []
+    notes: "Unmappable: organ-system adjective; needs study review. Rollup-only option: MONDO:0005093 (skin disorder) (low, editorial)."
+  - raw_value: "diarrhea, gastrointestinal infection, irritable bowel syndrome, inflammatory bowel disease, diabetes, neurological"
+    field: "disease"
+    occurrence_count: 308
+    proposal:
+      - term_id: "MONDO:0001673"
+        label: "diarrheal disease"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0043424"
+        label: "digestive system infectious disorder"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005265"
+        label: "inflammatory bowel disease"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005015"
+        label: "diabetes mellitus"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: diarrhea, gastrointestinal infection, irritable bowel syndrome, inflammatory bowel disease, diabetes. Unmappable parts: neurological (organ-system adjective, needs study review)."
+  - raw_value: "immune"
+    field: "disease"
+    occurrence_count: 156
+    proposal: []
+    notes: "Unmappable: 'immune' alone is not a diagnosis; likely from immunodeficiency or autoimmunity cohorts - needs study review. Rollup-only option: MONDO:0005046 (immune system disorder) (low, editorial)."
+  - raw_value: "Hemangioma, Cavernous"
+    field: "disease"
+    occurrence_count: 127
+    proposal:
+      - term_id: "MONDO:0003155"
+        label: "cavernous hemangioma"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0006267"
+        label: "liver cavernous hemangioma"
+        confidence: "medium"
+        source: "editorial"
+    notes: "MeSH inverted heading. OLS4 exact hit on MONDO:0003155. If samples are hepatic resections (common for this BioSample source), the narrower MONDO:0006267 is the intended term - check study context."
+  - raw_value: "Clostridium Infections"
+    field: "disease"
+    occurrence_count: 124
+    proposal:
+      - term_id: "MONDO:0024388"
+        label: "Clostridium infectious disease"
+        confidence: "high"
+        source: "ols4"
+    notes: "MeSH heading; OLS4 exact-synonym hit. Narrower alternatives if species is known from the study: MONDO:0000705 (C. difficile colitis), MONDO:0023149 (C. perfringens infection)."
+  - raw_value: "Parasite Present"
+    field: "disease"
+    occurrence_count: 112
+    proposal: []
+    notes: "Unmappable: presence/colonization observation, not a diagnosis; parasite species unspecified. Needs per-study review (likely a helminth/protozoan colonization cohort)."
+  - raw_value: "oral"
+    field: "disease"
+    occurrence_count: 83
+    proposal: []
+    notes: "Unmappable: anatomical adjective in a disease field; may indicate oral-site samples misfiled. Rollup-only option: MONDO:0006858 (mouth disorder) (low, editorial)."
+  - raw_value: "Fecal Microbiota Transplantation"
+    field: "disease"
+    occurrence_count: 76
+    proposal: []
+    notes: "Not a disease: FMT is a procedure (MAXO:0000748 / SNOMED 721036005 exist). Per-sample disease must come from study arm: donors -> healthy (rule), recipients often C. difficile infection (MONDO:0000705). Needs study-level review."
+  - raw_value: "Ascites, CTCAE"
+    field: "disease"
+    occurrence_count: 72
+    proposal:
+      - term_id: "HP:0001541"
+        label: "Ascites"
+        confidence: "medium"
+        source: "ols4"
+    notes: "MeSH/CTCAE grading term. MONDO has no plain 'ascites' (only subtypes, e.g. chylous ascites MONDO:0008829). CTCAE grade is dropped by mapping; out-of-target ontology (HP) -> medium."
+  - raw_value: "Borderline Hypertension"
+    field: "disease"
+    occurrence_count: 56
+    proposal:
+      - term_id: "MONDO:0005044"
+        label: "hypertensive disorder"
+        confidence: "low"
+        source: "editorial"
+    notes: "MeSH term; MONDO has no 'prehypertension'/'borderline hypertension' term (verified). Proposal is a lossy rollup to the hypertensive-disorder parent; if the study defines BP 120-139/80-89, reviewers may prefer unmappable over imprecise. Low confidence, needs study review."
+  - raw_value: "IgA Deficiency"
+    field: "disease"
+    occurrence_count: 56
+    proposal:
+      - term_id: "MONDO:0001341"
+        label: "selective IgA deficiency disease"
+        confidence: "high"
+        source: "ols4"
+    notes: "OLS4 exact top hit; MONDO:0007644 (IgAD1) is the same disease. Straight forward confirm."
+  - raw_value: "right arm"
+    field: "body_site"
+    occurrence_count: 47
+    proposal:
+      - term_id: "UBERON:0002427"
+        label: "arm skin"
+        confidence: "medium"
+        source: "editorial"
+    notes: "UBERON has no laterality-prefixed arm term (exact searches fail; note UBERON:0001465 is 'knee', not a limb). For a skin-swab body_site, arm skin fits; 'right' laterality is dropped - verify sample type."
+  - raw_value: "inguinal crease"
+    field: "body_site"
+    occurrence_count: 41
+    proposal:
+      - term_id: "UBERON:8410021"
+        label: "inguinal region skin"
+        confidence: "medium"
+        source: "ols4"
+    notes: "HMP skin subsite. OLS4 label-confirmed; 'crease' -> skin of the inguinal region. Confirm."
+  - raw_value: "volar forearm"
+    field: "body_site"
+    occurrence_count: 38
+    proposal:
+      - term_id: "UBERON:0003403"
+        label: "skin of forearm"
+        confidence: "medium"
+        source: "ols4"
+    notes: "HMP skin subsite. OLS4 exact-label term; the 'volar' (ventral aspect) qualifier is dropped - no separate ventral-forearm-skin term exists."
+  - raw_value: "antecubital creases"
+    field: "body_site"
+    occurrence_count: 34
+    proposal:
+      - term_id: "UBERON:0001461"
+        label: "elbow"
+        confidence: "low"
+        source: "editorial"
+    notes: "HMP skin subsite (inner elbow crease). UBERON has no antecubital-fossa/fold skin term; 'elbow' is the closest regional proxy. Low confidence - reviewer may prefer unmappable or a new-term request."
+  - raw_value: "Caliciviridae Infections"
+    field: "disease"
+    occurrence_count: 33
+    proposal:
+      - term_id: "MONDO:0005687"
+        label: "Caliciviridae infectious disease"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0100074"
+        label: "norovirus infectious disease"
+        confidence: "medium"
+        source: "editorial"
+    notes: "OLS4 exact hit for the MeSH heading. If the underlying datasets are norovirus challenge studies (likely for human calicivirus samples), the narrower MONDO:0100074 applies."
+  - raw_value: "Dwarfism"
+    field: "disease"
+    occurrence_count: 30
+    proposal:
+      - term_id: "HP:0004322"
+        label: "Short stature"
+        confidence: "medium"
+        source: "ols4"
+    notes: "MeSH 'Dwarfism' has no plain MONDO equivalent (OLS4 returns only specific primordial-dwarfism syndromes). HP:0004322 short stature is the accepted generalization; out-of-target ontology -> medium."
+  - raw_value: "Multiple Chemical Sensitivity"
+    field: "disease"
+    occurrence_count: 30
+    proposal:
+      - term_id: "DOID:4661"
+        label: "multiple chemical sensitivity"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "EFO:0007382"
+        label: "multiple chemical sensitivity"
+        confidence: "medium"
+        source: "ols4"
+    notes: "Absent from MONDO (verified; also absent under synonym 'idiopathic environmental intolerance'). Exact-label terms exist in DOID and EFO; both out-of-target -> medium."
+  - raw_value: "Pituitary ACTH Hypersecretion"
+    field: "disease"
+    occurrence_count: 27
+    proposal:
+      - term_id: "MONDO:0009050"
+        label: "Cushing disease due to pituitary adenoma"
+        confidence: "medium"
+        source: "editorial"
+      - term_id: "MONDO:0020528"
+        label: "ACTH-dependent Cushing syndrome"
+        confidence: "low"
+        source: "editorial"
+    notes: "MeSH heading. No direct MONDO exact; MONDO:0009050 is the standard Cushing-disease term (pituitary ACTH excess) via MeSH crosswalk; MONDO:0020528 is the broader ACTH-dependent class. Medium/low, confirm with study."
+  - raw_value: "Campylobacter Infections"
+    field: "disease"
+    occurrence_count: 26
+    proposal:
+      - term_id: "MONDO:0005688"
+        label: "campylobacteriosis"
+        confidence: "high"
+        source: "ols4"
+    notes: "MeSH heading maps to MONDO:0005688 (campylobacteriosis, the genus-level disease). Narrower: MONDO:0040728 (C. fetus) if species is known."
+  - raw_value: "gastrointestinal"
+    field: "disease"
+    occurrence_count: 26
+    proposal: []
+    notes: "Unmappable: organ-system adjective; needs study review. Rollup-only option: MONDO:0004335 (digestive system disorder) (low, editorial)."
+  - raw_value: "retroauricular crease"
+    field: "body_site"
+    occurrence_count: 26
+    proposal:
+      - term_id: "UBERON:8480047"
+        label: "retroauricular region"
+        confidence: "medium"
+        source: "ols4"
+    notes: "HMP classic skin subsite (behind the ear). OLS4 label-confirmed; 'crease' -> region. Confirm."
+  - raw_value: "occiput lower scalp"
+    field: "body_site"
+    occurrence_count: 24
+    proposal:
+      - term_id: "UBERON:8300000"
+        label: "skin of scalp"
+        confidence: "medium"
+        source: "ols4"
+    notes: "HMP skin subsite. Scalp-skin term label-confirmed; 'occiput lower' subsite qualifier dropped (no occipital-scalp term in UBERON)."
+  - raw_value: "Milk Hypersensitivity"
+    field: "disease"
+    occurrence_count: 22
+    proposal:
+      - term_id: "MONDO:0020554"
+        label: "Heiner syndrome"
+        confidence: "low"
+        source: "editorial"
+    notes: "MeSH heading. MONDO has no generic milk-allergy term (verified via 'milk allergy'/'milk protein allergy' searches); the only milk-hypersensitivity MONDO term is the much narrower Heiner syndrome (milk-induced pulmonary hemosiderosis). Likely a cow's-milk-allergy cohort -> needs study review; low confidence, do not auto-apply."
+  - raw_value: "Metastatic Malignant Neoplasm in the Lung"
+    field: "disease"
+    occurrence_count: 20
+    proposal:
+      - term_id: "NCIT:C3577"
+        label: "Metastatic Malignant Neoplasm in the Lung"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0021117"
+        label: "lung neoplasm"
+        confidence: "low"
+        source: "editorial"
+    notes: "NCIt exact-label term (these raw values are NCIt/MeSH phrasings). MONDO deliberately lacks metastasis-to-organ terms; MONDO:0021117 is a lossy rollup if a MONDO-only schema is required."
+  - raw_value: "genitourinary"
+    field: "disease"
+    occurrence_count: 20
+    proposal: []
+    notes: "Unmappable: organ-system adjective; needs study review. No clean single MONDO rollup surfaced (candidates would split into urinary vs genital system disease by context)."
+  - raw_value: "Growth Retardation"
+    field: "disease"
+    occurrence_count: 16
+    proposal:
+      - term_id: "HP:0008897"
+        label: "Postnatal growth retardation"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0005030"
+        label: "fetal growth restriction"
+        confidence: "medium"
+        source: "ols4"
+    notes: "One-to-many by life stage. MeSH 'Growth Retardation' is ambiguous: HP:0008897 (postnatal, likely for pediatric malnutrition cohorts) vs MONDO:0005030 (fetal). Choose per study."
+  - raw_value: "Bacterial Infection"
+    field: "disease"
+    occurrence_count: 11
+    proposal:
+      - term_id: "MONDO:0005113"
+        label: "bacterial infectious disease"
+        confidence: "high"
+        source: "ols4"
+    notes: "Plural->class normalization; OLS4 label-confirmed. Confirm."
+  - raw_value: "Hematuria"
+    field: "disease"
+    occurrence_count: 10
+    proposal:
+      - term_id: "HP:0000790"
+        label: "Hematuria"
+        confidence: "medium"
+        source: "ols4"
+    notes: "Symptom; MONDO keeps only familial/subtype terms. HP:0000790 exact; out-of-target ontology -> medium."
+  - raw_value: "Donor"
+    field: "disease"
+    occurrence_count: 9
+    proposal: []
+    notes: "Not a disease: healthy-donor semantics. Apply the existing HEALTHY_VALUES rule (zooma_map.py) - consider adding 'donor' to that set. No MONDO term expected."
+  - raw_value: "Metastatic Malignant Neoplasm in the Liver"
+    field: "disease"
+    occurrence_count: 8
+    proposal:
+      - term_id: "NCIT:C4758"
+        label: "Metastatic Malignant Neoplasm in the Liver"
+        confidence: "medium"
+        source: "ols4"
+    notes: "NCIt exact-label term; MONDO lacks liver-metastasis terms (verified)."
+  - raw_value: "diarrhea, irritable bowel syndrome, neurological"
+    field: "disease"
+    occurrence_count: 8
+    proposal:
+      - term_id: "MONDO:0001673"
+        label: "diarrheal disease"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: diarrhea, irritable bowel syndrome. Unmappable parts: neurological (organ-system adjective, needs study review)."
+  - raw_value: "diarrhea, neurological"
+    field: "disease"
+    occurrence_count: 7
+    proposal:
+      - term_id: "MONDO:0001673"
+        label: "diarrheal disease"
+        confidence: "medium"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: diarrhea. Unmappable parts: neurological (organ-system adjective, needs study review)."
+  - raw_value: "pre-diabetes"
+    field: "disease"
+    occurrence_count: 6
+    proposal:
+      - term_id: "MONDO:0006920"
+        label: "prediabetes syndrome"
+        confidence: "high"
+        source: "ols4"
+    notes: "OLS4 exact hit. Confirm."
+  - raw_value: "diabetes, neurological"
+    field: "disease"
+    occurrence_count: 5
+    proposal:
+      - term_id: "MONDO:0005015"
+        label: "diabetes mellitus"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: diabetes. Unmappable parts: neurological (organ-system adjective, needs study review)."
+  - raw_value: "diarrhea, irritable bowel syndrome"
+    field: "disease"
+    occurrence_count: 4
+    proposal:
+      - term_id: "MONDO:0001673"
+        label: "diarrheal disease"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: diarrhea, irritable bowel syndrome."
+  - raw_value: "Fever"
+    field: "disease"
+    occurrence_count: 3
+    proposal:
+      - term_id: "HP:0001945"
+        label: "Fever"
+        confidence: "medium"
+        source: "ols4"
+    notes: "Symptom; MONDO lacks a plain fever term. HP:0001945 exact; out-of-target ontology -> medium."
+  - raw_value: "Meibomian Gland Dysfunction"
+    field: "disease"
+    occurrence_count: 3
+    proposal:
+      - term_id: "SNOMED:397549002"
+        label: "Meibomian gland dysfunction"
+        confidence: "medium"
+        source: "ols4"
+    notes: "MONDO has no human MGD term (only non-human meibomianitis). SNOMED CT exact-label term (MeSH D000080343 equivalent); out-of-target -> medium."
+  - raw_value: "Metastatic Malignant Neoplasm in the Adrenal Gland"
+    field: "disease"
+    occurrence_count: 3
+    proposal:
+      - term_id: "NCIT:C8610"
+        label: "Metastatic Malignant Neoplasm in the Adrenal Gland"
+        confidence: "medium"
+        source: "ols4"
+    notes: "NCIt exact-label term; MONDO lacks adrenal-metastasis terms."
+  - raw_value: "Metastatic Malignant Neoplasm in the Bone"
+    field: "disease"
+    occurrence_count: 3
+    proposal:
+      - term_id: "NCIT:C3580"
+        label: "Metastatic Malignant Neoplasm in the Bone"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0002129"
+        label: "bone cancer"
+        confidence: "low"
+        source: "editorial"
+    notes: "NCIt exact-label term; MONDO:0002129 is a lossy rollup if MONDO-only."
+  - raw_value: "occiput scalp"
+    field: "body_site"
+    occurrence_count: 3
+    proposal:
+      - term_id: "UBERON:8300000"
+        label: "skin of scalp"
+        confidence: "medium"
+        source: "ols4"
+    notes: "Same as 'occiput lower scalp'; occipital subsite qualifier dropped."
+  - raw_value: "Cough"
+    field: "disease"
+    occurrence_count: 2
+    proposal:
+      - term_id: "HP:0012735"
+        label: "Cough"
+        confidence: "medium"
+        source: "ols4"
+    notes: "Symptom; MONDO lacks a plain cough term. HP:0012735 exact; out-of-target ontology -> medium."
+  - raw_value: "inflammatory bowel disease, irritable bowel syndrome, neurological"
+    field: "disease"
+    occurrence_count: 2
+    proposal:
+      - term_id: "MONDO:0005265"
+        label: "inflammatory bowel disease"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: inflammatory bowel disease, irritable bowel syndrome. Unmappable parts: neurological (organ-system adjective, needs study review)."
+  - raw_value: "Gangrene"
+    field: "disease"
+    occurrence_count: 1
+    proposal:
+      - term_id: "HP:0100758"
+        label: "Gangrene"
+        confidence: "medium"
+        source: "ols4"
+    notes: "MONDO has no plain gangrene term (only subtypes, e.g. gas gangrene MONDO:0005767). HP:0100758 exact; out-of-target -> medium."
+  - raw_value: "diarrhea, inflammatory bowel disease, irritable bowel syndrome, neurological"
+    field: "disease"
+    occurrence_count: 1
+    proposal:
+      - term_id: "MONDO:0001673"
+        label: "diarrheal disease"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0005265"
+        label: "inflammatory bowel disease"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: diarrhea, inflammatory bowel disease, irritable bowel syndrome. Unmappable parts: neurological (organ-system adjective, needs study review)."
+  - raw_value: "diarrhea, irritable bowel syndrome, diabetes"
+    field: "disease"
+    occurrence_count: 1
+    proposal:
+      - term_id: "MONDO:0001673"
+        label: "diarrheal disease"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005015"
+        label: "diabetes mellitus"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: diarrhea, irritable bowel syndrome, diabetes."
+  - raw_value: "gastrointestinal infection, irritable bowel syndrome"
+    field: "disease"
+    occurrence_count: 1
+    proposal:
+      - term_id: "MONDO:0043424"
+        label: "digestive system infectious disorder"
+        confidence: "medium"
+        source: "ols4"
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: gastrointestinal infection, irritable bowel syndrome."
+  - raw_value: "glabella forehead"
+    field: "body_site"
+    occurrence_count: 1
+    proposal:
+      - term_id: "UBERON:0034765"
+        label: "glabella skin"
+        confidence: "high"
+        source: "ols4"
+    notes: "HMP skin subsite. OLS4 exact hit for glabella skin (region variants: UBERON:0034766 glabella region); 'forehead' is redundant context."
+  - raw_value: "inflammatory bowel disease, diabetes"
+    field: "disease"
+    occurrence_count: 1
+    proposal:
+      - term_id: "MONDO:0005265"
+        label: "inflammatory bowel disease"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005015"
+        label: "diabetes mellitus"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: inflammatory bowel disease, diabetes."
+  - raw_value: "irritable bowel syndrome, diabetes"
+    field: "disease"
+    occurrence_count: 1
+    proposal:
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005015"
+        label: "diabetes mellitus"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: irritable bowel syndrome, diabetes."
+  - raw_value: "irritable bowel syndrome, diabetes, neurological"
+    field: "disease"
+    occurrence_count: 1
+    proposal:
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0005015"
+        label: "diabetes mellitus"
+        confidence: "high"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: irritable bowel syndrome, diabetes. Unmappable parts: neurological (organ-system adjective, needs study review)."
+  - raw_value: "irritable bowel syndrome, gastrointestinal infection, neurological"
+    field: "disease"
+    occurrence_count: 1
+    proposal:
+      - term_id: "MONDO:0005052"
+        label: "irritable bowel syndrome"
+        confidence: "high"
+        source: "ols4"
+      - term_id: "MONDO:0043424"
+        label: "digestive system infectious disorder"
+        confidence: "medium"
+        source: "ols4"
+    notes: "Comma-separated multi-condition value (one study's combined disease field); proposals are per-part. Mapped parts: irritable bowel syndrome, gastrointestinal infection. Unmappable parts: neurological (organ-system adjective, needs study review)."

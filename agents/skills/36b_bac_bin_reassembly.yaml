@@ -1,0 +1,99 @@
+id: "36b_bac_bin_reassembly"
+script: "scripts/36b_bac_bin_reassembly.sh"
+tool: "metaWRAP reassemble_bins"
+tool_version: "metawrap 1.3.2, spades 3.15.5"
+conda_env: "envs/metawrap"
+description: "Post-binning reassembly: re-assemble each DASTool bin with original reads using SPAdes for improved contig quality"
+dimension: "bacteria"
+category: "binning"
+rule_type: "per_sample"
+
+inputs:
+  - name: "dastool_bins"
+    path_pattern: "${WORKDIR}/result/binning/dastool/${SAMPLE}/${SAMPLE}_DASTool_bins/*.fa"
+    required: true
+    description: "Consensus bins from 36_bac_dastool"
+  - name: "clean_reads_r1"
+    path_pattern: "${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+    required: true
+    description: "Forward clean reads from kneaddata (after 02b pair repair)"
+  - name: "clean_reads_r2"
+    path_pattern: "${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+    required: true
+    description: "Reverse clean reads from kneaddata (after 02b pair repair)"
+
+outputs:
+  - name: "reassembled_bins"
+    path_pattern: "${WORKDIR}/result/binning/reassembly/${SAMPLE}/reassembled_bins/*.fa"
+    description: "Reassembled bins (or original bins if reassembly failed). Output bin count matches input bin count."
+  - name: "reassembly_log"
+    path_pattern: "${WORKDIR}/result/binning/reassembly/${SAMPLE}/reassembly.log"
+    description: "metaWRAP reassemble_bins log with per-bin success/failure status"
+
+depends_on:
+  - "36_bac_dastool"
+  - "02b_qc_pair_repair"
+
+required_by:
+  - "37_bac_checkm2"
+
+params:
+  sample: "Sample ID"
+  threads: "CPU threads"
+  workdir: "Working directory"
+  repo: "MaxMetagenome repository root"
+  memory: "Memory limit in GB (default: 64)"
+  parallel: "Optional --parallel flag for concurrent SPAdes jobs (memory-intensive)"
+  force: "Optional --force flag to re-run"
+
+workflow:
+  - stage: "Prepare input"
+    description: "Copy DASTool bins to metaWRAP work directory"
+  - stage: "Per-bin read extraction"
+    description: "For each bin, map reads with bwa mem, extract mapped reads"
+  - stage: "Per-bin reassembly"
+    description: "Run SPAdes on extracted reads (serial by default, parallel with --parallel flag)"
+  - stage: "Quality comparison"
+    description: "Compare reassembled contigs vs original bin (N50, total length)"
+  - stage: "Bin selection"
+    description: "Use reassembled bin if improved, otherwise keep original"
+  - stage: "Output consolidation"
+    description: "Copy final bins (reassembled or original) to output directory"
+
+benchmarks:
+  typical_runtime_min: 120
+  typical_input_size_mb: 3000
+  peak_memory_gb: 64
+
+validation:
+  test_sample: "Sample4"
+  input_bins: 142
+  output_bins: 142
+  reassembly_success_rate: "78%"
+  n50_improvement_median: "+15%"
+  notes: "111/142 bins successfully reassembled with N50 improvement. 31 bins kept original (SPAdes failed or worse quality). Discovered necessity of 02b pair repair during testing: bwa mem aborted on misaligned R1/R2 pairs before pair repair implementation."
+
+known_issues:
+  - issue: "SPAdes failure on low-coverage bins (<5x)"
+    impact: "~20-30% of bins may fail reassembly"
+    workaround: "Script falls back to original bin, ensures output bin count = input bin count"
+  - issue: "Memory-intensive with --parallel flag"
+    impact: "Multiple SPAdes jobs may exceed available RAM"
+    mitigation: "Default is serial mode; use --parallel only on high-memory servers (>128GB)"
+  - issue: "Requires strictly paired reads"
+    impact: "bwa mem aborts with 'paired reads have different names' if R1/R2 order misaligned"
+    resolution: "Fixed by 02b_qc_pair_repair.sh (2026-08-04)"
+  - issue: "reassembled_bins/ was never cleared before writing, so bins from an earlier run persisted; it also inherited any stale bins present in an upstream dastool dir."
+    impact: "Confirmed on Project01: the Sample2/3/10 reassembly dirs carried 71/55/61 stale bins (counts matched the inflated dastool dirs exactly), which flowed through CheckM2 into dRep - 153 of 653 drep_input MAGs (23%) descended from stale bins."
+    resolution: "Fixed in 44bf5fc (rm -rf FINAL_DIR in both the success and fallback branches). The contaminated Project01 dirs were cleaned (stale bins quarantined). Re-run 37 -> 38 for the affected samples to rebuild a reproducible MAG set."
+
+performance_notes: "Longest step in binning module (1-3 hours for 100-200 bins). Bottleneck is SPAdes (serial: 1-2 min/bin; parallel: faster wall-clock but memory-bound). Uses metaWRAP with --skip-checkm to avoid redundant CheckM 1.x evaluation (CheckM2 done downstream in 37_bac_checkm2)."
+
+parameter_rationale:
+  skip_checkm: "Avoids redundant quality check with old CheckM 1.x; project uses CheckM2 in script 37"
+  mem_default_64: "Conservative default for typical server; increase to 128+ for --parallel mode"
+  bwa_mem_for_mapping: "Faster than bowtie2 for long reads, standard for metagenome binning"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::bin_reassembly"

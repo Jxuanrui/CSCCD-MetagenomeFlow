@@ -1,0 +1,48 @@
+id: "20_bac_salmon_quant"
+script: "scripts/20_bac_salmon_quant.sh"
+tool: "salmon"
+tool_version: "1.2.0"
+conda_env: "envs/assembly"
+description: "Per-sample gene abundance quantification (TPM + NumReads) against the NR gene catalog Salmon index. Uses --meta mode for metagenomics EM optimization."
+dimension: "bacteria"
+category: "assembly"
+rule_type: "per_sample"
+
+inputs:
+  - name: "r1"
+    path_pattern: "{workdir}/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "r2"
+    path_pattern: "{workdir}/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+  - name: "index_info"
+    path_pattern: "{workdir}/result/assembly/salmon/index/info.json"
+    required: true
+
+outputs:
+  - name: "quant_sf"
+    path_pattern: "{workdir}/result/assembly/salmon/{sample}/quant.sf"
+    description: "Per-sample gene quantification (TPM + NumReads). Merge with salmon quantmerge after all samples complete."
+
+depends_on:
+  - "02_qc_kneaddata"
+  - "19_bac_salmon_build"
+required_by: []
+
+params:
+  lib_type: "A (auto-detect)"
+  meta_mode: "--meta"
+  validate_mappings: "--validateMappings (active in v1.2.0; default in v1.9+)"
+
+benchmarks:
+  typical_runtime_min: 5
+  peak_memory_gb: 4
+  note: "Very fast step. All samples can run in parallel after index is built."
+
+known_issues:
+  - description: "--validateMappings is deprecated in Salmon >=1.9. In v1.2.0 it enables selective alignment (recommended)."
+    workaround: "Safe to keep in script; newer Salmon versions treat it as a no-op."
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "pipeline/rules/bacteria_assembly.smk::salmon_quant"

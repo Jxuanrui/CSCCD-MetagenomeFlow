@@ -1,0 +1,54 @@
+# Remote CI — only repo-contained, deterministic checks:
+#   lint        shellcheck (--severity=warning) over scripts/**/*.sh, honoring the
+#               root .shellcheckrc (disable=SC1091); standalone twin of
+#               scripts/tests/level1/run_shellcheck_all.sh, which needs the
+#               gitignored envs/shellcheck env.
+#   consistency registry/scripts/skills/rules cross-check, requires issues=0.
+# Level 2 (sampled integration tests) and level 3 (Snakemake DAG dry-run) stay
+# local-only: they depend on Project/Test_CI_fixture data, which is gitignored.
+# Alternatively, translate
+#  this file to your CI platform's pipeline/ pipeline.
+#
+# schedule: weekly re-run guards against silent drift (shellcheck version bumps,
+# dependency updates in the consistency checker, rotting exclusion lists).
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"  # Mondays 03:00 UTC
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned shellcheck 0.11.0 (matches envs/shellcheck)
+        run: |
+          curl -fsSL https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz \
+            | tar -xJ -C /tmp
+          sudo install -m 0755 /tmp/shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
+          shellcheck --version
+      - name: shellcheck scripts (severity=warning, per .shellcheckrc) — blocking
+        run: |
+          mapfile -t all_sh < <( { find scripts -maxdepth 1 -name '*.sh' -type f; find scripts/utils scripts/hooks scripts/tests -maxdepth 1 -name '*.sh' -type f; } | sort -u)
+          echo "[INFO] Scanning ${#all_sh[@]} script(s) (severity=warning)..."
+          fail=0
+          for f in "${all_sh[@]}"; do
+            shellcheck --severity=warning "$f" || fail=1
+          done
+          exit "$fail"
+
+  consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyyaml
+      - name: Registry/scripts/skills/rules consistency (expect issues=0)
+        run: |
+          python3 scripts/utils/check_consistency.py | tee /tmp/consistency.log
+          tail -n 1 /tmp/consistency.log | grep -q 'issues=0$'

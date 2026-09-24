@@ -1,0 +1,36 @@
+id: "23_bac_amrfinder"
+name: "AMRFinderPlus Antibiotic Resistance Detection"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::amrfinder"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: tsv
+    path_pattern: "{workdir}/result/annotation/amrfinder/amrfinder_results.tsv"
+    description: "Full AMRFinder report (gene name, class, subclass, resistance mechanism)"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/amrfinder"
+db_path: "db/amrfinder"
+
+parameters:
+  ident_min: 0.9
+  coverage_min: 0.6
+  plus: true
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "--plus enables stress response, virulence, and point mutation detection"
+    workaround: "Remove --plus for strict ARG-only output"

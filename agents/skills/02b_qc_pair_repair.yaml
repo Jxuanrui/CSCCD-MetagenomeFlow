@@ -1,0 +1,84 @@
+id: "02b_qc_pair_repair"
+script: "scripts/02b_qc_pair_repair.sh"
+tool: "seqkit pair"
+tool_version: "seqkit 2.3.0"
+conda_env: "envs/assembly"
+description: "Repair R1/R2 read pairing misalignment from kneaddata output using seqkit pair (strict re-pairing by read ID)"
+dimension: "shared"
+category: "qc"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+    required: true
+    description: "Forward reads from kneaddata (potentially misaligned order)"
+  - name: "kneaddata_r2"
+    path_pattern: "${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+    required: true
+    description: "Reverse reads from kneaddata (potentially misaligned order)"
+
+outputs:
+  - name: "repaired_r1"
+    path_pattern: "${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+    description: "Strictly paired forward reads (in-place overwrite)"
+  - name: "repaired_r2"
+    path_pattern: "${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+    description: "Strictly paired reverse reads (in-place overwrite)"
+
+depends_on:
+  - "02_qc_kneaddata"
+
+required_by:
+  - "11_bac_metaphlan4"
+  - "13_bac_humann3"
+  - "14_bac_kraken2"
+  - "15_bac_centrifuger"
+  - "16_bac_megahit"
+  - "36b_bac_bin_reassembly"
+  - "51_vir_megahit"
+  - "71_fun_kraken2_fungi"
+
+params:
+  sample: "Sample ID"
+  workdir: "Working directory"
+  repo: "MaxMetagenome repository root"
+  force: "Optional --force flag to re-run"
+
+workflow:
+  - stage: "Check existing files"
+    description: "Verify kneaddata R1/R2 exist and are not empty"
+  - stage: "Decompress and pair"
+    description: "seqkit pair -1 R1 -2 R2 to temp directory, strict matching by read ID"
+  - stage: "In-place overwrite"
+    description: "Replace original kneaddata outputs with repaired fastq.gz files"
+  - stage: "Cleanup"
+    description: "Remove temporary files"
+
+benchmarks:
+  typical_runtime_min: 3
+  typical_input_size_mb: 2000
+  peak_memory_gb: 2
+
+validation:
+  test_sample: "Sample4"
+  input_r1_reads: 14500000
+  input_r2_reads: 14500000
+  output_r1_reads: 14500000
+  output_r2_reads: 14500000
+  paired_rate: "100%"
+  notes: "Discovered necessity during 36b debugging (2026-08-04): kneaddata R1/R2 have identical read counts but misaligned order (same read at different positions), causing 'paired reads have different names' abort in bwa mem. seqkit pair ensures strict pairing."
+
+known_issues:
+  - issue: "In-place overwrite breaks atomic operation guarantee"
+    impact: "If script crashes mid-write, original kneaddata output is corrupted"
+    workaround: "Script writes to temp directory first, then moves atomically"
+  - issue: "No backup of original kneaddata output"
+    impact: "Cannot rollback after this step"
+    mitigation: "kneaddata can be re-run from 02_qc_kneaddata.sh if needed"
+
+performance_notes: "Fast step (~3 min for 30M reads). Memory-efficient streaming mode. No disk space doubling (temp files cleaned immediately)."
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/preprocessing.smk::pair_repair"

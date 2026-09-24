@@ -1,0 +1,6 @@
+# Profile: local_16c — 16-core workstation / laptop
+# Total thread budget: 12 (reserve 4 for OS)
+# Effective concurrency: 12 cores / 16 threads_per_job = 1 job (min 1)
+cores: 12
+rerun-incomplete: true
+printshellcmds: false

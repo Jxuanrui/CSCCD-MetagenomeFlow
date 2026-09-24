@@ -1,0 +1,42 @@
+id: "54b_vir_checkv_filter"
+script: "scripts/54b_vir_checkv_filter.sh"
+tool: "awk + seqkit"
+tool_version: "bash"
+conda_env: "envs/assembly"
+description: "Filter CheckV viral contigs by quality class, viral gene support, and minimum length."
+dimension: "virome"
+category: "quality_control"
+rule_type: "per_sample"
+
+inputs:
+  - name: "quality_summary"
+    path_pattern: "{workdir}/result/virus/checkv/{sample}/quality_summary.tsv"
+    required: true
+  - name: "virus_contigs"
+    path_pattern: "{workdir}/result/virus/checkv/{sample}/virus_contigs.fasta"
+    required: true
+
+outputs:
+  - name: "viruses_filtered"
+    path_pattern: "{workdir}/result/virus/checkv/{sample}/viruses_filtered.fna"
+    description: "Filtered viral contigs retained for downstream virome steps."
+
+depends_on:
+  - "54_vir_checkv_contig"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/virome.smk::checkv_filter"

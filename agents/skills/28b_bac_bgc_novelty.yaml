@@ -1,0 +1,91 @@
+id: "28b_bac_bgc_novelty"
+script: "scripts/28b_bac_bgc_novelty.sh"
+tool: "DIAMOND + BioPython + custom Python scoring"
+tool_version: "diamond 2.1.8, biopython 1.79"
+conda_env: "envs/antismash"
+description: "BGC novelty scoring: extract CDS from antiSMASH regions, DIAMOND against MIBiG 3.1, calculate novelty_score = 1 - best_cluster_hit_fraction"
+dimension: "bacteria"
+category: "annotation"
+rule_type: "per_sample"
+
+inputs:
+  - name: "antismash_done"
+    path_pattern: "${WORKDIR}/result/annotation/antismash/${SAMPLE}/antismash_done.txt"
+    required: true
+    description: "Sentinel file from 28_bac_antismash (ensures antiSMASH completed)"
+  - name: "antismash_regions"
+    path_pattern: "${WORKDIR}/result/annotation/antismash/${SAMPLE}/*.region*.gbk"
+    required: true
+    description: "GenBank files for each BGC region predicted by antiSMASH"
+  - name: "mibig_dmnd"
+    path_pattern: "${REPO}/db/antismash/antismash-db/clustercompare/mibig/3.1/proteins.dmnd"
+    required: true
+    description: "MIBiG 3.1 protein DIAMOND database (from antiSMASH installation)"
+  - name: "mibig_metadata"
+    path_pattern: "${REPO}/db/antismash/antismash-db/clustercompare/mibig/3.1/data.json"
+    required: true
+    description: "MIBiG cluster metadata (organism, product names)"
+
+outputs:
+  - name: "novelty_tsv"
+    path_pattern: "${WORKDIR}/result/annotation/antismash/${SAMPLE}/${SAMPLE}.bgc_novelty.tsv"
+    description: "Per-region novelty scores with columns: sample, contig_id, region_id, product, n_cds, best_mibig_cluster, best_mibig_organism, best_mibig_product, best_mibig_hit_fraction, novelty_score"
+
+depends_on:
+  - "28_bac_antismash"
+
+required_by: []
+
+params:
+  sample: "Sample ID"
+  threads: "CPU threads for DIAMOND"
+  workdir: "Working directory"
+  repo: "MaxMetagenome repository root"
+  force: "Optional --force flag to re-run"
+
+workflow:
+  - stage: "Extract CDS proteins"
+    description: "Parse each *.region*.gbk file, extract CDS features, write protein sequences to temp FASTA"
+  - stage: "DIAMOND blastp against MIBiG"
+    description: "blastp --query region_proteins.fa --db mibig_proteins.dmnd --outfmt 6 --max-target-seqs 1 --evalue 1e-5"
+  - stage: "Group hits by MIBiG cluster"
+    description: "Parse DIAMOND output, group hits by MIBiG cluster ID, count CDS hit fraction per cluster"
+  - stage: "Calculate novelty score"
+    description: "novelty_score = 1 - max(cluster_hit_fractions). Uses Python helper: 28b_bgc_novelty_score.py for Jaccard-based scoring logic"
+  - stage: "Merge MIBiG metadata"
+    description: "Join data.json to get organism and product names for best-matching cluster"
+  - stage: "Write TSV output"
+    description: "One row per region with all metrics"
+
+benchmarks:
+  typical_runtime_min: 8
+  typical_input_size_mb: 50
+  peak_memory_gb: 4
+
+validation:
+  test_sample: "Sample4"
+  input_regions: 12
+  output_rows: 12
+  novelty_score_range: "0.42 - 1.0"
+  fully_novel_regions: 3
+  known_regions: 2
+  notes: "3 regions with novelty_score = 1.0 (no MIBiG hits, completely novel). 2 regions with score < 0.5 (>50% CDS match known cluster, likely known BGC family). 7 regions in 0.5-0.9 range (partial novelty)."
+
+known_issues:
+  - issue: "Requires antiSMASH run with --minimal flag (no KnownClusterBlast)"
+    impact: "Project default is --minimal to save time; this script compensates by running standalone MIBiG comparison"
+    workaround: "Reuses existing MIBiG DIAMOND database from antiSMASH installation, no new database needed"
+  - issue: "Granularity is contig+region, not MAG"
+    impact: "Same BGC may appear in multiple samples if same organism present; no cross-sample deduplication"
+    mitigation: "Downstream analysis can aggregate by MAG using 38_bac_drep results"
+
+performance_notes: "Fast DIAMOND search (~5-10 min for 10-20 regions). Python scoring is CPU-light. No new conda env needed (reuses antismash env which has diamond+biopython)."
+
+parameter_rationale:
+  diamond_evalue_1e5: "Standard protein homology threshold"
+  max_target_seqs_1: "Only need best hit per query CDS to calculate cluster-level hit fraction"
+  no_self_hits: "Not applicable (MIBiG is external reference database)"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::bac_bgc_novelty"

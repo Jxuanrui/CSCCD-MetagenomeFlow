@@ -1,0 +1,43 @@
+id: "28_bac_antismash"
+name: "antiSMASH BGC Prediction (per sample)"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::antismash"
+
+inputs:
+  - name: contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+    description: "Assembled contigs per sample from MEGAHIT (step 16)"
+
+outputs:
+  - name: index
+    path_pattern: "{workdir}/result/annotation/antismash/{sample}/index.html"
+    description: "antiSMASH HTML report (sentinel file); directory contains gbk, json, regions"
+
+depends_on:
+  - "16_bac_megahit"
+
+conda_env: "envs/antismash8"  # antiSMASH 8.0.4; old 7.1.0 env frozen at envs/antismash
+db_path: "db/antismash8"
+
+parameters:
+  taxon: "bacteria"
+  genefinding_tool: "prodigal-m"
+  minimal: true
+  enable_nrps_pks: true
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "antiSMASH refuses to write to an existing output directory; script deletes and recreates it"
+    workaround: "Script uses rm -rf then mkdir -p to handle re-runs safely"
+  - description: "--minimal skips NCBI taxonomy lookups (ClusterBlast, MIBiG), reduces runtime ~5x"
+    workaround: "Remove --minimal for full annotation in publication runs (requires internet or local DBs)"
+  - description: "antiSMASH 8.0.4 micro-batching pathology on metagenome input: hmm_detection spawns one hmmsearch per 2-17 records (each reloads the full HMM db), ~0.6-1 record/s => 40h+ per 60k-record assembly. Diagnosed 2026-09-19 during the Project01 v8 re-run (see agents/provenance/20260919_28_antismash8_rerun_all.json)."
+    workaround: "Chunked execution: pre-filter >=1000bp (antismash's own hard minimum, output-equivalent), split into 24 chunks (seqkit split), run 12 concurrent x 4 cpus, then merge region .gbk files + records JSON. ~25 min/sample for 40-60k records. Driver pattern: /tmp/antismash8_chunked/orchestrate.sh; consider upstreaming a batch-size knob to antiSMASH."
+  - description: "v8 region counts on Project01 run +40-45% over v7 (v8 is a strict superset incl. the new terpene-precursor type). 28b novelty scoring intentionally stays on MIBiG 3.1 so historical novelty scores remain comparable."
+    workaround: "Expect higher region counts when comparing v7-era and v8-era outputs; not a regression"

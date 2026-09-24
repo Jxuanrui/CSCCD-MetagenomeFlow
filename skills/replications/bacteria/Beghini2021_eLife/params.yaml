@@ -1,0 +1,84 @@
+# params.yaml — Beghini2021_eLife key parameters
+
+functional_profiling:
+  tool: HUMAnN
+  version_paper: "3.0"
+
+  paper_recommended:
+    taxonomic_profile_input: true
+    nucleotide_database: "ChocoPhlAn"
+    protein_database: "UniRef90"
+    translated_search: "DIAMOND"
+    pathway_inference: "MinPath"
+    stratified_output: true
+    note: "Core 3-step workflow is MetaPhlAn prescreen -> ChocoPhlAn/UniRef90 alignment -> MinPath pathway reconstruction"
+
+  project_current:
+    script: scripts/13_bac_humann3.sh
+    matches_paper: partial
+    deviation_notes: "Project adds speed modes, uses HUMAnN from envs/humann4, and keeps practical cohort-oriented threshold tuning."
+
+taxonomic_prescreen:
+  tool: MetaPhlAn4
+  paper_recommended:
+    use_external_profile: true
+    purpose: "restrict ChocoPhlAn database to observed species"
+    taxonomic_profile_source: "MetaPhlAn species abundance output"
+  project_current:
+    script: scripts/13_bac_humann3.sh
+    matches_paper: true
+    deviation_notes: "Project explicitly reuses script 11 output via --taxonomic-profile when available."
+
+nucleotide_search:
+  tool: "Bowtie2 + ChocoPhlAn"
+  paper_recommended:
+    bypass_nucleotide_index: true
+    search_order: "nucleotide first, translated fallback second"
+    custom_database_reduction: true
+  project_current:
+    script: scripts/13_bac_humann3.sh
+    matches_paper: true
+    deviation_notes: null
+
+translated_search:
+  tool: "DIAMOND + UniRef90"
+  paper_recommended:
+    protein_database: "UniRef90"
+    translated_search_enabled: true
+  project_current:
+    script: scripts/13_bac_humann3.sh
+    matches_paper: true
+    deviation_notes: "Project fast mode adds DIAMOND block-size/top tuning for cohort throughput."
+
+cross_dimension_postprocessing:
+  tool: "HUMAnN stratified output extraction"
+  paper_recommended:
+    species_contributor_stratification: true
+    downstream_reuse: "possible for any taxa represented in ChocoPhlAn"
+  project_current:
+    script: scripts/73_fun_humann4_fungi.sh
+    matches_paper: partial
+    deviation_notes: "Fungi extraction is a project-specific reuse of HUMAnN stratification, not a dedicated paper feature."
+
+benchmarks:
+  runtime_16_cores: "<1h/sample"
+  pathways_quantified: "95% of pathways"
+  output_strength: "species-stratified pathway attribution"
+  note: "Performance depends strongly on the taxonomic prescreen and database reduction step."
+
+database:
+  chocophlan:
+    version_paper: "bioBakery 3 release"
+    local_path: "db/humann4/chocophlan"
+  uniref:
+    version_paper: "UniRef90"
+    local_path: "db/humann4/uniref"
+  installation: "humann_databases --download chocophlan/uniref"
+
+key_design_choices:
+  - choice: "Taxonomy-guided nucleotide prescreen before translated search"
+    rationale: "Most reads can be assigned faster and more specifically when the search space is restricted to taxa already observed by MetaPhlAn."
+  - choice: "Two-stage nucleotide then translated alignment"
+    rationale: "Known organisms are handled efficiently by nucleotide search, while novel or divergent functions are recovered by protein-space alignment."
+  - choice: "MinPath pathway reconstruction"
+    rationale: "Parsimonious pathway inference reduces overcalling relative to naive pathway aggregation from gene family hits."

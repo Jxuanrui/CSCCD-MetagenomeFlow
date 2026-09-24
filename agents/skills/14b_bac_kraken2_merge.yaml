@@ -1,0 +1,51 @@
+id: "14b_bac_kraken2_merge"
+script: "scripts/14b_bac_kraken2_merge.sh"
+tool: "combine_bracken_outputs.py"
+tool_version: "Bracken utility"
+conda_env: "envs/kraken2"
+description: "Merge per-sample Bracken abundance tables into species, genus, and phylum community matrices."
+dimension: "bacteria"
+category: "taxonomy"
+rule_type: "aggregate"
+
+inputs:
+  - name: "bracken_species"
+    path_pattern: "{workdir}/result/kraken2/{sample}/bracken/{sample}_S.bracken"
+    required: true
+  - name: "bracken_genus"
+    path_pattern: "{workdir}/result/kraken2/{sample}/bracken/{sample}_G.bracken"
+    required: true
+  - name: "bracken_phylum"
+    path_pattern: "{workdir}/result/kraken2/{sample}/bracken/{sample}_P.bracken"
+    required: true
+
+outputs:
+  - name: "bracken_s"
+    path_pattern: "{workdir}/result/kraken2/merged/bracken_S.tsv"
+    description: "Merged species-level Bracken matrix."
+  - name: "bracken_g"
+    path_pattern: "{workdir}/result/kraken2/merged/bracken_G.tsv"
+    description: "Merged genus-level Bracken matrix."
+  - name: "bracken_p"
+    path_pattern: "{workdir}/result/kraken2/merged/bracken_P.tsv"
+    description: "Merged phylum-level Bracken matrix."
+
+depends_on:
+  - "14_bac_kraken2"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::kraken2_merge"

@@ -1,0 +1,52 @@
+id: "24b_bac_card_summary"
+script: "scripts/24b_bac_card_summary.sh"
+tool: "Python"
+tool_version: "3"
+conda_env: ""
+description: "Confidence-tier (Perfect/Strict/Loose), drug-class, resistance-mechanism, and SNP-evidence summary of the CARD/RGI output. Pure statistical aggregation of existing rgi_results.txt columns, no new external tool, no cross-sample abundance linkage (CARD/RGI runs once on the pooled non-redundant protein catalog, not per-sample)."
+dimension: "bacteria"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "rgi_results"
+    path_pattern: "{workdir}/result/annotation/card/rgi_results.txt"
+    required: true
+
+outputs:
+  - name: "confidence_tier_summary"
+    path_pattern: "{workdir}/result/annotation/card/summary/card_confidence_tier_summary.tsv"
+    description: "Hit counts and unique Best_Hit_ARO counts per Cut_Off confidence tier."
+  - name: "drug_class_summary"
+    path_pattern: "{workdir}/result/annotation/card/summary/card_drug_class_summary.tsv"
+    description: "Hit counts per drug class (multi-value Drug Class field split), broken down by confidence tier."
+  - name: "resistance_mechanism_summary"
+    path_pattern: "{workdir}/result/annotation/card/summary/card_resistance_mechanism_summary.tsv"
+    description: "Hit counts per resistance mechanism (multi-value field split), broken down by confidence tier."
+  - name: "snp_evidence_summary"
+    path_pattern: "{workdir}/result/annotation/card/summary/card_snp_evidence_summary.tsv"
+    description: "Resistance determinants with SNP mutation evidence (SNPs_in_Best_Hit_ARO or Other_SNPs != n/a) -- stronger evidence than sequence similarity alone."
+  - name: "summary_report"
+    path_pattern: "{workdir}/result/annotation/card/summary/card_summary_report.txt"
+    description: "Human-readable text summary: total hits, tier breakdown, SNP-evidence count, top-10 drug classes."
+
+depends_on:
+  - "24_bac_card"
+required_by: []
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - description: "No weighted composite 'pathogenicity score' is computed by design -- an unweighted confidence-tier + SNP-evidence breakdown was chosen over a subjective scoring formula with no established scientific basis."
+    workaround: "n/a -- this is an intentional scope decision, not a limitation to work around."
+
+integration_status: "integrated"
+integrated_date: "2026-07-29"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::card_summary"

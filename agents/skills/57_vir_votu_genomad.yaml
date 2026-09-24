@@ -1,0 +1,37 @@
+id: "57_vir_votu_genomad"
+script: "scripts/57_vir_votu_genomad.sh"
+tool: "geNomad"
+tool_version: "1.10+"
+conda_env: "envs/genomad"
+description: "Taxonomic annotation of vOTU representatives via geNomad (virus taxonomy)."
+dimension: "virome"
+category: "taxonomy"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+
+outputs:
+  - name: "taxonomy"
+    path_pattern: "{workdir}/result/virus/votu/genomad/virus_taxonomy.tsv"
+    description: "geNomad taxonomy classification for vOTU representatives."
+
+depends_on:
+  - "56_vir_votu_gen"
+required_by:
+  - "60_vir_votu_table"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_votu_genomad"
