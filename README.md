@@ -305,3 +305,13 @@ bash scripts/checkm_config.sh
 
 [![SIAMCAT](https://img.shields.io/badge/SIAMCAT-0059B3)](https://siamcat.embl.de/) [![DESeq2](https://img.shields.io/badge/DESeq2-0059B3)](https://bioconductor.org/packages/DESeq2/) [![ANCOM-BC2](https://img.shields.io/badge/ANCOM-BC2-0059B3)](https://bioconductor.org/packages/ancombc/) [![MaAsLin2](https://img.shields.io/badge/MaAsLin2-0059B3)](https://huttenhower.sph.harvard.edu/maaslin/) [![MMUPHin](https://img.shields.io/badge/MMUPHin-0059B3)](https://github.com/biobakery/mmuphin)  
 ![ConQuR](https://img.shields.io/badge/ConQuR-0059B3) [![FastSpar](https://img.shields.io/badge/FastSpar-0059B3)](https://github.com/scwatts/fastspar) ![MBECS](https://img.shields.io/badge/MBECS-0059B3)  
+
+---
+
+## Community
+
+<p align="center">
+  <img src="docs/figures/wechat.jpg" width="320" alt="WeChat official account 肠动心弦 QR card">
+</p>
+
+<p align="center"><em>Scan to follow the WeChat official account <b>肠动心弦</b> — tutorials, release notes, and metagenomics how-tos (Chinese).</em></p>
