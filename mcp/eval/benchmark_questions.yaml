@@ -1,0 +1,241 @@
+# RAG retrieval benchmark question set (single source of truth).
+# Loaded by mcp/eval/rag_benchmark.py; do not embed questions in the script.
+version: v2
+created: 2026-09-19
+source: >
+  Questions 1-30 extracted verbatim from mcp/eval/rag_benchmark.py
+  GOLDEN_QUESTIONS/HARD_QUESTION_IDS (the 2026-07-04 30-question set).
+  Questions 31-45 added 2026-09-19, grounded in docs/experience/*.md files
+  present in the current experience_kb index; expected_doc_prefixes match
+  the source filename stems indexed by mcp/indexer.py.
+
+questions:
+  # ---- original 30 (verbatim from rag_benchmark.py, 2026-07-04) ----
+  - id: metaphlan4_params
+    query: "MetaPhlAn4 双端样本参数设置 mapout samout"
+    expected_doc_prefixes: ["metaphlan4-parameter-guide"]
+    dimension: bacteria
+    subset: easy
+  - id: humann3_speed
+    query: "HUMAnN3 速度模式 balanced fast 参数"
+    expected_doc_prefixes: ["humann3-speed-mode", "02_read_based/humann3"]
+    dimension: bacteria
+    subset: easy
+  - id: kraken2_db
+    query: "Kraken2 数据库选择 Standard PlusPF Standard-8"
+    expected_doc_prefixes: ["kraken2-database-choice"]
+    dimension: bacteria
+    subset: easy
+  - id: megahit_assembly
+    query: "MEGAHIT 组装 min-contig-len k-mer 参数"
+    expected_doc_prefixes: ["megahit-assembly-strategy"]
+    dimension: bacteria
+    subset: easy
+  - id: fastp_qc
+    query: "fastp 质控 adapter removal length_required Q20"
+    expected_doc_prefixes: ["fastp-quality-control"]
+    dimension: bacteria
+    subset: easy
+  - id: kneaddata_host
+    query: "KneadData 去宿主 bowtie2 hg37dec very-sensitive-local"
+    expected_doc_prefixes: ["kneaddata-host-removal", "01_preprocessing/kneaddata"]
+    dimension: bacteria
+    subset: easy
+  - id: metabat2_bin
+    query: "MetaBAT2 binning depth 最小长度 minCVSum 参数"
+    expected_doc_prefixes: ["metabat2-binning-parameters"]
+    dimension: bacteria
+    subset: easy
+  - id: checkm2_quality
+    query: "CheckM2 MAG 质量 HQ MQ MIMAG 完整度 污染率"
+    expected_doc_prefixes: ["checkm2-quality-thresholds", "04_binning/checkm2"]
+    dimension: bacteria
+    subset: easy
+  - id: dastool_refine
+    query: "DAS_Tool 多算法 bin 整合 score_threshold diamond"
+    expected_doc_prefixes: ["dastool-bin-refinement", "04_binning/dastool"]
+    dimension: bacteria
+    subset: easy
+  - id: genomad_virus
+    query: "geNomad 病毒鉴定 score 阈值 1500bp 最小长度"
+    expected_doc_prefixes: ["genomad-virus-identification", "genomad-virsorter2-consensus"]
+    dimension: virome
+    subset: easy
+  - id: checkv_viral
+    query: "CheckV 病毒 completeness 过滤 provirus 修剪"
+    expected_doc_prefixes: ["checkv-virus-quality", "checkv-quality-filter"]
+    dimension: virome
+    subset: easy
+  - id: funomic_fungi
+    query: "FunOMIC 真菌 marker 数据库 1.6M 肠道真菌"
+    expected_doc_prefixes: ["funomic-fungi-profiling"]
+    dimension: mycobiome
+    subset: easy
+  - id: eukfinder_mag
+    query: "Eukfinder 真核 MAG binning BUSCO 质量评估"
+    expected_doc_prefixes: ["eukfinder-fungi-mag"]
+    dimension: mycobiome
+    subset: easy
+  - id: batch_correction
+    query: "批次校正 ConQuR MMUPHin ComBat-seq 多中心"
+    expected_doc_prefixes: ["batch-correction-strategy", "05_stats/batch_correct"]
+    dimension: statistics
+    subset: easy
+  - id: siamcat_ml
+    query: "SIAMCAT 机器学习 lasso RF 疾病分类器 ROC AUC"
+    expected_doc_prefixes: ["siamcat-ml-disease-classifier", "05_stats/siamcat"]
+    dimension: statistics
+    subset: easy
+  - id: virsorter2_threshold
+    query: "VirSorter2 --min-score 阈值 与 geNomad 交集策略 高可信病毒序列"
+    expected_doc_prefixes: ["virsorter2-virus-prediction", "genomad-virsorter2-consensus"]
+    dimension: virome
+    subset: easy
+  - id: dbcan_fungi_consensus
+    query: "真菌 CAZyme dbCAN 三方法共识 overview.txt HMMER DIAMOND eCAMI"
+    expected_doc_prefixes: ["fungi-dbcan-cazyme"]
+    dimension: mycobiome
+    subset: easy
+  - id: snippy_core_snp
+    query: "Snippy 核心 SNP core.full.aln 泛基因组 Roary --core-definition 系统发育"
+    expected_doc_prefixes: ["snippy-snp-detection", "pangenome-roary"]
+    dimension: bacteria
+    subset: easy
+  # ---- original 12 hard (collection-routing stress tests, verbatim) ----
+  - id: kegg_fungi_vs_bacteria
+    query: "真菌基因组 KEGG KO 通路注释，用哪个数据库和比对工具"
+    expected_doc_prefixes: ["fungi-kegg-annotation", "tools_ref/kegg"]
+    dimension: mycobiome
+    subset: hard
+  - id: eggnog_fungi_vs_bacteria
+    query: "真菌蛋白集 eggNOG 注释 COG KO GO EC CAZy 输出文件"
+    expected_doc_prefixes: ["fungi-eggnog-annotation"]
+    dimension: mycobiome
+    subset: hard
+  - id: metaphlan4_fungi_ignore_bacteria
+    query: "MetaPhlAn4 只保留真核真菌信号，忽略细菌古菌，用什么参数"
+    expected_doc_prefixes: ["metaphlan4-fungi-eukaryote"]
+    dimension: mycobiome
+    subset: hard
+  - id: kraken2_fungi_quick_screen
+    query: "在跑完整 FunOMIC 之前，先用 Kraken2 快速判断肠道样本有没有真菌信号"
+    expected_doc_prefixes: ["kraken2-fungi-database"]
+    dimension: mycobiome
+    subset: hard
+  - id: dbcan_bacteria_vs_fungi
+    query: "细菌 CAZyme 三工具投票注释，overview.txt 里 GH GT family 汇总"
+    expected_doc_prefixes: ["dbcan-cazyme-annotation"]
+    dimension: bacteria
+    subset: hard
+  - id: amr_primary_vs_card_supplement
+    query: "耐药基因分析应该以哪个工具的结果作为发表用的主表，另一个工具做什么补充"
+    expected_doc_prefixes: ["amrfinder-resistance-genes"]
+    dimension: bacteria
+    subset: hard
+  - id: drep_strain_tracking_097
+    query: "如果我想追踪同一个物种内部不同菌株的差异，dRep 的 ANI 阈值该调到多少"
+    expected_doc_prefixes: ["drep-ani-threshold"]
+    dimension: bacteria
+    subset: hard
+  - id: gtdbtk_bac_vs_ar_summary
+    query: "MAG 分类结果里细菌和古菌应该分别看哪个 summary 表，为什么不能混着看"
+    expected_doc_prefixes: ["gtdbtk-classification", "gtdbtk-mag-taxonomy"]
+    dimension: bacteria
+    subset: hard
+  - id: eukfinder_low_completeness
+    query: "真核 MAG 回收出来完整度只有百分之四十，是不是流程哪里错了"
+    expected_doc_prefixes: ["eukfinder-fungi-mag", "tools_ref/eukfinder"]
+    dimension: mycobiome
+    subset: hard
+  - id: votu_vclust_species_level
+    query: "把多个样本的病毒序列合并去冗余，得到物种级别的代表序列集合，该用什么方法"
+    expected_doc_prefixes: ["votu-clustering-vclust"]
+    dimension: virome
+    subset: hard
+  - id: binning_why_multi_algorithm
+    query: "只跑一个分箱工具是不是不够，为什么要同时跑好几个再整合"
+    expected_doc_prefixes: ["binning-multi-algorithm", "dastool-bin-refinement"]
+    dimension: bacteria
+    subset: hard
+  - id: batch_correction_which_first
+    query: "多中心菌群数据校正批次效应，跑了好几种方法，应该优先看哪几个结果"
+    expected_doc_prefixes: ["batch-correction-strategy", "05_stats/batch_correct", "08_statistics/batch_correct"]
+    dimension: statistics
+    subset: hard
+
+  # ---- 15 new (2026-09-19, grounded in current experience_kb docs) ----
+  - id: semibin2_pretrained_model
+    query: "SemiBin2 分箱 human_gut 预训练模型 self-supervised 选择"
+    expected_doc_prefixes: ["semibin2-ml-binning"]
+    dimension: bacteria
+    subset: easy
+  - id: drep_dereplication_workflow
+    query: "dRep MAG 去冗余 -sa 0.97 fastANI Cdb.csv 代表基因组"
+    expected_doc_prefixes: ["drep-genome-dereplication"]
+    dimension: bacteria
+    subset: easy
+  - id: strainphlan4_marker_input
+    query: "StrainPhlAn4 菌株追踪 sam.bz2 marker phylophlan accurate"
+    expected_doc_prefixes: ["strainphlan4-strain-tracking"]
+    dimension: bacteria
+    subset: easy
+  - id: coverm_contig_depth
+    query: "CoverM contig 深度 metabat sorted bam depth.txt"
+    expected_doc_prefixes: ["coverm-contig-depth"]
+    dimension: bacteria
+    subset: easy
+  - id: phold_dark_matter
+    query: "PHOLD 病毒暗物质结构注释 PHAROKKA PHROG 未注释 ORF"
+    expected_doc_prefixes: ["phold-dark-matter-annotation"]
+    dimension: virome
+    subset: easy
+  - id: vogdb_hmmsearch
+    query: "VOGDB HMMER hmmsearch --cut_ga 病毒蛋白注释"
+    expected_doc_prefixes: ["vog-hmm-scan"]
+    dimension: virome
+    subset: easy
+  - id: iphop_host_prediction
+    query: "iPHoP 宿主预测结果使用边界 空结果退出 候选关联生成器 数据库覆盖不足"
+    expected_doc_prefixes: ["iphop-host-prediction"]
+    dimension: virome
+    subset: easy
+  - id: vmag_vrhyme_coverage
+    query: "vRhyme vMAG 病毒分箱 多样本 coverage 共丰度 contig"
+    expected_doc_prefixes: ["vmag-vrhyme-binning"]
+    dimension: virome
+    subset: easy
+  - id: humann4_fungi_stratified
+    query: "HUMAnN 真菌通路 stratified 分层结果提取 MetaCyc 贡献"
+    expected_doc_prefixes: ["humann4-fungi-pathways"]
+    dimension: mycobiome
+    subset: easy
+  - id: blast_gutdb_fungi
+    query: "DIAMOND blastx 肠道真菌参考基因组库 reads 六框翻译比对"
+    expected_doc_prefixes: ["blast-gutdb-fungi"]
+    dimension: mycobiome
+    subset: easy
+  - id: ccmetagen_kma_pantaxa
+    query: "CCMetagen KMA 全域分类 真核 原虫 稀有真菌 nt 库"
+    expected_doc_prefixes: ["ccmetagen-eukaryote-classification"]
+    dimension: mycobiome
+    subset: easy
+  - id: diversity_alpha_beta
+    query: "alpha beta 多样性 Shannon Chao1 Bray PERMANOVA phyloseq"
+    expected_doc_prefixes: ["diversity-analysis-alpha-beta"]
+    dimension: statistics
+    subset: easy
+  - id: ancombc2_differential
+    query: "ANCOM-BC2 差异丰度 BH 校正 DESeq2 MaAsLin2 共识"
+    expected_doc_prefixes: ["differential-abundance-ancombc2"]
+    dimension: statistics
+    subset: easy
+  - id: spieceasi_cooccurrence
+    query: "SpiecEasi 共现网络 NetCoMi hub 物种模块"
+    expected_doc_prefixes: ["cooccurrence-network-spieceasi"]
+    dimension: statistics
+    subset: easy
+  - id: unified_visualization_all_domains
+    query: "94_stat_visualization 统一可视化 一次性出图 多组学概览图 --force"
+    expected_doc_prefixes: ["visualization-unified"]
+    dimension: statistics
+    subset: hard
