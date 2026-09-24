@@ -268,4 +268,8 @@ MetaPhlAn4 · StrainPhlAn4 · HUMAnN3 · Kraken2/Bracken · Centrifuger · sylph
 
 ## Community
 
-Announcements and tutorials (in Chinese) are posted on the WeChat official account **肠动心弦**.
+<p align="center">
+  <img src="docs/figures/wechat.jpg" width="320" alt="WeChat official account 肠动心弦 QR card">
+</p>
+
+<p align="center"><em>Scan to follow the WeChat official account <b>肠动心弦</b> — tutorials, release notes, and metagenomics how-tos (Chinese).</em></p>
