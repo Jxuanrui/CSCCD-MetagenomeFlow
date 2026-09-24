@@ -106,4 +106,4 @@ if [ -n "${BAD_PATHS}" ] || [ -n "${BAD_HOME}" ]; then
 fi
 
 echo "[publish] ${BRANCH} ready: $(git rev-parse --short "${BRANCH}") — single clean commit"
-echo "[publish] push with:  git push <remote> ${BRANCH}:main --force${TAG:+ echo "[publish] push with:  git push <remote> ${BRANCH}:main    (never --mirror)"echo "[publish] push with:  git push <remote> ${BRANCH}:main    (never --mirror)" git push <remote> ${TAG}}    (never --mirror)"
+echo "[publish] push with:  git push <remote> ${BRANCH}:main --force${TAG:+ && git push <remote> ${TAG}}    (never --mirror)"
