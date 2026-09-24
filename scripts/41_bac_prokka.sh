@@ -31,7 +31,7 @@ show_help() { cat << EOF
 必需参数:
   -t  线程数（每个 Prokka 进程使用的线程数）
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 可选参数:
   -m  单个MAG文件名（不含路径和.fa后缀，用于单样本测试）
 EOF

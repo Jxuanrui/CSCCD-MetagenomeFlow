@@ -51,7 +51,7 @@ cat << EOF
   -s  样本名（不含后缀，如 SRR28210342）
   -t  线程数（推荐 16-32）
   -w  工作目录（绝对路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --mode  证据预设：default（推荐）/ recall（高灵敏）/ precision（高特异）

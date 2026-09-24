@@ -30,7 +30,7 @@ cat << EOF
   -s  样本名
   -t  线程数（本步骤为后处理，固定单线程；保留供 pipeline 统一调用）
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 EOF
 }
 

@@ -39,7 +39,7 @@ show_help() { cat << EOF
   -s  样本名（不含后缀）
   -t  线程数
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --mem-gb  JVM 堆上限 GB（默认 32）

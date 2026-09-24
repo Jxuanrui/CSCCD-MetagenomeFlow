@@ -51,7 +51,7 @@ cat << EOF
   -s  样本名称
   -t  线程数（推荐 8+）
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
@@ -62,13 +62,13 @@ cat << EOF
 示例:
   # Per-sample 模式（推荐，与其他注释脚本对齐）
   bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 
   # NR 模式（单次运行，所有样本共享结果）
   bash scripts/31e_bac_fegenie.sh -s NR -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome --input-type nr
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow --input-type nr
 EOF
 }
 

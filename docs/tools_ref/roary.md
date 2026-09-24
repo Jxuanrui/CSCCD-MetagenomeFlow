@@ -29,7 +29,7 @@ Roary 对多个 GFF 格式注释基因组进行快速泛基因组分析，鉴定
 
 ```bash
 # 聚合泛基因组分析（需要 ≥3 个 GFF 文件）
-bash scripts/41c_bac_pangenome.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/41c_bac_pangenome.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 手动运行
 conda run --prefix envs/prokaWGS roary \

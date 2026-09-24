@@ -9,7 +9,7 @@
 每次分析前必须激活项目环境：
 
 ```bash
-cd /path/to/Maxmetagenome
+cd /path/to/CSCCD-MetagenomeFlow
 source scripts/activate.sh
 ```
 

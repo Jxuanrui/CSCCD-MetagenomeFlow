@@ -10,13 +10,13 @@
 ```bash
 # 第一步：运行多种批次校正方法
 bash scripts/95a_stat_batch_correct.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv -b batch \
     -g group
 
 # 第二步：评估并推荐最佳方法
 bash scripts/95b_stat_batch_evaluate.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow \
     -m metadata.csv -b batch \
     -g group
 ```

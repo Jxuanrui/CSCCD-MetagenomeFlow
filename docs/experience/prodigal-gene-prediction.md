@@ -30,7 +30,7 @@ bash scripts/17_bac_prodigal.sh \
   -s S01 \
   -t 1 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如果需要单独审计参数或在流程外复现，直接命令应显式写出 `-p meta`、蛋白输出、核酸输出和 GFF 坐标输出：

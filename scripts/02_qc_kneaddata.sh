@@ -27,7 +27,7 @@ cat << EOF
   -r REPO      仓库根目录
 
 示例:
-  bash scripts/02_qc_kneaddata.sh -s S1 -t 16 -w Project/Project_example -r /path/to/Maxmetagenome
+  bash scripts/02_qc_kneaddata.sh -s S1 -t 16 -w Project/Project_example -r /path/to/CSCCD-MetagenomeFlow
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）

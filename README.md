@@ -31,6 +31,8 @@ Developed by the [China-Saudi Arabia Joint Laboratory for Cardiovascular and Cer
 
 ## Overview
 
+*(The project was developed under the internal codename "mgx / MaxMetagenome" — tool names like `mgx-vis` and environment variables like `MGX_FIGURE_FORMATS` still use the short form. They refer to this repository, CSCCD-MetagenomeFlow.)*
+
 Most published pipelines handle one kingdom at a time, depend on cloud infrastructure, or don't reproduce cleanly across servers. This platform takes a different approach: bacteria (scripts 11–43c), virome (51–72), and mycobiome (71–86) run side by side under one script convention and one Snakemake DAG, on a single server, with everything installed locally.
 
 **Why it works:**
@@ -68,16 +70,16 @@ bash scripts/checkm_config.sh
 **Step-by-step** — debugging, fine-grained control:
 
 ```bash
-bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/Maxmetagenome
-bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/Maxmetagenome
+bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/CSCCD-MetagenomeFlow
+bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **Bash pipeline** — lightweight, checkpointed:
 
 ```bash
-bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16
-bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --from metaphlan4   # resume
-bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 --force              # re-run
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 --from metaphlan4   # resume
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 --force              # re-run
 ```
 
 **Snakemake** — production, large cohorts:
@@ -242,3 +244,9 @@ bash scripts/checkm_config.sh
 ## Tools & References
 
 MetaPhlAn4 · StrainPhlAn4 · HUMAnN3 · Kraken2/Bracken · Centrifuger · sylph · MetaX · MEGAHIT · metaSPAdes · Prodigal · CD-HIT · Salmon · eggNOG-mapper · AMRFinderPlus · CARD/RGI · dbCAN3 · antiSMASH 8 · Defense-Finder · NCyc · PCyc · SCyc · BacMet · VFDB · CoverM · MetaBAT2 · MaxBin2 · SemiBin 2.5 · QuickBin · DAS_Tool · CheckM2 · GUNC · dRep · GTDB-Tk · Prokka · mlst · Roary · Snippy · geNomad · VirSorter2 · CheckV · vclust · PHAROKKA · PHOLD · VOGDB · BACPHLIP · PhaGCN3 · PhaStyle · iPHoP · vConTACT3 · DRAM · PhaBox2 · FunOMIC · CCMetagen · MicroFisher · Eukfinder · Tiara · BUSCO · MetaEuk · MEROPS · GutMGene v2.0 · MicrobiomeKG · BugSigDB · SIAMCAT · DESeq2 · ANCOM-BC2 · MaAsLin2 · MMUPHin · ConQuR · FastSpar · MBECS
+
+---
+
+## Community
+
+Announcements and tutorials (in Chinese) are posted on the WeChat official account **肠动心弦**.

@@ -8,7 +8,7 @@
 ## 用法
 
 ```bash
-bash scripts/74_fun_blast_gutdb.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/74_fun_blast_gutdb.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 | 参数 | 必需 | 默认 | 含义 |

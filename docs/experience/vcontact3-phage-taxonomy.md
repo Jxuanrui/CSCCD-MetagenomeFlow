@@ -25,7 +25,7 @@ vConTACT3 把 query vOTU 和参考病毒基因组构建蛋白共享网络（Leid
 bash scripts/69_vir_vcontact3.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接调用时，需先准备数据库（首次离线部署）：

@@ -24,7 +24,7 @@ cat << EOF
   -s  样本名
   -t  线程数
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --cdb  Centrifuge DB 路径前缀（若不传，脚本自动检测默认路径）

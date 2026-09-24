@@ -32,7 +32,7 @@ cat << EOF
   -s  样本 ID
   -t  线程数
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 EOF
 }
 

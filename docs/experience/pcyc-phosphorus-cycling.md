@@ -25,7 +25,7 @@ PCyc 在宏基因组项目中使用频率低于 NCyc，但对研究磷酸盐溶�
 bash scripts/31_bac_pcyc.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接运行时，建议沿用与 NCyc 一致的 DIAMOND 参数，便于两类生物地球化学功能结果比较：
@@ -33,7 +33,7 @@ bash scripts/31_bac_pcyc.sh \
 ```bash
 # Direct DIAMOND search against PCyc.
 diamond blastp \
-  --db /path/to/Maxmetagenome/db/pcyc/PCyc.dmnd \
+  --db /path/to/CSCCD-MetagenomeFlow/db/pcyc/PCyc.dmnd \
   --query result/assembly/cdhit/protein_nr.fa \
   --out result/pcyc/pcyc_hits.tsv \
   --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore \

@@ -8,7 +8,7 @@ SemiBin2 使用自监督机器学习方法（对比学习 + 变分自编码器�
 ## 用法
 
 ```bash
-bash scripts/35_bac_semibin2.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/35_bac_semibin2.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

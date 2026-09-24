@@ -28,13 +28,13 @@ cat << EOF
 
 必需参数:
   -t  线程数
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
 
 示例:
-  bash 74a_fun_gut_db_build.sh -t 16 -r ~/Course/Maxmetagenome
+  bash 74a_fun_gut_db_build.sh -t 16 -r ~/Course/CSCCD-MetagenomeFlow
 
 WARNING:
   Each index can take 30-120 min depending on database size. Run in screen/tmux.

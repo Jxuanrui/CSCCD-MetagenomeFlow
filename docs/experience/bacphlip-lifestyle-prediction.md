@@ -25,7 +25,7 @@ BACPHLIP 基于随机森林，利用 HMMER 扫描噬菌体功能蛋白（整合�
 bash scripts/67_vir_bacphlip.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接调用时，使用 `--multi_fasta` 对全部 vOTU 序列批量预测：

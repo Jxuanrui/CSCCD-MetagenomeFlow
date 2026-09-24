@@ -36,13 +36,13 @@ Output directory: ${WORKDIR}/result/viz_crosscohort/
 
 Examples:
   # Local multi-cohort (3 projects)
-  bash 97_stat_crosscohort.sh -w Project_A -r ~/Course/Maxmetagenome \
+  bash 97_stat_crosscohort.sh -w Project_A -r ~/Course/CSCCD-MetagenomeFlow \
        -m metadata.csv -g Group \
        --source local --cohorts "Project_A,Project_B,Project_C" \
        --train-cohort Project_A
 
   # curatedMetagenomicData (online, requires network)
-  bash 97_stat_crosscohort.sh -w Project_example -r ~/Course/Maxmetagenome \
+  bash 97_stat_crosscohort.sh -w Project_example -r ~/Course/CSCCD-MetagenomeFlow \
        -m metadata.csv -g Group \
        --source curated --condition CRC
 EOF

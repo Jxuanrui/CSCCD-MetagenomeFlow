@@ -16,7 +16,7 @@ show_help() { cat << EOF
 Usage: bash 41d_bac_snippy.sh -w WORKDIR -r REPO -t THREADS [-R REF_GENOME]
 Required:
   -w  Working directory
-  -r  MaxMetagenome repository root
+  -r  CSCCD-MetagenomeFlow repository root
   -t  Thread count
 Optional:
   -R  Reference genome path (.fa/.fasta/.gbk/.gbff). If omitted, use the largest MAG.

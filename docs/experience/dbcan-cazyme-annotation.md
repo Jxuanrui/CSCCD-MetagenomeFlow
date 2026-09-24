@@ -27,7 +27,7 @@ CAZyme 注释不应只依赖单一搜索工具，因为 HMM profile、序列相�
 bash scripts/25_bac_dbcan.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如需直接运行并显式启用三工具投票，建议写出完整命令，确保 `overview.txt` 来自 HMMER、DIAMOND 和 eCAMI 的综合结果：
@@ -38,7 +38,7 @@ run_dbcan \
   /path/to/project/result/assembly/cdhit/protein_nr.fa \
   protein \
   --tools all \
-  --db_dir /path/to/Maxmetagenome/db/dbcan \
+  --db_dir /path/to/CSCCD-MetagenomeFlow/db/dbcan \
   --out_dir /path/to/project/result/dbcan \
   --dia_cpu 16 \
   --hmm_cpu 16

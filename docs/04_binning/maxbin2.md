@@ -8,7 +8,7 @@ MaxBin2 使用期望最大化（EM）算法结合四核苷酸频率（tetranucle
 ## 用法
 
 ```bash
-bash scripts/34_bac_maxbin2.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/34_bac_maxbin2.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

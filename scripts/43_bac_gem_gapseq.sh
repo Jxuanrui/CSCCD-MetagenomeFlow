@@ -37,7 +37,7 @@ show_help() { cat << EOF
   -m  MAG 名称（不含路径和 .fa 后缀，用于单 MAG 测试）
   -t  线程数（推荐 16+）
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force     强制重新运行（覆盖已有输出）

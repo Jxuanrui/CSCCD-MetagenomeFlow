@@ -24,7 +24,7 @@ Roary 应用于同一物种或非常近缘的 MAG 集合，用来划分核心基
 # Run Roary pan-genome analysis on Prokka GFF files.
 bash scripts/41c_bac_pangenome.sh \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -t 16 \
   --identity 95 \
   --core-definition 99

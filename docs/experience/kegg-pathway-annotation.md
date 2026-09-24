@@ -30,7 +30,7 @@ scenario: [gut-microbiome, gene-catalog, shotgun-metagenomics]
 # Run KEGG KO annotation through the project wrapper.
 THREADS=16                        # compute threads
 WORKDIR=/path/to/project          # project workdir with protein_nr.fa
-REPO=/path/to/Maxmetagenome       # repo root with db/kegg and envs
+REPO=/path/to/CSCCD-MetagenomeFlow       # repo root with db/kegg and envs
 bash scripts/22_bac_kegg.sh -t "$THREADS" -w "$WORKDIR" -r "$REPO"
 ```
 

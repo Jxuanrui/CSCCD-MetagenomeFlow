@@ -8,7 +8,7 @@ CARD（Comprehensive Antibiotic Resistance Database）结合 RGI（Resistance Ge
 ## 用法
 
 ```bash
-bash scripts/24_bac_card.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/24_bac_card.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

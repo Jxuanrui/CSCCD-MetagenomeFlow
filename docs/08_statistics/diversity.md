@@ -9,14 +9,14 @@
 
 ```bash
 bash scripts/91_stat_diversity.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv -g group
 ```
 
 | 参数 | 必需 | 默认 | 含义 |
 |------|------|------|------|
 | `-w` | 是 | — | 项目工作目录 |
-| `-r` | 是 | — | MaxMetagenome 根目录 |
+| `-r` | 是 | — | CSCCD-MetagenomeFlow 根目录 |
 | `-t` | 是 | — | 线程数 |
 | `-m` | 是 | — | 元数据 CSV（必须包含 sample_id 和分组列） |
 | `-g` | 否 | `group` | 元数据中的分组列名 |

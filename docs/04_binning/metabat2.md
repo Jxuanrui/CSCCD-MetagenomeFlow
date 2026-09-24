@@ -40,7 +40,7 @@ jgi_summarize_bam_contig_depths \
 
 ```bash
 # 运行 MetaBAT2
-bash scripts/33_bac_metabat2.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/33_bac_metabat2.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 统计 bin 数量和大小
 for f in result/binning/metabat2/SAMPLE01/bins/bin.*.fa; do

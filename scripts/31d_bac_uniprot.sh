@@ -33,15 +33,15 @@ cat << EOF
 必需参数:
   -t  线程数（推荐 16+）
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
 
 示例:
   bash scripts/31d_bac_uniprot.sh -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

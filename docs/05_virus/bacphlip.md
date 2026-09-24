@@ -8,7 +8,7 @@ BACPHLIP 使用随机森林分类器基于蛋白序列特征预测噬菌体的�
 ## 用法
 
 ```bash
-bash scripts/67_vir_bacphlip.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/67_vir_bacphlip.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

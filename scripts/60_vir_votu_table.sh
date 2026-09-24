@@ -21,7 +21,7 @@ show_help() { cat << EOF
 用法: bash 60_vir_votu_table.sh [-m SAMPLES_TSV] [-t CPUS] -w WORKDIR -r REPO
 必需参数:
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 可选参数:
   -m  样本列表 TSV（每行一个样本 ID，默认: WORKDIR/samples.txt）
   -t  线程数（兼容旧接口，当前未使用）

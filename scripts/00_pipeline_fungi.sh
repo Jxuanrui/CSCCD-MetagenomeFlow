@@ -8,7 +8,7 @@
 #
 # 参  数:
 #   -i  samplesheet.csv 路径（必需）
-#   -r  MaxMetagenome 项目根目录（必需）
+#   -r  CSCCD-MetagenomeFlow 项目根目录（必需）
 #   -t  每个样本的线程数（默认 8）
 #   -j  并发样本数（默认 1）
 #   --skip  跳过指定步骤，逗号分隔
@@ -19,8 +19,8 @@
 #   --only  只运行指定步骤（同 --skip 可选值）
 #
 # 示  例:
-#   bash 00_pipeline_fungi.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16
-#   bash 00_pipeline_fungi.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 \
+#   bash 00_pipeline_fungi.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16
+#   bash 00_pipeline_fungi.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
 #        --from assembly
 # ==============================================================================
 
@@ -43,7 +43,7 @@ cat << 'EOF'
 
 必需参数:
   -i  samplesheet.csv 路径
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   -t  线程数（默认 8）

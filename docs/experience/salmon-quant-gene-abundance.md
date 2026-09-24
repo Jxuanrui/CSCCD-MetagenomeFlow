@@ -28,7 +28,7 @@ bash scripts/20_bac_salmon_quant.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如果直接运行 Salmon，建议保留自动文库类型、选择性比对和 GC bias 校正：

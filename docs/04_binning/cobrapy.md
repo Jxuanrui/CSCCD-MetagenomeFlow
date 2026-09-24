@@ -49,11 +49,11 @@ COBRApy 直接读取 SBML 模型文件，无需外部数据库。所需信息（
 
 ```bash
 # 批量 FBA 分析所有已重建的模型
-bash scripts/43c_bac_gem_cobrapy_fba.sh -t 8 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/43c_bac_gem_cobrapy_fba.sh -t 8 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 单模型手动运行（调用 Python 脚本）
 MAG="bin001"
-REPO=~/Course/Maxmetagenome
+REPO=~/Course/CSCCD-MetagenomeFlow
 MODEL=result/gem/gapseq/${MAG}/${MAG}.xml
 OUTDIR=result/gem/fba/${MAG}
 mkdir -p ${OUTDIR}

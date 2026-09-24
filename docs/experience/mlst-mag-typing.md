@@ -24,7 +24,7 @@ MLST 适合在 MAG 层面快速识别特定病原或机会致病菌的 sequence 
 # Run aggregate MLST typing for dereplicated MAGs.
 bash scripts/41b_bac_mlst.sh \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -t 16
 ```
 
@@ -34,7 +34,7 @@ bash scripts/41b_bac_mlst.sh \
 # Run MLST with an explicit scheme.
 bash scripts/41b_bac_mlst.sh \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -t 16 \
   --scheme ecoli
 ```

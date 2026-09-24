@@ -29,7 +29,7 @@ PHROG 更偏 bacteriophage protein families；VOG 覆盖 bacterial、archaeal �
 bash scripts/66_vir_vog.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 主输出为 `result/virus/vog/vog_hits.tsv` 和 `result/virus/vog/vog_annot.tsv`。

@@ -61,7 +61,7 @@ cat << EOF
   -s  样本名称
   -t  线程数（推荐 16+）
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --skip-isfinder     跳过 ISfinder 分析
@@ -72,8 +72,8 @@ cat << EOF
 
 示例:
   bash scripts/42_bac_mge.sh -s S01 -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

@@ -42,7 +42,7 @@ apptainer exec -B /some/path:/some/path some.sif echo hello
 ```bash
 # 不要用 mcp__sandbox__sandbox / sandbox-reply
 # 直接：
-bash scripts/53_vir_virsorter2.sh -s Sample1 -t 16 -w Project/Project01 -r ~/Course/Maxmetagenome
+bash scripts/53_vir_virsorter2.sh -s Sample1 -t 16 -w Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 排查新脚本是否受影响：

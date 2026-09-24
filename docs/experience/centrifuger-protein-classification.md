@@ -28,7 +28,7 @@ bash scripts/15_bac_centrifuger.sh \
   -s SRR28210342 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 主结果建议优先使用 `{sample}.kreport.tsv`，因为它是 Kraken2 兼容格式，后续更容易并入现有统计和可视化流程。

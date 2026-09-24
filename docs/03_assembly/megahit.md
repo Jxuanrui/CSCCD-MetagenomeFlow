@@ -32,7 +32,7 @@ MEGAHIT 使用多 k-mer 策略（successive k-mer sizes）和内存高效的稀�
 
 ```bash
 # 细菌维度组装
-bash scripts/16_bac_megahit.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/16_bac_megahit.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 查看组装统计
 awk '/^>/{next} {len=length($0); total+=len; n++; if(len>500)n500++}

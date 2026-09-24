@@ -8,7 +8,7 @@ AMRFinderPlus 使用 NCBI 维护的抗性基因数据库（约 6000 个 HMM）�
 ## 用法
 
 ```bash
-bash scripts/23_bac_amrfinder.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/23_bac_amrfinder.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

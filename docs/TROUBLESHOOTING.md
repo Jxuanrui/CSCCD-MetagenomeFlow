@@ -17,12 +17,12 @@ bash: metaphlan: command not found
 **诊断**:
 ```bash
 echo $CONDA_PREFIX
-# 如果输出为空或不包含 "Maxmetagenome/miniforge3"，则环境未激活
+# 如果输出为空或不包含 "CSCCD-MetagenomeFlow/miniforge3"，则环境未激活
 ```
 
 **解决**:
 ```bash
-cd /path/to/Maxmetagenome
+cd /path/to/CSCCD-MetagenomeFlow
 source scripts/activate.sh
 ```
 

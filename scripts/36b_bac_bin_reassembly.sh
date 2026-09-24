@@ -29,7 +29,7 @@ show_help() { cat << EOF
   -s  样本 ID
   -t  线程数
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 可选参数:
   -m  内存上限 GB（默认: 64）
   --parallel  多个 bin 的 SPAdes 组装并行跑（各用 1 线程），bin 数多时大幅提速；

@@ -8,7 +8,7 @@ DefenseFinder 使用 MacSyFinder 和 HMM profiles 检测细菌基因组中的防
 ## 用法
 
 ```bash
-bash scripts/29_bac_defense_finder.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/29_bac_defense_finder.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

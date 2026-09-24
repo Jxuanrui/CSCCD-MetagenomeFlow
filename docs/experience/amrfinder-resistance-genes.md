@@ -28,7 +28,7 @@ scenario: [gut-microbiome, gene-catalog, antibiotic-resistance]
 # Run AMRFinderPlus through the project wrapper.
 THREADS=16                        # compute threads
 WORKDIR=/path/to/project          # project workdir with protein_nr.fa
-REPO=/path/to/Maxmetagenome       # repo root with db/amrfinder and envs
+REPO=/path/to/CSCCD-MetagenomeFlow       # repo root with db/amrfinder and envs
 bash scripts/23_bac_amrfinder.sh -t "$THREADS" -w "$WORKDIR" -r "$REPO"
 ```
 

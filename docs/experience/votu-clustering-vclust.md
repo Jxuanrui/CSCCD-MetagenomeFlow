@@ -30,7 +30,7 @@ vOTU 不是单样本概念，而是整个队列共享的病毒操作分类单元
 # Run cross-sample vOTU clustering through the project wrapper.
 THREADS=16                        # compute threads
 WORKDIR=/path/to/project          # project workdir with CheckV-filtered viruses.fna
-REPO=/path/to/Maxmetagenome       # repo root with envs/vclust
+REPO=/path/to/CSCCD-MetagenomeFlow       # repo root with envs/vclust
 bash scripts/56_vir_votu_gen.sh -t "$THREADS" -w "$WORKDIR" -r "$REPO"
 ```
 

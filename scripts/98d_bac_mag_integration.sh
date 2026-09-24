@@ -29,7 +29,7 @@ cat << EOF
 
 必需参数:
   -w  工作目录（Project_example 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）

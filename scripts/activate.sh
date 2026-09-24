@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# MaxMetagenome 会话激活脚本
+# CSCCD-MetagenomeFlow 会话激活脚本
 # 用法：source <项目路径>/scripts/activate.sh
 # 说明：每次分析前执行，激活项目内的 conda 环境，设置所有路径变量
 # ==============================================================================
@@ -31,4 +31,4 @@
     # 优先使用项目内 conda R（与 Bioconductor 包版本一致）
     export PATH="${PROJ_DIR}/miniforge3/bin:${PATH}"
 
-    echo "[MaxMetagenome] 环境已激活  PROJ_DIR=${PROJ_DIR}"
+    echo "[CSCCD-MetagenomeFlow] 环境已激活  PROJ_DIR=${PROJ_DIR}"

@@ -24,7 +24,7 @@ Snippy 适合分析近缘 MAG 之间的核心 SNP/InDel 差异，用于构建系
 # Run Snippy on dereplicated MAGs with auto-selected reference.
 bash scripts/41d_bac_snippy.sh \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -t 16
 ```
 
@@ -34,7 +34,7 @@ bash scripts/41d_bac_snippy.sh \
 # Run Snippy with an explicit reference genome.
 bash scripts/41d_bac_snippy.sh \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -t 16 \
   -R /path/to/reference.fa
 ```

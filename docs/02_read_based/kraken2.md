@@ -39,7 +39,7 @@ Kraken2 使用 k-mer 精确匹配对读段进行快速分类学分类；Bracken 
 
 ```bash
 # 细菌物种分类
-bash scripts/14_bac_kraken2.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/14_bac_kraken2.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 合并多样本 Bracken 结果
 combine_bracken_outputs.py \

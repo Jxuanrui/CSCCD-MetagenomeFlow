@@ -25,7 +25,7 @@ NCyc 适合在非冗余蛋白目录上做 N-cycle gene 的候选注释，常用�
 bash scripts/30_bac_ncyc.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接运行时，建议保留脚本中的敏感模式和 `1e-5` 阈值：
@@ -33,7 +33,7 @@ bash scripts/30_bac_ncyc.sh \
 ```bash
 # Direct DIAMOND search against NCyc.
 diamond blastp \
-  --db /path/to/Maxmetagenome/db/ncyc/NCyc.dmnd \
+  --db /path/to/CSCCD-MetagenomeFlow/db/ncyc/NCyc.dmnd \
   --query result/assembly/cdhit/protein_nr.fa \
   --out result/annotation/ncyc/ncyc_hits.tsv \
   --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore \

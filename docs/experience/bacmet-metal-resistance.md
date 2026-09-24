@@ -27,7 +27,7 @@ BacMet 适合回答“环境暴露是否可能推动群落中金属/杀生剂耐
 bash scripts/27_bac_bacmet.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 输出文件是 `result/annotation/bacmet/bacmet_hits.tsv`。建议后续与 ARG 注释表按基因 ID 或 contig 来源做联动，优先关注同时落在同一功能模块、同一 contig 或同一富集样本中的金属抗性与 AMR 命中。

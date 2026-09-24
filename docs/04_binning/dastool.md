@@ -34,7 +34,7 @@ DAS_Tool（Dereplication, Aggregation and Scoring Tool）整合来自多种 binn
 
 ```bash
 # 整合三种 binning 结果
-bash scripts/36_bac_dastool.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/36_bac_dastool.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 查看整合结果统计
 cat result/binning/dastool/SAMPLE01/SAMPLE01_DASTool_summary.tsv | column -t

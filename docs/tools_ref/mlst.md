@@ -34,10 +34,10 @@ conda run --prefix envs/prokaWGS mlst --list
 
 ```bash
 # 聚合 MLST 分型
-bash scripts/41b_bac_mlst.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/41b_bac_mlst.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 指定物种方案（如大肠杆菌）
-bash scripts/41b_bac_mlst.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome --scheme ecoli
+bash scripts/41b_bac_mlst.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow --scheme ecoli
 
 # 手动运行
 conda run --prefix envs/prokaWGS mlst --nopath --quiet --threads 16 \

@@ -27,7 +27,7 @@ dRep 的关键作用不是提高单个 MAG 质量，而是在 MAG catalog 层面
 bash scripts/38_bac_drep.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -a 0.97
 ```
 

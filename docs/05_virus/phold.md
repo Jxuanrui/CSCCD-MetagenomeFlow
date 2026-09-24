@@ -8,7 +8,7 @@ PHOLD 对 PHAROKKA 注释结果中的暗物质 ORFs（缺乏已知同源性的 O
 ## 用法
 
 ```bash
-bash scripts/65_vir_phold.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/65_vir_phold.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

@@ -26,7 +26,7 @@ bash scripts/02_qc_kneaddata.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接运行时，肠道样本建议使用 hg37dec_v0.1 或项目中等价的人源 Bowtie2 数据库，Bowtie2 使用 local sensitive 模式，并跳过 TRF：

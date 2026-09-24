@@ -87,20 +87,20 @@
 bash scripts/13_bac_humann3.sh \
      -s SRR28210342 -t 16 \
      -w Project/Project_example \
-     -r ~/Course/Maxmetagenome
+     -r ~/Course/CSCCD-MetagenomeFlow
 
 # 平衡模式（推荐）
 bash scripts/13_bac_humann3.sh \
      -s SRR28210342 -t 16 \
      -w Project/Project_example \
-     -r ~/Course/Maxmetagenome \
+     -r ~/Course/CSCCD-MetagenomeFlow \
      --speed-mode balanced
 
 # 快速模式
 bash scripts/13_bac_humann3.sh \
      -s SRR28210342 -t 16 \
      -w Project/Project_example \
-     -r ~/Course/Maxmetagenome \
+     -r ~/Course/CSCCD-MetagenomeFlow \
      --speed-mode fast
 ```
 
@@ -110,7 +110,7 @@ bash scripts/13_bac_humann3.sh \
 # 所有样本使用 balanced 模式
 bash scripts/00_pipeline_bacteria.sh \
      -i samplesheet.csv \
-     -r ~/Course/Maxmetagenome -t 16 \
+     -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
      --humann-speed balanced
 ```
 

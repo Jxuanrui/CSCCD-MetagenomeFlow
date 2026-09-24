@@ -26,7 +26,7 @@ bash scripts/01_qc_fastp.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如果直接运行 fastp，建议把关键参数显式写入命令，便于审计和复现：

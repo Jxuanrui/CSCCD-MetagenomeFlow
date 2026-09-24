@@ -26,7 +26,7 @@ scenario: [bacteria-virus-fungi, merged-profiles, group-comparison]
 # Run the project diversity wrapper with shared metadata and group labels.
 THREADS=16                        # compute threads
 WORKDIR=/path/to/project          # project workdir containing merged abundance tables
-REPO=/path/to/Maxmetagenome       # repo root with envs/r_stat
+REPO=/path/to/CSCCD-MetagenomeFlow       # repo root with envs/r_stat
 META=/path/to/project/metadata.csv  # sample metadata for group comparison
 bash scripts/91_stat_diversity.sh -w "$WORKDIR" -r "$REPO" -t "$THREADS" -m "$META" -g group
 ```

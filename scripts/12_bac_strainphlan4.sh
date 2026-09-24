@@ -31,7 +31,7 @@ cat << EOF
 
 必需参数:
   -w  工作目录（Project_example 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   -t  线程数（默认 8）
@@ -42,13 +42,13 @@ cat << EOF
 示例:
   # 第一步：自动检测可分析菌株
   bash 12_bac_strainphlan4.sh \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome -t 8
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow -t 8
 
   # 第二步：对指定菌株建树
   bash 12_bac_strainphlan4.sh \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome -t 8 \\
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow -t 8 \\
        -c t__SGB10068
 EOF
 }

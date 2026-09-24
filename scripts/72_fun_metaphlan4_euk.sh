@@ -25,7 +25,7 @@ cat << EOF
   -s  样本名
   -t  线程数
   -w  工作目录
-  -r  MaxMetagenome 根目录
+  -r  CSCCD-MetagenomeFlow 根目录
   --force  强制重跑
 EOF
 }

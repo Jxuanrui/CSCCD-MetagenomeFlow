@@ -29,7 +29,7 @@ scenario: [gut-microbiome, gene-catalog, multi-sample-integration]
 bash scripts/18_bac_cdhit.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如果需要把关键阈值写死在命令中，推荐把过滤、聚类和翻译拆开显式执行：

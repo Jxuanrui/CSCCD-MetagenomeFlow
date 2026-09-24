@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-description: MaxMetagenome Snakemake pipeline configuration
+description: CSCCD-MetagenomeFlow Snakemake pipeline configuration
 type: object
 required:
   - workdir
@@ -21,7 +21,7 @@ properties:
     description: Project working directory (absolute path)
   repo:
     type: string
-    description: MaxMetagenome repository root (absolute path)
+    description: CSCCD-MetagenomeFlow repository root (absolute path)
   threads_per_job:
     type: integer
     minimum: 1

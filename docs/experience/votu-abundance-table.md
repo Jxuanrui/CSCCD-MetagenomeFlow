@@ -29,7 +29,7 @@ vOTU abundance table 是病毒组分析里最接近 16S OTU table 的最终矩�
 bash scripts/60_vir_votu_table.sh \
   -m samples.tsv \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 主要输出位于 `result/virus/votu/table/`。`vOTU_table.txt` 是基础丰度矩阵，`vOTU_table_ann.txt` 是追加 taxonomy 的注释矩阵。

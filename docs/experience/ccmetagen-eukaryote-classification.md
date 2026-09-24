@@ -26,7 +26,7 @@ bash scripts/76_fun_ccmetagen.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接调用时，先运行 KMA 比对再进入 CCMetagen：

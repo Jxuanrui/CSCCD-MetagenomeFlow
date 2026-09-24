@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/43b_bac_gem_carveme.sh
 # MAG GEM reconstruction using CarveMe (fast BiGG-based method)
-# Author: MaxMetagenome Platform
+# Author: CSCCD-MetagenomeFlow Platform
 # Date: 2026-08-06
 
 set -euo pipefail
@@ -22,8 +22,8 @@ Optional:
   --force    Overwrite existing outputs
 
 Example:
-  $0 -m bin001 -w /path/to/project -r ~/Course/Maxmetagenome
-  $0 -m all -w /path/to/project -r ~/Course/Maxmetagenome
+  $0 -m bin001 -w /path/to/project -r ~/Course/CSCCD-MetagenomeFlow
+  $0 -m all -w /path/to/project -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

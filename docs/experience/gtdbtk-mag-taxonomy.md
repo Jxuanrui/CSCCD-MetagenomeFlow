@@ -27,14 +27,14 @@ GTDB 与 NCBI 分类会出现大量不一致，尤其是 Firmicutes 相关谱系
 bash scripts/40_bac_gtdbtk.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如需直接运行，建议显式设置数据库路径，保证使用同一个 GTDB release：
 
 ```bash
 # Direct GTDB-Tk v2 classify workflow with GTDB R214.
-export GTDBTK_DATA_PATH=/path/to/Maxmetagenome/db/gtdbtk
+export GTDBTK_DATA_PATH=/path/to/CSCCD-MetagenomeFlow/db/gtdbtk
 gtdbtk classify_wf \
   --genome_dir /path/to/project/result/binning/drep/dereplicated_genomes \
   --out_dir /path/to/project/result/binning/gtdbtk \

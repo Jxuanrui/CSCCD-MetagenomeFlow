@@ -20,7 +20,7 @@ OPTIONS:
   -h, --help           Show this help message
   -p, --project DIR    Project directory (e.g., Project/Project01)
   -o, --output DIR     Output directory for report (default: PROJECT/result/qc_report)
-  -t, --title TEXT     Report title (default: "MaxMetagenome Quality Control Report")
+  -t, --title TEXT     Report title (default: "CSCCD-MetagenomeFlow Quality Control Report")
 
 INTEGRATED MODULES:
   - FastQC (raw reads quality)
@@ -46,7 +46,7 @@ OUTPUT:
 EOF
 }
 
-REPORT_TITLE="MaxMetagenome Quality Control Report"
+REPORT_TITLE="CSCCD-MetagenomeFlow Quality Control Report"
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh); short + long aliases map to the same vars
 export MGX_OPTS_STRING="p:PROJECT_DIR o:OUTPUT_DIR t:REPORT_TITLE"
@@ -85,7 +85,7 @@ MULTIQC_CONFIG="${OUTPUT_DIR}/multiqc_config.yaml"
 cat > "$MULTIQC_CONFIG" << EOF
 title: "$REPORT_TITLE"
 subtitle: "Generated: $(date '+%Y-%m-%d %H:%M:%S')"
-intro_text: "Comprehensive quality control report for MaxMetagenome analysis pipeline."
+intro_text: "Comprehensive quality control report for CSCCD-MetagenomeFlow analysis pipeline."
 
 report_header_info:
   - Project: "$PROJECT_DIR"
@@ -124,7 +124,7 @@ show_analysis_time: True
 
 custom_logo: null
 custom_logo_url: null
-custom_logo_title: "MaxMetagenome"
+custom_logo_title: "CSCCD-MetagenomeFlow"
 
 report_comment: "This report aggregates QC metrics from bacteria, virus, and fungi analysis modules."
 EOF

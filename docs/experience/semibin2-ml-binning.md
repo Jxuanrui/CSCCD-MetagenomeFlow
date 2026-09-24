@@ -43,7 +43,7 @@ bash scripts/35_bac_semibin2.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 对肠道项目而言，这两种模式都能工作，但推荐优先级不同。如果你是在标准 human gut cohort 上做常规 MAG 回收，预训练模型通常更省时；如果数据类型偏离肠道、实验设计特殊，或你怀疑预训练分布和样本分布差距较大，再考虑切回自监督训练。

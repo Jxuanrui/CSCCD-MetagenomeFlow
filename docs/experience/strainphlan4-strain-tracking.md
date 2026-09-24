@@ -26,13 +26,13 @@ scenario: [gut-microbiome, strain-level, shotgun-metagenomics]
 # Step 1: extract consensus markers and list candidate clades.
 bash scripts/12_bac_strainphlan4.sh \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -t 16
 
 # Step 2: build tree for a selected clade from clades_detected.txt.
 bash scripts/12_bac_strainphlan4.sh \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -t 16 \
   -c t__SGB10068
 ```

@@ -27,7 +27,7 @@ vMAG binning 的核心信息不是单条 contig 的序列相似性，而是多�
 bash scripts/61_vir_vmag.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如果直接运行 vRhyme，建议先确认每个样本的 BAM 已按同一套 vOTU reference 生成：

@@ -22,7 +22,7 @@ cat << EOF
   -w  工作目录（项目目录，如 Project/Project01）
 
 可选参数:
-  -r  MaxMetagenome 项目根目录（默认自动检测: ${REPO}）
+  -r  CSCCD-MetagenomeFlow 项目根目录（默认自动检测: ${REPO}）
 EOF
 }
 

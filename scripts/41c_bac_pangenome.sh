@@ -17,7 +17,7 @@ show_help() { cat << EOF
 Usage: bash 41c_bac_pangenome.sh -w WORKDIR -r REPO -t THREADS [--identity 95] [--core-definition 99]
 Required:
   -w  Working directory
-  -r  MaxMetagenome repository root
+  -r  CSCCD-MetagenomeFlow repository root
   -t  Thread count
 Optional:
   --identity         Protein identity cutoff for Roary (default: 95)

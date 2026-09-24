@@ -42,15 +42,15 @@ cat << EOF
   -s  样本名（如 SRR28210342）
   -t  线程数（Prodigal 单线程，此参数保留供 pipeline 调用一致性）
   -w  工作目录（Project 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
 
 示例:
   bash 17_bac_prodigal.sh -s SRR28210342 -t 1 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

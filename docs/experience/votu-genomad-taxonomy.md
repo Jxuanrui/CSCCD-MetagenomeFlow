@@ -29,7 +29,7 @@ scenario: [virome, votu-representatives, taxonomy-annotation]
 bash scripts/57_vir_votu_genomad.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 输入固定为 `result/virus/votu/contigs/virus.fasta`，输出为 `result/virus/votu/genomad/virus_taxonomy.tsv`。

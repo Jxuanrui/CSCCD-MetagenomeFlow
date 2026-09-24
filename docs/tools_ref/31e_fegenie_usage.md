@@ -94,23 +94,23 @@ S02.faa,1,0,0,...
 ### 单样本运行
 ```bash
 bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \
-     -w ~/Course/Maxmetagenome/Project/Project_example \
-     -r ~/Course/Maxmetagenome
+     -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \
+     -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ### 批量运行（6 个样本，2 并发）
 ```bash
 cat Project/Project_example/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
 rush -j 2 'bash scripts/31e_bac_fegenie.sh -s {} -t 8 \
-     -w ~/Course/Maxmetagenome/Project/Project_example \
-     -r ~/Course/Maxmetagenome'
+     -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \
+     -r ~/Course/CSCCD-MetagenomeFlow'
 ```
 
 ### NR 模式（MAG-level，单次运行）
 ```bash
 bash scripts/31e_bac_fegenie.sh -s NR -t 16 \
-     -w ~/Course/Maxmetagenome/Project/Project_example \
-     -r ~/Course/Maxmetagenome --input-type nr
+     -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \
+     -r ~/Course/CSCCD-MetagenomeFlow --input-type nr
 ```
 
 ---

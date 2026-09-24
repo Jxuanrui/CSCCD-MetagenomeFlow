@@ -32,10 +32,10 @@ Snippy 对细菌基因组进行快速 SNP 和 small InDel 检测，通过将查�
 
 ```bash
 # 聚合 SNP 分析（自动以最大 MAG 为参考）
-bash scripts/41d_bac_snippy.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/41d_bac_snippy.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 指定外部参考基因组
-bash scripts/41d_bac_snippy.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome \
+bash scripts/41d_bac_snippy.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow \
     -R /path/to/reference.fasta
 
 # 手动：单 MAG 比对

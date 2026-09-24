@@ -8,7 +8,7 @@
 ## 用法
 
 ```bash
-bash scripts/31_bac_pcyc.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/31_bac_pcyc.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

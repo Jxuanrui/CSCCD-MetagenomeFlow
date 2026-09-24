@@ -30,7 +30,7 @@ cat << EOF
   -s  样本名
   -t  线程数
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --min-len  长度过滤阈值，Tiara 官方不建议对短于此长度的序列分类 [默认: 1000]

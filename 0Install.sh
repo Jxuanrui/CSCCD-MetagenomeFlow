@@ -1282,7 +1282,7 @@ echo "§9 MCP / RAG 服务安装完成"
 # ==============================================================================
 # ==============================================================================
 # 说明：
-#   - Virus_Apptainer_pipline 使用 Apptainer 容器；MaxMetagenome 使用 conda 环境
+#   - Virus_Apptainer_pipline 使用 Apptainer 容器；CSCCD-MetagenomeFlow 使用 conda 环境
 #   - 数据库从 Virus 项目压缩包解压，避免重复下载（除 virsorter2 需在线 setup）
 #   - iphop 数据库（294 GB）直接引用 Virus 项目已解压目录，不复制（节省磁盘）
 #   - 所有环境路径：${envs}/<工具名>

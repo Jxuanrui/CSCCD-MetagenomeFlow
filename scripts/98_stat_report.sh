@@ -73,7 +73,7 @@ extract_table_preview() {
 }
 
 {
-    echo "# MaxMetagenome Statistical Snapshot"
+    echo "# CSCCD-MetagenomeFlow Statistical Snapshot"
     echo
     echo "- Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
     echo "- Workdir: ${WORKDIR}"

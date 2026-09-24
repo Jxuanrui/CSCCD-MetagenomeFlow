@@ -15,7 +15,7 @@ Salmon 使用准比对（quasi-mapping）或完整比对（alignment-based）方
 | 输出索引 | `result/assembly/salmon_index/` |
 
 ```bash
-bash scripts/19_bac_salmon_build.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/19_bac_salmon_build.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ### 步骤 2：定量（20/59 脚本，per-sample）
@@ -26,7 +26,7 @@ bash scripts/19_bac_salmon_build.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmet
 | 输出 TPM | `result/assembly/salmon_quant/{sample}/quant.sf` |
 
 ```bash
-bash scripts/20_bac_salmon_quant.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/20_bac_salmon_quant.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 关键参数

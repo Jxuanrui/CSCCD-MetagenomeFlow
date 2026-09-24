@@ -23,7 +23,7 @@ cat << EOF
   -s  样本名
   -t  线程数
   -w  工作目录（含 result/kneaddata/）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 输出:
   \${WORKDIR}/result/fungi/phf_profiler/SAMPLE/SAMPLE.rc  — 相对丰度表（Singular+Escrow）

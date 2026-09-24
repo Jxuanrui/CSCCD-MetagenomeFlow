@@ -8,7 +8,7 @@
 #         ${WORKDIR}/result/fungi/metaphlan4/merged/taxonomy_species.tsv  （仅菌种级）
 #         ${WORKDIR}/result/fungi/metaphlan4/merged/taxonomy_genus.tsv    （仅菌属级）
 #         ${WORKDIR}/result/fungi/metaphlan4/merged/taxonomy_species.csv  （菌种级 CSV，列=样本，行=物种）
-# 用  法: bash 72b_fun_metaphlan4_merge.sh -w /path/to/Project_example -r /path/to/MaxMetagenome
+# 用  法: bash 72b_fun_metaphlan4_merge.sh -w /path/to/Project_example -r /path/to/CSCCD-MetagenomeFlow
 # ==============================================================================
 
 set -euo pipefail
@@ -23,12 +23,12 @@ show_help() { cat << EOF
 
 参数说明:
   -w  工作目录（Project_example 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 示例:
   bash 72b_fun_metaphlan4_merge.sh \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）

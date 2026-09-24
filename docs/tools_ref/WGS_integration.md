@@ -1,8 +1,8 @@
-# WGS 模块融入 MaxMetagenome 说明
+# WGS 模块融入 CSCCD-MetagenomeFlow 说明
 
 ## 概述
 
-本文档说明如何将原核生物全基因组测序（WGS）单基因组分析模块融入 MaxMetagenome 宏基因组平台，实现 **MAG 深度精细化注释**。
+本文档说明如何将原核生物全基因组测序（WGS）单基因组分析模块融入 CSCCD-MetagenomeFlow 宏基因组平台，实现 **MAG 深度精细化注释**。
 
 **适用场景**：获得高质量 MAG（步骤 37-38）后，对感兴趣的物种进行单基因组级别的深度分析。
 

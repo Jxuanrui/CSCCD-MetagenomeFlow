@@ -9,10 +9,10 @@
 
 ```bash
 # 默认输出到 result/stat/report/
-bash scripts/98_stat_report.sh -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/98_stat_report.sh -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 指定输出目录
-bash scripts/98_stat_report.sh -w /path/to/workdir -r ~/Course/Maxmetagenome -o /custom/path
+bash scripts/98_stat_report.sh -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -o /custom/path
 ```
 
 ## 报告内容

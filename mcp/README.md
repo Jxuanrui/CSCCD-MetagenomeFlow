@@ -1,6 +1,6 @@
-# MaxMetagenome MCP
+# CSCCD-MetagenomeFlow MCP
 
-本目录提供 MaxMetagenome 的五知识库检索能力：
+本目录提供 CSCCD-MetagenomeFlow 的五知识库检索能力：
 
 - `experience_kb`：索引 `docs/`、`scripts/`、`pipeline/rules/`、`agents/skills/` 等项目经验文档。
 - `literature_kb`：索引 Europe PMC 检索到的高影响力肠道菌群文献 Methods 文本块。

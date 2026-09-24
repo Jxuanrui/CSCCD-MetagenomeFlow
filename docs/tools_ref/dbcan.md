@@ -8,7 +8,7 @@ dbCAN3 使用 HMMER + DIAMOND 两种方法对蛋白序列进行碳水化合物�
 ## 用法
 
 ```bash
-bash scripts/25_bac_dbcan.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/25_bac_dbcan.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

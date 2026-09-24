@@ -10,7 +10,7 @@ CD-HIT-EST 对跨样本基因集进行 95% 核苷酸序列相似度聚类去冗�
 ## 用法
 
 ```bash
-bash scripts/18_bac_cdhit.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/18_bac_cdhit.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

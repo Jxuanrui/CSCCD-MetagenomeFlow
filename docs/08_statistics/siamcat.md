@@ -10,24 +10,24 @@
 ```bash
 # 默认（细菌维度，10折交叉验证）
 bash scripts/96_stat_ml_siamcat.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv -g group
 
 # 全维度交叉（细菌+病毒联合）
 bash scripts/96_stat_ml_siamcat.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv -g group -d all
 
 # 指定5折
 bash scripts/96_stat_ml_siamcat.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv -g group --folds 5
 ```
 
 | 参数 | 必需 | 默认 | 含义 |
 |------|------|------|------|
 | `-w` | 是 | — | 项目工作目录 |
-| `-r` | 是 | — | MaxMetagenome 根目录 |
+| `-r` | 是 | — | CSCCD-MetagenomeFlow 根目录 |
 | `-t` | 是 | — | 线程数 |
 | `-m` | 是 | — | 元数据 CSV |
 | `-g` | 是 | — | 分组列名 |

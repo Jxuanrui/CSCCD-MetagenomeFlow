@@ -37,7 +37,7 @@ export GTDBTK_DATA_PATH=${PROJ_DIR}/db/gtdbtk
 
 ```bash
 # 聚合分类（等待 drep 完成）
-bash scripts/40_bac_gtdbtk.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/40_bac_gtdbtk.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 查看细菌分类结果（关键列：user_genome, classification, fastani_reference）
 cut -f1,2,18 result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv | head -5

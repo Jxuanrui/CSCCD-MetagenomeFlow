@@ -33,7 +33,7 @@ Prodigal（PROkaryotic DYnamic programming Gene-finding Algorithm）使用动态
 
 ```bash
 # 细菌宏基因组模式
-bash scripts/17_bac_prodigal.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/17_bac_prodigal.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 手动运行（元基因组模式）
 conda run --prefix envs/assembly prodigal \

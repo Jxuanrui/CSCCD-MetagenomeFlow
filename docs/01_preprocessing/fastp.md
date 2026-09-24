@@ -32,7 +32,7 @@
 
 ```bash
 # 独立运行
-bash scripts/01_qc_fastp.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/01_qc_fastp.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 查看报告
 firefox result/fastp/SAMPLE01/SAMPLE01.html

@@ -30,7 +30,7 @@ bash scripts/55_vir_prodigal_gv.sh \
   -s SAMPLE \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 输出目录为 `result/virus/prodigal/{sample}/`，其中 `{sample}.faa` 用于蛋白层面功能注释，`{sample}.fna` 用于基因核酸序列分析，`{sample}.gff` 用于坐标追溯和 genome browser 检查。

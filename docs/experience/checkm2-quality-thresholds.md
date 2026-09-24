@@ -25,7 +25,7 @@ CheckM2 是 CheckM 的后继方案，使用机器学习模型预测 MAG 质量�
 bash scripts/37_bac_checkm2.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接运行时，先确认数据库已经下载并放在固定路径，然后显式指定 `--database_path`：

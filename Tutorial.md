@@ -1,4 +1,4 @@
-# MaxMetagenome 分析平台使用教程
+# CSCCD-MetagenomeFlow 分析平台使用教程
 
 > 面向首次使用者的完整流程指南
 > 平台版本：CSCCD-MetagenomeFlow v1.1 (2026-08 patch) | 更新日期：2026-08-19
@@ -48,29 +48,29 @@
 
 ### P1. 激活项目环境
 
-**步骤名称**：激活 MaxMetagenome 环境
+**步骤名称**：激活 CSCCD-MetagenomeFlow 环境
 
 **目的**：初始化项目的 conda 环境和路径变量，使所有脚本和工具可直接调用。
 
 **执行方式**：
 ```bash
-source ~/Course/Maxmetagenome/scripts/activate.sh
+source ~/Course/CSCCD-MetagenomeFlow/scripts/activate.sh
 ```
 
 **输出结果**：
 ```
-[MaxMetagenome] 环境已激活  PROJ_DIR=${PROJ_DIR}
+[CSCCD-MetagenomeFlow] 环境已激活  PROJ_DIR=${PROJ_DIR}
 ```
 
 **审核要点**：
-- 看到 `[MaxMetagenome] 环境已激活` 即成功
+- 看到 `[CSCCD-MetagenomeFlow] 环境已激活` 即成功
 - `PROJ_DIR` 路径指向正确的项目根目录
 - 若报错，检查 `miniforge3/` 目录是否存在
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我激活 MaxMetagenome 环境并确认激活成功：
-source ~/Course/Maxmetagenome/scripts/activate.sh
+请帮我激活 CSCCD-MetagenomeFlow 环境并确认激活成功：
+source ~/Course/CSCCD-MetagenomeFlow/scripts/activate.sh
 确认输出中是否包含"环境已激活"
 ```
 
@@ -85,16 +85,16 @@ source ~/Course/Maxmetagenome/scripts/activate.sh
 **执行方式**：
 ```bash
 # 创建项目目录
-mkdir -p ~/Course/Maxmetagenome/Project/MyProject/{data,temp,result,logs}
+mkdir -p ~/Course/CSCCD-MetagenomeFlow/Project/MyProject/{data,temp,result,logs}
 
 # 将原始数据软链接到 data/ 目录（.fq.gz → .fastq.gz）
 for f in /path/to/raw/data/*.fq.gz; do
-  ln -sf "$f" ~/Course/Maxmetagenome/Project/MyProject/data/$(basename "${f/.fq.gz/.fastq.gz}")
+  ln -sf "$f" ~/Course/CSCCD-MetagenomeFlow/Project/MyProject/data/$(basename "${f/.fq.gz/.fastq.gz}")
 done
 
 # 验证
-ls ~/Course/Maxmetagenome/Project/MyProject/data/ | head -6
-ls ~/Course/Maxmetagenome/Project/MyProject/data/ | wc -l
+ls ~/Course/CSCCD-MetagenomeFlow/Project/MyProject/data/ | head -6
+ls ~/Course/CSCCD-MetagenomeFlow/Project/MyProject/data/ | wc -l
 ```
 
 **输出结果**：
@@ -114,7 +114,7 @@ Sample2_1.fastq.gz
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我在 MaxMetagenome 项目中为新项目 MyProject 创建目录结构，
+请帮我在 CSCCD-MetagenomeFlow 项目中为新项目 MyProject 创建目录结构，
 并将 /path/to/raw/data/ 下的 .fq.gz 文件以软链接形式（重命名为 .fastq.gz）
 链接到 Project/MyProject/data/ 目录下，然后验证链接数量和有效性。
 ```
@@ -132,16 +132,16 @@ Sample2_1.fastq.gz
 **执行方式**：
 ```bash
 # 生成 samplesheet.csv
-DATADIR=~/Course/Maxmetagenome/Project/MyProject/data
-echo "sample_id,r1,r2" > ~/Course/Maxmetagenome/Project/MyProject/samplesheet.csv
+DATADIR=~/Course/CSCCD-MetagenomeFlow/Project/MyProject/data
+echo "sample_id,r1,r2" > ~/Course/CSCCD-MetagenomeFlow/Project/MyProject/samplesheet.csv
 ls $DATADIR/*_1.fastq.gz | sort -V | while read r1; do
   sample=$(basename "$r1" _1.fastq.gz)
   r2="${r1/_1.fastq.gz/_2.fastq.gz}"
   echo "${sample},${r1},${r2}"
-done >> ~/Course/Maxmetagenome/Project/MyProject/samplesheet.csv
+done >> ~/Course/CSCCD-MetagenomeFlow/Project/MyProject/samplesheet.csv
 
 # 查看前5行
-head -6 ~/Course/Maxmetagenome/Project/MyProject/samplesheet.csv
+head -6 ~/Course/CSCCD-MetagenomeFlow/Project/MyProject/samplesheet.csv
 ```
 
 `metadata.csv` 格式（手动编辑或让 LLM 生成）：
@@ -168,7 +168,7 @@ Sample2,<data-dir>/Sample2_1.fastq.gz,<data-dir>/Sample2_2.fastq.gz
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我为 MaxMetagenome 项目 Project/MyProject 生成 samplesheet.csv 和 metadata.csv。
+请帮我为 CSCCD-MetagenomeFlow 项目 Project/MyProject 生成 samplesheet.csv 和 metadata.csv。
 data/ 目录下有 50 个样本（Sample1-Sample55，注意编号不连续），
 metadata 要求前 25 个样本为 control，后 25 个为 treat，
 按自然排序（Sample1,2,3,4,10,11,...,55）分配。
@@ -188,20 +188,20 @@ metadata 要求前 25 个样本为 control，后 25 个为 treat，
 
 *模式一（本教程）— 单样本，手动执行：*
 ```bash
-source ~/Course/Maxmetagenome/scripts/activate.sh
+source ~/Course/CSCCD-MetagenomeFlow/scripts/activate.sh
 
-bash ~/Course/Maxmetagenome/scripts/01_qc_fastp.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/01_qc_fastp.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 > **为什么用 `-t 16`**：fastp 的 `-w`（worker threads）参数超过 16 后性能不再提升，这是工具本身的设计限制。本机 48 核，单样本最优就是 16 线程。
 
 *模式二 — rush 并行剩余9样本（单样本审核通过后执行，补齐10样本验证集）：*
 ```bash
-PROJ=~/Course/Maxmetagenome
+PROJ=~/Course/CSCCD-MetagenomeFlow
 WORKDIR=$PROJ/Project/Project01
 
 # 从 samplesheet_test10.csv 读取全部10个样本 ID，-j 3 并发（48核/16线程=3）
@@ -260,8 +260,8 @@ Q30（过滤后）：97.94%
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我运行 MaxMetagenome 步骤1（fastp质控），样本 Sample1，
-项目目录 ~/Course/Maxmetagenome/Project/Project01，线程数 16。
+请帮我运行 CSCCD-MetagenomeFlow 步骤1（fastp质控），样本 Sample1，
+项目目录 ~/Course/CSCCD-MetagenomeFlow/Project/Project01，线程数 16。
 运行完成后解析 result/fastp/Sample1/Sample1.json，
 输出：原始reads数、过滤保留率、Q20、Q30、接头修剪reads数及占比，
 并判断数据质量是否合格（保留率≥90%，Q20≥80%，接头比例<30%）。
@@ -281,18 +281,18 @@ Q30（过滤后）：97.94%
 
 *模式一（本教程）— 单样本，手动执行：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/02_qc_kneaddata.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/02_qc_kneaddata.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 > **为什么用 `-t 16`**：kneaddata 底层是 Bowtie2，线程数越高比对越快，16 线程是单任务合理上限（超过后收益递减且挤占并行空间）。
 
 *模式二 — rush 并行剩余9样本（单样本审核通过后执行，补齐10样本验证集）：*
 ```bash
-PROJ=~/Course/Maxmetagenome
+PROJ=~/Course/CSCCD-MetagenomeFlow
 WORKDIR=$PROJ/Project/Project01
 
 # kneaddata CPU+内存密集，-j 2（每个实例占用 16 线程 + ~13 GB 内存）
@@ -349,8 +349,8 @@ Project/MyProject/result/kneaddata/Sample1/
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我运行 MaxMetagenome 步骤2（kneaddata去宿主），样本 Sample1，
-项目目录 ~/Course/Maxmetagenome/Project/Project01，线程数 16。
+请帮我运行 CSCCD-MetagenomeFlow 步骤2（kneaddata去宿主），样本 Sample1，
+项目目录 ~/Course/CSCCD-MetagenomeFlow/Project/Project01，线程数 16。
 运行完成后解析 result/kneaddata/Sample1/kneaddata.log 中的 READ COUNT 行，
 输出：输入reads数（R1+R2合计）、宿主去除reads数、宿主去除率、微生物保留率，
 并判断是否在正常范围（肠道样本宿主污染率通常 <5%，超过 30% 需复查采样）。
@@ -369,8 +369,8 @@ Project/MyProject/result/kneaddata/Sample1/
 **执行方式**：
 
 ```bash
-bash ~/Course/Maxmetagenome/scripts/02b_qc_pair_repair.sh \
-  -s Sample4 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/02b_qc_pair_repair.sh \
+  -s Sample4 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -423,11 +423,11 @@ result/kneaddata/Sample4/
 
 *模式一（本教程）— 单样本，手动执行：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/11_bac_metaphlan4.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/11_bac_metaphlan4.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -461,7 +461,7 @@ UNKNOWN 比例：0%
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我解读 MaxMetagenome 步骤3（MetaPhlAn4）的输出结果：
+请帮我解读 CSCCD-MetagenomeFlow 步骤3（MetaPhlAn4）的输出结果：
 文件：result/metaphlan4/Sample1/Sample1_profile.txt
 输出：1）检测到的 species 级物种总数；
 2）各门（Phylum）相对丰度前5名；
@@ -505,11 +505,11 @@ UNKNOWN 比例：0%
 
 *模式一（本教程）— 单样本，手动执行：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/13_bac_humann3.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/13_bac_humann3.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -576,7 +576,7 @@ Top 10 丰度通路：
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我解读 MaxMetagenome 步骤4（HUMAnN3）的输出结果，样本 Sample1：
+请帮我解读 CSCCD-MetagenomeFlow 步骤4（HUMAnN3）的输出结果，样本 Sample1：
 文件：result/humann3/Sample1/Sample1_pathabundance.tsv
 输出：
 1）检测到的代谢通路总数（排除 UNMAPPED 和 UNINTEGRATED）；
@@ -621,11 +621,11 @@ Top 10 丰度通路：
 
 *模式一（本教程）— 单样本，手动执行：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/14_bac_kraken2.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/14_bac_kraken2.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -692,7 +692,7 @@ Top 10 物种（Bracken 种级）：
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我解读 MaxMetagenome 步骤5（Kraken2+Bracken）的输出结果，样本 Sample1：
+请帮我解读 CSCCD-MetagenomeFlow 步骤5（Kraken2+Bracken）的输出结果，样本 Sample1：
 文件：
   result/kraken2/Sample1/bracken/Sample1_S.bracken （种级）
   result/kraken2/Sample1/bracken/Sample1_P.bracken （门级）
@@ -738,11 +738,11 @@ Top 10 物种（Bracken 种级）：
 
 *模式一（本教程）— 单样本，手动执行：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/15_bac_centrifuger.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/15_bac_centrifuger.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -805,7 +805,7 @@ Top 10 物种（GTDB R226 命名）：
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我解读 MaxMetagenome 步骤6（Centrifuger）的输出结果，样本 Sample1：
+请帮我解读 CSCCD-MetagenomeFlow 步骤6（Centrifuger）的输出结果，样本 Sample1：
 文件：result/centrifuger/Sample1/Sample1.kreport.tsv
 输出：
 1）总分类率和细菌域分类率；
@@ -870,11 +870,11 @@ Top 10 物种（GTDB R226 命名）：
 
 *模式一（本教程）— 单样本，手动执行：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/16_bac_megahit.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/16_bac_megahit.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -912,7 +912,7 @@ N90：        755 bp
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我统计 MaxMetagenome 步骤7（MEGAHIT）的组装质量，样本 Sample1：
+请帮我统计 CSCCD-MetagenomeFlow 步骤7（MEGAHIT）的组装质量，样本 Sample1：
 文件：result/assembly/megahit/Sample1/Sample1.contigs.fa
 输出：
 1）Contig 总数、总碱基数（Mb）；
@@ -943,11 +943,11 @@ N90：        755 bp
 
 **执行方式**（模式一 — 单样本，手动执行；opt-in，不入 rule all）：
 ```bash
-bash ~/Course/Maxmetagenome/scripts/16b_bac_metaspades.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/16b_bac_metaspades.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome \
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow \
   --mem-gb 250        # 内存上限 GB，metaspades --memory 取其 0.9 倍（默认 225 GB）
 ```
 Snakemake 显式触发（验证层，不在 rule all）：`snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -R metaspades`
@@ -995,11 +995,11 @@ Project/Project01/result/assembly_metaspades/Sample1/
 
 *模式一（本教程）— 单样本，手动执行：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/17_bac_prodigal.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/17_bac_prodigal.sh \
   -s Sample1 \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 > **注意**：Prodigal 本身是单线程工具，`-t 16` 参数无效，实际运行只用 1 核。脚本保留 `-t` 参数是为了与其他步骤接口一致。
@@ -1041,7 +1041,7 @@ Project/Project01/result/assembly/prodigal/Sample1/
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我统计 MaxMetagenome 步骤8（Prodigal）的基因预测结果，样本 Sample1：
+请帮我统计 CSCCD-MetagenomeFlow 步骤8（Prodigal）的基因预测结果，样本 Sample1：
 文件：result/assembly/prodigal/Sample1/Sample1.faa
 输出：
 1）预测基因总数（faa 文件中的序列数）；
@@ -1094,17 +1094,17 @@ Project/Project01/result/assembly/prodigal/Sample1/
 
 ```bash
 # ── 方式 A：CD-HIT（≤500万基因，默认，10样本推荐）──────────────────
-bash ~/Course/Maxmetagenome/scripts/18_bac_cdhit.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/18_bac_cdhit.sh \
   -t 48 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 
 # ── 方式 B：MMseqs2 Linclust（>500万基因，50样本全量推荐）───────────
-bash ~/Course/Maxmetagenome/scripts/18_bac_cdhit.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/18_bac_cdhit.sh \
   --tool mmseqs \
   -t 48 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 > `envs/assembly` 中已同时安装 CD-HIT v4.8.1 和 MMseqs2 v13.45111，无需额外配置。
@@ -1112,7 +1112,7 @@ bash ~/Course/Maxmetagenome/scripts/18_bac_cdhit.sh \
 **LLM 调用示例**：
 ```
 请帮我运行步骤 9（基因去冗余），当前 Project01 有 10 个样本，使用默认 CD-HIT 后端。
-工作目录：~/Course/Maxmetagenome/Project/Project01
+工作目录：~/Course/CSCCD-MetagenomeFlow/Project/Project01
 如果样本数将来超过 50 个，记得提示我切换到 --tool mmseqs。
 ```
 
@@ -1154,10 +1154,10 @@ Project/Project01/result/assembly/cdhit/
 
 *聚合步骤，只运行一次：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/19_bac_salmon_build.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/19_bac_salmon_build.sh \
   -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -1198,13 +1198,13 @@ Project/Project01/result/assembly/salmon/index/
 
 ```bash
 # ① 单样本测试（Sample1）
-bash ~/Course/Maxmetagenome/scripts/20_bac_salmon_quant.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/20_bac_salmon_quant.sh \
   -s Sample1 -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 
 # ② rush 并行 9 样本（Sample2-4, Sample10-15）
-PROJ=~/Course/Maxmetagenome
+PROJ=~/Course/CSCCD-MetagenomeFlow
 WORKDIR=$PROJ/Project/Project01
 tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | grep -v "^Sample1$" | \
   $PROJ/miniforge3/bin/rush -j 3 -k \
@@ -1255,10 +1255,10 @@ Project/Project01/result/assembly/salmon/
 
 **执行方式**：
 ```bash
-bash ~/Course/Maxmetagenome/scripts/21_bac_eggnog.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/21_bac_eggnog.sh \
   -t 48 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -1295,10 +1295,10 @@ Project/Project01/result/eggnog/
 
 **执行方式**：
 ```bash
-bash ~/Course/Maxmetagenome/scripts/22_bac_kegg.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/22_bac_kegg.sh \
   -t 48 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -1328,7 +1328,7 @@ Project/Project01/result/kegg/
 
 **执行命令**（一次性启动所有）：
 ```bash
-PROJ=~/Course/Maxmetagenome && WORKDIR=$PROJ/Project/Project01
+PROJ=~/Course/CSCCD-MetagenomeFlow && WORKDIR=$PROJ/Project/Project01
 # 聚合注释（protein_nr.fa 输入）
 for script in 23_bac_amrfinder 24_bac_card 25_bac_dbcan 26_bac_vfdb \
               27_bac_bacmet 29_bac_defense_finder 30_bac_ncyc 31_bac_pcyc; do
@@ -1370,8 +1370,8 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
 **执行方式**：
 
 ```bash
-bash ~/Course/Maxmetagenome/scripts/28b_bac_bgc_novelty.sh \
-  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/28b_bac_bgc_novelty.sh \
+  -s Sample4 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -1408,19 +1408,19 @@ result/annotation/antismash/Sample4/
 ```bash
 # 31b SCyc 硫循环（与 NCyc/PCyc 完全对称，DIAMOND，~10 分钟）
 bash scripts/31b_bac_scyc.sh -t 16 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
 
 # 31c Pfam-A 蛋白域（hmmscan --cut_ga，建议 32+ 线程，~1-3 小时）
 bash scripts/31c_bac_pfam.sh -t 32 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
 
 # 31d UniProt Swiss-Prot（MMseqs2 easy-search，~20-40 分钟）
 bash scripts/31d_bac_uniprot.sh -t 16 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
 
 # 31e FeGenie 铁代谢（per-sample 模式，推荐）
 bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 > **注意**：
@@ -1442,26 +1442,26 @@ bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \
 **前置安装**（已完成，首次运行前验证）：
 ```bash
 # 验证 FeGenie 环境
-conda run --prefix ~/Course/Maxmetagenome/envs/fegenie FeGenie.py -h
+conda run --prefix ~/Course/CSCCD-MetagenomeFlow/envs/fegenie FeGenie.py -h
 
 # 验证 HMM 数据库
-ls -lh ~/Course/Maxmetagenome/envs/fegenie/share/fegenie-1.2/hmms/iron/
+ls -lh ~/Course/CSCCD-MetagenomeFlow/envs/fegenie/share/fegenie-1.2/hmms/iron/
 ```
 
 **执行方式**：
 ```bash
 # 单样本运行（per-sample 模式，推荐）
 bash scripts/31e_bac_fegenie.sh -s S01 -t 8 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
 
 # 批量运行（rush 并行）
 cat [WORKDIR]/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
 rush -j 2 'bash scripts/31e_bac_fegenie.sh -s {} -t 8 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome'
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow'
 
 # NR 模式（单次运行，所有样本共享结果，适合 MAG-level 分析）
 bash scripts/31e_bac_fegenie.sh -s NR -t 16 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome --input-type nr
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow --input-type nr
 ```
 
 **输出**：`result/annotation/fegenie/{SAMPLE}/FeGenie-HMM-results.csv`（基因级铁功能注释）+ `FeGenie-geneSummary.csv`（功能类别统计）
@@ -1486,12 +1486,12 @@ bash scripts/31e_bac_fegenie.sh -s NR -t 16 \
 ```bash
 # 单样本运行（per-sample 步骤）
 bash scripts/42_bac_mge.sh -s S01 -t 16 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
 
 # 批量运行（rush 并行）
 cat [WORKDIR]/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
 rush -j 2 'bash scripts/42_bac_mge.sh -s {} -t 16 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome'
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow'
 ```
 
 > **注意**：
@@ -1505,20 +1505,20 @@ rush -j 2 'bash scripts/42_bac_mge.sh -s {} -t 16 \
 
 **前置安装**（首次运行前执行一次）：
 ```bash
-conda create --prefix ~/Course/Maxmetagenome/envs/plasmidfinder python=3.10 -y
-conda install --prefix ~/Course/Maxmetagenome/envs/plasmidfinder \
+conda create --prefix ~/Course/CSCCD-MetagenomeFlow/envs/plasmidfinder python=3.10 -y
+conda install --prefix ~/Course/CSCCD-MetagenomeFlow/envs/plasmidfinder \
     -c conda-forge -c bioconda plasmidfinder=2.1.6 blast -y
 ```
 
 ```bash
 # 单样本运行
 bash scripts/42b_bac_plasmidfinder.sh -s S01 -t 16 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
 
 # 批量运行（rush 并行）
 cat [WORKDIR]/samplesheet.csv | grep -v "^sample" | cut -d',' -f1 | \
 rush -j 4 'bash scripts/42b_bac_plasmidfinder.sh -s {} -t 8 \
-     -w [WORKDIR] -r ~/Course/Maxmetagenome'
+     -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow'
 ```
 
 > **输出**：`result/mge/plasmidfinder/{SAMPLE}/results_tab.tsv`（含 replicon 类型 + Inc group）
@@ -1538,13 +1538,13 @@ rush -j 4 'bash scripts/42b_bac_plasmidfinder.sh -s {} -t 8 \
 
 **执行方式（单样本示例，Sample1）**：
 ```bash
-bash scripts/32_bac_coverm_depth.sh   -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
-bash scripts/33_bac_metabat2.sh       -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
-bash scripts/34_bac_maxbin2.sh        -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
-bash scripts/35_bac_semibin2.sh       -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
-bash scripts/36_bac_dastool.sh        -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome
-bash scripts/36b_bac_bin_reassembly.sh -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome --parallel
-bash scripts/37_bac_checkm2.sh        -t 32 -w [WORKDIR] -r ~/Course/Maxmetagenome   # 跨样本汇总，非 per-sample
+bash scripts/32_bac_coverm_depth.sh   -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
+bash scripts/33_bac_metabat2.sh       -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
+bash scripts/34_bac_maxbin2.sh        -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
+bash scripts/35_bac_semibin2.sh       -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
+bash scripts/36_bac_dastool.sh        -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow
+bash scripts/36b_bac_bin_reassembly.sh -s Sample1 -t 32 -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow --parallel
+bash scripts/37_bac_checkm2.sh        -t 32 -w [WORKDIR] -r ~/Course/CSCCD-MetagenomeFlow   # 跨样本汇总，非 per-sample
 ```
 
 #### 步骤 36b：Post-binning Reassembly（metaWRAP，用原始 reads 逐 bin 精细重组装）
@@ -1622,69 +1622,69 @@ result/binning/reassembly/{sample}/
 
 *模式一（本教程）— 单样本，手动执行（Sample1 示例）：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/51_vir_megahit.sh \
-  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/51_vir_megahit.sh \
+  -s Sample1 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
-bash ~/Course/Maxmetagenome/scripts/52_vir_genomad.sh \
-  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/52_vir_genomad.sh \
+  -s Sample1 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
-bash ~/Course/Maxmetagenome/scripts/53_vir_virsorter2.sh \
-  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/53_vir_virsorter2.sh \
+  -s Sample1 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
-bash ~/Course/Maxmetagenome/scripts/54_vir_checkv_contig.sh \
-  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/54_vir_checkv_contig.sh \
+  -s Sample1 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
-bash ~/Course/Maxmetagenome/scripts/54b_vir_checkv_filter.sh \
-  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/54b_vir_checkv_filter.sh \
+  -s Sample1 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
-bash ~/Course/Maxmetagenome/scripts/55_vir_prodigal_gv.sh \
-  -s Sample1 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/55_vir_prodigal_gv.sh \
+  -s Sample1 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 *模式二 — rush 并行剩余9样本（单样本审核通过后执行，补齐10样本验证集）：*
 
 ```bash
-cd ~/Course/Maxmetagenome/Project/Project01
+cd ~/Course/CSCCD-MetagenomeFlow/Project/Project01
 echo -e "Sample2\nSample3\nSample4\nSample10\nSample11\nSample12\nSample13\nSample14\nSample15" > temp/virus_test9_samples.txt
 
 # 步骤51：MEGAHIT（内存密集，rush -j 2）
-~/Course/Maxmetagenome/miniforge3/bin/rush -j 2 -k \
-  'bash ~/Course/Maxmetagenome/scripts/51_vir_megahit.sh -s {} -t 16 \
-   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
-   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/51_vir_megahit_{}.log 2>&1' \
+~/Course/CSCCD-MetagenomeFlow/miniforge3/bin/rush -j 2 -k \
+  'bash ~/Course/CSCCD-MetagenomeFlow/scripts/51_vir_megahit.sh -s {} -t 16 \
+   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow \
+   > ~/Course/CSCCD-MetagenomeFlow/Project/Project01/temp/logs/virus/51_vir_megahit_{}.log 2>&1' \
   :::: temp/virus_test9_samples.txt
 
 # 步骤52：geNomad（神经网络推理，rush -j 3）
-~/Course/Maxmetagenome/miniforge3/bin/rush -j 3 -k \
-  'bash ~/Course/Maxmetagenome/scripts/52_vir_genomad.sh -s {} -t 16 \
-   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
-   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/52_vir_genomad_{}.log 2>&1' \
+~/Course/CSCCD-MetagenomeFlow/miniforge3/bin/rush -j 3 -k \
+  'bash ~/Course/CSCCD-MetagenomeFlow/scripts/52_vir_genomad.sh -s {} -t 16 \
+   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow \
+   > ~/Course/CSCCD-MetagenomeFlow/Project/Project01/temp/logs/virus/52_vir_genomad_{}.log 2>&1' \
   :::: temp/virus_test9_samples.txt
 
 # 步骤53：VirSorter2（HMM扫描耗时长，rush -j 2）
-~/Course/Maxmetagenome/miniforge3/bin/rush -j 2 -k \
-  'bash ~/Course/Maxmetagenome/scripts/53_vir_virsorter2.sh -s {} -t 16 \
-   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
-   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/53_vir_virsorter2_{}.log 2>&1' \
+~/Course/CSCCD-MetagenomeFlow/miniforge3/bin/rush -j 2 -k \
+  'bash ~/Course/CSCCD-MetagenomeFlow/scripts/53_vir_virsorter2.sh -s {} -t 16 \
+   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow \
+   > ~/Course/CSCCD-MetagenomeFlow/Project/Project01/temp/logs/virus/53_vir_virsorter2_{}.log 2>&1' \
   :::: temp/virus_test9_samples.txt
 
 # 步骤54-55：CheckV + Prodigal（快速，rush -j 6）
-~/Course/Maxmetagenome/miniforge3/bin/rush -j 6 -k \
-  'bash ~/Course/Maxmetagenome/scripts/54_vir_checkv_contig.sh -s {} -t 16 \
-   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
-   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/54_vir_checkv_contig_{}.log 2>&1' \
+~/Course/CSCCD-MetagenomeFlow/miniforge3/bin/rush -j 6 -k \
+  'bash ~/Course/CSCCD-MetagenomeFlow/scripts/54_vir_checkv_contig.sh -s {} -t 16 \
+   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow \
+   > ~/Course/CSCCD-MetagenomeFlow/Project/Project01/temp/logs/virus/54_vir_checkv_contig_{}.log 2>&1' \
   :::: temp/virus_test9_samples.txt
 
-~/Course/Maxmetagenome/miniforge3/bin/rush -j 6 -k \
-  'bash ~/Course/Maxmetagenome/scripts/54b_vir_checkv_filter.sh -s {} -t 16 \
-   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
-   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/54b_vir_checkv_filter_{}.log 2>&1' \
+~/Course/CSCCD-MetagenomeFlow/miniforge3/bin/rush -j 6 -k \
+  'bash ~/Course/CSCCD-MetagenomeFlow/scripts/54b_vir_checkv_filter.sh -s {} -t 16 \
+   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow \
+   > ~/Course/CSCCD-MetagenomeFlow/Project/Project01/temp/logs/virus/54b_vir_checkv_filter_{}.log 2>&1' \
   :::: temp/virus_test9_samples.txt
 
-~/Course/Maxmetagenome/miniforge3/bin/rush -j 6 -k \
-  'bash ~/Course/Maxmetagenome/scripts/55_vir_prodigal_gv.sh -s {} -t 16 \
-   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
-   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/55_vir_prodigal_gv_{}.log 2>&1' \
+~/Course/CSCCD-MetagenomeFlow/miniforge3/bin/rush -j 6 -k \
+  'bash ~/Course/CSCCD-MetagenomeFlow/scripts/55_vir_prodigal_gv.sh -s {} -t 16 \
+   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow \
+   > ~/Course/CSCCD-MetagenomeFlow/Project/Project01/temp/logs/virus/55_vir_prodigal_gv_{}.log 2>&1' \
   :::: temp/virus_test9_samples.txt
 ```
 
@@ -1788,28 +1788,28 @@ Project/Project01/result/virus/
 
 ```bash
 # 步骤56：vOTU聚类（需等待所有样本54b完成）
-bash ~/Course/Maxmetagenome/scripts/56_vir_votu_gen.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/56_vir_votu_gen.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤57：vOTU分类学注释
-bash ~/Course/Maxmetagenome/scripts/57_vir_votu_genomad.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/57_vir_votu_genomad.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤58：Salmon索引构建（需等待所有样本55完成）
-bash ~/Course/Maxmetagenome/scripts/58_vir_salmon_build.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/58_vir_salmon_build.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤59：Salmon逐样本定量（per-sample，rush并行）
-~/Course/Maxmetagenome/miniforge3/bin/rush -j 3 -k \
-  'bash ~/Course/Maxmetagenome/scripts/59_vir_salmon_quant.sh -s {} -t 16 \
-   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
-   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/59_vir_salmon_quant_{}.log 2>&1' \
+~/Course/CSCCD-MetagenomeFlow/miniforge3/bin/rush -j 3 -k \
+  'bash ~/Course/CSCCD-MetagenomeFlow/scripts/59_vir_salmon_quant.sh -s {} -t 16 \
+   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow \
+   > ~/Course/CSCCD-MetagenomeFlow/Project/Project01/temp/logs/virus/59_vir_salmon_quant_{}.log 2>&1' \
   :::: samplesheet_test10.csv
 
 # 步骤60：vOTU丰度矩阵生成
-bash ~/Course/Maxmetagenome/scripts/60_vir_votu_table.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/60_vir_votu_table.sh \
   -m temp/virus_test10_samples.txt \
-  -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -1851,18 +1851,18 @@ Project/Project01/result/virus/
 
 ```bash
 # 步骤61：vMAG binning（需等待56完成）
-bash ~/Course/Maxmetagenome/scripts/61_vir_vmag.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/61_vir_vmag.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤62：vMAG质量评估
-bash ~/Course/Maxmetagenome/scripts/62_vir_checkv_mag.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/62_vir_checkv_mag.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤63：vMAG丰度定量（per-sample，rush并行）
-~/Course/Maxmetagenome/miniforge3/bin/rush -j 3 -k \
-  'bash ~/Course/Maxmetagenome/scripts/63_vir_coverm_quant.sh -s {} -t 16 \
-   -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome \
-   > ~/Course/Maxmetagenome/Project/Project01/temp/logs/virus/63_vir_coverm_quant_{}.log 2>&1' \
+~/Course/CSCCD-MetagenomeFlow/miniforge3/bin/rush -j 3 -k \
+  'bash ~/Course/CSCCD-MetagenomeFlow/scripts/63_vir_coverm_quant.sh -s {} -t 16 \
+   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow \
+   > ~/Course/CSCCD-MetagenomeFlow/Project/Project01/temp/logs/virus/63_vir_coverm_quant_{}.log 2>&1' \
   :::: samplesheet_test10.csv
 ```
 
@@ -1892,40 +1892,40 @@ bash ~/Course/Maxmetagenome/scripts/62_vir_checkv_mag.sh \
 
 ```bash
 # 步骤64：PHAROKKA端到端注释
-bash ~/Course/Maxmetagenome/scripts/64_vir_pharokka.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/64_vir_pharokka.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤65：PHOLD结构暗物质ORF
-bash ~/Course/Maxmetagenome/scripts/65_vir_phold.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/65_vir_phold.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤66：VOG HMM扫描
-bash ~/Course/Maxmetagenome/scripts/66_vir_vog.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/66_vir_vog.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤67：BACPHLIP生活方式预测
-bash ~/Course/Maxmetagenome/scripts/67_vir_bacphlip.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/67_vir_bacphlip.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤68：iPHoP宿主关联
-bash ~/Course/Maxmetagenome/scripts/68_vir_iphop.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/68_vir_iphop.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤69：vConTACT3基因共享网络
-bash ~/Course/Maxmetagenome/scripts/69_vir_vcontact3.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/69_vir_vcontact3.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤70：PhaBox2深度学习分类
-bash ~/Course/Maxmetagenome/scripts/70_vir_phabox2.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/70_vir_phabox2.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤71：DRAM-v AMG预测
-bash ~/Course/Maxmetagenome/scripts/71_vir_dram.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/71_vir_dram.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤72：PhaGCN3图卷积分类
-bash ~/Course/Maxmetagenome/scripts/72_vir_phagcn3.sh \
-  -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/72_vir_phagcn3.sh \
+  -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **Project01 执行进度（vOTU注释链，基于10样本vOTU）**：
@@ -1963,21 +1963,21 @@ bash ~/Course/Maxmetagenome/scripts/72_vir_phagcn3.sh \
 
 **执行方式**（手动执行；opt-in，不入 rule all）：
 ```bash
-bash ~/Course/Maxmetagenome/scripts/67b_vir_phastyle.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/67b_vir_phastyle.sh \
   -t 8 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome \
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow \
   --batch-size 32       # 推理批大小（模型线程封顶 8）
 ```
 Snakemake 显式触发（验证层，不在 rule all）：`snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -R phastyle`
 
 **环境与模型（一次性，envs/prokbert）**：
 ```bash
-conda create --prefix ~/Course/Maxmetagenome/envs/prokbert python=3.10 -y
-conda run --prefix ~/Course/Maxmetagenome/envs/prokbert pip install prokbert
-conda run --prefix ~/Course/Maxmetagenome/envs/prokbert pip install \
+conda create --prefix ~/Course/CSCCD-MetagenomeFlow/envs/prokbert python=3.10 -y
+conda run --prefix ~/Course/CSCCD-MetagenomeFlow/envs/prokbert pip install prokbert
+conda run --prefix ~/Course/CSCCD-MetagenomeFlow/envs/prokbert pip install \
     torch torchvision --index-url https://download.pytorch.org/whl/cpu
-conda run --prefix ~/Course/Maxmetagenome/envs/prokbert pip install transformers==4.53.2
+conda run --prefix ~/Course/CSCCD-MetagenomeFlow/envs/prokbert pip install transformers==4.53.2
 ```
 模型 `neuralbioinfo/PhaStyle-mini`（约25M参数，~80MB）首次运行自动从 HuggingFace 下载到 `HF_HOME`（默认 `~/.cache/huggingface`），之后离线复用；huggingface.co 不可达时脚本自动改用 hf-mirror.com 镜像。注意 prokbert 0.0.48 与 transformers>=5 不兼容（必须 4.53.2）；CPU 版 torch 使 env 从 6.3G 降至 1.8G。
 
@@ -2013,20 +2013,20 @@ Project/Project01/result/virus/phastyle/
 
 ```bash
 # 步骤71：Kraken2 + Bracken 真菌快速分类（PlusPF数据库，~77G）
-bash ~/Course/Maxmetagenome/scripts/71_fun_kraken2_fungi.sh \
-  -s Sample1 -t 8 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/71_fun_kraken2_fungi.sh \
+  -s Sample1 -t 8 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤72：MetaPhlAn4-euk 精确真菌/真核标记基因分类（复用步骤3比对结果）
-bash ~/Course/Maxmetagenome/scripts/72_fun_metaphlan4_euk.sh \
-  -s Sample1 -t 8 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/72_fun_metaphlan4_euk.sh \
+  -s Sample1 -t 8 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤72b：合并所有样本的 MetaPhlAn4 真菌丰度表（跨样本一次性执行）
-bash ~/Course/Maxmetagenome/scripts/72b_fun_metaphlan4_merge.sh \
-  -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/72b_fun_metaphlan4_merge.sh \
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
 # 步骤73：HUMAnN4 真菌功能通路定量
-bash ~/Course/Maxmetagenome/scripts/73_fun_humann4.sh \
-  -s Sample1 -t 8 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/73_fun_humann4.sh \
+  -s Sample1 -t 8 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **Project01 执行进度（真菌维度，10样本：Sample1/2/3/4/10/11/12/13/14/15）**：
@@ -2062,8 +2062,8 @@ bash ~/Course/Maxmetagenome/scripts/73_fun_humann4.sh \
 **执行方式**：
 
 ```bash
-bash ~/Course/Maxmetagenome/scripts/79b_fun_veba_qc.sh \
-  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/79b_fun_veba_qc.sh \
+  -s Sample4 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -2118,14 +2118,14 @@ Sample4   saccharomycetaceae_odb12.2  73.5          0.4             16.2
 **执行方式**：
 
 ```bash
-bash ~/Course/Maxmetagenome/scripts/79c_fun_coverm_depth.sh \
-  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/79c_fun_coverm_depth.sh \
+  -s Sample4 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
-bash ~/Course/Maxmetagenome/scripts/79d_fun_metabat2.sh \
-  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/79d_fun_metabat2.sh \
+  -s Sample4 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
-bash ~/Course/Maxmetagenome/scripts/79e_fun_euk_qc_per_bin.sh \
-  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/79e_fun_euk_qc_per_bin.sh \
+  -s Sample4 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -2186,8 +2186,8 @@ Sample4  bin.1   saccharomycetaceae_odb12.2  63.8          0.3             28.7 
 **执行方式**：
 
 ```bash
-bash ~/Course/Maxmetagenome/scripts/79f_fun_metaeuk_per_bin.sh \
-  -s Sample4 -t 16 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/79f_fun_metaeuk_per_bin.sh \
+  -s Sample4 -t 16 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -2220,11 +2220,11 @@ result/fungi/veba_qc/Sample4/euk_mags/
 **执行方式**：
 
 ```bash
-bash ~/Course/Maxmetagenome/scripts/98e_cross_domain_ani_cluster.sh \
-  -t 40 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/98e_cross_domain_ani_cluster.sh \
+  -t 40 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
-bash ~/Course/Maxmetagenome/scripts/98f_cross_domain_orthogroup.sh \
-  -t 40 -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/98f_cross_domain_orthogroup.sh \
+  -t 40 -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 **输出结果**：
@@ -2330,16 +2330,16 @@ HUMAnN3 核苷酸搜索前需构建物种定制 ChocoPhlAn 子数据库（bowtie
 
 *单样本手动（推荐 balanced）：*
 ```bash
-bash ~/Course/Maxmetagenome/scripts/13_bac_humann3.sh \
+bash ~/Course/CSCCD-MetagenomeFlow/scripts/13_bac_humann3.sh \
   -s Sample1 -t 16 \
-  -w ~/Course/Maxmetagenome/Project/Project01 \
-  -r ~/Course/Maxmetagenome \
+  -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
+  -r ~/Course/CSCCD-MetagenomeFlow \
   --speed-mode balanced
 ```
 
 *rush 批量（balanced，可提升至 -j 3）：*
 ```bash
-PROJ=~/Course/Maxmetagenome
+PROJ=~/Course/CSCCD-MetagenomeFlow
 WORKDIR=$PROJ/Project/Project01
 tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
   $PROJ/miniforge3/bin/rush -j 3 -k \
@@ -2355,7 +2355,7 @@ tail -n +2 $WORKDIR/samplesheet_test10.csv | cut -d, -f1 | \
 
 **LLM 调用方式（Prompt）**：
 ```
-请帮我用 balanced 模式重新运行 MaxMetagenome HUMAnN3，样本列表来自
+请帮我用 balanced 模式重新运行 CSCCD-MetagenomeFlow HUMAnN3，样本列表来自
 Project01/samplesheet_test10.csv，线程 16，rush -j 3 并发。
 已完成的样本自动跳过（脚本幂等）。完成后告知每个样本的通路数。
 ```

@@ -26,7 +26,7 @@ cat << EOF
   -s  样本名
   -t  线程数
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
@@ -36,14 +36,14 @@ cat << EOF
 
 示例:
   bash 80b_fun_metaeuk.sh -s SRR28210342 -t 8 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 
   bash 80b_fun_metaeuk.sh -s SRR28210342 -t 8 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome \\
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow \\
        --method metaeuk \\
-       --db ~/Course/Maxmetagenome/db/metaeuk_db/fungi_refseq_mmseqs
+       --db ~/Course/CSCCD-MetagenomeFlow/db/metaeuk_db/fungi_refseq_mmseqs
 EOF
 }
 

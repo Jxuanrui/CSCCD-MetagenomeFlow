@@ -190,7 +190,7 @@ def generate_provenance(step_id, sample_id, registry, repo, workdir, user, date)
 def main():
     parser = argparse.ArgumentParser(description="Batch backfill provenance records")
     parser.add_argument("--workdir", required=True, help="Project workdir")
-    parser.add_argument("--repo", required=True, help="Maxmetagenome repo root")
+    parser.add_argument("--repo", required=True, help="CSCCD-MetagenomeFlow repo root")
     parser.add_argument("--user", required=True, help="Username")
     parser.add_argument("--date", required=True, help="Run date YYYYMMDD")
     parser.add_argument("--dry-run", action="store_true", help="Print records without writing")

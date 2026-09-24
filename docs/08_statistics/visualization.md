@@ -9,7 +9,7 @@
 
 ```bash
 bash scripts/94_stat_visualization.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -m metadata.csv
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -m metadata.csv
 ```
 
 | 参数 | 必需 | 默认 | 含义 |

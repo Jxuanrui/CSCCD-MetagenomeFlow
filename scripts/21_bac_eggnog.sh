@@ -35,15 +35,15 @@ cat << EOF
 必需参数:
   -t  线程数（推荐 16-32）
   -w  工作目录（Project 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
 
 示例:
   bash 21_bac_eggnog.sh -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

@@ -20,7 +20,7 @@ show_help() { cat <<'EOF'
 必需参数:
   -t  线程数（保留用于与跨域分析脚本一致；相关性计算按块执行）
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --virus-value-column  病毒表使用的丰度列后缀（tpm 或 count，默认 tpm）

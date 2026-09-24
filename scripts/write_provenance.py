@@ -54,7 +54,7 @@ def error(message: str) -> None:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Write a provenance record for a MaxMetagenome workflow step."
+        description="Write a provenance record for a CSCCD-MetagenomeFlow workflow step."
     )
     parser.add_argument("--step-id", required=True)
     parser.add_argument("--sample", required=True)

@@ -8,7 +8,7 @@ MicroFisher 使用 Centrifuge 结合 HMD（Human Microbiome Database）ITS/18S/2
 ## 用法
 
 ```bash
-bash scripts/77_fun_microfisher.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/77_fun_microfisher.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 | 参数 | 必需 | 默认 | 含义 |

@@ -22,7 +22,7 @@
 #
 # 参  数:
 #   -i  samplesheet.csv 路径（必需）
-#   -r  MaxMetagenome 项目根目录（必需）
+#   -r  CSCCD-MetagenomeFlow 项目根目录（必需）
 #   -t  每个样本的线程数（默认 8）
 #   -j  并发样本数（默认 1，多样本时可设置 2-4）
 #   --skip  跳过指定步骤，逗号分隔（如 --skip qc,kneaddata）
@@ -34,18 +34,18 @@
 #
 # 示  例:
 #   # 完整流程
-#   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16
+#   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16
 #
 #   # 从去宿主开始（跳过质控）
-#   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 \
+#   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
 #        --from kneaddata
 #
 #   # 只做分类分析（跳过质控和去宿主）
-#   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 \
+#   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
 #        --only taxonomy
 #
 #   # 高深度样本使用平衡模式加速 HUMAnN4
-#   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/Maxmetagenome -t 16 \
+#   bash 00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
 #        --humann-speed balanced
 # ==============================================================================
 
@@ -70,7 +70,7 @@ cat << 'EOF'
 
 必需参数:
   -i  samplesheet.csv 路径
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   -t  线程数（默认 8）
@@ -85,8 +85,8 @@ samplesheet.csv 格式（第一行为表头）:
 
 示例:
   bash 00_pipeline_bacteria.sh \
-       -i ~/Course/Maxmetagenome/Project/Project_A/samplesheet.csv \
-       -r ~/Course/Maxmetagenome -t 16 -j 2
+       -i ~/Course/CSCCD-MetagenomeFlow/Project/Project_A/samplesheet.csv \
+       -r ~/Course/CSCCD-MetagenomeFlow -t 16 -j 2
 EOF
 }
 

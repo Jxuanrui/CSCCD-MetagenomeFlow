@@ -39,7 +39,7 @@ ls db/metaphlan/
 
 ```bash
 # 单样本分类
-bash scripts/11_bac_metaphlan4.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/11_bac_metaphlan4.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 手动合并多样本（脚本自动执行）
 merge_metaphlan_tables.py result/metaphlan4/*/\*_profile.txt > result/metaphlan4/merged/taxonomy.tsv

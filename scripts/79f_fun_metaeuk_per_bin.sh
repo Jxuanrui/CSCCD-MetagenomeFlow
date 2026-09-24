@@ -29,7 +29,7 @@ show_help() { cat << EOF
   -s  样本 ID
   -t  线程数
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --db     MetaEuk 数据库前缀 [默认: {REPO}/db/metaeuk_db/fungi_refseq_mmseqs]

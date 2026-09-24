@@ -32,7 +32,7 @@ bash scripts/53_vir_virsorter2.sh \
   -s SAMPLE \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 标准输出目录为 `result/virus/virsorter2/{sample}/`，关键文件是 `final-viral-score.tsv` 和 `final-viral-boundary.tsv`。

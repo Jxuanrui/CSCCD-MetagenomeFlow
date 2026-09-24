@@ -25,7 +25,7 @@ scenario: [gut-microbiome, protein-catalog, defense-system-annotation]
 bash scripts/29_bac_defense_finder.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接运行时，应显式指定 DefenseFinder 数据库和 unordered 模式：
@@ -33,7 +33,7 @@ bash scripts/29_bac_defense_finder.sh \
 ```bash
 # Direct DefenseFinder command for metagenome NR proteins.
 defense-finder run \
-  --models-dir /path/to/Maxmetagenome/db/defense-finder/defense-finder-db/models \
+  --models-dir /path/to/CSCCD-MetagenomeFlow/db/defense-finder/defense-finder-db/models \
   --db-type unordered \
   --workers 16 \
   --out-dir result/annotation/defense_finder \

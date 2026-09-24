@@ -17,7 +17,7 @@ CoverM 对基因组序列（contigs 或 MAGs）计算跨样本覆盖深度，兼
 | 输出深度表 | `result/binning/coverm/{sample}/depth.txt` |
 
 ```bash
-bash scripts/32_bac_coverm_depth.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/32_bac_coverm_depth.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ### 模式 B：MAG 丰度定量（脚本 39/63，聚合后）
@@ -29,7 +29,7 @@ bash scripts/32_bac_coverm_depth.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/C
 | 输出丰度表 | `result/binning/coverm_quant/{sample}.tsv` |
 
 ```bash
-bash scripts/39_bac_coverm_quant.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/39_bac_coverm_quant.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 关键参数

@@ -28,7 +28,7 @@ bash scripts/28_bac_antismash.sh \
   -s SRR28210342 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 主结果建议优先查看 `index.html` 进行人工浏览，再结合 `{sample}.gbk` 和 `.json` 做结构化提取。对宏基因组项目，`--minimal` 通常已经足够支持 BGC 类型级发现。

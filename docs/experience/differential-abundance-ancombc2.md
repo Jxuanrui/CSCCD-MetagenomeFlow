@@ -26,7 +26,7 @@ scenario: [disease-vs-control, metagenomics, covariate-adjusted-modeling]
 # Run the project differential abundance wrapper after diversity analysis.
 THREADS=16                        # compute threads
 WORKDIR=/path/to/project          # project workdir with merged abundance tables
-REPO=/path/to/Maxmetagenome       # repo root with envs/r_stat
+REPO=/path/to/CSCCD-MetagenomeFlow       # repo root with envs/r_stat
 META=/path/to/project/metadata.csv  # metadata containing group and confounders
 bash scripts/92_stat_differential.sh -w "$WORKDIR" -r "$REPO" -t "$THREADS" -m "$META" -g group -d all
 ```

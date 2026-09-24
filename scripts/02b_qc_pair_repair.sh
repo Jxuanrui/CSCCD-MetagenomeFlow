@@ -29,7 +29,7 @@ show_help() { cat << EOF
 必需参数:
   -s  样本 ID
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
 EOF

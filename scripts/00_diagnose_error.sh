@@ -83,7 +83,7 @@ if [ "$CHECK_RUNNING" = false ] && [ "$CHECK_LOGS" = false ] && [ "$CHECK_DISK" 
 fi
 
 echo "========================================"
-echo "MaxMetagenome Pipeline Diagnostic Report"
+echo "CSCCD-MetagenomeFlow Pipeline Diagnostic Report"
 echo "========================================"
 echo "Time: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""

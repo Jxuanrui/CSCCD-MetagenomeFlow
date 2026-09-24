@@ -25,7 +25,7 @@ PHAROKKA 以 prodigal-gv 做基因预测（支持病毒遗传密码子），并�
 bash scripts/64_vir_pharokka.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接调用时，指定 PHROG 数据库路径，添加 `--skip_mash` 避免与 mash database 的额外比对：

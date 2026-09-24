@@ -8,7 +8,7 @@ vConTACT3 基于病毒蛋白基因共享网络进行病毒分类学分析，通�
 ## 用法
 
 ```bash
-bash scripts/69_vir_vcontact3.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/69_vir_vcontact3.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

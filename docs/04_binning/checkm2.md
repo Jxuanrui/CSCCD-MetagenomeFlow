@@ -45,7 +45,7 @@ checkm2 database --download --path db/checkm2/
 
 ```bash
 # 聚合运行（脚本自动收集所有样本 bins）
-bash scripts/37_bac_checkm2.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/37_bac_checkm2.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 查看 HQ MAGs
 awk -F'\t' '$2 >= 90 && $3 <= 5' result/binning/checkm2/quality_report.tsv | head

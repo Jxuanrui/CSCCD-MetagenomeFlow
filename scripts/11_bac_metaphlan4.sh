@@ -8,7 +8,7 @@
 # 输  出: ${WORKDIR}/result/metaphlan4/${SAMPLE}/${SAMPLE}_profile.txt
 #         ${WORKDIR}/result/metaphlan4/${SAMPLE}/${SAMPLE}.sam.bz2  (供 12_strainphlan4 使用)
 # 临时文件: ${WORKDIR}/temp/metaphlan4/${SAMPLE}/
-# 用  法: bash 11_bac_metaphlan4.sh -s SRR28210342 -t 16 -w /path/to/Project_example -r /path/to/MaxMetagenome
+# 用  法: bash 11_bac_metaphlan4.sh -s SRR28210342 -t 16 -w /path/to/Project_example -r /path/to/CSCCD-MetagenomeFlow
 # ==============================================================================
 
 set -euo pipefail
@@ -25,12 +25,12 @@ show_help() { cat << EOF
   -s  样本名（不含后缀，如 SRR28210342）
   -t  线程数（推荐 8-16）
   -w  工作目录（Project_example 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 示例:
   bash 11_bac_metaphlan4.sh -s SRR28210342 -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）

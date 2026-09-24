@@ -9,10 +9,10 @@
 
 ```bash
 # 细菌功能注释
-bash scripts/22_bac_kegg.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/22_bac_kegg.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 真菌功能注释
-bash scripts/82_fun_kegg.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/82_fun_kegg.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

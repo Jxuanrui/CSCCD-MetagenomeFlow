@@ -61,7 +61,7 @@ show_help() { cat << EOF
 必需参数:
   -t  线程数（模型推理封顶 8）
   -w  工作目录
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --model        PhaStyle 模型 ID（默认 neuralbioinfo/PhaStyle-mini）
@@ -71,7 +71,7 @@ show_help() { cat << EOF
 
 示例:
   bash 67b_vir_phastyle.sh -t 8 \\
-       -w ~/Course/Maxmetagenome/Project/Project01 -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 -r ~/Course/CSCCD-MetagenomeFlow
 
   # 显式触发 Snakemake 规则（默认不在 rule all 中）:
   snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -R phastyle

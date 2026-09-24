@@ -42,7 +42,7 @@ cat << EOF
   -s  样本名（不含后缀，如 SRR28210342）
   -t  线程数（推荐 16）
   -w  工作目录（Project_example 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force    强制重新运行（忽略已存在的结果）
@@ -50,8 +50,8 @@ cat << EOF
 
 示例:
   bash 15c_bac_sylph.sh -s SRR28210342 -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

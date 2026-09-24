@@ -9,7 +9,7 @@
 #         ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}.json
 #         ${WORKDIR}/result/fastp/${SAMPLE}/${SAMPLE}.html
 # 临时文件: ${WORKDIR}/temp/fastp/${SAMPLE}/
-# 用  法: bash 01_qc_fastp.sh -s SRR28210342 -t 16 -w /path/to/Project_example -r /path/to/MaxMetagenome
+# 用  法: bash 01_qc_fastp.sh -s SRR28210342 -t 16 -w /path/to/Project_example -r /path/to/CSCCD-MetagenomeFlow
 # ==============================================================================
 
 set -euo pipefail
@@ -26,12 +26,12 @@ show_help() { cat << EOF
   -s  样本名（不含后缀，如 SRR28210342）
   -t  线程数（推荐 8-16）
   -w  工作目录（Project_example 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 示例:
   bash 01_qc_fastp.sh -s SRR28210342 -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

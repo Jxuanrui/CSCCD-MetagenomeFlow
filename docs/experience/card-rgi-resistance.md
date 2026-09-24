@@ -27,7 +27,7 @@ CARD/RGI 更适合在 resistome 分析里补充“机制层”的解释，尤其
 bash scripts/24_bac_card.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 在项目报告中，建议把 `rgi_results.txt` 作为人工审阅主表，把 `rgi_results.json` 作为后续程序化抽取机制、药物类别和 ARO 标识的结构化来源。

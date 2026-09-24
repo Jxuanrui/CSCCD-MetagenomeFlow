@@ -26,7 +26,7 @@ bash scripts/33_bac_metabat2.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接运行时，推荐显式设置 `-m 1500`，并在低丰度菌株恢复场景中关闭 CV sum 过滤：

@@ -11,10 +11,10 @@ StrainPhlAn4 使用 MetaPhlAn4 的标记基因（marker genes）对微生物组�
 
 ```bash
 # 第一步：自动检测可分析菌株
-bash scripts/12_bac_strainphlan4.sh -w /path/to/workdir -r ~/Course/Maxmetagenome -t 8
+bash scripts/12_bac_strainphlan4.sh -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 8
 
 # 第二步：对指定菌株建树
-bash scripts/12_bac_strainphlan4.sh -w /path/to/workdir -r ~/Course/Maxmetagenome -t 8 -c t__SGB10068
+bash scripts/12_bac_strainphlan4.sh -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 8 -c t__SGB10068
 ```
 
 | 参数 | 必需 | 默认 | 含义 |

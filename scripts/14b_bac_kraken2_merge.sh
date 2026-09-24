@@ -7,7 +7,7 @@
 # 输  出: ${WORKDIR}/result/kraken2/merged/bracken_S.tsv  （种级多样本丰度表）
 #         ${WORKDIR}/result/kraken2/merged/bracken_G.tsv  （属级多样本丰度表）
 #         ${WORKDIR}/result/kraken2/merged/bracken_P.tsv  （门级多样本丰度表）
-# 用  法: bash 14b_bac_kraken2_merge.sh -w /path/to/Project_example -r /path/to/MaxMetagenome
+# 用  法: bash 14b_bac_kraken2_merge.sh -w /path/to/Project_example -r /path/to/CSCCD-MetagenomeFlow
 # ==============================================================================
 
 set -euo pipefail
@@ -22,12 +22,12 @@ show_help() { cat << EOF
 
 参数说明:
   -w  工作目录（Project_example 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 示例:
   bash 14b_bac_kraken2_merge.sh \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）

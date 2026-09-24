@@ -16,7 +16,7 @@ show_help() { cat << EOF
 Usage: bash 41b_bac_mlst.sh -w WORKDIR -r REPO -t THREADS [--scheme SCHEME]
 Required:
   -w  Working directory
-  -r  MaxMetagenome repository root
+  -r  CSCCD-MetagenomeFlow repository root
   -t  Thread count
 Optional:
   --scheme  MLST scheme name (default: auto)

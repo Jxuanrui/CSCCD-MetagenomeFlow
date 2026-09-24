@@ -59,11 +59,11 @@ gapseq 首次运行时自动下载数据库至 `~/.gapseq/` 目录：
 
 ```bash
 # 批量重建所有 dRep MAGs 的代谢模型
-bash scripts/43_bac_gem_gapseq.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/43_bac_gem_gapseq.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 单 MAG 手动运行（三步法）
 MAG="bin001"
-REPO=~/Course/Maxmetagenome
+REPO=~/Course/CSCCD-MetagenomeFlow
 OUTDIR=result/gem/gapseq/${MAG}
 mkdir -p ${OUTDIR}
 

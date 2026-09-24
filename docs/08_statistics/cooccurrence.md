@@ -12,17 +12,17 @@
 ```bash
 # 全网络类型（默认）
 bash scripts/93_stat_cooccurrence.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv
 
 # 仅细菌维度
 bash scripts/93_stat_cooccurrence.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv -n bac
 
 # 跨维度细菌-病毒
 bash scripts/93_stat_cooccurrence.sh \
-    -w /path/to/workdir -r ~/Course/Maxmetagenome -t 16 \
+    -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv -n cross_bac_vir
 ```
 

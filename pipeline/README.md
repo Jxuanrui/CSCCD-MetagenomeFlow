@@ -6,7 +6,7 @@
 
 ## Overview
 
-该 Snakemake 流程整合了 MaxMetagenome 平台的 181 个分析脚本，支持**细菌、病毒、真菌**三维度并行分析。
+该 Snakemake 流程整合了 CSCCD-MetagenomeFlow 平台的 181 个分析脚本，支持**细菌、病毒、真菌**三维度并行分析。
 
 **特性**:
 - ✅ 141 个规则，覆盖从质控到统计分析的完整流程

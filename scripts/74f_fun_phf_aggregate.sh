@@ -20,7 +20,7 @@ cat << EOF
 
 参数:
   -w  工作目录（含 result/fungi/phf_profiler/）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 输出:
   \${WORKDIR}/result/fungi/phf_profiler/merged_abundance.tsv

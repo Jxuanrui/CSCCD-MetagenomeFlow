@@ -27,7 +27,7 @@ scenario: [gut-microbiome, gene-catalog, shotgun-metagenomics]
 bash scripts/21_bac_eggnog.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如果从 Prodigal 的 `*.faa` 直接运行 eggNOG-mapper，建议显式写出关键参数，便于审计和复现：

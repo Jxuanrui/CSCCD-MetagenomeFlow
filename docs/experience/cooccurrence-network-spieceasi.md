@@ -26,7 +26,7 @@ scenario: [bacteria-virus-fungi, relative-abundance, network-inference]
 # Run co-occurrence network analysis for all supported domains.
 bash scripts/93_stat_cooccurrence.sh \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome \
+  -r /path/to/CSCCD-MetagenomeFlow \
   -t 16 \
   -m /path/to/project/metadata.csv \
   -g group \

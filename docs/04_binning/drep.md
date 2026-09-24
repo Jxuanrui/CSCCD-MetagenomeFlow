@@ -33,7 +33,7 @@
 
 ```bash
 # 聚合去冗余
-bash scripts/38_bac_drep.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/38_bac_drep.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 查看聚类结果
 cat result/binning/drep/data_tables/Wdb.csv | head

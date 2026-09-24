@@ -38,7 +38,7 @@ Project/
 ```bash
 bash scripts/97_stat_crosscohort.sh \
   -w Project/Hospital_A \
-  -r ~/Course/Maxmetagenome \
+  -r ~/Course/CSCCD-MetagenomeFlow \
   -m Project/Hospital_A/metadata.csv \
   -g Group \
   --source local \
@@ -61,7 +61,7 @@ bash scripts/97_stat_crosscohort.sh \
 ```bash
 bash scripts/97_stat_crosscohort.sh \
   -w Project/Project_example \
-  -r ~/Course/Maxmetagenome \
+  -r ~/Course/CSCCD-MetagenomeFlow \
   -m Project/Project_example/metadata.csv \
   -g Group \
   --source local
@@ -76,7 +76,7 @@ bash scripts/97_stat_crosscohort.sh \
 ```bash
 bash scripts/97_stat_crosscohort.sh \
   -w Project/Project_example \
-  -r ~/Course/Maxmetagenome \
+  -r ~/Course/CSCCD-MetagenomeFlow \
   -m Project/Project_example/metadata.csv \
   -g Group \
   --source curated \
@@ -118,7 +118,7 @@ ${WORKDIR}/result/viz_crosscohort/
 | 参数 | 必需 | 默认值 | 说明 |
 |------|------|--------|------|
 | `-w` | ✅ | - | 项目工作目录（作为默认队列） |
-| `-r` | ✅ | - | MaxMetagenome 仓库根目录 |
+| `-r` | ✅ | - | CSCCD-MetagenomeFlow 仓库根目录 |
 | `-m` | ✅ | - | Metadata CSV（必须含 `sample_id` + `GROUP_COL` + `cohort` 列） |
 | `-g` | ✅ | - | 分组列名（如 `Group`, `Disease`） |
 | `--source` | ❌ | `local` | 数据源：`local` / `curated` |
@@ -153,7 +153,7 @@ ${WORKDIR}/result/viz_crosscohort/
 
 **清理测试数据**：
 ```bash
-rm -rf ~/Course/Maxmetagenome/Project/_test_crosscohort
+rm -rf ~/Course/CSCCD-MetagenomeFlow/Project/_test_crosscohort
 ```
 
 ---
@@ -216,7 +216,7 @@ rm -rf ~/Course/Maxmetagenome/Project/_test_crosscohort
 **原因**：脚本 96 未运行或 ML 模型缺失  
 **解决**：
 ```bash
-bash scripts/96_stat_ml_siamcat.sh -w ${WORKDIR} -r ~/Course/Maxmetagenome \
+bash scripts/96_stat_ml_siamcat.sh -w ${WORKDIR} -r ~/Course/CSCCD-MetagenomeFlow \
      -t 16 -m metadata.csv -g Group
 ```
 

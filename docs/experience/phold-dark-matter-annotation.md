@@ -29,7 +29,7 @@ PHAROKKA 更偏向病毒数据库和已知蛋白家族比对；PHOLD 利用结�
 bash scripts/65_vir_phold.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 主输出为 `result/virus/phold/vOTU_phold.tsv`。下游解释时建议把 PHOLD 命中标记为“结构支持的功能候选”，而不是与高置信序列同源注释完全等价。

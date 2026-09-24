@@ -8,7 +8,7 @@ Centrifuger 使用 FM-index + 无损压缩技术进行蛋白级精确物种分�
 ## 用法
 
 ```bash
-bash scripts/15_bac_centrifuger.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/15_bac_centrifuger.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

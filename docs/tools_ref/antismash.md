@@ -8,7 +8,7 @@ antiSMASH 识别宏基因组 contigs 中的次级代谢产物生物合成基因�
 ## 用法
 
 ```bash
-bash scripts/28_bac_antismash.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/28_bac_antismash.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

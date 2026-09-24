@@ -33,7 +33,7 @@ cat << EOF
   -s  样本名（不含后缀，如 SRR28210342）
   -t  线程数（推荐 16）
   -w  工作目录（Project 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --confidence  Kraken2 置信度阈值（默认 0.1，范围 0.0-1.0）
@@ -41,8 +41,8 @@ cat << EOF
 
 示例:
   bash 71_fun_kraken2_fungi.sh -s SRR28210342 -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

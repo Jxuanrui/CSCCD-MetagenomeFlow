@@ -8,7 +8,7 @@ eggNOG-mapper v2 使用 DIAMOND 同源搜索对蛋白序列进行综合功能注
 ## 用法
 
 ```bash
-bash scripts/21_bac_eggnog.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/21_bac_eggnog.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 ```
 
 ## 输入 / 输出

@@ -42,11 +42,11 @@ CarveMe 使用 BiGG Models 数据库的通用模板，数据已集成在安装�
 
 ```bash
 # 批量重建所有 dRep MAGs 的代谢模型
-bash scripts/43b_bac_gem_carveme.sh -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/43b_bac_gem_carveme.sh -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 单 MAG 手动运行
 MAG="bin001"
-REPO=~/Course/Maxmetagenome
+REPO=~/Course/CSCCD-MetagenomeFlow
 OUTDIR=result/gem/carveme/${MAG}
 mkdir -p ${OUTDIR}
 

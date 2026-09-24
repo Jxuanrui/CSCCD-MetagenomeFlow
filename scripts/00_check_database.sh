@@ -89,7 +89,7 @@ if [ "$CHECK_ALL" = false ] && [ "$CHECK_BACTERIA" = false ] && [ "$CHECK_VIRUS"
 fi
 
 echo "========================================"
-echo "MaxMetagenome Database Integrity Check"
+echo "CSCCD-MetagenomeFlow Database Integrity Check"
 echo "========================================"
 echo "Time: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""

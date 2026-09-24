@@ -52,18 +52,18 @@ git checkout --orphan "${BRANCH}" >/dev/null 2>&1
 git rm -r -q --cached . >/dev/null 2>&1 || true
 # Machine-specific runtime paths in shipped config templates become generic
 # home-relative examples; the master worktree copy is force-restored afterwards.
-sed -i 's|/home/[^/]*/Course/Maxmetagenome|~/Course/Maxmetagenome|g' \
+sed -i 's|/home/[^/]*/Course/CSCCD-MetagenomeFlow|~/Course/CSCCD-MetagenomeFlow|g' \
     pipeline/config/config.yaml pipeline/config/config.test_ci.yaml 2>/dev/null || true
 # Real-cohort sample IDs (docs/comments/example commands only — verified no
 # functional strings) are neutralized to "Sample<N>" in the snapshot.
 echo "${FILES}" | xargs -d '\n' grep -l 'Harbin' 2>/dev/null | xargs -r -d '\n' sed -i 's/Harbin/Sample/g'
 # Machine-specific repo paths in mined tooling become portable placeholders.
-echo "${FILES}" | xargs -d '\n' grep -l '/home/[^/]*/Course/Maxmetagenome' 2>/dev/null | \
-    xargs -r -d '\n' sed -i 's|/home/[^/]*/Course/Maxmetagenome|~/Course/Maxmetagenome|g'
+echo "${FILES}" | xargs -d '\n' grep -l '/home/[^/]*/Course/CSCCD-MetagenomeFlow' 2>/dev/null | \
+    xargs -r -d '\n' sed -i 's|/home/[^/]*/Course/CSCCD-MetagenomeFlow|~/Course/CSCCD-MetagenomeFlow|g'
 # Development-era attributions and retired dual-agent jargon are neutralized;
 # dead /mgx-* references into the unshipped .claude/ tree drop their lines.
 echo "${FILES}" | xargs -d '\n' grep -l '^# Author: Claude Code' 2>/dev/null | \
-    xargs -r -d '\n' sed -i 's|^# Author: Claude Code.*|# Author: MaxMetagenome team|'
+    xargs -r -d '\n' sed -i 's|^# Author: Claude Code.*|# Author: CSCCD-MetagenomeFlow team|'
 echo "${FILES}" | xargs -d '\n' grep -l -E 'Codex sandbox|Codex 沙盒|Codex 沙箱|CC Bash 工具|走Codex执行' 2>/dev/null | \
     xargs -r -d '\n' sed -i -e 's/Codex sandbox/sandboxed executor/g' \
         -e 's/Codex 沙盒/执行沙箱/g' -e 's/Codex 沙箱/执行沙箱/g' \

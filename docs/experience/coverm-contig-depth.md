@@ -30,7 +30,7 @@ bash scripts/32_bac_coverm_depth.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如果要手动复现实验逻辑，推荐把“比对生成 BAM”和“从 BAM 提取深度”分成两步写清楚：

@@ -26,7 +26,7 @@ bash scripts/36_bac_dastool.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 直接运行时，建议至少组合两个 binner；如果有 CONCOCT，也可以替换或追加到输入列表。常规发表级流程建议从默认 `--score_threshold 0.5` 起步，速度优先时使用 DIAMOND：

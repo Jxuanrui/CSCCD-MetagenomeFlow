@@ -63,7 +63,7 @@ cat << EOF
 必需参数:
   -t  线程数（推荐 16-48）
   -w  工作目录（Project 路径，含 result/assembly/prodigal/ 子目录）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
@@ -73,13 +73,13 @@ cat << EOF
 示例:
   # 默认 CD-HIT（10样本）
   bash 18_bac_cdhit.sh -t 48 \\
-       -w ~/Course/Maxmetagenome/Project/Project01 \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 
   # MMseqs2 Linclust（50样本全量，>500万基因）
   bash 18_bac_cdhit.sh -t 48 --tool mmseqs \\
-       -w ~/Course/Maxmetagenome/Project/Project01 \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 EOF
 }
 

@@ -51,7 +51,7 @@ cat << EOF
   -s  样本名（不含后缀，如 SRR28210342）
   -t  线程数（推荐 16-32）
   -w  工作目录（Project 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 可选参数:
   --force   强制重新运行（忽略已存在的 sentinel）
@@ -60,8 +60,8 @@ cat << EOF
 
 示例:
   bash 16b_bac_metaspades.sh -s SRR28210342 -t 16 \\
-       -w ~/Course/Maxmetagenome/Project/Project01 \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 
   # 显式触发 Snakemake 规则（默认不在 rule all 中）:
   snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml \\

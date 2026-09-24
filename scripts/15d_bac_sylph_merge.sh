@@ -5,7 +5,7 @@
 # 依  赖: 15c_bac_sylph.sh 的输出（每个样本的 .sylphmpa）
 # 输  入: ${WORKDIR}/result/sylph/*/  （扫描所有已完成样本）
 # 输  出: ${WORKDIR}/result/sylph/merged/sylph_profile_merged.tsv  （物种级多样本相对丰度表）
-# 用  法: bash 15d_bac_sylph_merge.sh -w /path/to/Project_example -r /path/to/MaxMetagenome
+# 用  法: bash 15d_bac_sylph_merge.sh -w /path/to/Project_example -r /path/to/CSCCD-MetagenomeFlow
 # ==============================================================================
 
 set -euo pipefail
@@ -18,12 +18,12 @@ show_help() { cat << EOF
 
 参数说明:
   -w  工作目录（Project_example 路径）
-  -r  MaxMetagenome 项目根目录
+  -r  CSCCD-MetagenomeFlow 项目根目录
 
 示例:
   bash 15d_bac_sylph_merge.sh \\
-       -w ~/Course/Maxmetagenome/Project/Project_example \\
-       -r ~/Course/Maxmetagenome
+       -w ~/Course/CSCCD-MetagenomeFlow/Project/Project_example \\
+       -r ~/Course/CSCCD-MetagenomeFlow
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）

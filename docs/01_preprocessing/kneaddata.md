@@ -37,7 +37,7 @@
 
 ```bash
 # 独立运行（单样本）
-bash scripts/02_qc_kneaddata.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/02_qc_kneaddata.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 检查去宿主效率（看 kneaddata.log 第一行）
 head -5 result/kneaddata/SAMPLE01/SAMPLE01.log

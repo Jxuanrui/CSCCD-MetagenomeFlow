@@ -30,7 +30,7 @@ bash scripts/34_bac_maxbin2.sh \
   -s S01 \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 如果需要显式记录 MaxBin2 的核心参数，建议先从 CoverM 深度表提取二维 abundance，再运行主程序：

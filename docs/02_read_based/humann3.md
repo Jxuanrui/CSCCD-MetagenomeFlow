@@ -48,10 +48,10 @@
 
 ```bash
 # 标准模式
-bash scripts/13_bac_humann3.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome
+bash scripts/13_bac_humann3.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
 
 # 快速模式
-bash scripts/13_bac_humann3.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/Maxmetagenome --speed-mode fast
+bash scripts/13_bac_humann3.sh -s SAMPLE01 -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow --speed-mode fast
 
 # 合并多样本通路矩阵（脚本聚合步骤）
 humann_join_tables -i result/humann3/ -o result/humann3/merged_pathabundance.tsv --file_name pathabundance

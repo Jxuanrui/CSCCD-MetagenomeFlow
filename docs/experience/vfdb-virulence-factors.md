@@ -27,7 +27,7 @@ VFDB 在本流程中的用途不是给细菌贴“致病/非致病”二元标�
 bash scripts/26_bac_vfdb.sh \
   -t 16 \
   -w /path/to/project \
-  -r /path/to/Maxmetagenome
+  -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 结果主文件是 `result/annotation/vfdb/vfdb_hits.tsv`。建议后续整理时至少保留 `qseqid`、`sseqid`、`pident`、`length`、`evalue` 和 `bitscore`，便于筛选高可信命中。
