@@ -1,5 +1,7 @@
 # CSCCD-MetagenomeFlow
 
+<p align="center"><img src="docs/figures/header.jpg" alt="CSCCD-MetagenomeFlow banner"></p>
+
 A self-contained metagenomics platform that profiles gut bacteria, viruses, and fungi in parallel — from raw reads to publication-ready statistics — with built-in host-microbe mechanism discovery and an AI-assisted workflow.
 
 Developed by the [China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases](https://example.org).
