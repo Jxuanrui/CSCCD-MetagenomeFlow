@@ -80,10 +80,17 @@ mgx_try mgx_conda antismash8 \
         --enable-nrps-pks || EXIT_CODE=$?
 
 if [ ${EXIT_CODE} -ne 0 ]; then
-    echo "[antismash] WARNING: antismash 失败（exit: ${EXIT_CODE}），创建空 sentinel"
+    # T-11: execution failure must never masquerade as "done with no BGC".
+    # Write an explicit FAILED marker (no done sentinel) and propagate the error.
     mkdir -p "${RESULT_DIR}"
-    touch "${SENTINEL}"
-    exit 0
+    {
+        echo "status=FAILED"
+        echo "timestamp=$(date -Iseconds)"
+        echo "exit_code=${EXIT_CODE}"
+        echo "note=antiSMASH did not complete; empty/partial output is NOT a valid result"
+    } > "${RESULT_DIR}/antismash_FAILED.txt"
+    echo "[antismash] ERROR: antismash 失败（exit: ${EXIT_CODE}），已写入 ${RESULT_DIR}/antismash_FAILED.txt"
+    exit ${EXIT_CODE}
 fi
 
 N_BGC=$(grep -c '"cluster_blast_hit"' "${RESULT_DIR}"/*.json 2>/dev/null || \

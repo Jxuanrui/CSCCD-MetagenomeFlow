@@ -61,6 +61,15 @@ fi
 if [ ! -d "${ANTISMASH_DIR}" ]; then
     echo "[ERROR] antiSMASH 输出目录不存在: ${ANTISMASH_DIR}"; exit 1
 fi
+# T-11 guard: only trust antiSMASH output proven by its done sentinel.
+if [ -f "${ANTISMASH_DIR}/antismash_FAILED.txt" ]; then
+    echo "[ERROR] antiSMASH 上游执行失败（antismash_FAILED.txt 存在），拒绝基于部分输出计算新颖性: ${ANTISMASH_DIR}"
+    exit 1
+fi
+if [ ! -f "${ANTISMASH_DIR}/antismash_done.txt" ]; then
+    echo "[ERROR] antiSMASH 未完成（antismash_done.txt 缺失），请先运行 28_bac_antismash.sh: ${ANTISMASH_DIR}"
+    exit 1
+fi
 if [ ! -f "${MIBIG_DMND}" ] || [ ! -f "${MIBIG_JSON}" ]; then
     echo "[ERROR] MIBiG DIAMOND 库缺失: ${MIBIG_DMND}"; exit 1
 fi
