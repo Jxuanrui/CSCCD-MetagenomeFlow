@@ -60,21 +60,29 @@ mkdir -p "${OUTDIR}"
     set +e
 if [ ! -f "${BAM}" ] || [ ! -s "${BAM}" ]; then
     echo "[coverm] 步骤 1/2: minimap2 比对生成 BAM ..."
+    EXIT_CODE=0
     mgx_conda coverm \
         coverm make \
             -p minimap2-sr \
             -t "${CPUS}" \
             -r "${CONTIGS}" \
             -1 "${R1}" -2 "${R2}" \
-            -o "${OUTDIR}"
+            -o "${OUTDIR}" || EXIT_CODE=$?
+    # T-13: capture the exit code right after coverm make. The previous
+    # `EXIT_CODE=$?` after the ls/mv rename block read the if-statement's
+    # status (0 when no BAM was found), so a make failure surfaced later as
+    # a misleading "coverm contig 失败" instead of a make failure.
+    if [ ${EXIT_CODE} -ne 0 ]; then
+        set -e
+        echo "[ERROR] coverm make 失败 (exit: ${EXIT_CODE})"
+        exit ${EXIT_CODE}
+    fi
     # coverm make 输出 BAM 文件名包含 contig/read 信息，重命名为标准格式
     GENERATED_BAM=$(ls "${OUTDIR}"/*.bam 2>/dev/null | head -1)
     if [ -n "${GENERATED_BAM}" ] && [ "${GENERATED_BAM}" != "${BAM}" ]; then
         mv "${GENERATED_BAM}" "${BAM}"
     fi
-    EXIT_CODE=$?
     set -e
-    if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] coverm make 失败"; exit ${EXIT_CODE}; fi
 fi
 
     set +e
