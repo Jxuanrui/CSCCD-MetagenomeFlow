@@ -271,8 +271,9 @@ def load_votu_tpm():
         for row in reader:
             if not row:
                 continue
-            gene = row[0].strip()
-            votu = re.sub(r"_[0-9]+$", "", gene)
+            # T-16: votu_table.tsv rows are canonical vOTU ids produced by
+            # script 60 via votu_id_map.tsv - no regex identity derivation.
+            votu = row[0].strip()
             for sample, idx in tpm_indices:
                 if idx >= len(row):
                     continue

@@ -104,6 +104,31 @@ mgx_conda vclust \
 
 cut -f2 "${OUTDIR}/vclust/clusters.tsv" | tail -n +2 | sort -u > "${SENTINEL}"
 
+# T-16: canonical vOTU identity map. Every downstream consumer (taxonomy,
+# abundance, function, host, network) must join through this table instead of
+# re-deriving identity by string surgery (e.g. stripping "_<digits>" suffixes,
+# which truncates MEGAHIT contig ids such as k127_1717 -> k127).
+# Columns: original_contig_id (vclust object, SAMPLE__-prefixed when present) |
+#          cluster_id | representative_votu_id (= cluster name in vclust) |
+#          sample_id (from the SAMPLE__ prefix, else "unknown") | source_step
+# Invariant: one original id must map to exactly one representative; if vclust
+# ever emits duplicate objects the build fails here instead of guessing.
+awk -F'\t' '
+    NR == 1 { next }                                   # header: object\tcluster
+    seen[$1]++ {
+        print "[votu_id_map] ERROR: duplicate object in clusters.tsv: " $1 > "/dev/stderr"
+        exit 3
+    }
+    {
+        sample = "unknown"; contig = $1
+        if (match($1, /^([^_][^_]*)__/)) {
+            sample = substr($1, 1, RLENGTH - 2)
+            contig = substr($1, RLENGTH + 1)
+        }
+        print $1 "\t" $2 "\t" $2 "\t" sample "\t56_vclust"
+    }
+' "${OUTDIR}/vclust/clusters.tsv" > "${OUTDIR}/votu_id_map.tsv"
+
 N_VOTUS=$(wc -l < "${SENTINEL}")
-echo "[votu_gen] vOTUs: ${N_VOTUS}"
+echo "[votu_gen] vOTUs: ${N_VOTUS} | id map rows: $(($(wc -l < "${OUTDIR}/votu_id_map.tsv"))) | ${OUTDIR}/votu_id_map.tsv"
 mgx_end "votu_gen"

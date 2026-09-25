@@ -105,6 +105,100 @@ PYEOF
 # Clean up any leftover tmp files from previous partial runs
 rm -f "${OUTDIR}"/_*.tmp
 
+# --- T-16: aggregate gene-level TPM to CANONICAL vOTU identity -------------
+# votu_id_map.tsv (from 56_vir_votu_gen.sh) is the single source of identity.
+# gene "X_<digits>" -> contig X via the Prodigal naming rule (legitimate
+# suffix), then contig -> representative vOTU strictly through the map.
+ID_MAP="${WORKDIR}/result/virus/votu/votu_id_map.tsv"
+JOIN_STATS="${OUTDIR}/votu_join_stats.tsv"
+
+python3 - "${OUTDIR}/vOTU_table.txt" "${ID_MAP}" "${LEGACY_TABLE}" "${JOIN_STATS}" <<'PYINNER'
+import sys, os, re
+from collections import defaultdict
+
+src, id_map_path, out_path, stats_path = sys.argv[1:5]
+if not os.path.exists(id_map_path):
+    sys.exit(f"[ERROR] votu_id_map.tsv not found: {id_map_path} (run 56_vir_votu_gen.sh first)")
+
+# map: original_contig_id | cluster_id | representative_votu_id | sample_id | source_step
+by_original = {}
+by_bare = {}
+ambiguous = set()
+for line in open(id_map_path):
+    parts = line.rstrip("\n").split("\t")
+    if len(parts) < 5:
+        continue
+    orig, _cluster, repr_id, _sample, _src = parts[:5]
+    by_original[orig] = repr_id
+    bare = orig.split("__", 1)[-1]
+    if bare in by_bare and by_bare[bare] != repr_id:
+        # one bare contig name mapping to two representatives: refuse to guess
+        ambiguous.add(bare)
+    by_bare[bare] = repr_id
+
+def canonical(gene, sid):
+    # gene/target -> canonical vOTU or None.
+    # Order matters: salmon reports mix contig-level rows (k127_1717) with
+    # gene-level rows (k127_1717_1). A bare contig id must be looked up as-is;
+    # only fall back to stripping the Prodigal gene index when the raw name is
+    # not itself a known contig. Never guess identity by suffix alone.
+    if gene in by_original:
+        return by_original[gene]
+    if gene in by_bare:
+        return None if gene in ambiguous else by_bare[gene]
+    contig = re.sub(r"_[0-9]+$", "", gene)
+    if contig in ambiguous:
+        return None
+    return by_bare.get(contig)
+
+columns = []
+with open(src) as fh:
+    header = fh.readline().rstrip("\n").split("\t")
+    for c in header[2:]:
+        if c.endswith("_tpm"):
+            pass
+        columns.append(c)
+    agg = defaultdict(lambda: defaultdict(float))
+    lengths = {}
+    failed, njoined = [], 0
+    for line in fh:
+        parts = line.rstrip("\n").split("\t")
+        if len(parts) < 2:
+            continue
+        gene = parts[0]
+        votu = canonical(gene, "")
+        if votu is None:
+            failed.append(gene)
+            continue
+        njoined += 1
+        if votu not in lengths:
+            lengths[votu] = parts[1]
+        for c, v in zip(columns, parts[2:]):
+            try:
+                agg[votu][c] += float(v)
+            except ValueError:
+                pass
+
+with open(out_path, "w") as out:
+    out.write("votu\tlength\t" + "\t".join(columns) + "\n")
+    for votu in sorted(agg):
+        vals = agg[votu]
+        out.write(votu + "\t" + lengths.get(votu, "0") + "\t" +
+                  "\t".join(f"{vals.get(c, 0.0):.10g}" for c in columns) + "\n")
+
+with open(stats_path, "w") as st:
+    st.write("metric\tvalue\n")
+    st.write(f"joined_gene_rows\t{njoined}\n")
+    st.write(f"join_failed_gene_rows\t{len(failed)}\n")
+    st.write(f"canonical_votus\t{len(agg)}\n")
+    for g in failed:
+        st.write(f"join_failed_row\t{g}\n")
+print(f"[votu_table] canonical aggregation: {len(agg)} vOTUs, joined={njoined}, join_failed={len(failed)} -> {stats_path}")
+if failed:
+    print("[votu_table] WARNING: join-failed rows are listed in " + stats_path, file=sys.stderr)
+PYINNER
+
+
 # 加入分类注释
 if [ -f "${TAXONOMY}" ] && [ -f "${OUTDIR}/vOTU_table.txt" ]; then
     python3 -c "
@@ -126,8 +220,8 @@ else
     cp "${OUTDIR}/vOTU_table.txt" "${SENTINEL}"
 fi
 
-# Maintain the legacy path expected by integration and older wrappers.
-cp "${OUTDIR}/vOTU_table.txt" "${LEGACY_TABLE}"
+# LEGACY_TABLE (votu_table.tsv) is written by the canonical aggregation above;
+# consumers (98c/98g/93/96) expect canonical vOTU keys since T-16.
 
 echo "[votu_table] 输出: ${OUTDIR}/"
 mgx_end "votu_table"
