@@ -58,17 +58,12 @@ merge_with_sample_prefix() {
         sed "s/^>/>${sample}__/" "$f" >> "${ALL_VIRUS}"
     done
 }
+# T-15: only the MIUVIG-filtered contigs may enter the vOTU universe.
+# The previous fallback chain (viruses.fna / virus_contigs.fasta) silently
+# bypassed the 54b QC gate when filtered files were missing.
 merge_with_sample_prefix "viruses_filtered.fna"
-# fallback: 用 viruses.fna
-if [ ! -s "${ALL_VIRUS}" ]; then
-    merge_with_sample_prefix "viruses.fna"
-fi
-# second fallback: 用 virus_contigs.fasta
-if [ ! -s "${ALL_VIRUS}" ]; then
-    merge_with_sample_prefix "virus_contigs.fasta"
-fi
 
-if [ ! -s "${ALL_VIRUS}" ]; then echo "[ERROR] 无病毒 contigs"; exit 1; fi
+if [ ! -s "${ALL_VIRUS}" ]; then echo "[ERROR] 无 MIUVIG 过滤后病毒 contigs（54b 输出缺失或为空）"; exit 1; fi
 
 mkdir -p "${OUTDIR}/vclust"
 

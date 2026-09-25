@@ -71,8 +71,9 @@ if $HAS_GENOMAD || $HAS_VS2; then
 else
     echo "[WARN] S01 中未检测到病毒序列: geNomad 和 VirSorter2 均无有效输出"
     mkdir -p "${OUTDIR}"
-    echo -e "sample_id\tnum_viral\tnuc_contam\tcompleteness\tcompleteness_method\tcontamination\tcontamination_method\tkmer_freq\tn50\tlength_max\ttotal_length\tgene_count\tviral_genes\thost_genes\tprovirus" > "${SENTINEL}"
-    echo "0\t0\t0\t0.0\tN/A\t0.0\tN/A\tNA\t0\t0\t0\t0\t0\t0\tN/A" >> "${SENTINEL}"
+    # T-15: empty result must still match the real per-contig quality_summary
+    # schema so 54b can parse it (previously a fabricated summary header).
+    echo -e "contig_id\tcontig_length\tprovirus\tproviral_length\tgene_count\tviral_genes\thost_genes\tcheckv_quality\tmiuvig_quality\tcompleteness\tcompleteness_method\tcontamination\tkmer_freq\twarnings" > "${SENTINEL}"
     echo "[checkv] 生成空摘要（sentinel），下游步骤可正常感知"
     exit 0
 fi

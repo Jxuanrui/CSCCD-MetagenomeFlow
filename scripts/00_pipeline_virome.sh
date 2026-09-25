@@ -12,7 +12,7 @@
 #   -t  每个样本的线程数（默认 8）
 #   -j  并发样本数（默认 1）
 #   --skip  跳过指定步骤，逗号分隔
-#           可选值: qc, kneaddata, assembly, viral_id, checkv,
+#           可选值: qc, kneaddata, assembly, viral_id, checkv, checkv_filter,
 #                   prodigal_gv, quantify, cluster, mag, annotate
 #   --from  从指定步骤继续（断点续跑）
 #           可选值: kneaddata, assembly, viral_id, quantify, cluster, annotate
@@ -50,7 +50,7 @@ cat << 'EOF'
   -t  线程数（默认 8）
   -j  并发样本数（默认 1）
   --skip  跳过步骤（逗号分隔）:
-          qc, kneaddata, assembly, viral_id, checkv,
+          qc, kneaddata, assembly, viral_id, checkv, checkv_filter,
           prodigal_gv, quantify, cluster, mag, annotate
   --from  从某步骤续跑:
           kneaddata, assembly, viral_id, quantify, cluster, annotate
@@ -76,7 +76,7 @@ SCRIPTS="${REPO}/scripts"
 mgx_begin
 
 # 步骤执行顺序（用于 --from 逻辑）
-STEPS_ORDER="qc kneaddata assembly viral_id checkv prodigal_gv quantify cluster mag annotate"
+STEPS_ORDER="qc kneaddata assembly viral_id checkv checkv_filter prodigal_gv quantify cluster mag annotate"
 
 should_run() {
     local step="$1"
@@ -145,6 +145,9 @@ run_sample() {
 
     # 54 CheckV contig 质评
     should_run "checkv" && { echo "[${SAMPLE_ID}] Step 54: CheckV contig 质评..."; bash "${SCRIPTS}/54_vir_checkv_contig.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 checkv"
+
+    # 54b MIUVIG 质量过滤（T-15: QC gate 之前被跳过， viruses_filtered.fna 从未生成）
+    should_run "checkv_filter" && { echo "[${SAMPLE_ID}] Step 54b: MIUVIG 质量过滤..."; bash "${SCRIPTS}/54b_vir_checkv_filter.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 checkv_filter"
 
     # 55 蛋白预测
     should_run "prodigal_gv" && { echo "[${SAMPLE_ID}] Step 55: Prodigal-gv 蛋白预测..."; bash "${SCRIPTS}/55_vir_prodigal_gv.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 prodigal_gv"

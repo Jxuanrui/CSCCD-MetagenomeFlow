@@ -90,9 +90,9 @@ rule checkv_filter:
 
 
 rule vir_prodigal_gv:
-    """Viral gene prediction (Prodigal-gv with genetic code 15)."""
+    """Viral gene prediction on the MIUVIG-filtered set (T-15)."""
     input:
-        viral_contigs = WORKDIR + "/result/virus/checkv/{sample}/viruses.fna",
+        viral_contigs = WORKDIR + "/result/virus/checkv/{sample}/viruses_filtered.fna",
     output:
         faa = WORKDIR + "/result/virus/prodigal/{sample}/{sample}.faa",
         fna = WORKDIR + "/result/virus/prodigal/{sample}/{sample}.fna",
@@ -113,7 +113,7 @@ rule vir_votu_gen:
     """Cross-sample vOTU clustering (vclust, 95% ANI, Leiden, qcov 0.85)."""
     input:
         contigs = expand(
-            WORKDIR + "/result/virus/checkv/{sample}/viruses.fna",
+            WORKDIR + "/result/virus/checkv/{sample}/viruses_filtered.fna",
             sample=SAMPLES,
         ),
     output:

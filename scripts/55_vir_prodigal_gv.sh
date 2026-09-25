@@ -35,15 +35,23 @@ mgx_parse "$@"
 mgx_require SAMPLE CPUS WORKDIR REPO
 
 mgx_begin
-INPUT_FA="${WORKDIR}/result/virus/checkv/${SAMPLE}/viruses.fna"
-# fallback: 如果 viruses.fna 不存在，用完整的组合病毒 contigs
-[ -f "${INPUT_FA}" ] || INPUT_FA="${WORKDIR}/result/virus/checkv/${SAMPLE}/virus_contigs.fasta"
+# T-15: gene prediction runs on the MIUVIG-filtered set, same universe as 56.
+INPUT_FA="${WORKDIR}/result/virus/checkv/${SAMPLE}/viruses_filtered.fna"
 OUTDIR="${WORKDIR}/result/virus/prodigal/${SAMPLE}"
 FAA="${OUTDIR}/${SAMPLE}.faa"
 FNA="${OUTDIR}/${SAMPLE}.fna"
 GFF="${OUTDIR}/${SAMPLE}.gff"
 
 if [ ! -f "${INPUT_FA}" ]; then echo "[ERROR] 病毒序列不存在: ${INPUT_FA}"; exit 1; fi
+# T-15: a sample with 0 MIUVIG-passed contigs is a legal empty state -
+# emit empty sentinels instead of failing prodigal on an empty FASTA.
+if [ ! -s "${INPUT_FA}" ]; then
+    OUTDIR="${WORKDIR}/result/virus/prodigal/${SAMPLE}"
+    mkdir -p "${OUTDIR}"
+    : > "${OUTDIR}/${SAMPLE}.faa"; : > "${OUTDIR}/${SAMPLE}.fna"; : > "${OUTDIR}/${SAMPLE}.gff"
+    echo "[prodigal_gv] ${SAMPLE}: 0 条 MIUVIG 通过 contig，写空哨兵"
+    exit 0
+fi
 if [ ${FORCE} -eq 0 ] && [ -f "${FAA}" ] && [ -s "${FAA}" ]; then echo "[prodigal_gv] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
