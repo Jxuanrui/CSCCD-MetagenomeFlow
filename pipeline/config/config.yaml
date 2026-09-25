@@ -1,7 +1,7 @@
-samplesheet: "/home/labuser/Course/CSCCD-MetagenomeFlow/Project/Project01/samplesheet.csv"
+samplesheet: "/home/labuser/Course/Maxmetagenome/Project/Project01/samplesheet.csv"
 
-workdir: "/home/labuser/Course/CSCCD-MetagenomeFlow/Project/Project01"
-repo: "/home/labuser/Course/CSCCD-MetagenomeFlow"
+workdir: "/home/labuser/Course/Maxmetagenome/Project/Project01"
+repo: "/home/labuser/Course/Maxmetagenome"
 
 # Thread configuration
 # threads_per_job: threads each tool uses internally (-t / -p / --nproc)
@@ -16,7 +16,7 @@ cpus: 16
 humann_speed: "standard"
 
 # metadata for statistical analysis (91-98)
-metadata: "/home/labuser/Course/CSCCD-MetagenomeFlow/Project/Project01/metadata.csv"
+metadata: "/home/labuser/Course/Maxmetagenome/Project/Project01/metadata.csv"
 group_col: "group"
 
 # Force re-run all steps ignoring existing outputs

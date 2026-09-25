@@ -1,7 +1,7 @@
-samplesheet: "/home/labuser/Course/CSCCD-MetagenomeFlow/Project/Test_CI_fixture/samplesheet.csv"
+samplesheet: "/home/labuser/Course/Maxmetagenome/Project/Test_CI_fixture/samplesheet.csv"
 
-workdir: "/home/labuser/Course/CSCCD-MetagenomeFlow/Project/Test_CI_fixture"
-repo: "/home/labuser/Course/CSCCD-MetagenomeFlow"
+workdir: "/home/labuser/Course/Maxmetagenome/Project/Test_CI_fixture"
+repo: "/home/labuser/Course/Maxmetagenome"
 
 # CI dry-run only -- kept low so an accidental real run stays cheap.
 threads_per_job: 2
@@ -13,5 +13,5 @@ cpus: 2
 humann_speed: "standard"
 
 # metadata for statistical analysis (91-98)
-metadata: "/home/labuser/Course/CSCCD-MetagenomeFlow/Project/Test_CI_fixture/metadata.csv"
+metadata: "/home/labuser/Course/Maxmetagenome/Project/Test_CI_fixture/metadata.csv"
 group_col: "group"
