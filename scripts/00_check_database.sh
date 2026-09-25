@@ -113,7 +113,9 @@ check_directory() {
     return 1
   fi
 
-  FILE_COUNT=$(find "$DB_PATH" -type f 2>/dev/null | wc -l)
+  # -L: follow symlinks (iPHoP DB is a symlink into a sibling project); without it a
+  # symlinked DB dir is miscounted as EMPTY.
+  FILE_COUNT=$(find -L "$DB_PATH" -type f 2>/dev/null | wc -l)
   DB_SIZE=$(du -sh "$DB_PATH" 2>/dev/null | awk '{print $1}')
 
   if [ "$FILE_COUNT" -eq 0 ]; then
@@ -157,28 +159,28 @@ if [ "$CHECK_BACTERIA" = true ] || [ "$CHECK_ALL" = true ]; then
   echo "## Bacterial Analysis Databases"
   echo ""
 
-  check_directory "${DB_DIR}/kraken2/k2_standard_20240605" "Kraken2 Standard" "hash.k2d opts.k2d taxo.k2d"
+  check_directory "${DB_DIR}/kraken2/pluspf" "Kraken2 PlusPF (14/71 shared)" "hash.k2d opts.k2d taxo.k2d"
   echo ""
 
-  check_directory "${DB_DIR}/metaphlan4/mpa_vJan21_CHOCOPhlAnSGB_202103" "MetaPhlAn4" "mpa_vJan21_CHOCOPhlAnSGB_202103.pkl"
+  check_directory "${DB_DIR}/metaphlan4" "MetaPhlAn4 (vOct22 flat layout)" "mpa_vOct22_CHOCOPhlAnSGB_202212.pkl mpa_vOct22_CHOCOPhlAnSGB_202212.1.bt2l mpa_vOct22_CHOCOPhlAnSGB_202212.2.bt2l mpa_vOct22_CHOCOPhlAnSGB_202212.3.bt2l mpa_vOct22_CHOCOPhlAnSGB_202212.4.bt2l"
   echo ""
 
-  check_directory "${DB_DIR}/humann/chocophlan" "HUMAnN ChocoPhlAn" ""
+  check_directory "${DB_DIR}/humann4/chocophlan" "HUMAnN ChocoPhlAn" ""
   echo ""
 
-  check_directory "${DB_DIR}/humann/uniref" "HUMAnN UniRef90" ""
+  check_directory "${DB_DIR}/humann4/uniref" "HUMAnN UniRef90" ""
   echo ""
 
-  check_directory "${DB_DIR}/checkm2/uniref100.KO.1.dmnd" "CheckM2" ""
+  check_directory "${DB_DIR}/checkm2/CheckM2_database" "CheckM2" "uniref100.KO.1.dmnd"
   echo ""
 
-  check_directory "${DB_DIR}/gtdbtk/release220" "GTDB-Tk r220" "taxonomy"
+  check_directory "${DB_DIR}/gtdbtk" "GTDB-Tk (r214 layout, GTDBTK_DATA_PATH target)" "markers markers/pfam"
   echo ""
 
-  check_directory "${DB_DIR}/dRep/MASH_sketches" "dRep MASH" ""
+  # T-12: removed - dRep runs with built-in skani, no external DB
   echo ""
 
-  check_directory "${DB_DIR}/prokka" "Prokka" ""
+  # T-12: removed - prokka ships its own DB inside the conda env
   echo ""
 fi
 
@@ -187,19 +189,19 @@ if [ "$CHECK_VIRUS" = true ] || [ "$CHECK_ALL" = true ]; then
   echo "## Viral Analysis Databases"
   echo ""
 
-  check_directory "${DB_DIR}/virsorter2/db" "VirSorter2" ""
+  check_directory "${DB_DIR}/virsorter2" "VirSorter2" "group hmm"
   echo ""
 
-  check_directory "${DB_DIR}/checkv/checkv-db-v1.5" "CheckV v1.5" "genome_db"
+  check_directory "${DB_DIR}/checkv" "CheckV" "genome_db hmm_db RELEASE"
   echo ""
 
-  check_directory "${DB_DIR}/genomad/genomad_db" "geNomad" ""
+  check_directory "${DB_DIR}/genomad/genomad/genomad_db" "geNomad" ""
   echo ""
 
-  check_directory "${DB_DIR}/iphop/iPHoP_db" "iPHoP" ""
+  check_directory "${DB_DIR}/iphop/Jun_2025_pub_rw" "iPHoP (Jun_2025_pub_rw)" ""
   echo ""
 
-  check_directory "${DB_DIR}/pharokka/pharokka_db" "Pharokka" ""
+  check_directory "${DB_DIR}/pharokka" "Pharokka (flat layout)" "1Aug2023_data.tsv"
   echo ""
 fi
 
@@ -208,10 +210,10 @@ if [ "$CHECK_FUNGI" = true ] || [ "$CHECK_ALL" = true ]; then
   echo "## Fungal Analysis Databases"
   echo ""
 
-  check_directory "${DB_DIR}/kraken2/k2_fungi_20240605" "Kraken2 Fungi" "hash.k2d opts.k2d taxo.k2d"
+  check_directory "${DB_DIR}/kraken2/pluspf" "Kraken2 Fungi (via shared PlusPF, 71)" "hash.k2d opts.k2d taxo.k2d"
   echo ""
 
-  check_directory "${DB_DIR}/eukcc2" "EukCC2" ""
+  # T-12: removed - no consumer script references db/eukcc2 (fungal MAG QC is BUSCO-based, see 79b/79e)
   echo ""
 fi
 
