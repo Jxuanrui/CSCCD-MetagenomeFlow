@@ -154,3 +154,40 @@ mgx_try() {
     if [ "${errexit}" -eq 1 ]; then set -e; fi
     return "${rc}"
 }
+
+# samplesheet 校验 (T-14): 列数 / 样本 ID 格式 / 唯一性 / R1+R2 存在性。
+# 用法: mgx_validate_samplesheet <csv>  — 失败时打印带行号的错误并 exit 1。
+# 约定列: sample_id,R1,R2,host_type[,workdir]（与 00_pipeline_*.sh 的 IFS 解析一致）。
+mgx_validate_samplesheet() {
+    local csv="$1" line_no=1
+    if [ ! -f "${csv}" ]; then
+        echo "[ERROR] samplesheet 不存在: ${csv}"; exit 1
+    fi
+    local -a ids=()
+    local line id r1 r2
+    # Header row is skipped (line 1), matching the pipelines' tail -n+2 read.
+    while IFS= read -r line; do
+        line_no=$((line_no + 1))
+        case "${line}" in ''|\#*) continue ;; esac
+        IFS=',' read -r id r1 r2 _ <<< "${line}"
+        id=$(echo "${id}" | tr -d ' "')
+        r1=$(echo "${r1}" | tr -d ' "')
+        r2=$(echo "${r2}" | tr -d ' "')
+        if [ -z "${id}" ] || ! echo "${id}" | grep -qE '^[A-Za-z0-9_.-]+$'; then
+            echo "[ERROR] samplesheet 第 ${line_no} 行: 非法样本 ID '${id}'（仅允许字母/数字/点/下划线/连字符）"; exit 1
+        fi
+        for seen in "${ids[@]:-}"; do
+            if [ "${seen}" = "${id}" ]; then
+                echo "[ERROR] samplesheet 第 ${line_no} 行: 样本 ID 重复 '${id}'"; exit 1
+            fi
+        done
+        ids+=("${id}")
+        if [ ! -f "${r1}" ]; then
+            echo "[ERROR] samplesheet 第 ${line_no} 行 (${id}): R1 不存在: ${r1}"; exit 1
+        fi
+        if [ ! -f "${r2}" ]; then
+            echo "[ERROR] samplesheet 第 ${line_no} 行 (${id}): R2 不存在: ${r2}"; exit 1
+        fi
+    done < <(tail -n+2 "${csv}")
+    echo "[pipeline] samplesheet 校验通过: ${#ids[@]} 样本"
+}

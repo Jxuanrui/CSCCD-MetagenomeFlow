@@ -14,9 +14,44 @@ _SCHEMA = os.path.join(
 )
 validate(config, _SCHEMA)
 
+def _validate_samplesheet(sheet):
+    """T-14: fail-fast on duplicate / malformed sample IDs or missing reads
+    before the DAG is built. Mirrors mgx_validate_samplesheet in Mode 2."""
+    import re
+    ids, errors = [], []
+    with open(sheet) as fh:
+        rows = list(csv.DictReader(fh))
+    def _col(row, *names):
+        """Case-insensitive column lookup: samplesheets in the wild use
+        sample_id/r1/r2 or SAMPLE_ID/R1/R2 (Mode 2 parses positionally, so
+        it never cared)."""
+        low = {k.strip().lower(): v for k, v in row.items()}
+        for name in names:
+            v = low.get(name.lower())
+            if v:
+                return v
+        return ""
+    for n, row in enumerate(rows, start=2):  # data rows start at line 2
+        sid = _col(row, "sample_id").strip().strip('"')
+        r1 = _col(row, "r1", "R1", "read1").strip().strip('"')
+        r2 = _col(row, "r2", "R2", "read2").strip().strip('"')
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", sid):
+            errors.append(f"line {n}: illegal sample id {sid!r}")
+        if sid in ids:
+            errors.append(f"line {n}: duplicate sample id {sid!r}")
+        ids.append(sid)
+        for tag, path in (("R1", r1), ("R2", r2)):
+            if not os.path.isfile(path):
+                errors.append(f"line {n} ({sid}): {tag} not found: {path}")
+    if errors:
+        raise ValueError(f"samplesheet validation failed ({sheet}):\n  " + "\n  ".join(errors))
+    print(f"[pipeline] samplesheet validation passed: {len(ids)} samples")
+
+
 def _load_samples(cfg):
     sheet = cfg.get("samplesheet", "")
     if sheet and os.path.exists(sheet):
+        _validate_samplesheet(sheet)
         with open(sheet) as fh:
             return [row["sample_id"] for row in csv.DictReader(fh)]
     return cfg["samples"]

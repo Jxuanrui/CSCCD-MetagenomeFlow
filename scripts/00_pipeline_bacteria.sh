@@ -96,6 +96,7 @@ export MGX_OPTS_LONG="skip:SKIP_STEPS from:FROM_STEP only:ONLY_STEP humann-speed
 export MGX_OPTS_FLAG="force"
 mgx_parse "$@"
 mgx_require SAMPLESHEET REPO
+mgx_validate_samplesheet "${SAMPLESHEET}"   # T-14: fail-fast on bad input before any compute
 
 if [ ! -f "${SAMPLESHEET}" ]; then
     echo "[ERROR] samplesheet 不存在: ${SAMPLESHEET}"; exit 1
