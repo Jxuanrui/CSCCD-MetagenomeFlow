@@ -123,9 +123,13 @@ done
 
 FEGENIE_GENE_SUMMARY="${ANNO_DIR}/fegenie/NR/FeGenie-geneSummary.csv"
 if [ ! -f "${FEGENIE_GENE_SUMMARY}" ]; then
+    # T-21: missing NR/ must fall back gracefully - find failing on a
+    # nonexistent dir previously killed the script under set -e -o pipefail.
+    # note: 2>/dev/null only hides stderr; under pipefail find's nonzero exit
+    # (missing NR/ dir) still aborts, hence the explicit fallback assignment.
     FEGENIE_FALLBACK_COUNT=$(find "${ANNO_DIR}/fegenie/NR" -maxdepth 1 -type f \
         -name "*-summary.csv" ! -name "FeGenie-summary.csv" ! -name "FinalSummary*" \
-        2>/dev/null | wc -l)
+        2>/dev/null | wc -l) || FEGENIE_FALLBACK_COUNT=0
     if [ "${FEGENIE_FALLBACK_COUNT}" -gt 0 ]; then
         echo "[WARNING] 缺少可选输入文件: ${FEGENIE_GENE_SUMMARY}; 将尝试合并 FeGenie per-category *-summary.csv"
     else
@@ -134,7 +138,7 @@ if [ ! -f "${FEGENIE_GENE_SUMMARY}" ]; then
 fi
 
 # 检查至少有一个 Salmon quant 文件
-QUANT_FOUND=$(find "${SALMON_DIR}" -name "quant.sf" 2>/dev/null | wc -l)
+QUANT_FOUND=$(find "${SALMON_DIR}" -name "quant.sf" 2>/dev/null | wc -l) || QUANT_FOUND=0
 if [ "${QUANT_FOUND}" -eq 0 ]; then
     echo "[ERROR] 未找到 Salmon quant.sf 文件: ${SALMON_DIR}"
     exit 1
@@ -159,6 +163,7 @@ mgx_conda assembly python3 - \
 import sys
 import os
 import csv
+import re
 import glob
 from collections import defaultdict
 
@@ -532,6 +537,79 @@ def load_fegenie_hmm_results():
                     add_iron_label(parts[0], category)
     return used_files
 
+# T-21 commit B: per-sample FeGenie evidence aggregated onto NR representatives
+# through the CD-HIT clstr mapping (member "SAMPLE|raw" -> representative).
+# Semantics: an NR cluster is Iron-positive when >=1 member carries FeGenie
+# evidence - NOT "the representative sequence itself was hit by FeGenie".
+iron_evidence = {}  # rep -> dict(members_hit, members_total, categories set)
+
+def _load_clstr_member_to_rep():
+    """member id -> NR representative id. Two-pass per file: cd-hit may list
+    the '*' representative after some member lines, so resolve after reading
+    the whole cluster block."""
+    m2r = {}
+    for clstr in sorted(glob.glob(os.path.join(WORKDIR, "result/assembly/cdhit/*.clstr"))):
+        members, rep = [], None
+        with open(clstr) as fh:
+            for line in fh:
+                line = line.strip()
+                if line.startswith(">Cluster"):
+                    continue
+                m = re.search(r">([^ ]+?)\.\.\.", line)
+                if not m:
+                    continue
+                members.append(m.group(1))
+                if line.endswith("*"):
+                    rep = m.group(1)
+        if rep is not None:
+            for mid in members:
+                m2r[mid] = rep
+    return m2r
+
+def load_fegenie_per_sample():
+    """Aggregate per-sample FeGenie geneSummary rows onto NR representatives."""
+    if not iron_evidence and not iron_map:
+        m2r = _load_clstr_member_to_rep()
+        for summary in sorted(glob.glob(os.path.join(ANNO_DIR, "fegenie", "*", "FeGenie-geneSummary.csv"))):
+            sample = os.path.basename(os.path.dirname(summary))
+            with open(summary, newline="") as fh:
+                for row in csv.DictReader(fh):
+                    orf = (row.get("orf") or row.get("ORF") or row.get("gene") or "").strip()
+                    category = (row.get("category") or row.get("Category") or
+                                row.get("function") or row.get("Function") or "").strip()
+                    if not orf or category in ("", "-", "EMPTY", "category"):
+                        continue
+                    member = f"{sample}|{orf}"
+                    rep = m2r.get(member)
+                    if rep is None:
+                        continue  # orphan evidence counted in census
+                    ev = iron_evidence.setdefault(rep, {"members_hit": set(), "categories": set(), "total": None})
+                    ev["members_hit"].add(member)
+                    ev["categories"].add(category)
+        # annotate totals per cluster from clstr membership
+        sizes = {}
+        for clstr in sorted(glob.glob(os.path.join(WORKDIR, "result/assembly/cdhit/*.clstr"))):
+            with open(clstr) as fh:
+                rep = None; n = 0
+                for line in fh:
+                    line = line.strip()
+                    if line.startswith(">Cluster"):
+                        if rep is not None: sizes[rep] = n
+                        rep = None; n = 0; continue
+                    m = re.search(r">([^ ]+?)\.\.\.", line)
+                    if not m: continue
+                    n += 1
+                    if line.endswith("*"): rep = m.group(1)
+                if rep is not None: sizes[rep] = n
+        for rep, ev in iron_evidence.items():
+            ev["total"] = sizes.get(rep)
+            label = ";".join(sorted(ev["categories"]))
+            add_iron_label(rep, label)
+        n_members = sum(len(ev["members_hit"]) for ev in iron_evidence.values())
+        print(f"  FeGenie per-sample: {n_members} member hits -> {len(iron_evidence)} NR clusters (clstr N:1 aggregation)")
+        return len(iron_evidence)
+    return 0
+
 if os.path.isfile(fegenie_gene_summary):
     with open(fegenie_gene_summary, newline="") as fh:
         reader = csv.DictReader(fh)
@@ -543,6 +621,7 @@ if os.path.isfile(fegenie_gene_summary):
             add_iron_label(gene, category)
     if iron_map:
         print(f"  FeGenie: {len(iron_map)} 基因 (FeGenie-geneSummary.csv)")
+load_fegenie_per_sample()
     else:
         print(f"  [WARNING] FeGenie-geneSummary.csv 未提供可匹配 NR gene_id 的有效 category，尝试 fallback：{fegenie_gene_summary}")
 
@@ -672,7 +751,7 @@ tpm_headers   = [f"TPM_{s}" for s in samples]
 anno_headers  = ["COG_category", "KEGG_KO", "EC", "GO",
                  "ARG_AMRFinder", "ARG_CARD", "CAZyme",
                  "VFDB", "BacMet", "NCyc_gene", "PCyc_gene", "Defense_system",
-                 "SCyc_gene", "Iron_category", "UniProt_SwissProt"]
+                 "SCyc_gene", "Iron_category", "FeGenie_hit_member_count", "FeGenie_total_member_count", "UniProt_SwissProt"]
 
 outpath_b = os.path.join(OUT_DIR, "gene_annotation_matrix.tsv")
 with open(outpath_b, "w", newline="") as fh:
@@ -695,6 +774,8 @@ with open(outpath_b, "w", newline="") as fh:
             defense_map.get(gene, "-"),
             scyc_map.get(gene, "-"),
             iron_map.get(gene, "-"),
+            (len(iron_evidence[gene]["members_hit"]) if gene in iron_evidence else ""),
+            (iron_evidence[gene].get("total", "") if gene in iron_evidence else ""),
             uniprot_map.get(gene, "-"),
         ]
         writer.writerow(row)
