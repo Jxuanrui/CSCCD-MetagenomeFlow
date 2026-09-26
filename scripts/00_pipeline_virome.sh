@@ -150,7 +150,7 @@ run_sample() {
     should_run "checkv_filter" && { echo "[${SAMPLE_ID}] Step 54b: MIUVIG 质量过滤..."; bash "${SCRIPTS}/54b_vir_checkv_filter.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 checkv_filter"
 
     # 55 蛋白预测
-    should_run "prodigal_gv" && { echo "[${SAMPLE_ID}] Step 55: Prodigal-gv 蛋白预测..."; bash "${SCRIPTS}/55_vir_prodigal_gv.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 prodigal_gv"
+    should_run "prodigal_gv" && { echo "[${SAMPLE_ID}] Step 55: Prodigal (-p meta) 蛋白预测..."; bash "${SCRIPTS}/55_vir_prodigal_gv.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; } || echo "[${SAMPLE_ID}] 跳过 prodigal_gv"
 
     echo "[pipeline_virome] 样本 ${SAMPLE_ID} per-sample 步骤完成"
 }

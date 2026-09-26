@@ -165,7 +165,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 > **分析完成状态（Project_example，2026-06-18 更新）**
 > - 51-72 全部完成 ✅（含新增脚本 54b/70/71/72）；Snakemake 全流程验证通过（2026-06-17）
 > - **54b** (`54b_vir_checkv_filter.sh`): MIUVIG标准质量过滤 — 42个contigs（S01=0, S02=21, S03=4, S04=8, S05=1, S06=8）
-> - **55** Prodigal-gv：6/6样本完成，输出 `result/virus/prodigal/`
+> - **55** Prodigal(-p meta)：6/6样本完成，输出 `result/virus/prodigal/`
 > - **57** vOTU geNomad分类：`result/virus/votu/genomad/virus_taxonomy.tsv`（42行）✅
 > - **59** Salmon quant：6/6样本完成 ✅（修复：Salmon 0.14.1 decoy-aware 索引 segfault → 标准索引）
 > - **60** vOTU丰度矩阵：`result/virus/votu/table/vOTU_table_ann.txt`（533行）✅
@@ -185,7 +185,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 53 | `scripts/53_vir_virsorter2.sh` | 病毒序列预测（与geNomad取交集） | VirSorter2 |
 | 54 | `scripts/54_vir_checkv_contig.sh` | 病毒contig质量评估 | CheckV |
 | **54b** | **`scripts/54b_vir_checkv_filter.sh`** | **MIUVIG质量过滤**（Complete/HQ/MQ/LQ + Not-det+viral_genes≥1，长度≥2000bp） | **seqkit** |
-| 55 | `scripts/55_vir_prodigal_gv.sh` | 病毒蛋白预测（病毒遗传密码子） | Prodigal-gv |
+| 55 | `scripts/55_vir_prodigal_gv.sh` | 病毒蛋白预测（Prodigal `-p meta`；文件名 gv 为历史命名，meta_gv 在未来候选区） | Prodigal 2.6.3 |
 | 56 | `scripts/56_vir_votu_gen.sh` | vOTU 生成（95% ANI, 0.85 qcov；优先读54b filtered输出） | vclust |
 | 57 | `scripts/57_vir_votu_genomad.sh` | vOTU 分类学注释 | geNomad |
 | 58 | `scripts/58_vir_salmon_build.sh` | 构建 vOTU 定量索引（per-sample CDS + vOTU representatives） | Salmon |

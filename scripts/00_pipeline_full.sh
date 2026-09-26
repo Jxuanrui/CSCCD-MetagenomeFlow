@@ -240,7 +240,7 @@ set -euo pipefail
     bash ${PROJ_DIR}/scripts/54_vir_checkv_contig.sh \
         -t ${t} -w ${wd} -r ${PROJ_DIR}
 
-    # 步骤 55：Prodigal-gv 病毒蛋白预测
+    # 步骤 55：Prodigal(-p meta)病毒蛋白预测
     bash ${PROJ_DIR}/scripts/55_vir_prodigal_gv.sh \
         -t ${t} -w ${wd} -r ${PROJ_DIR}
 

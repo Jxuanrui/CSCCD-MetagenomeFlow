@@ -39,8 +39,10 @@ mgx_begin
 VMAGS_DIR="${WORKDIR}/result/virus/vmag/vmag_filtered"
 [ -d "${VMAGS_DIR}" ] || VMAGS_DIR="${WORKDIR}/result/virus/vmag/bins/vMAG"
 OUTFILE="${WORKDIR}/result/virus/coverm_quant/${SAMPLE}.tsv"
-R1="${WORKDIR}/temp/qc/kneaddata/${SAMPLE}/${SAMPLE}_1_kneaddata.fastq.gz"
-R2="${WORKDIR}/temp/qc/kneaddata/${SAMPLE}/${SAMPLE}_2_kneaddata.fastq.gz"
+# T-18: align with script 02's actual output layout (result/kneaddata,
+# "<sample>_N.kneaddata.fastq.gz"); the old temp/qc path never existed.
+R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
 if [ ! -d "${VMAGS_DIR}" ] || [ -z "$(ls "${VMAGS_DIR}"/*.fasta 2>/dev/null)" ]; then
     echo "[WARN] 无 vMAGs 可定量，创建空输出文件"

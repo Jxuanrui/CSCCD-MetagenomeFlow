@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 55_vir_prodigal_gv.sh
-# 功  能: 病毒蛋白编码基因预测（Prodigal-gv，病毒遗传密码表）
-#         工具版本：Prodigal-gv / Prodigal 2.6.3（conda env: assembly）
+# 功  能: 病毒蛋白编码基因预测（Prodigal -p meta 模式；标题中的 gv 为历史命名，实际未用密码表 15，meta_gv 属未来候选）
+#         工具版本：Prodigal 2.6.3（conda env: assembly），运行参数 -p meta
 # 依  赖: 54_vir_checkv_contig.sh 的病毒 contigs
 # 输  入: ${WORKDIR}/result/virus/checkv/{sample}/viruses.fna
 # 输  出: ${WORKDIR}/result/virus/prodigal/{sample}/
@@ -10,7 +10,7 @@
 #           {sample}.fna  — 基因核酸序列
 #           {sample}.gff  — 基因坐标
 #
-# 参  考: Prodigal-gv (virus-specific genetic code 15); Hyatt et al. 2010
+# 参  考: Prodigal (Hyatt et al. 2010)；Prodigal-gv/meta_gv (code 15) 记录于未来候选清单，未经 benchmark 不得切换
 # 用  法: bash 55_vir_prodigal_gv.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO
 # ==============================================================================
 
