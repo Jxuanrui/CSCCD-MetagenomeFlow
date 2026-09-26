@@ -57,7 +57,9 @@ mkdir -p "${RESULT_DIR}" "${TEMP_DIR}"
 echo "[fun_eggnog] 合并各样本 FAA 文件..."
 mapfile -t FAA_FILES < <(find "${PRODIGAL_DIR}" -name "*.faa" 2>/dev/null)
 if [ ${#FAA_FILES[@]} -eq 0 ]; then echo "[ERROR] 未找到 FAA 文件"; exit 1; fi
-cat "${FAA_FILES[@]}" > "${COMBINED_FAA}"
+# T-20: project-unique canonical ids (SAMPLE__raw) + explicit identity map;
+# the map table is the single source of identity for all downstream joins.
+python3 "${REPO}/scripts/utils/mgx_prefix_fasta.py" "${PRODIGAL_DIR}" "${COMBINED_FAA}" "${RESULT_DIR}/fungal_gene_id_map.tsv"
 
 N_PROTEINS=$(grep -c "^>" "${COMBINED_FAA}")
 echo "[fun_eggnog] 合并完成: ${#FAA_FILES[@]} 个样本, ${N_PROTEINS} 条蛋白序列"
