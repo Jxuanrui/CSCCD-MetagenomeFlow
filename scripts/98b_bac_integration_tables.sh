@@ -554,6 +554,10 @@ def _load_clstr_member_to_rep():
             for line in fh:
                 line = line.strip()
                 if line.startswith(">Cluster"):
+                    if rep is not None:          # T-21: flush previous cluster
+                        for mid in members:
+                            m2r[mid] = rep
+                    members, rep = [], None
                     continue
                 m = re.search(r">([^ ]+?)\.\.\.", line)
                 if not m:
@@ -621,9 +625,11 @@ if os.path.isfile(fegenie_gene_summary):
             add_iron_label(gene, category)
     if iron_map:
         print(f"  FeGenie: {len(iron_map)} 基因 (FeGenie-geneSummary.csv)")
-load_fegenie_per_sample()
     else:
         print(f"  [WARNING] FeGenie-geneSummary.csv 未提供可匹配 NR gene_id 的有效 category，尝试 fallback：{fegenie_gene_summary}")
+
+# T-21: aggregate per-sample FeGenie evidence onto NR representatives.
+load_fegenie_per_sample()
 
 if not iron_map:
     n_summary_files = load_fegenie_category_summaries()
