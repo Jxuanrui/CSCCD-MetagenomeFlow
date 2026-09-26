@@ -199,23 +199,51 @@ if failed:
 PYINNER
 
 
-# 加入分类注释
+# 加入分类注释 (T-17 four-state join)
+# geNomad taxonomy.tsv columns: seq_name | n_genes | agreement | taxid | lineage.
+# The old join read column 2 (a gene count) and keyed on gene-level rows, so
+# nearly every row came out 'Unclassified'. Now: canonical vOTU rows are
+# annotated via their representative contig (through votu_id_map.tsv), with an
+# explicit annotation_status column so 'truly unclassified' is never confused
+# with 'join failed'.
 if [ -f "${TAXONOMY}" ] && [ -f "${OUTDIR}/vOTU_table.txt" ]; then
-    python3 -c "
-import sys
+    python3 - "${LEGACY_TABLE}" "${TAXONOMY}" "${ID_MAP}" "${SENTINEL}" <<'PYANN'
+import sys, re
+table, tax_path, id_map_path, out = sys.argv[1:5]
 tax = {}
-with open('${TAXONOMY}') as f:
-    for line in f:
-        parts = line.strip().split('\t')
-        if len(parts) >= 2: tax[parts[0]] = parts[1]
-with open('${OUTDIR}/vOTU_table.txt') as f:
-    header = f.readline().strip()
-    print(header + '\ttaxonomy')
-    for line in f:
-        g = line.split('\t')[0]
-        t = tax.get(g, 'Unclassified')
-        print(line.strip() + '\t' + t)
-" > "${SENTINEL}"
+for line in open(tax_path):
+    parts = line.rstrip("\n").split("\t")
+    if len(parts) >= 5:
+        tax[parts[0]] = parts[4].strip()          # lineage column
+
+bare_to_repr = {}
+for line in open(id_map_path):
+    parts = line.rstrip("\n").split("\t")
+    if len(parts) >= 5:
+        bare_to_repr[parts[0].split("__", 1)[-1]] = parts[2]
+
+def status_for(votu):
+    contig = votu.split("__", 1)[-1]
+    repr_id = bare_to_repr.get(contig, contig)
+    lineage = None
+    for key in (repr_id, contig, votu):
+        if key in tax:
+            lineage = tax[key]
+            break
+    if lineage is None:
+        return "", "source_missing"
+    if lineage == "" or lineage.lower() in ("unclassified", "na", "nan", "-"):
+        return lineage, "source_truly_unclassified"
+    return lineage, "annotated"
+
+with open(table) as fh, open(out, "w") as fo:
+    header = fh.readline().rstrip("\n")
+    fo.write(header + "\ttaxonomy\tannotation_status\n")
+    for line in fh:
+        row = line.rstrip("\n").split("\t")
+        lineage, status = status_for(row[0])
+        fo.write(line.rstrip("\n") + "\t" + (lineage or "Unclassified") + "\t" + status + "\n")
+PYANN
 else
     cp "${OUTDIR}/vOTU_table.txt" "${SENTINEL}"
 fi
