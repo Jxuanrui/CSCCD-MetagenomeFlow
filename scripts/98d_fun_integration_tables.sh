@@ -677,5 +677,96 @@ if [ ${EXIT_CODE} -ne 0 ]; then
 fi
 
 echo ""
+
+# --- E-FUN-01 fungal evidence layer (facts only; no confidence tiers) -------
+# Sources (inventory c89c372): metaphlan4_euk (anchor, mpa vOct22 style,
+# relab 0-100), microfisher (NCBI taxid, fixed fungal taxa, reads - the
+# fungal-scoped NCBI view; raw bracken is NOT used: PlusPF output mixes
+# bacteria and no frozen kingdom filter exists), funomic via 75b species
+# counts when present. Cross-source species joins are FORBIDDEN without a
+# crosswalk: every row keeps its own name+system+rank+source identity;
+# canonical_fungal_id stays empty for non-anchor rows by design.
+# Flags are heuristic only (0.01% = 0.0001 fraction / 0.01 on 0-100 scale,
+# computed per-source at its own scale). negative_control_available=false:
+# low-support flags are NOT contamination statements.
+python3 - "${WORKDIR}" <<'PYFUN'
+import csv, glob, os, sys
+workdir = sys.argv[1]
+out = os.path.join(workdir, "result", "integration", "fungi", "fungal_evidence.tsv")
+rows = []
+census = {"mpa": 0, "microfisher": 0, "funomic": 0, "low_read": 0, "low_relab": 0}
+NEG = "false"
+# 1) metaphlan4_euk (anchor)
+for prof in sorted(glob.glob(os.path.join(workdir, "result", "fungi", "metaphlan4", "*", "*_profile.txt"))):
+    sample = os.path.basename(os.path.dirname(prof))
+    for line in open(prof):
+        if line.startswith("#"):
+            continue
+        parts = line.rstrip("\n").split("\t")
+        if len(parts) < 2 or not parts[0].endswith("__") or parts[0].count("|") < 6:
+            continue  # species-level clade rows only (k|p|c|o|f|g|s)
+        relab = parts[1]
+        try:
+            v = float(relab)
+        except ValueError:
+            continue
+        if v <= 0:
+            continue  # zero semantics: not reported as detected
+        name = parts[0].split("|")[-1][3:]
+        census["mpa"] += 1
+        low = v < 0.01  # 0.01% on the 0-100 scale
+        census["low_relab"] += low
+        rows.append([name, "mpa_vOct22-style", "species", "metaphlan4_euk", sample, "TRUE",
+                     "", f"{v}", low, "", "", "ANCHOR", prof, NEG])
+# 2) microfisher (fungal-scoped NCBI, reads)
+for tab in sorted(glob.glob(os.path.join(workdir, "result", "fungi", "microfisher", "*", "*_fungal_profile.tsv"))):
+    sample = os.path.basename(os.path.dirname(tab))
+    with open(tab) as fh:
+        rd = csv.DictReader(fh, delimiter="\t")
+        for r in rd:
+            try:
+                reads = int(float(r.get("reads", 0) or 0))
+            except ValueError:
+                continue
+            if reads <= 0:
+                continue  # zero = not detected in this fixed-taxon panel
+            census["microfisher"] += 1
+            low = reads < 10
+            census["low_read"] += low
+            rows.append([r.get("taxon", ""), f"NCBI-taxid({r.get('taxid','')})",
+                         r.get("abundance_level", ""), "microfisher", sample, "TRUE",
+                         str(reads), "", "", low, "", "SAME_SYSTEM_NO_CROSSWALK", tab, NEG])
+# 3) funomic species counts via 75b (if present)
+fc = os.path.join(workdir, "result", "integration", "fungi", "funomic_species_count.tsv")
+if os.path.isfile(fc):
+    with open(fc) as fh:
+        rd = csv.reader(fh, delimiter="\t")
+        header = next(rd)
+        samples = header[1:]
+        for r in rd:
+            for smp, val in zip(samples, r[1:]):
+                try:
+                    n = int(float(val))
+                except ValueError:
+                    continue
+                if n <= 0:
+                    continue
+                census["funomic"] += 1
+                low = n < 10
+                census["low_read"] += low
+                rows.append([r[0], "FunOMIC-protein-DB", "species", "funomic_75b", smp, "TRUE",
+                             str(n), "", "", low, "", "NO_CROSSWALK", fc, NEG])
+with open(out, "w", newline="") as fh:
+    w = csv.writer(fh, delimiter="\t")
+    w.writerow(["source_taxon_name","taxonomy_system","taxonomy_rank","classifier_source","sample",
+                "detected","read_count","relative_abundance","low_relative_abundance_flag",
+                "low_read_support_flag","canonical_fungal_id","mapping_status","provenance_file",
+                "negative_control_available"])
+    w.writerows(rows)
+print(f"  [FungalEvidence] rows={len(rows)} mpa={census['mpa']} microfisher={census['microfisher']} "
+      f"funomic={census['funomic']} low_read_flag={census['low_read']} low_relab_flag={census['low_relab']} "
+      f"negctrl={NEG} | 跨源 join 未执行(无 crosswalk), flags=heuristic only")
+PYFUN
+
 mgx_end "integration"
 echo "[integration] 输出目录: ${OUT_DIR}"
