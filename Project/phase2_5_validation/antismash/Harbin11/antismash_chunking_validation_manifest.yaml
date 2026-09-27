@@ -1,0 +1,23 @@
+# E-HARD-02 frozen manifest (deterministic selection, no manual pick)
+generated: 2026-09-27T07:53:51+00:00
+git_head: 9be9cf2f8c13ece7e5028ef809b6aef1c852cc6c
+selected_sample: Sample11
+selection_rule: "合法样本(≠Sample16/17/18)∪ 有 region-GBK BGC 证据 → assembly bp 最接近候选中位数(median=294,760,651.5) → 并列取 lexical"
+candidate_sample_count: 10
+candidates: [Sample4, Sample2, Sample12, Sample1, Sample11, Sample3, Sample10, Sample13, Sample14, Sample15]
+assembly_bp: 283730228
+contig_count: 137115
+bgc_region_gbk: 289
+input_path: Project/Project01/result/assembly/megahit/Sample11/Sample11.contigs.fa
+input_sha256: b13080a3a4730c2b674ece916debf25610cfbeddf8fe76ddf1dd9f08b66c4a42
+env: envs/antismash8 (conda run; 版本随 env 冻结)
+env_manifest: docs/manifests/envs (Step 0 冻结 dacb154a1e4f3186)
+database: db/antismash8 (manifest 见 docs/manifests/databases.yaml antismash8 条)
+monolithic_command: "antismash <contigs> --taxon bacteria --cpus N --databases db/antismash8 --genefinding-tool prodigal-m --minimal --enable-nrps-pks  (=28 号冻结生产命令)"
+chunked_command: "同参数逐 chunk; chunk 单位=完整 FASTA record; 24 chunks bp-balanced largest-first greedy; merge 仅在全部 chunk DONE 后"
+chunking_policy: {atomic_unit: full_record, chunks: 24, balance: bp_greedy_largest_first, ordering: chunk_00..23, resume: per-chunk antismash_done.txt skip, merge_gate: all_done}
+comparison_contract:
+  fields_compared: [input_record/bp/id conservation, region universe(contig+coords+product), region count, downstream-consumed annotations]
+  allowed_differences: [wallclock, paths, timestamps, run UUID, log/chunk/file ordering]
+  pass_rule: "unexpected scientific difference = 0; input 守恒; failure/resume PASS"
+write_audit: "全程 phase2_5_validation/ 隔离; 零 production 写入(守卫已就位)"
