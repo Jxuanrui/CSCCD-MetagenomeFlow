@@ -371,6 +371,53 @@ with open(vfdb_file) as fh:
 
 print(f"  VFDB: {len(vfdb_map)} 基因")
 
+# 2f1. E-GENE-01: gene -> contig -> MAG membership -> sample.
+# Membership source of truth = contig headers inside the FINAL dereplicated
+# MAG FASTAs (explicit artifacts). MAG contigs carry no sample prefix, so
+# matching is scoped: gene prefix sample == MAG filename sample segment.
+# Reassembled bins (_sub) contain reassembly contigs that never match the
+# original assembly contigs - those genes stay NOT_BINNED and are counted
+# (documented provenance gap; no filename/substring guessing).
+_DEREP = os.path.join(WORKDIR, "result", "binning", "drep", "dereplicated_genomes")
+mag_contigs_by_sample = {}
+if os.path.isdir(_DEREP):
+    for mag_fa in sorted(glob.glob(os.path.join(_DEREP, "*.fa"))):
+        mag_id = os.path.basename(mag_fa)[:-3]
+        sample_seg = mag_id.split("__", 1)[0] if "__" in mag_id else ""
+        contigs = mag_contigs_by_sample.setdefault(sample_seg, {})
+        with open(mag_fa) as fh:
+            for line in fh:
+                if line.startswith(">"):
+                    cid = line[1:].split()[0].strip()
+                    contigs.setdefault(cid, []).append(mag_id)
+
+gene_census = {"total": 0, "mapped_one": 0, "not_binned": 0, "multi_mag": 0, "non_conforming": 0}
+
+def gene_contig_parts(gene):
+    # documented inverse of Prodigal naming SAMPLE|contig_geneidx
+    if "|" not in gene:
+        return None, None
+    sample, rest = gene.split("|", 1)
+    cidx, _, gidx = rest.rpartition("_")
+    if not cidx or not gidx.isdigit():
+        return None, None
+    return sample, cidx
+
+def mag_membership(gene):
+    sample, contig = gene_contig_parts(gene)
+    if contig is None:
+        gene_census["non_conforming"] += 1
+        return "", "-"
+    mags = mag_contigs_by_sample.get(sample, {}).get(contig, [])
+    if len(mags) == 1:
+        gene_census["mapped_one"] += 1
+        return mags[0], contig
+    if len(mags) > 1:
+        gene_census["multi_mag"] += 1
+        return f"MULTI_MAG({len(mags)})", contig
+    gene_census["not_binned"] += 1
+    return "NOT_BINNED", contig
+
 # 2f2. Pfam (E-FUNC-01): census = heavy 1:N (P01: 2.27M records, 510k genes
 # with >1 family hit) - full relation goes to a sidecar evidence table, the
 # matrix only carries Pfam_hit_count. NO collapse into a single label.
@@ -798,7 +845,7 @@ anno_headers  = ["COG_category", "KEGG_KO", "EC", "GO",
                  "SCyc_gene", "Iron_category", "FeGenie_hit_member_count", "FeGenie_total_member_count", "UniProt_SwissProt",
                  "KEGG_evalue", "KEGG_bitscore", "VFDB_evalue", "VFDB_bitscore",
                  "NCyc_evalue", "NCyc_bitscore", "eggNOG_Description",
-                 "Pfam_hit_count"]
+                 "Pfam_hit_count", "Source_Contig", "MAG_Membership"]
 
 outpath_b = os.path.join(OUT_DIR, "gene_annotation_matrix.tsv")
 with open(outpath_b, "w", newline="") as fh:
@@ -806,6 +853,8 @@ with open(outpath_b, "w", newline="") as fh:
     writer.writerow(["gene_id"] + tpm_headers + anno_headers)
     for gene in all_genes:
         tpm_vals = [f"{gene_tpm[gene].get(s, 0.0):.4f}" for s in samples]
+        _mm = mag_membership(gene)          # E-GENE-01: (MAG, contig), census counted once
+        gene_census["total"] += 1
         row = [gene] + tpm_vals + [
             eggnog_cog.get(gene, "-"),
             eggnog_ko.get(gene, "-"),
@@ -829,9 +878,12 @@ with open(outpath_b, "w", newline="") as fh:
             ncyc_evalue.get(gene, "-"), ncyc_bitscore.get(gene, "-"),
             eggnog_desc.get(gene, "-"),
             (pfam_hit_count.get(gene, "") if pfam_hit_count else ""),
+            _mm[1], _mm[0],
         ]
         writer.writerow(row)
 
+print("  [E-GENE-01 census] genes: {} | mapped_one: {} | not_binned: {} | multi_mag: {} | non_conforming: {}".format(
+    gene_census["total"], gene_census["mapped_one"], gene_census["not_binned"], gene_census["multi_mag"], gene_census["non_conforming"]))
 print(f"  → gene_annotation_matrix.tsv: {len(all_genes)} 基因 × "
       f"{len(tpm_headers)+len(anno_headers)+1} 列")
 
