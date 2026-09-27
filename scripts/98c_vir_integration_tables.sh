@@ -579,6 +579,7 @@ def build_amg_evidence(votu_names):
         ann = cand
         break
     rows = []
+    flags_col_missing = False
     excluded_f = [0]
     aux_source_global = "NO_DRAM_OUTPUT"
     if ann:
@@ -590,6 +591,11 @@ def build_amg_evidence(votu_names):
                     hdr = row
                     idx = {c: n for n, c in enumerate(hdr)}
                     flags_col = idx.get("amg_flags")
+                    # P2-U-07 Case C guard: amg_flags column absent while aux
+                    # exists matches NEITHER known producer mode (native needs
+                    # the flags column; 71's patch only fires when aux is
+                    # missing) -> PROVENANCE_AMBIGUOUS, never guessed.
+                    flags_col_missing = flags_col is None
                     has_flags = False
                     continue
                 if hdr is None or not row or len(row) < 5:
@@ -619,7 +625,10 @@ def build_amg_evidence(votu_names):
                              "AMG_FLAGGED" if flags else "KO_ANNOTATED",
                              flags or "-", context, ann])
         # final pass provenance: NATIVE only if flags actually seen
-        if not any(r[5] == "NATIVE" for r in rows):
+        if flags_col_missing:
+            for r in rows:
+                r[5] = "PROVENANCE_AMBIGUOUS"
+        elif not any(r[5] == "NATIVE" for r in rows):
             for r in rows:
                 r[5] = "UNASSESSED_AUX"
     summary_by_scaffold = {}
@@ -628,7 +637,7 @@ def build_amg_evidence(votu_names):
         summary_by_scaffold[r[0]] += 1
     n_flag = sum(1 for r in rows if r[6] == "AMG_FLAGGED")
     print(f"  [AMGEvidence] evidence rows={len(rows)} (flagged={n_flag}, ko_annotated={len(rows)-n_flag}) | DRAM 'F'-excluded counted not emitted: {excluded_f[0]} "
-          f"aux_source={'NATIVE(amg_flags present)' if rows and rows[0][5]=='NATIVE' else 'UNASSESSED_AUX(placeholder, P2-U-07)'} "
+          f"aux_source={rows[0][5] if rows else 'NO_ROWS'} "
           f"| annotation != mechanism (schema 契约)")
     return rows, summary_by_scaffold
 
