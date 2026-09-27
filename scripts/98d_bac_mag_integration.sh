@@ -156,17 +156,56 @@ def read_gtdb(path):
     return data
 
 def read_checkm2(path):
+    """E-MAG-01: carry the full evidence profile, not just comp/cont.
+    CheckM2 quality_report already provides Contig_N50, Genome_Size,
+    GC_Content, Total_Coding_Sequences and the completeness model."""
     data = {}
     with open(path, newline="") as fh:
         reader = csv.DictReader(fh, delimiter="\t")
         for row in reader:
             mag = row.get("Name", "").strip()
             if mag:
-                data[mag] = (
-                    row.get("Completeness", "-").strip() or "-",
-                    row.get("Contamination", "-").strip() or "-",
-                )
+                data[mag] = {
+                    "comp": row.get("Completeness", "-").strip() or "-",
+                    "cont": row.get("Contamination", "-").strip() or "-",
+                    "n50": row.get("Contig_N50", "-").strip() or "-",
+                    "size": row.get("Genome_Size", "-").strip() or "-",
+                    "gc": row.get("GC_Content", "-").strip() or "-",
+                    "cds": row.get("Total_Coding_Sequences", "-").strip() or "-",
+                    "model": row.get("Completeness_Model_Used", "-").strip() or "-",
+                }
     return data
+
+def read_gunc(gunc_dir):
+    """E-MAG-01: GUNC stays optional evidence - absent output yields '-'
+    columns, never a silent drop (38b is not in rule all by default)."""
+    data = {}
+    import glob as _glob
+    for tsv in _glob.glob(os.path.join(gunc_dir, "**", "GUNC.progenomes_2.1.maxCSS_level.tsv"), recursive=True):
+        with open(tsv, newline="") as fh:
+            for row in csv.DictReader(fh, delimiter="\t"):
+                name = (row.get("genome") or row.get("name") or "").strip()
+                if not name:
+                    continue
+                name = strip_fa(name)
+                css = (row.get("CSS") or "-").strip()
+                passed = (row.get("pass.GUNC") or row.get("pass") or "-").strip()
+                data[name] = (css, passed)
+    return data
+
+def parse_mag_source(mag_id):
+    """E-MAG-01: sample and binner provenance from the dRep file naming
+    convention SAMPLE__binner_bin.NNN[_sub] (documented in 32/36 chains)."""
+    sample, binner = "-", "-"
+    base = mag_id
+    if "__" in base:
+        sample, rest = base.split("__", 1)
+        for tag in ("metabat2_bin.", "maxbin2_bin.", "semibin2_", "quickbin_"):
+            i = rest.find(tag)
+            if i >= 0:
+                binner = tag.rstrip(". _").replace("_bin", "").replace("_", "-")
+                break
+    return sample, binner
 
 def read_drep(path):
     data = {}
@@ -235,6 +274,9 @@ gtdb = read_gtdb(GTDB_FILE)
 checkm2 = read_checkm2(CHECKM2_FILE)
 drep = read_drep(DREP_WDB)
 coverm_tpm, coverm_seen_mags = read_coverm(samples)
+# binning root derived from the derep dir argument (shell BIN_DIR is not
+# visible inside this python heredoc): .../binning/drep/dereplicated_genomes
+gunc = read_gunc(os.path.join(os.path.dirname(os.path.dirname(sys.argv[4] if False else DEREP_DIR)), "gunc")) if False else read_gunc(os.path.join(os.path.dirname(os.path.dirname(DEREP_DIR)), "gunc"))
 
 print(f"  GTDB-Tk rows: {len(gtdb)}")
 print(f"  CheckM2 rows: {len(checkm2)}")
@@ -262,7 +304,8 @@ for mag in mags:
     else:
         complete += 1
 
-    comp, cont = checkm2.get(mag, ("-", "-"))
+    _q = checkm2.get(mag, {})
+    comp, cont = _q.get("comp", "-"), _q.get("cont", "-")
     cluster, score = drep.get(mag, ("-", "-"))
     row = [
         mag,
@@ -272,6 +315,15 @@ for mag in mags:
         cluster,
         score,
     ]
+    # E-MAG-01 evidence profile (annotation-only; existing columns untouched)
+    q = checkm2.get(mag, {})
+    css, gunc_pass = gunc.get(mag, ("-", "-"))
+    sample_src, binner_src = parse_mag_source(mag)
+    row.extend([
+        q.get("n50", "-"), q.get("size", "-"), q.get("gc", "-"),
+        q.get("cds", "-"), q.get("model", "-"),
+        css, gunc_pass, sample_src, binner_src,
+    ])
     row.extend(coverm_tpm.get(mag, {}).get(sample, "0") for sample in samples)
     rows.append(row)
 
@@ -280,6 +332,9 @@ with open(OUT_FILE, "w", newline="") as fh:
     writer.writerow([
         "MAG_id", "GTDB_classification", "CheckM2_Completeness",
         "CheckM2_Contamination", "dRep_cluster", "dRep_score",
+        "Contig_N50", "Genome_Size", "GC_Content", "Total_CDS",
+        "Completeness_Model", "GUNC_CSS", "GUNC_pass",
+        "Source_Sample", "Binner_Source",
     ] + [f"TPM_{s}" for s in samples])
     writer.writerows(rows)
 
