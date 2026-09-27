@@ -323,6 +323,7 @@ for mag in mags:
         q.get("n50", "-"), q.get("size", "-"), q.get("gc", "-"),
         q.get("cds", "-"), q.get("model", "-"),
         css, gunc_pass, sample_src, binner_src,
+        "GTDB-Tk R214",   # E-TAX: name never travels without its system
     ])
     row.extend(coverm_tpm.get(mag, {}).get(sample, "0") for sample in samples)
     rows.append(row)
@@ -334,7 +335,7 @@ with open(OUT_FILE, "w", newline="") as fh:
         "CheckM2_Contamination", "dRep_cluster", "dRep_score",
         "Contig_N50", "Genome_Size", "GC_Content", "Total_CDS",
         "Completeness_Model", "GUNC_CSS", "GUNC_pass",
-        "Source_Sample", "Binner_Source",
+        "Source_Sample", "Binner_Source", "Taxonomy_System",
     ] + [f"TPM_{s}" for s in samples])
     writer.writerows(rows)
 
