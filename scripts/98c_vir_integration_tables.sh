@@ -540,7 +540,7 @@ def build_detection_evidence(votu_names):
                     v = canon(raw)
                     if v is None or v not in valid:
                         preqc += 1
-                        status = "MAPPED_PRE_QC" if v is not None else "MAPPING_MISS"
+                        status = "MAPPED_PRE_QC" if v is not None else "OUTSIDE_FINAL_UNIVERSE"
                         rows.append(["", "geNomad", raw, f, "DETECTED", status, sample])
                     else:
                         rows.append([v, "geNomad", raw, f, "DETECTED", "MAPPED_FINAL", sample])
@@ -554,7 +554,7 @@ def build_detection_evidence(votu_names):
                     v = canon(raw)
                     if v is None or v not in valid:
                         preqc += 1
-                        status = "MAPPED_PRE_QC" if v is not None else "MAPPING_MISS"
+                        status = "MAPPED_PRE_QC" if v is not None else "OUTSIDE_FINAL_UNIVERSE"
                         rows.append(["", "VirSorter2", raw, f, "DETECTED", status, sample])
                     else:
                         rows.append([v, "VirSorter2", raw, f, "DETECTED", "MAPPED_FINAL", sample])
