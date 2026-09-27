@@ -567,6 +567,72 @@ def build_detection_evidence(votu_names):
     return rows, summary
 
 
+# --- E-VIR-03 AMG Evidence Layer. Provenance rule (artifact-structure
+# based, not guessed): amg_flags with >=1 real value => viral DB present =>
+# auxiliary_score is NATIVE (5 = DRAM-v native 'no aux evidence' tier);
+# amg_flags absent/all-empty => 71's schema patch => UNASSESSED_AUX
+# placeholder (P2-U-07). annotation != mechanism by contract.
+def build_amg_evidence(votu_names):
+    import glob as _g
+    ann = None
+    for cand in _g.glob(os.path.join(VIRUS_DIR, "dram", "annotate", "annotations.tsv")):
+        ann = cand
+        break
+    rows = []
+    excluded_f = [0]
+    aux_source_global = "NO_DRAM_OUTPUT"
+    if ann:
+        with open(ann, newline="") as fh:
+            rd = csv.reader(fh, delimiter="\t")
+            hdr = None
+            for row in rd:
+                if hdr is None and row and row[1] == "fasta":
+                    hdr = row
+                    idx = {c: n for n, c in enumerate(hdr)}
+                    flags_col = idx.get("amg_flags")
+                    has_flags = False
+                    continue
+                if hdr is None or not row or len(row) < 5:
+                    continue
+                flags = (row[flags_col].strip() if flags_col is not None and flags_col < len(row) else "")
+                ko = (row[idx.get("ko_id", 10)].strip() if idx.get("ko_id", 10) < len(row) else "")
+                kegg = (row[idx.get("kegg_hit", 11)].strip() if idx.get("kegg_hit", 11) < len(row) else "")
+                aux = (row[idx.get("auxiliary_score", 9)].strip() if idx.get("auxiliary_score", 9) < len(row) else "")
+                # DRAM-v semantics: flags 'F' = explicitly EXCLUDED from AMG by
+                # the tool; empty = not assessed. Real candidate flags carry
+                # M/K/etc. Provenance marker: any real flag => aux column is
+                # NATIVE; F/empty only => placeholder path (P2-U-07).
+                if flags and flags not in ("F", "-", "NA"):
+                    has_flags = True
+                if flags in ("F", "-", "NA") or (not flags and not ko):
+                    if flags == "F":
+                        excluded_f[0] += 1
+                    continue  # F-excluded / unassessed rows are counted, not emitted
+                scaffold = row[idx.get("scaffold", 2)].strip() if idx.get("scaffold", 2) < len(row) else ""
+                context = "{scaffold}:{start}-{end}({strand})".format(
+                    scaffold=scaffold,
+                    start=row[idx["start_position"]] if "start_position" in idx and idx["start_position"] < len(row) else "",
+                    end=row[idx["end_position"]] if "end_position" in idx and idx["end_position"] < len(row) else "",
+                    strand=row[idx["strandedness"]] if "strandedness" in idx and idx["strandedness"] < len(row) else "")
+                rows.append([scaffold, row[0] if row[0] else scaffold, ko or kegg or "-",
+                             "DRAM-v", aux, "NATIVE" if has_flags else "PENDING",
+                             "AMG_FLAGGED" if flags else "KO_ANNOTATED",
+                             flags or "-", context, ann])
+        # final pass provenance: NATIVE only if flags actually seen
+        if not any(r[5] == "NATIVE" for r in rows):
+            for r in rows:
+                r[5] = "UNASSESSED_AUX"
+    summary_by_scaffold = {}
+    for r in rows:
+        summary_by_scaffold.setdefault(r[0], 0)
+        summary_by_scaffold[r[0]] += 1
+    n_flag = sum(1 for r in rows if r[6] == "AMG_FLAGGED")
+    print(f"  [AMGEvidence] evidence rows={len(rows)} (flagged={n_flag}, ko_annotated={len(rows)-n_flag}) | DRAM 'F'-excluded counted not emitted: {excluded_f[0]} "
+          f"aux_source={'NATIVE(amg_flags present)' if rows and rows[0][5]=='NATIVE' else 'UNASSESSED_AUX(placeholder, P2-U-07)'} "
+          f"| annotation != mechanism (schema 契约)")
+    return rows, summary_by_scaffold
+
+
 def load_vcontact(votu_names):
     print("[Step7] 解析 vConTACT3")
     votu_family = {}
@@ -694,6 +760,15 @@ votu_vog_ids = load_vog(pharokka_gene_to_contig)
 votu_lifestyle, votu_virulent_prob = load_bacphlip()
 host_evidence_rows, host_summary, host_orphans = build_host_evidence(all_votus)
 det_rows, det_summary = build_detection_evidence(all_votus)
+amg_rows, amg_by_scaffold = build_amg_evidence(all_votus)
+_amg_sc = os.path.join(OUT_DIR, "viral_amg_evidence.tsv")
+with open(_amg_sc, "w", newline="") as _fh:
+    _w = csv.writer(_fh, delimiter="\t")
+    _w.writerow(["scaffold","viral_gene_id","function_annotation","annotation_source",
+                 "auxiliary_score","auxiliary_score_source","evidence_status","amg_flags",
+                 "gene_context","provenance_file"])
+    _w.writerows(amg_rows)
+print(f"  [AMGEvidence] sidecar -> {_amg_sc} ({len(amg_rows)} rows)")
 _det_sc = os.path.join(OUT_DIR, "viral_detection_evidence.tsv")
 with open(_det_sc, "w", newline="") as _fh:
     _w = csv.writer(_fh, delimiter="\t")
@@ -757,6 +832,7 @@ anno_headers = [
     "Host_Best_Target", "Host_Best_Resolution", "Host_Display_Level",
     "Host_Evidence_Count", "Host_Independent_Group_Count", "Host_Conflict_Flag",
     "Detected_By_geNomad", "Detected_By_VirSorter2", "Caller_Support_Count",
+    "AMG_Evidence_Count",
     "viral_family",
     "VOG_IDs",
 ]
@@ -787,6 +863,7 @@ with open(matrix_path, "w", newline="") as fh:
                 *([("TRUE" if "geNomad" in det_summary.get(votu, set()) else "FALSE"),
                    ("TRUE" if "VirSorter2" in det_summary.get(votu, set()) else "FALSE"),
                    str(len(det_summary.get(votu, set())))]),
+                str(amg_by_scaffold.get(votu.split("__", 1)[-1], 0)),
                 votu_family.get(votu, "-"),
                 ",".join(sorted(votu_vog_ids.get(votu, set()))) if votu_vog_ids.get(votu) else "-",
             ]
