@@ -521,6 +521,52 @@ def build_host_evidence(votu_names):
     return rows, summary, n_orphan
 
 
+# --- E-VIR-02 Detection Consensus (evidence-only; caller support is NOT
+# confidence and NOT QC status). Union+exact-dedup semantics documented as-is.
+def build_detection_evidence(votu_names):
+    import glob as _g
+    canon = canonical_lookup_factory(os.path.join(VIRUS_DIR, "votu", "votu_id_map.tsv"))
+    valid = set(votu_names)
+    rows = []
+    preqc = 0
+    # geNomad: virus + provirus fna per sample (caller = geNomad)
+    for f in sorted(_g.glob(os.path.join(VIRUS_DIR, "genomad", "*", "*.contigs_summary", "*.contigs_virus.fna")) +
+                    _g.glob(os.path.join(VIRUS_DIR, "genomad", "*", "*.contigs_summary", "*.contigs_provirus.fna"))):
+        sample = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(f))))
+        with open(f) as fh:
+            for line in fh:
+                if line.startswith(">"):
+                    raw = line[1:].split()[0].strip()
+                    v = canon(raw)
+                    if v is None or v not in valid:
+                        preqc += 1
+                        status = "MAPPED_PRE_QC" if v is not None else "MAPPING_MISS"
+                        rows.append(["", "geNomad", raw, f, "DETECTED", status, sample])
+                    else:
+                        rows.append([v, "geNomad", raw, f, "DETECTED", "MAPPED_FINAL", sample])
+    # VirSorter2: final-viral-combined.fa (caller = VirSorter2)
+    for f in sorted(_g.glob(os.path.join(VIRUS_DIR, "virsorter2", "*", "final-viral-combined.fa"))):
+        sample = os.path.basename(os.path.dirname(f))
+        with open(f) as fh:
+            for line in fh:
+                if line.startswith(">"):
+                    raw = line[1:].split()[0].strip().rstrip("|")
+                    v = canon(raw)
+                    if v is None or v not in valid:
+                        preqc += 1
+                        status = "MAPPED_PRE_QC" if v is not None else "MAPPING_MISS"
+                        rows.append(["", "VirSorter2", raw, f, "DETECTED", status, sample])
+                    else:
+                        rows.append([v, "VirSorter2", raw, f, "DETECTED", "MAPPED_FINAL", sample])
+    summary = {}
+    for r in rows:
+        if r[5] == "MAPPED_FINAL":
+            summary.setdefault(r[0], set()).add(r[1])
+    print(f"  [DetectionEvidence] caller relations={len(rows)} final-vOTU-covered={len(summary)} "
+          f"pre-QC/unmapped={preqc} (union+exact-dedup 生产语义, caller support ≠ confidence)")
+    return rows, summary
+
+
 def load_vcontact(votu_names):
     print("[Step7] 解析 vConTACT3")
     votu_family = {}
@@ -647,6 +693,13 @@ pharokka_gene_to_contig, votu_category = load_pharokka()
 votu_vog_ids = load_vog(pharokka_gene_to_contig)
 votu_lifestyle, votu_virulent_prob = load_bacphlip()
 host_evidence_rows, host_summary, host_orphans = build_host_evidence(all_votus)
+det_rows, det_summary = build_detection_evidence(all_votus)
+_det_sc = os.path.join(OUT_DIR, "viral_detection_evidence.tsv")
+with open(_det_sc, "w", newline="") as _fh:
+    _w = csv.writer(_fh, delimiter="\t")
+    _w.writerow(["canonical_votu_id","caller_name","caller_raw_id","source_file","detection_status","mapping_status","source_sample"])
+    _w.writerows(det_rows)
+print(f"  [DetectionEvidence] sidecar -> {_det_sc} ({len(det_rows)} rows)")
 _host_sc = os.path.join(OUT_DIR, "viral_host_evidence.tsv")
 with open(_host_sc, "w", newline="") as _fh:
     _w = csv.writer(_fh, delimiter="\t")
@@ -703,6 +756,7 @@ anno_headers = [
     "host_confidence",
     "Host_Best_Target", "Host_Best_Resolution", "Host_Display_Level",
     "Host_Evidence_Count", "Host_Independent_Group_Count", "Host_Conflict_Flag",
+    "Detected_By_geNomad", "Detected_By_VirSorter2", "Caller_Support_Count",
     "viral_family",
     "VOG_IDs",
 ]
@@ -730,6 +784,9 @@ with open(matrix_path, "w", newline="") as fh:
                 votu_host.get(votu, "-"),
                 votu_host_conf.get(votu, "-"),
                 *host_summary.get(votu, ["-","-","UNKNOWN","0","0","FALSE"]),
+                *([("TRUE" if "geNomad" in det_summary.get(votu, set()) else "FALSE"),
+                   ("TRUE" if "VirSorter2" in det_summary.get(votu, set()) else "FALSE"),
+                   str(len(det_summary.get(votu, set())))]),
                 votu_family.get(votu, "-"),
                 ",".join(sorted(votu_vog_ids.get(votu, set()))) if votu_vog_ids.get(votu) else "-",
             ]
