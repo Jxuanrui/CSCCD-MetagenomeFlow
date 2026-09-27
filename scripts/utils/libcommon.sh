@@ -126,6 +126,18 @@ mgx_require() {
 
 # 计时开始
 mgx_begin() {
+    # P2-HYGIENE-01 production write guard: refuse Project01 + --force
+    # unless PRODUCTION_WRITE_ALLOWED=true is explicitly exported.
+    # Read-only use (no --force) is unaffected; scientific output unchanged.
+    if [ "${FORCE:-0}" -eq 1 ] && [ "${PRODUCTION_WRITE_ALLOWED:-false}" != "true" ]; then
+        case "${WORKDIR:-}" in
+            */Project/Project01|*/Project/Project01/*)
+                echo "[GUARD] production write blocked: WORKDIR=${WORKDIR} + --force on Project01."
+                echo "[GUARD] export PRODUCTION_WRITE_ALLOWED=true to override (P2-DEV-01 discipline)."
+                exit 60
+                ;;
+        esac
+    fi
     SECONDS=0
 }
 
