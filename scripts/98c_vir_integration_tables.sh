@@ -407,6 +407,120 @@ def load_iphop():
     return votu_host, votu_host_conf
 
 
+# --- E-VIR-01b Host Evidence Layer (Type+Resolution+Independence+Provenance;
+# A-D is display only). Sidecar keeps every raw relation; the matrix gets a
+# summary. No new acceptance thresholds: sources without a project-defined
+# standard are status=RAW_EVIDENCE and never auto-promoted to Level A.
+def canonical_lookup_factory(id_map_path):
+    by_original, by_bare, ambiguous = {}, {}, set()
+    try:
+        for line in open(id_map_path):
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 5:
+                continue
+            by_original[parts[0]] = parts[2]
+            bare = parts[0].split("__", 1)[-1]
+            if bare in by_bare and by_bare[bare] != parts[2]:
+                ambiguous.add(bare)
+            by_bare[bare] = parts[2]
+    except FileNotFoundError:
+        pass
+    def lookup(name):
+        name = name[:-6] if name.endswith(".fasta") else name
+        if name in by_original:
+            return by_original[name]
+        if name in ambiguous:
+            return None
+        return by_bare.get(name)
+    return lookup
+
+def build_host_evidence(votu_names):
+    """Returns (rows, summary). rows -> viral_host_evidence.tsv sidecar."""
+    import glob as _g
+    ID_MAP = os.path.join(VIRUS_DIR, "votu", "votu_id_map.tsv")
+    canon = canonical_lookup_factory(ID_MAP)
+    valid = set(votu_names)
+    rows = []
+    def emit(votu, etype, esrc, target, ttype, reso, tax_name, tax_sys, tax_rank, score, status, group, prov):
+        if votu is None or votu not in valid:
+            return "orphan"
+        rows.append([votu, etype, esrc, target, ttype, reso, tax_name, tax_sys, tax_rank,
+                     score, status, group, prov])
+        return "ok"
+    # 1) iPHoP raw CRISPR spacer hits (RAW_EVIDENCE - no project threshold)
+    n_orphan = 0
+    for f in _g.glob(os.path.join(VIRUS_DIR, "iphop", "Wdir", "blastcrispr.tsv")):
+        with open(f) as fh:
+            for line in fh:
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) < 2 or not parts[0]:
+                    continue
+                n_orphan += (emit(canon(parts[0]), "SEQUENCE_LINKED_CRISPR", "iPHoP_blastcrispr",
+                                  parts[1], "host_genome_region", "genome", "", "", "",
+                                  parts[4] if len(parts) > 4 else "", "RAW_EVIDENCE",
+                                  "IPHOP_CRISPR", f) == "orphan")
+    # 2) iPHoP raw genome alignments (blast-like: pident,len,evalue,bitscore at 3,4,12,13(1-based 11,12))
+    for f in _g.glob(os.path.join(VIRUS_DIR, "iphop", "Wdir", "blastgenomes.tsv")):
+        with open(f) as fh:
+            for line in fh:
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) < 12 or not parts[0]:
+                    continue
+                score = ";".join([parts[2], parts[3], parts[10], parts[11]])  # pident;alen;evalue;bitscore
+                n_orphan += (emit(canon(parts[0]), "SEQUENCE_LINKED_GENOME", "iPHoP_blastgenomes",
+                                  parts[1], "host_genome", "genome", "", "", "",
+                                  score, "RAW_EVIDENCE", "IPHOP_GENOME_ALN", f) == "orphan")
+    # 3) iPHoP genus m90 (tool-standard -> rated, display C)
+    if os.path.isfile(IPHOP_FILE):
+        with open(IPHOP_FILE, newline="") as fh:
+            for row in csv.DictReader(fh):
+                votu_raw = (row.get("Virus") or "").strip()
+                lineage = (row.get("Host genus") or "").strip()
+                conf = (row.get("Confidence score") or "").strip()
+                genus = "-"
+                if ";g__" in lineage:
+                    genus = lineage.split(";g__", 1)[1].strip() or "-"
+                elif lineage.startswith("g__"):
+                    genus = lineage[3:].strip() or "-"
+                if genus != "-":
+                    n_orphan += (emit(canon(votu_raw), "MODEL_TAXONOMIC_PREDICTION", "iPHoP_genus_m90",
+                                      genus, "taxon", "genus", genus, "GTDB(via iPHoP DB)", "genus",
+                                      conf, "TOOL_STANDARD", "IPHOP_MODEL", IPHOP_FILE) == "orphan")
+    # 4) PhaBOX2 CRISPR alignment DB (independence vs IPHOP_CRISPR = UNKNOWN)
+    for f in _g.glob(os.path.join(VIRUS_DIR, "phabox2", "predict", "midfolder", "CRISPRs_alignment_DB.tsv")):
+        with open(f) as fh:
+            for line in fh:
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) < 2 or not parts[0]:
+                    continue
+                n_orphan += (emit(canon(parts[0]), "SEQUENCE_LINKED_CRISPR", "PhaBOX2_crispr_db",
+                                  parts[1], "host_genome_region", "genome", "", "", "",
+                                  parts[4] if len(parts) > 4 else "", "RAW_EVIDENCE",
+                                  "PHABOX2_CRISPR", f) == "orphan")
+    # summary per votu: display level only from rated evidence (C here);
+    # RAW sequence evidence is counted but never auto-A.
+    by_votu = {}
+    for r in rows:
+        by_votu.setdefault(r[0], []).append(r)
+    summary = {}
+    for votu, evs in by_votu.items():
+        groups = sorted({e[11] for e in evs})
+        rated = [e for e in evs if e[10] == "TOOL_STANDARD"]
+        level = "UNKNOWN"
+        best, best_reso = "-", "-"
+        if rated:
+            # currently only genus-level tool-standard exists -> C
+            level = "C"
+            best = rated[0][6]
+            best_reso = rated[0][5]
+        targets = {e[3] for e in evs if e[10] == "TOOL_STANDARD"}
+        conflict = "TRUE" if len(targets) > 1 else "FALSE"
+        summary[votu] = [best, best_reso, level, str(len(evs)), str(len(groups)), conflict]
+    print(f"  [HostEvidence] relations={len(rows)} votus_with_evidence={len(by_votu)} orphan_rows={n_orphan} "
+          f"(RAW_UNRATED 序列证据保留, 不自动 A; independence: IPHOP 内部=DERIVED_OR_SHARED_SIGNAL, 跨工具 CRISPR=UNKNOWN)")
+    return rows, summary, n_orphan
+
+
 def load_vcontact(votu_names):
     print("[Step7] 解析 vConTACT3")
     votu_family = {}
@@ -532,6 +646,15 @@ votu_lengths = load_votu_lengths()
 pharokka_gene_to_contig, votu_category = load_pharokka()
 votu_vog_ids = load_vog(pharokka_gene_to_contig)
 votu_lifestyle, votu_virulent_prob = load_bacphlip()
+host_evidence_rows, host_summary, host_orphans = build_host_evidence(all_votus)
+_host_sc = os.path.join(OUT_DIR, "viral_host_evidence.tsv")
+with open(_host_sc, "w", newline="") as _fh:
+    _w = csv.writer(_fh, delimiter="\t")
+    _w.writerow(["votu_id","evidence_type","evidence_source","raw_target_id","target_entity_type",
+                 "target_resolution","taxonomy_name","taxonomy_system","taxonomy_rank","raw_score",
+                 "evidence_status","independence_group","provenance_file"])
+    _w.writerows(host_evidence_rows)
+print(f"  [HostEvidence] sidecar -> {_host_sc} ({len(host_evidence_rows)} rows)")
 votu_host, votu_host_conf = load_iphop()
 votu_family = load_vcontact(all_votus)
 best_checkv = load_checkv()
@@ -578,6 +701,8 @@ anno_headers = [
     "BACPHLIP_virulent_prob",
     "host_genus",
     "host_confidence",
+    "Host_Best_Target", "Host_Best_Resolution", "Host_Display_Level",
+    "Host_Evidence_Count", "Host_Independent_Group_Count", "Host_Conflict_Flag",
     "viral_family",
     "VOG_IDs",
 ]
@@ -604,6 +729,7 @@ with open(matrix_path, "w", newline="") as fh:
                 fmt_float(votu_virulent_prob[votu]) if votu in votu_virulent_prob else "-",
                 votu_host.get(votu, "-"),
                 votu_host_conf.get(votu, "-"),
+                *host_summary.get(votu, ["-","-","UNKNOWN","0","0","FALSE"]),
                 votu_family.get(votu, "-"),
                 ",".join(sorted(votu_vog_ids.get(votu, set()))) if votu_vog_ids.get(votu) else "-",
             ]
