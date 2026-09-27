@@ -4,6 +4,8 @@
 > **触发时机**：当用户询问"如何启动"、"做什么分析"、"某工具怎么用"、某脚本编号/功能时，CC 读取本文件。
 > 未知工具参数 → WebSearch 获取官方文档，结果缓存至 `docs/tools_ref/`。
 >
+> **冻结契约索引（Phase 1/2，2026-09-27 同步）**：定量与单位 `docs/QUANTIFICATION_CONTRACT.md`（禁止跨 unit 混比；mpa 0-100 vs 0-1 需显式转换）· taxonomy 身份 `docs/TAXONOMY_SCHEMA.md`（name 必绑 system+rank+release；GTDB↔NCBI 无 crosswalk，禁 raw-name join）· vOTU/真菌基因/宿主/检测/AMG/真菌/边/DA 证据 sidecars 与语义见 `docs/plans/phase2_evidence/`（RAW_EVIDENCE≠已评级；A-D 仅展示层；association≠host；caller support≠confidence；annotation≠mechanism）· **写入纪律**：Project01+`--force` 默认被守卫阻断（exit 60，需 `PRODUCTION_WRITE_ALLOWED=true`）；validation 一律隔离 workdir · **版本纪律**：软件/数据库默认冻结，升级须走 Candidate→Isolated Benchmark→Evidence Review→Adopt/Reject/Defer · Result/Intermediate/Regenerability 为三个不同概念（U-6 实证）。
+
 > **状态标注说明**：本文件中的 ✅/⚠️ 完成状态标注是特定时间点（多为 `Project_example` 测试项目）的快照，
 > 会随分析进展变化。如需了解当前最新进度，优先核对实际 `result/` 目录内容或 `agents/provenance/`，
 > 而不要仅依赖本文件的历史标注。
@@ -164,7 +166,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 
 > **分析完成状态（Project_example，2026-06-18 更新）**
 > - 51-72 全部完成 ✅（含新增脚本 54b/70/71/72）；Snakemake 全流程验证通过（2026-06-17）
-> - **54b** (`54b_vir_checkv_filter.sh`): MIUVIG标准质量过滤 — 42个contigs（S01=0, S02=21, S03=4, S04=8, S05=1, S06=8）
+> - **54b** (`54b_vir_checkv_filter.sh`): MIUVIG标准质量过滤 — 当前冻结输入重算为 47 contigs（S01=0,S02=23,S03=3,S04=6,S05=2,S06=13）；历史记录 42 属 snapshot drift（U-5，证据 docs/plans/phase1_evidence/U5_snapshot_drift.md）
 > - **55** Prodigal(-p meta)：6/6样本完成，输出 `result/virus/prodigal/`
 > - **57** vOTU geNomad分类：`result/virus/votu/genomad/virus_taxonomy.tsv`（42行）✅
 > - **59** Salmon quant：6/6样本完成 ✅（修复：Salmon 0.14.1 decoy-aware 索引 segfault → 标准索引）
