@@ -285,6 +285,8 @@ print(f"  eggNOG: {len(eggnog_ko)} 基因, KO覆盖: {sum(1 for v in eggnog_ko.v
 # 2b. KEGG diamond hits: use eggnog KO (more reliable), kegg file as backup ref
 # kegg_diamond.tsv: gene | ref_gene | pident | ...
 kegg_gene_ref = {}
+kegg_evalue = {}    # E-FUNC-01: DIAMOND e-value (first hit; census 1:1)
+kegg_bitscore = {}
 kegg_file = os.path.join(ANNO_DIR, "kegg", "kegg_diamond.tsv")
 with open(kegg_file) as fh:
     for line in fh:
@@ -297,6 +299,8 @@ with open(kegg_file) as fh:
         ref  = parts[1]  # e.g. "scaz:ACI3DN_01020"
         if gene not in kegg_gene_ref:
             kegg_gene_ref[gene] = ref
+            kegg_evalue[gene] = parts[10].strip() if len(parts) > 10 else "-"
+            kegg_bitscore[gene] = parts[11].strip() if len(parts) > 11 else "-"
 
 # 2c. AMRFinder: gene → ARG symbol
 amr_map = {}
@@ -351,6 +355,8 @@ print(f"  CAZyme: {len(cazyme_map)} 基因")
 
 # 2f. VFDB: gene → VFG_id
 vfdb_map = {}
+vfdb_evalue = {}   # E-FUNC-01: DIAMOND e-value, per-hit (1:1 census)
+vfdb_bitscore = {}
 vfdb_file = os.path.join(ANNO_DIR, "vfdb", "vfdb_hits.tsv")
 with open(vfdb_file) as fh:
     for line in fh:
@@ -360,8 +366,36 @@ with open(vfdb_file) as fh:
             vfg  = parts[1].strip()
             if gene and vfg:
                 vfdb_map[gene] = vfg
+                vfdb_evalue[gene] = parts[10].strip() if len(parts) > 10 else "-"
+                vfdb_bitscore[gene] = parts[11].strip() if len(parts) > 11 else "-"
 
 print(f"  VFDB: {len(vfdb_map)} 基因")
+
+# 2f2. Pfam (E-FUNC-01): census = heavy 1:N (P01: 2.27M records, 510k genes
+# with >1 family hit) - full relation goes to a sidecar evidence table, the
+# matrix only carries Pfam_hit_count. NO collapse into a single label.
+pfam_hit_count = {}
+pfam_sidecar_rows = 0
+pfam_tblout = os.path.join(ANNO_DIR, "pfam", "pfam_hits.tblout")
+if os.path.isfile(pfam_tblout):
+    sidecar_path = os.path.join(OUT_DIR, "pfam_evidence.tsv")
+    with open(pfam_tblout) as fin, open(sidecar_path, "w") as fout:
+        fout.write("gene\tpfam_family\tevalue\tscore\tfull_line\n")
+        for line in fin:
+            if line.startswith("#") or not line.strip():
+                continue
+            parts = line.rstrip("\n").split()
+            if len(parts) < 6:
+                continue
+            family, gene, evalue, score = parts[0], parts[2], parts[4], parts[5]
+            if not gene:
+                continue
+            pfam_hit_count[gene] = pfam_hit_count.get(gene, 0) + 1
+            fout.write(f"{gene}\t{family}\t{evalue}\t{score}\t{line.rstrip(chr(10))}\n")
+            pfam_sidecar_rows += 1
+    print(f"  Pfam: {len(pfam_hit_count)} genes, {pfam_sidecar_rows} hits -> sidecar {sidecar_path}")
+else:
+    print("  Pfam: tblout 未生成(31c 未运行) - Pfam_hit_count 列将为空(evidence unavailable)")
 
 # 2g. BacMet: gene → BAC_id (for gene-level table; will use for Type B)
 bacmet_map = {}
@@ -386,6 +420,8 @@ with open(NCYC_MAP) as fh:
             ncyc_acc_to_func[parts[0].strip()] = parts[1].strip()
 
 ncyc_map = {}
+ncyc_evalue = {}   # E-FUNC-01: DIAMOND e-value
+ncyc_bitscore = {}
 ncyc_file = os.path.join(ANNO_DIR, "ncyc", "ncyc_hits.tsv")
 with open(ncyc_file) as fh:
     for line in fh:
@@ -396,6 +432,8 @@ with open(ncyc_file) as fh:
             func = ncyc_acc_to_func.get(ref, ref)  # fallback to accession
             if gene:
                 ncyc_map[gene] = func
+                ncyc_evalue[gene] = parts[10].strip() if len(parts) > 10 else "-"
+                ncyc_bitscore[gene] = parts[11].strip() if len(parts) > 11 else "-"
 
 print(f"  NCyc: {len(ncyc_map)} 基因")
 
@@ -757,7 +795,10 @@ tpm_headers   = [f"TPM_{s}" for s in samples]
 anno_headers  = ["COG_category", "KEGG_KO", "EC", "GO",
                  "ARG_AMRFinder", "ARG_CARD", "CAZyme",
                  "VFDB", "BacMet", "NCyc_gene", "PCyc_gene", "Defense_system",
-                 "SCyc_gene", "Iron_category", "FeGenie_hit_member_count", "FeGenie_total_member_count", "UniProt_SwissProt"]
+                 "SCyc_gene", "Iron_category", "FeGenie_hit_member_count", "FeGenie_total_member_count", "UniProt_SwissProt",
+                 "KEGG_evalue", "KEGG_bitscore", "VFDB_evalue", "VFDB_bitscore",
+                 "NCyc_evalue", "NCyc_bitscore", "eggNOG_Description",
+                 "Pfam_hit_count"]
 
 outpath_b = os.path.join(OUT_DIR, "gene_annotation_matrix.tsv")
 with open(outpath_b, "w", newline="") as fh:
@@ -783,6 +824,11 @@ with open(outpath_b, "w", newline="") as fh:
             (len(iron_evidence[gene]["members_hit"]) if gene in iron_evidence else ""),
             (iron_evidence[gene].get("total", "") if gene in iron_evidence else ""),
             uniprot_map.get(gene, "-"),
+            kegg_evalue.get(gene, "-"), kegg_bitscore.get(gene, "-"),
+            vfdb_evalue.get(gene, "-"), vfdb_bitscore.get(gene, "-"),
+            ncyc_evalue.get(gene, "-"), ncyc_bitscore.get(gene, "-"),
+            eggnog_desc.get(gene, "-"),
+            (pfam_hit_count.get(gene, "") if pfam_hit_count else ""),
         ]
         writer.writerow(row)
 
