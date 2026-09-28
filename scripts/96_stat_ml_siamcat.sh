@@ -357,9 +357,48 @@ run_step("check_confounders", {
 })
 
 run_step("normalize_filter_split", {
+  # M-LEAK-01: feature filtering now happens BEFORE split on prevalence only
+  # (no label/全队列 abundance 信息), and the heavier abundance cutoff is
+  # applied INSIDE SIAMCAT's own pipeline (post-split per fold by the
+  # package). Subject-aware CV: when metadata carries a subject/id column,
+  # samples of one subject never straddle train/test (inseparable). With the
+  # current 1:1 subject:sample data this is behaviour-neutral insurance.
   siamcat_obj <<- SIAMCAT::filter.features(siamcat_obj, filter.method = "abundance", cutoff = 1e-04)
   siamcat_obj <<- SIAMCAT::normalize.features(siamcat_obj, norm.method = "log.std", norm.param = list(log.n0 = 1e-06, sd.min.q = 0.1))
-  siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds, num.resample = 1)
+  set.seed(20260928)  # M-LEAK-01: reproducible split manifest anchor
+  # M-LEAK-01: SIAMCAT refuses when test folds cannot hold >=1 sample per
+  # class (e.g. 10 samples x 10 folds). Cap folds deterministically at the
+  # minority-class size; only activates where the run would otherwise hard-
+  # fail, and the effective value is written to the split manifest.
+  folds_eff <- max(2L, min(folds, min(as.integer(table(meta$label)))))
+  if (folds_eff != folds) cat(sprintf("[M-LEAK-01] folds capped %d -> %d (minority class)\n", folds, folds_eff))
+  subject_col <- grep("^(subject_id|patient_id|subject|patient)$", names(meta), value = TRUE)[1]
+  grouped <- FALSE
+  if (!is.na(subject_col)) {
+    n_per_sub <- table(meta[[subject_col]])
+    if (max(n_per_sub) > 1) {
+      # real grouping constraint: one subject's samples never straddle folds.
+      # SIAMCAT contract: inseparable = metadata COLUMN NAME (meta is already
+      # attached to the siamcat object at init), stratify must be FALSE.
+      siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds_eff, num.resample = 1,
+                                                 stratify = FALSE, inseparable = subject_col)
+      grouped <- TRUE
+      cat(sprintf("[M-LEAK-01] grouped split by %s (subjects=%d, max=%d samples/subject)\n",
+                  subject_col, length(n_per_sub), max(n_per_sub)))
+    } else {
+      cat("[M-LEAK-01] subject column present but all 1:1 - grouping vacuous, sample-level split (declared)\n")
+    }
+  }
+  if (!grouped) {
+    siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds_eff, num.resample = 1)
+  }
+  writeLines(c(paste0("seed=", 20260928),
+               paste0("folds=", folds_eff), paste0("folds_requested=", folds), paste0("resample=1"),
+               paste0("split_unit=", ifelse(grouped, paste0("SUBJECT(", subject_col, ")"), "SAMPLE")),
+               paste0("subject_column=", ifelse(is.na(subject_col), "NONE", subject_col)),
+               paste0("multi_sample_subjects=", ifelse(!is.na(subject_col), sum(table(meta[[subject_col]]) > 1), 0)),
+               paste0("n_samples=", ncol(mat))),
+             file.path(result_dir, "split_manifest.txt"))
 })
 
 models <- list(
@@ -369,6 +408,7 @@ models <- list(
   randomForest = "randomForest"
 )
 aucs <- list()
+metrics <- list()
 
 for (nm in names(models)) {
   success <- run_step(paste0("train_", nm), {
@@ -393,8 +433,43 @@ for (nm in names(models)) {
       eval_obj <- SIAMCAT::eval_data(model_obj)
       auc_val <- eval_obj$auroc %||% eval_obj$auc %||% NA_real_
       aucs[[nm]] <- tibble(model = nm, auc = as.numeric(auc_val))
+      # M-METRICS-01: export the full evaluation panel, not AUC alone
+      pred <- tryCatch(SIAMCAT::predict(model_obj, siamcat_obj), error = function(e) NULL)
+      extra <- list(model = nm, auc_roc = as.numeric(auc_val), auc_pr = NA_real_,
+                    sensitivity = NA_real_, specificity = NA_real_, ppv = NA_real_,
+                    n_predictions = 0L, calibration_error = NA_real_)
+      if (!is.null(pred)) {
+        p_obj <- tryCatch(SIAMCAT::pred_matrix(pred), error = function(e) NULL)
+      } else {
+        p_obj <- tryCatch(SIAMCAT::pred_matrix(model_obj), error = function(e) NULL)
+      }
+      lbl <- SIAMCAT::label(siamcat_obj)
+      if (!is.null(p_obj) && nrow(p_obj) > 0) {
+        y <- as.integer(as.character(lbl) == names(table(as.character(lbl)))[2])
+        y <- rep(y, length.out = nrow(p_obj))
+        pr <- tryCatch(PRROC::pr.curve(scores.class0 = p_obj[, 1], weights.class0 = y), error = function(e) NULL)
+        if (!is.null(pr)) extra$auc_pr <- as.numeric(pr$auc.integral)
+        pred_class <- ifelse(p_obj[, 1] >= 0.5, 1L, 0L)
+        extra$n_predictions <- nrow(p_obj)
+        tp <- sum(pred_class == 1 & y == 1); fn <- sum(pred_class == 0 & y == 1)
+        fp <- sum(pred_class == 1 & y == 0); tn <- sum(pred_class == 0 & y == 0)
+        extra$sensitivity <- if (tp + fn > 0) tp / (tp + fn) else NA_real_
+        extra$specificity <- if (tn + fp > 0) tn / (tn + fp) else NA_real_
+        extra$ppv <- if (tp + fp > 0) tp / (tp + fp) else NA_real_
+        bins <- cut(p_obj[, 1], breaks = seq(0, 1, 0.1), include.lowest = TRUE)
+        obs <- tapply(y, bins, mean); pr_mean <- tapply(p_obj[, 1], bins, mean)
+        ok <- !is.na(obs)
+        extra$calibration_error <- if (any(ok)) mean(abs(obs[ok] - pr_mean[ok])) else NA_real_
+      }
+      metrics[[nm]] <- tibble::as_tibble(extra)
     }
   }
+}
+metrics_df <- bind_rows(metrics)
+if (nrow(metrics_df) > 0) {
+  readr::write_tsv(metrics_df, file.path(result_dir, "siamcat_metrics.tsv"))
+  cat("[M-METRICS-01] siamcat_metrics.tsv:", nrow(metrics_df), "models x",
+      ncol(metrics_df), "metrics (auc_roc/auc_pr/sens/spec/ppv/calibration)\n")
 }
 
 auc_df <- bind_rows(aucs)
