@@ -67,33 +67,79 @@ mkdir -p "$(dirname "${RESULT_DIR}")"
 
 echo "[antismash] 样本: ${SAMPLE} | 线程: ${CPUS}"
 
-EXIT_CODE=0
-mgx_try mgx_conda antismash8 \
-    antismash \
-        "${CONTIGS}" \
-        --taxon bacteria \
-        --output-dir "${RESULT_DIR}" \
-        --cpus "${CPUS}" \
-        --databases "${ANTISMASH_DB}" \
-        --genefinding-tool prodigal-m \
-        --minimal \
-        --enable-nrps-pks || EXIT_CODE=$?
+# E-HARD-02-ADOPT: chunked execution (validated equivalent to monolithic on
+# Sample11, docs/plans/phase2_5_evidence/antismash_chunking_reconciliation.md).
+# Purpose: reliability / resume / failure isolation ONLY - scientific params
+# are byte-identical to the frozen monolithic command. Atomic unit = full
+# FASTA record (never split a sequence). Per-chunk DONE/FAILED sentinels
+# preserve the T-11 semantics; the sample-level done sentinel is written only
+# after ALL chunks succeed (merge gate).
+CHUNKS_DIR="${RESULT_DIR}/_chunks"
+CHUNK_N=24
 
-if [ ${EXIT_CODE} -ne 0 ]; then
-    # T-11: execution failure must never masquerade as "done with no BGC".
-    # Write an explicit FAILED marker (no done sentinel) and propagate the error.
-    mkdir -p "${RESULT_DIR}"
-    {
-        echo "status=FAILED"
-        echo "timestamp=$(date -Iseconds)"
-        echo "exit_code=${EXIT_CODE}"
-        echo "note=antiSMASH did not complete; empty/partial output is NOT a valid result"
-    } > "${RESULT_DIR}/antismash_FAILED.txt"
-    echo "[antismash] ERROR: antismash 失败（exit: ${EXIT_CODE}），已写入 ${RESULT_DIR}/antismash_FAILED.txt"
-    exit ${EXIT_CODE}
+python3 - "${CONTIGS}" "${CHUNKS_DIR}" "${CHUNK_N}" <<'PYSPLIT'
+import sys, os
+src, outdir, k = sys.argv[1], sys.argv[2], int(sys.argv[3])
+os.makedirs(outdir, exist_ok=True)
+recs = []
+name, seq = None, []
+for line in open(src):
+    if line.startswith(">"):
+        if name: recs.append((name, "".join(seq)))
+        name, seq = line, []
+    else: seq.append(line.strip())
+if name: recs.append((name, "".join(seq)))
+recs.sort(key=lambda r: -len(r[1]))  # bp-balanced greedy (largest-first)
+bins = [([], 0) for _ in range(k)]
+for name, s in recs:
+    bins.sort(key=lambda b: b[1])
+    lst, load = bins[0]; lst.append((name, s)); bins[0] = (lst, load + len(s))
+for i, (lst, _) in enumerate(bins):
+    with open(os.path.join(outdir, f"chunk_{i:02d}.fa"), "w") as f:
+        for name, s in lst: f.write(name + "\n" + s + "\n")
+PYSPLIT
+
+FAILED_ANY=0
+for C_FA in "${CHUNKS_DIR}"/chunk_*.fa; do
+    CID=$(basename "${C_FA}" .fa)
+    C_DIR="${RESULT_DIR}/${CID}"
+    if [ -f "${C_DIR}/antismash_done.txt" ]; then
+        echo "[antismash] ${CID}: DONE (resume skip)"
+        continue
+    fi
+    [ -d "${C_DIR}" ] && rm -rf "${C_DIR}"
+    mkdir -p "${C_DIR}"
+    EXIT_CODE=0
+    mgx_try mgx_conda antismash8 \
+        antismash "${C_FA}" \
+            --taxon bacteria \
+            --output-dir "${C_DIR}" \
+            --cpus "${CPUS}" \
+            --databases "${ANTISMASH_DB}" \
+            --genefinding-tool prodigal-m \
+            --minimal \
+            --enable-nrps-pks || EXIT_CODE=$?
+    if [ ${EXIT_CODE} -ne 0 ]; then
+        # T-11: execution failure must never masquerade as "done with no BGC".
+        {
+            echo "status=FAILED"
+            echo "timestamp=$(date -Iseconds)"
+            echo "exit_code=${EXIT_CODE}"
+            echo "note=antiSMASH did not complete; empty/partial output is NOT a valid result"
+        } > "${C_DIR}/antismash_FAILED.txt"
+        echo "[antismash] ERROR: ${CID} 失败（exit: ${EXIT_CODE}），已写入 ${C_DIR}/antismash_FAILED.txt"
+        FAILED_ANY=1
+        continue
+    fi
+    touch "${C_DIR}/antismash_done.txt"
+done
+
+if [ ${FAILED_ANY} -ne 0 ]; then
+    echo "[antismash] ERROR: 存在失败 chunk，样本不标记完成（merge 门未通过）"
+    exit 1
 fi
 
-N_BGC=$(grep -c '"cluster_blast_hit"' "${RESULT_DIR}"/*.json 2>/dev/null || \
-        find "${RESULT_DIR}" -name "*.gbk" | wc -l)
+# BGC 统计基于全部 chunk 的 region GBK(与既有 N_BGC 口径一致: gbk 计数)
+N_BGC=$(find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" 2>/dev/null | wc -l)
 touch "${SENTINEL}"
-echo "[antismash] 完成，耗时 ${SECONDS}s | BGC: ${N_BGC} | 输出: ${RESULT_DIR}/"
+echo "[antismash] 完成，耗时 ${SECONDS}s | BGC: ${N_BGC} | chunks: ${CHUNK_N} | 输出: ${RESULT_DIR}/"
