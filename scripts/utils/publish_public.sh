@@ -23,7 +23,7 @@ done
 
 # Files/dirs that must NEVER enter the public snapshot.
 # Project/ carries production cohort metadata + machine-specific sheets.
-EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.omo/|\.codegraph|agents/provenance/|skills/.*\.pdf|Project/)'
+EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.omo/|\.codegraph|agents/provenance/|skills/.*\.pdf|Project/|docs/plans/|scripts/tests/benchmark/)'
 
 cd "${REPO}"
 

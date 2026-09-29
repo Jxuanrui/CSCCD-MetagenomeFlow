@@ -21,6 +21,9 @@ Developed by the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cere
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Analysis Dimensions](#analysis-dimensions)
+- [Evidence & Interpretation Layer](#evidence--interpretation-layer)
+- [Reliability Engineering](#reliability-engineering)
+- [Statistical & ML Validity](#statistical--ml-validity)
 - [Figure Gallery](#figure-gallery)
 - [Script Index](#script-index)
 - [AI-Assisted Features](#ai-assisted-features)
@@ -138,6 +141,29 @@ Multiple taxonomic profilers cross-validate each other: Kraken2, MetaPhlAn4-euk,
 Diversity (91), differential abundance (92, 99b LEfSe), co-occurrence networks (93, FastSpar), visualization (94), batch correction and evaluation (95a/b, 10 methods), functional profiling across 20 dimension × type combinations (96 series), cross-cohort replication (97), snapshot reports (98). phyloseq objects for each kingdom feed all downstream R packages directly.
 
 ---
+
+## Evidence & Interpretation Layer
+
+Every reported result carries traceable evidence — what was observed, by which method, at what resolution, and how strongly it may be interpreted.
+
+- **Quantification contract** (`docs/QUANTIFICATION_CONTRACT.md`): every abundance output is registered as entity × quantity × unit × normalization (gene TPM, vOTU TPM, MAG coverage, relative abundance, fungal read counts...); cross-unit joins are explicitly forbidden (MetaPhlAn 0–100 vs fraction 0–1 must be converted on purpose).
+- **Taxonomy identity contract** (`docs/TAXONOMY_SCHEMA.md`): taxon names never travel without their system + rank + release context (GTDB R214/R220/R226 and NCBI-style sources stay distinct; no cross-system string joins).
+- **Evidence sidecars** (one row per raw evidence record, never collapsed by summaries): viral host evidence (sequence-linked CRISPR / genome alignment / model prediction with independence groups), detection caller consensus, AMG evidence with auxiliary-score provenance (native vs schema placeholder), fungal multi-source detections with low-support heuristic flags, cross-domain edges with `edge_type ≠ evidence_type ≠ score_type ≠ interpretation_status`.
+- **Provenance columns** in integration tables: annotation evalue/bitscore/method per database, MAG quality profile (N50/GC/GUNC/source binner), gene→contig→MAG→sample traceability.
+- **Honest-state semantics**: `RAW_EVIDENCE_ONLY`, `UNKNOWN`, `NOT_ASSESSED`, `UNMAPPED` are first-class outputs — evidence is preserved even when no frozen rule exists to rate it (e.g. host sequence evidence stays un-rated until an acceptance threshold is formally adopted).
+
+## Reliability Engineering
+
+- **Chunked antiSMASH execution** (validated on a 284 Mb assembly: identical BGC universe, 289/289 regions): full-record chunks with per-chunk DONE/FAILED sentinels, resume re-runs only failed chunks, merge gated on all-chunks-success.
+- **Failure semantics**: tool failures never masquerade as "completed with no result" (explicit FAILED markers; downstream consumers refuse them).
+- **Production write guard**: destructive re-runs against production project directories are blocked by default and require an explicit environment override.
+- **Input validation at every entry**: sample sheets are checked for duplicates, illegal IDs and missing reads before any compute starts (bash and Snakemake entries alike).
+
+## Statistical & ML Validity
+
+- **Subject-aware cross-validation**: when metadata carries subject/patient IDs with repeated sampling, train/test splits are grouped so one subject never straddles folds (with a persisted split manifest: seed, effective folds, split unit).
+- **Full evaluation panel** beyond AUC: PR-AUC, sensitivity, specificity, PPV and binned calibration error are exported for every model.
+- **Differential-abundance consensus view**: multi-method results are reported side by side (effect size + type, direction, FDR, prevalence, n) with direction-consistency flags — never collapsed into a single vote.
 
 ## Figure Gallery
 
