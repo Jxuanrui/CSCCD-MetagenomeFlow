@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Script: scripts/install_git_hooks.sh
-# Purpose: One-time setup to symlink scripts/hooks/pre-commit into
-#          .git/hooks/pre-commit so it takes effect on this machine.
+# Purpose: Symlink scripts/hooks/pre-commit into .git/hooks/pre-commit
+#          (idempotent, ln -sf). Invoked automatically by scripts/activate.sh
+#          self-heal (2026-09-29) and by 0Install.sh §16; this manual entry
+#          point remains as fallback for non-git-clone deployments.
 # Usage:   bash scripts/install_git_hooks.sh
 # ==============================================================================
 

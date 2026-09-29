@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Script: scripts/hooks/pre-commit
-# Purpose: Two advisory/blocking gates on the staged diff:
+# Purpose: Advisory/blocking gates on the staged diff:
 #            1. Ponytail net-line-growth warning (advisory, all file types)
 #            2. shellcheck on staged .sh files (blocking)
+#            3. large/binary run-artifact staging block (blocking, E-4-3)
 # Installed via: scripts/install_git_hooks.sh (symlinks this file into
 #                .git/hooks/pre-commit)
 #

@@ -32,10 +32,14 @@
     export PATH="${PROJ_DIR}/miniforge3/bin:${PATH}"
 
     # pre-commit 门禁自愈安装（.git/hooks 不进 git，clone/换机后自动补装；幂等）
-    if [ -d "${PROJ_DIR}/.git" ] && [ ! -e "${PROJ_DIR}/.git/hooks/pre-commit" ] \
-        && [ -x "${PROJ_DIR}/scripts/install_git_hooks.sh" ]; then
-        bash "${PROJ_DIR}/scripts/install_git_hooks.sh" >/dev/null 2>&1 \
-            || echo "[WARN] pre-commit hook 自愈安装失败，请手动执行: bash ${PROJ_DIR}/scripts/install_git_hooks.sh" >&2
+    # -f 而非 -x：tarball/权限丢失场景下仍可经 bash 调用，避免静默跳过（质量审核 P1-1）
+    if [ -d "${PROJ_DIR}/.git" ] && [ ! -e "${PROJ_DIR}/.git/hooks/pre-commit" ]; then
+        if [ -f "${PROJ_DIR}/scripts/install_git_hooks.sh" ]; then
+            bash "${PROJ_DIR}/scripts/install_git_hooks.sh" >/dev/null 2>&1 \
+                || echo "[WARN] pre-commit hook 自愈安装失败，请手动执行: bash ${PROJ_DIR}/scripts/install_git_hooks.sh" >&2
+        else
+            echo "[WARN] ${PROJ_DIR}/scripts/install_git_hooks.sh 不存在，pre-commit 门禁未安装" >&2
+        fi
     fi
 
     echo "[CSCCD-MetagenomeFlow] 环境已激活  PROJ_DIR=${PROJ_DIR}"
