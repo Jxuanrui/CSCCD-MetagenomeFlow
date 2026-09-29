@@ -34,7 +34,8 @@
     # pre-commit 门禁自愈安装（.git/hooks 不进 git，clone/换机后自动补装；幂等）
     if [ -d "${PROJ_DIR}/.git" ] && [ ! -e "${PROJ_DIR}/.git/hooks/pre-commit" ] \
         && [ -x "${PROJ_DIR}/scripts/install_git_hooks.sh" ]; then
-        bash "${PROJ_DIR}/scripts/install_git_hooks.sh" >/dev/null 2>&1 || true
+        bash "${PROJ_DIR}/scripts/install_git_hooks.sh" >/dev/null 2>&1 \
+            || echo "[WARN] pre-commit hook 自愈安装失败，请手动执行: bash ${PROJ_DIR}/scripts/install_git_hooks.sh" >&2
     fi
 
     echo "[CSCCD-MetagenomeFlow] 环境已激活  PROJ_DIR=${PROJ_DIR}"

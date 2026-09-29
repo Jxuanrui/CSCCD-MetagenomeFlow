@@ -536,14 +536,18 @@ pipeline/config/config.test_ci.yaml   — 层三DAG测试专用config
 **验收规约（2026-09-29 质量审核decision）**：凡对 fixture 做 Snakemake dry-run 验收（含单规则 `-n -p -R <rule>`），
 一律使用 `snakemake -s pipeline/Snakefile --configfile pipeline/config/config.test_ci.yaml -n <target>`；
 **禁止**用 `--config workdir=... samplesheet=...` 手动拼参（会漏掉 `metadata`，统计类规则串用
-Project01 分组表导致假阳性验收）。**过渡期约束**（crosscohort.smk 的 `{workdir}` 通配与其余
-9 个规则文件的 `WORKDIR` 常量路径域不一致，相对路径 target 会触发 MissingInput）：
-**target 必须写绝对路径**，直至 §待approve的路径域结构修复获批落地。
+Project01 分组表导致假阳性验收）。**target 必须写绝对路径**（WORKDIR 常量规则只声明绝对路径产出，
+相对 target 报 MissingRuleException 属全仓统一语义；路径域结构修复已于 2026-09-29 落地，ab74059）。
 ```
+
+**pre-commit hook（2026-09-29 起自动分发）**：首次 `source scripts/activate.sh` 时自愈安装
+（.git/hooks/pre-commit 缺失即静默装回，失败输出 WARN；幂等）；0Install.sh §16 亦实际执行安装
+（绝对路径，防 bank 模式 cwd 漂移）；手动命令 `bash scripts/install_git_hooks.sh` 保留备用。
+脚本本体在 git 内（scripts/hooks/pre-commit），三道门禁：Ponytail 净增告警 / shellcheck 阻断 /
+大二进制与 >5MB 暂存阻断（diff-filter=ACM）。
 
 **日常使用**：
 ```bash
-bash scripts/install_git_hooks.sh          # 一次性：安装pre-commit hook
 bash scripts/tests/run_ci_checks.sh --level all   # 按需：跑全部三层
 bash scripts/tests/run_ci_checks.sh --level 2     # 只跑层二集成测试
 ```
