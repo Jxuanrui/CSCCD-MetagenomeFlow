@@ -136,7 +136,7 @@ QC → host removal → MEGAHIT → geNomad + VirSorter2 → CheckV quality filt
 
 ### Mycobiome
 
-Multiple taxonomic profilers cross-validate each other: Kraken2, MetaPhlAn4-euk, HUMAnN4-fungi, BLAST against the gut-fungus database, FunOMIC, CCMetagen, MicroFisher, and the PHF profiler (760 gut fungal genomes, Yan et al. 2024 *Cell*). Downstream: fungal assembly → Eukfinder → Tiara/BUSCO QC → MetaBAT2 binning → MetaEuk protein prediction → eggNOG/KEGG/dbCAN/VFDB/AMR/MEROPS annotation.
+Multiple taxonomic profilers cross-validate each other: Kraken2, MetaPhlAn4-euk, HUMAnN4-fungi, BLAST against the gut-fungus database, FunOMIC, MicroFisher, and the PHF profiler (760 gut fungal genomes, Yan et al. 2024 *Cell*). Downstream: fungal assembly → Eukfinder → Tiara/BUSCO QC → MetaBAT2 binning → MetaEuk protein prediction → eggNOG/KEGG/dbCAN/VFDB/AMR/MEROPS annotation.
 
 ### Statistics
 
@@ -322,7 +322,7 @@ bash scripts/checkm_config.sh
 
 **Mycobiome**
 
-![FunOMIC](https://img.shields.io/badge/FunOMIC-C96DA8) [![CCMetagen](https://img.shields.io/badge/CCMetagen-C96DA8)](https://github.com/vrmarcelino/CCMetagen) ![MicroFisher](https://img.shields.io/badge/MicroFisher-C96DA8) ![Eukfinder](https://img.shields.io/badge/Eukfinder-C96DA8) [![Tiara](https://img.shields.io/badge/Tiara-C96DA8)](https://github.com/lubianat/tiara)  
+![FunOMIC](https://img.shields.io/badge/FunOMIC-C96DA8) ![MicroFisher](https://img.shields.io/badge/MicroFisher-C96DA8) ![Eukfinder](https://img.shields.io/badge/Eukfinder-C96DA8) [![Tiara](https://img.shields.io/badge/Tiara-C96DA8)](https://github.com/lubianat/tiara)  
 [![BUSCO](https://img.shields.io/badge/BUSCO-C96DA8)](https://busco.ezlab.org/) [![MetaEuk](https://img.shields.io/badge/MetaEuk-C96DA8)](https://metaek.sourceforge.net/)  
 
 **Knowledge bases**

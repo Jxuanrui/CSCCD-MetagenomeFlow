@@ -127,7 +127,7 @@ run_sample() {
     # 02 去宿主
     should_run "kneaddata" && { echo "[${SAMPLE_ID}] Step 02: kneaddata 去宿主..."; bash "${SCRIPTS}/02_qc_kneaddata.sh" -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true; } || echo "[${SAMPLE_ID}] 跳过 kneaddata"
 
-    # 71-77 分类（Kraken2 + MetaPhlAn4 + HUMAnN4提取 + BLAST + FunOMIC + CCMetagen + MicroFisher）
+    # 71-77 分类（Kraken2 + MetaPhlAn4 + HUMAnN4提取 + BLAST + FunOMIC + MicroFisher；76 CCMetagen 已移除）
     # 并行启动三种互补策略，提速
     if should_run "taxonomy"; then
         echo "[${SAMPLE_ID}] Step 71: Kraken2 真菌分类..."
@@ -140,8 +140,7 @@ run_sample() {
         bash "${SCRIPTS}/74_fun_blast_gutdb.sh"    -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
         echo "[${SAMPLE_ID}] Step 75: FunOMIC 真菌分类..."
         bash "${SCRIPTS}/75_fun_funomics.sh"       -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
-        echo "[${SAMPLE_ID}] Step 76: CCMetagen 真核分类..."
-        bash "${SCRIPTS}/76_fun_ccmetagen.sh"      -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
+        # Step 76 (CCMetagen) removed 2026-09-29: tool permanently excluded by user (registry status=removed); archived under archive/cleanup_20260929/
         echo "[${SAMPLE_ID}] Step 77: MicroFisher 多标记提取..."
         bash "${SCRIPTS}/77_fun_microfisher.sh"    -s "${SAMPLE_ID}" -t "${CPUS}" -w "${WORKDIR}" -r "${REPO}" ${FORCE_FLAG}; [ ${FORCE} -eq 1 ] && echo " --force" || true
     else

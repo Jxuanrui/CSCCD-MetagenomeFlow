@@ -6,7 +6,7 @@
 #          database (13.1GB) + taxonomy metadata to be present; SKIPs
 #          (not FAILs) if the database hasn't been downloaded yet, matching
 #          the project's existing convention for large-DB-dependent tools
-#          (e.g. 76_fun_ccmetagen.sh's nt-DB skip pattern).
+#          (large-DB-dependent tools skip when the DB is absent).
 #
 # Prerequisite: 02_qc_kneaddata.sh output for sample T01 (already present
 # in Test_CI_fixture as a shared prerequisite for other level2 tests).

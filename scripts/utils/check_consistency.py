@@ -210,7 +210,7 @@ def main():
     for entry_id, entry in sorted(registry.items()):
         if entry_id in REGISTRY_EXEMPT_FILES:
             continue
-        if entry.get("status") in ("deprecated",) or entry_id in RULE_ONLY_ENTRIES:
+        if entry.get("status") in ("deprecated", "removed") or entry_id in RULE_ONLY_ENTRIES:
             continue
         if entry_id not in scripts:
             issues.append(f"[registry] {entry_id}: 已注册但 scripts/ 下无对应文件")

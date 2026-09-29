@@ -308,8 +308,8 @@ set -euo pipefail
         "bash ${PROJ_DIR}/scripts/74_fun_blast_gutdb.sh \
              -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"
 
-    # 步骤 75-77：FunOMIC / CCMetagen / MicroFisher（互补分类策略）
-    for script in 75_fun_funomics 76_fun_ccmetagen 77_fun_microfisher; do
+    # 步骤 75/77：FunOMIC / MicroFisher（互补分类策略；76 CCMetagen 于 2026-09-29 移除——用户永久排除，见 registry）
+    for script in 75_fun_funomics 77_fun_microfisher; do
         cat ${wd}/samples.txt | rush -j ${j} \
             "bash ${PROJ_DIR}/scripts/${script}.sh \
                  -s {} -t ${t} -w ${wd} -r ${PROJ_DIR}"

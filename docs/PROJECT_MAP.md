@@ -226,7 +226,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 > - 73：`result/fungi/humann4/` — 真菌功能通路丰度，6/6样本 ✅
 > - 74：`result/fungi/blast_gutdb/` — BLAST比对肠道真菌库，6/6样本 ✅
 > - 75：`result/fungi/funomic/` — FunOMIC分类，6/6样本 ✅（75b多样本聚合待运行）
-> - 76：**CCMetagen — 未运行**（依赖NCBI nt全库，数据库未配置）
+> - 76：**CCMetagen — 已移除**（2026-06 用户永久排除；2026-09-29 归档 archive/cleanup_20260929/）
 > - 77：`result/fungi/microfisher/` — ITS/18S/28S多超变区，6/6样本 ✅
 >
 > **路线 C — 组装+MAG+注释（深度功能分析）✅ 流程全部跑通**
@@ -243,7 +243,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 >
 > **⚠️ 待完成项**：
 > - **75b FunOMIC聚合** ✅ 2026-06-22：`result/integration/fungi/funomic_species_count.tsv` + `normalized/funomic_species_relab.tsv` + `funomic_species_clr.tsv`（3544 species × 6 samples）
-> - **76 CCMetagen**：需要NCBI nt全库（>200G），暂未配置
+> - **76 CCMetagen**：已移除（用户永久排除，归档于 archive/cleanup_20260929/）
 
 | 编号 | 脚本 | 功能 | 工具 |
 |------|------|------|------|
@@ -256,7 +256,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 74f | `scripts/74f_fun_phf_aggregate.sh` | **论文方法** 聚合：多样本.rc矩阵+物种分类注释 | Python |
 | 75 | `scripts/75_fun_funomics.sh` | FunOMIC 专用真菌WGS流程（1.6M marker+3.4M功能蛋白） | FunOMIC |
 | 75b | `scripts/75b_fun_funomics_aggregate.sh` | FunOMIC 多样本结果聚合 | Python |
-| 76 | `scripts/76_fun_ccmetagen.sh` | CCMetagen 真核+原核综合分类（NCBI nt全库） | CCMetagen |
+| 76 | ~~`scripts/76_fun_ccmetagen.sh`~~ | 已移除（2026-09-29 归档 archive/cleanup_20260929/） | CCMetagen |
 | 77 | `scripts/77_fun_microfisher.sh` | MicroFisher 多超变区提取（ITS1/ITS2/18S/28S） | MicroFisher |
 | 78 | `scripts/78_fun_megahit.sh` | 真菌reads提取（依赖71/72输出）+重新组装 | MEGAHIT |
 | 79 | `scripts/79_fun_eukfinder.sh` | 真核生物MAG回收（Eukfinder，2025，专用真核binning） | Eukfinder |
@@ -345,7 +345,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 
 - **真菌 74e/74f**（PHF丰度定量）依赖 **74a** 的 Bowtie2 索引（一次性前置建库）
 - **真菌 78-79**（组装+MAG）依赖 **71/72/74/75/76/77** 的分类输出（用于真菌 reads 提取）
-- **真菌 75/76/77** 为三种互补分类策略（FunOMIC/CCMetagen/MicroFisher），建议同时运行后取共识
+- **真菌 75/77** 为两种互补分类策略（FunOMIC/MicroFisher），建议同时运行后取共识（76 CCMetagen 已于 2026-09-29 移除）
 - **病毒 65**（PHOLD）依赖 **64**（PHAROKKA）的输出
 - **统计 95b** 依赖 **95a** 的输出
 - **统计 97** 依赖 **96** 或 **92** 的 Top10 特征输出
