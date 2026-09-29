@@ -26,8 +26,8 @@ rule crosscohort_validation:
         repo = config.get("repo", "~/Course/Maxmetagenome"),
         group_col = config.get("group_col", "Group"),
         source_mode = config.get("crosscohort_source", "local"),
-        cohorts = config.get("crosscohort_cohorts", ""),
-        train_cohort = config.get("crosscohort_train", ""),
+        cohorts = ("--cohorts " + config["crosscohort_cohorts"]) if config.get("crosscohort_cohorts") else "",
+        train_cohort = ("--train-cohort " + config["crosscohort_train"]) if config.get("crosscohort_train") else "",
         meta_analysis = "--meta-analysis" if config.get("crosscohort_meta_analysis", False) else "",
         force_flag = config.get("force", False) and "--force" or "",
     threads: 1
@@ -44,7 +44,7 @@ rule crosscohort_validation:
             {params.cohorts} \
             {params.train_cohort} \
             {params.meta_analysis} \
-            {params.force_flag}
+            {params.force_flag} > {log} 2>&1
         """
 
 # Optional: aggregate rule for statistics module
