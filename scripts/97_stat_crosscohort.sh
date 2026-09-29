@@ -67,7 +67,7 @@ WORKDIR="$(cd "${WORKDIR}" && pwd)"
 
 mgx_begin
 
-ML_DIR="${WORKDIR}/result/stat/ml"
+ML_DIR="${WORKDIR}/result/stat/bacteria/ml"
 RESULT_DIR="${WORKDIR}/result/viz_crosscohort"
 LOG_DIR="${WORKDIR}/logs/stat/crosscohort"
 SENTINEL="${RESULT_DIR}/crosscohort_done.txt"

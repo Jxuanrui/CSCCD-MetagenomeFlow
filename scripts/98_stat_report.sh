@@ -185,6 +185,20 @@ extract_table_preview() {
     else
         echo "- No .FAILED sentinels found"
     fi
+    echo
+
+    echo "## LEfSe Failures"
+    echo
+    LEFSE_LEDGER="${STAT_DIR}/lefse_failed_tables.txt"
+    if [ -s "${LEFSE_LEDGER}" ]; then
+        echo "The following LEfSe tables FAILED (their sentinel still got touched; results for these tables are missing):"
+        echo
+        echo '```'
+        cat "${LEFSE_LEDGER}"
+        echo '```'
+    else
+        echo "- None (ledger empty or absent: ${LEFSE_LEDGER})"
+    fi
 } > "${REPORT_FILE}"
 
 if [ ! -s "${REPORT_FILE}" ]; then

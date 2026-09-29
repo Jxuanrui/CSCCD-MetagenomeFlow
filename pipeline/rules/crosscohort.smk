@@ -8,7 +8,7 @@ rule crosscohort_validation:
     Generates 8 core visualizations + optional meta-analysis.
     """
     input:
-        ml_model = "{workdir}/result/stat/ml/siamcat_lasso.rds",
+        ml_sentinel = "{workdir}/result/stat/bacteria/ml/siamcat_done.txt",
         metadata = "{workdir}/metadata.csv",
         abundance = "{workdir}/result/metaphlan4/merged/taxonomy.tsv"
     output:
@@ -53,10 +53,7 @@ rule viz_statistics_all:
     Generate all statistics visualizations including cross-cohort validation.
     """
     input:
-        diversity = "{workdir}/result/stat/diversity_done.txt",
-        differential = "{workdir}/result/stat/diff_done.txt",
-        network = "{workdir}/result/stat/network_done.txt",
-        ml = "{workdir}/result/stat/ml/siamcat_done.txt",
+        ml = "{workdir}/result/stat/bacteria/ml/siamcat_done.txt",
         crosscohort = "{workdir}/result/viz_crosscohort/crosscohort_done.txt"
     output:
         sentinel = "{workdir}/result/viz_statistics_all_done.txt"
