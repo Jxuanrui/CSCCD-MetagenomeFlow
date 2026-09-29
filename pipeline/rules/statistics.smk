@@ -311,6 +311,9 @@ rule stat_report:
         WORKDIR + "/result/stat/diversity_alpha_summary.tsv",
         WORKDIR + "/result/stat/differential_summary.tsv",
         WORKDIR + "/result/stat/bacteria/ml/siamcat_done.txt",
+        WORKDIR + "/result/stat/bacteria/lefse/.done",
+        WORKDIR + "/result/stat/virus/lefse/.done",
+        WORKDIR + "/result/stat/fungi/lefse/.done",
     output:
         touch(WORKDIR + "/result/stat/report/report.done")
     threads: 1
@@ -465,7 +468,7 @@ rule stat_lefse:
     shell:
         """
         # Failure ledger (not a declared output; sentinel contract unchanged)
-        : {WORKDIR}/result/stat/lefse_failed_tables.txt
+        : > {WORKDIR}/result/stat/lefse_failed_tables.txt
         # Bacteria (8 functional tables)
         for type in kegg_ko cog arg cazyme vfdb ncyc pcyc defense; do
             if [ -f {WORKDIR}/result/integration/bacteria/${{type}}_abundance.tsv ]; then
@@ -474,7 +477,7 @@ rule stat_lefse:
                     -m {params.meta} \
                     -o {WORKDIR}/result/stat/bacteria/lefse/$type \
                     -d bacteria -y $type \
-                    --lda-threshold {params.lda_threshold} || { echo "bacteria/$type  exit=$?" >> {WORKDIR}/result/stat/lefse_failed_tables.txt; echo "LEfSe failed for bacteria/$type"; }
+                    --lda-threshold {params.lda_threshold} || {{ echo "bacteria/$type  exit=$?" >> {WORKDIR}/result/stat/lefse_failed_tables.txt; echo "LEfSe failed for bacteria/$type"; }}
             fi
         done
         touch {output.bac_done}
@@ -487,7 +490,7 @@ rule stat_lefse:
                     -m {params.meta} \
                     -o {WORKDIR}/result/stat/virus/lefse/$type \
                     -d virus -y $type \
-                    --lda-threshold {params.lda_threshold} || { echo "virus/$type  exit=$?" >> {WORKDIR}/result/stat/lefse_failed_tables.txt; echo "LEfSe failed for virus/$type"; }
+                    --lda-threshold {params.lda_threshold} || {{ echo "virus/$type  exit=$?" >> {WORKDIR}/result/stat/lefse_failed_tables.txt; echo "LEfSe failed for virus/$type"; }}
             fi
         done
         touch {output.vir_done}
@@ -501,7 +504,7 @@ rule stat_lefse:
                     -m {params.meta} \
                     -o {WORKDIR}/result/stat/fungi/lefse/$type \
                     -d fungi -y $type \
-                    --lda-threshold {params.lda_threshold} || { echo "fungi/$type  exit=$?" >> {WORKDIR}/result/stat/lefse_failed_tables.txt; echo "LEfSe failed for fungi/$type"; }
+                    --lda-threshold {params.lda_threshold} || {{ echo "fungi/$type  exit=$?" >> {WORKDIR}/result/stat/lefse_failed_tables.txt; echo "LEfSe failed for fungi/$type"; }}
             fi
         done
         touch {output.fun_done}

@@ -1741,7 +1741,7 @@ Project/Project01/result/virus/
 |------|------|------|
 | 52_vir_genomad.sh | **步骤52 sentinel路径修正**（2026-07-06发现）：原监控路径 `genomad/$s/${s}_summary/${s}_virus_summary.tsv` 错误，实际输出路径为 `genomad/$s/${s}.contigs_summary/${s}.contigs_virus_summary.tsv`（geNomad自动添加`.contigs`后缀）。建议用 `aggregated_classification.tsv` 作为sentinel，更可靠。| 已确认实际路径，所有样本geNomad均正常完成（时间戳2026-07-05），进度监控已修正 |
 | 53_vir_virsorter2.sh | VirSorter2 在 Snakemake ~300步工作流中，**hmmsearch阶段会长时间无日志输出**（尤其71%-95%区间的NCLDV/provirus阶段），表现为日志"卡"在某个百分比数十分钟。这是**正常现象**，hmmsearch子进程仍在后台消耗CPU（可通过 `ps -eo pid,time,pcpu,cmd | grep hmmsearch` 确认CPU时间持续增长）| 监控进程而非日志：若 `ps aux | grep hmmsearch` 显示进程存活且%CPU>0，则继续等待；仅当进程消失或CPU=0.0超1小时才视为卡死。单样本耗时：5-7小时正常（Sample13: 6.8h, Sample14: 6.4h观测值）|
-| 54_vir_checkv_contig.sh | CheckV 1.0.3 若 geNomad 和 VirSorter2 均无有效病毒输出（罕见，测序深度极低样本），脚本会创建空的 quality_summary.tsv（仅表头）防止下游中断 | 无需修复，符合预期（空样本正常通过）|
+| 54_vir_checkv_contig.sh | CheckV 若 geNomad 和 VirSorter2 均无有效病毒输出（罕见，测序深度极低样本），脚本会创建空的 quality_summary.tsv（仅表头）防止下游中断 | 无需修复，符合预期（空样本正常通过）|
 | 54b_vir_checkv_filter.sh | 过滤逻辑：保留 (checkv_quality in Complete/High/Medium/Low-quality) OR (checkv_quality=Not-determined AND viral_genes≥1)；同时要求 contig_length≥2000 | 2026-06-18 已实现，参考 MIUVIG 最小报告标准 |
 
 **Project01 执行进度（病毒上游分析，10 样本）**：
