@@ -27,4 +27,4 @@ ln -sf "${HOOK_SRC}" "${HOOK_DST}"
 chmod +x "${HOOK_SRC}" "${HOOK_DST}"
 
 echo "[OK] pre-commit hook installed -> ${HOOK_DST}"
-echo "[INFO] It runs shellcheck on staged .sh files (see scripts/hooks/pre-commit)."
+echo "[INFO] It runs 3 gates on staged files: Ponytail net-growth advisory, shellcheck (blocking), large/binary artifact block (see scripts/hooks/pre-commit)."
