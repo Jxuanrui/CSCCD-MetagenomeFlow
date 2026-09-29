@@ -52,6 +52,8 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 
 > Details: `git log v1.1.4-baseline..HEAD` (private dev history)
 
+- **v1.4.0 (2026-09)** — Evidence & interpretation layer + ML validity: Phase 2 evidence layer closed (taxonomy cross-validation, virome host/detection/AMG evidence contracts, cross-domain edge contract, DA consensus views); antiSMASH chunked execution adopted in production script 28; Phase 3 opened with subject-aware CV, reproducible split manifests and full metrics panel (PR-AUC/sensitivity/specificity); production write guard for Project01; global rename to CSCCD-MetagenomeFlow; supervisor review channel + user governance rules (path hygiene, DB freeze, doc sync).
+
 - **v1.3.0 (2026-09)** — First public release. mgx-vis MCP visualization module (publication PDF+PNG, CNS design system, 14-figure gallery reproducible from synthetic demo data); agent-driven metagenome mining loop; GitHub publishing pipeline with leak verification; environment lock manifests.
 
 - **v1.2.1 (2026-09)** — Cleanup & RAG expansion: ~770 GB reclaimed; antiSMASH 8 full re-run (regions +41.5%); literature_kb 5.7x; mechanism_kb +435 records; BugSigDB signature_kb added.
