@@ -29,8 +29,8 @@ def resolve_repo(repo_arg):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Build the MaxMetagenome experience KB index.")
-    parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
+    parser = argparse.ArgumentParser(description="Build the CSCCD-MetagenomeFlow experience KB index.")
+    parser.add_argument("--repo", help="Path to the CSCCD-MetagenomeFlow repository root.")
     parser.add_argument("--force", action="store_true", help="Delete and rebuild the experience_kb collection.")
     parser.add_argument("--incremental", action="store_true", help="Only rebuild changed source files.")
     parser.add_argument("--batch-size", type=int, default=32, help="Embedding batch size.")

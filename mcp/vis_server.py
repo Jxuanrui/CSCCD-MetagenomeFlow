@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""mgx-vis — MCP stdio server for MaxMetagenome figure orchestration.
+"""mgx-vis — MCP stdio server for CSCCD-MetagenomeFlow figure orchestration.
 
 Three tools: vis_scan / vis_render / vis_mining. The server NEVER plots
 anything itself. vis_render delegates drawing to the stable orbit-0 pipeline

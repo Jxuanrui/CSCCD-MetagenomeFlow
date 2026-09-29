@@ -1,0 +1,84 @@
+LOCUS       k127_2117               1089 bp    DNA     linear   UNK 01-JAN-1980
+DEFINITION  k127_2117 flag=1 multi=3.0000 len=1089.
+ACCESSION   k127_2117
+VERSION     k127_2117
+KEYWORDS    .
+SOURCE      
+  ORGANISM  
+            .
+COMMENT     ##antiSMASH-Data-START##
+            Version      :: 7.1.0-a7804a5(changed)
+            Run date     :: 2026-06-17 10:28:44
+            NOTE: This is a single region extracted from a larger record!
+            Orig. start  :: 0
+            Orig. end    :: 1089
+            ##antiSMASH-Data-END##
+FEATURES             Location/Qualifiers
+     protocluster    1..1089
+                     /aStool="rule-based-clusters"
+                     /category="RiPP"
+                     /contig_edge="True"
+                     /core_location="[209:365]"
+                     /cutoff="10000"
+                     /detection_rule="(PF13471 and Asn_synthase or micJ25 or
+                     mcjC)"
+                     /neighbourhood="10000"
+                     /product="lassopeptide"
+                     /protocluster_number="1"
+                     /tool="antismash"
+     proto_core      210..365
+                     /aStool="rule-based-clusters"
+                     /tool="antismash"
+                     /cutoff="10000"
+                     /detection_rule="(PF13471 and Asn_synthase or micJ25 or
+                     mcjC)"
+                     /neighbourhood="10000"
+                     /product="lassopeptide"
+                     /protocluster_number="1"
+     cand_cluster    1..1089
+                     /candidate_cluster_number="1"
+                     /contig_edge="True"
+                     /detection_rules="(PF13471 and Asn_synthase or micJ25 or
+                     mcjC)"
+                     /kind="single"
+                     /product="lassopeptide"
+                     /protoclusters="1"
+                     /tool="antismash"
+     region          1..1089
+                     /candidate_cluster_numbers="1"
+                     /contig_edge="True"
+                     /product="lassopeptide"
+                     /region_number="1"
+                     /rules="(PF13471 and Asn_synthase or micJ25 or mcjC)"
+                     /tool="antismash"
+     CDS             210..365
+                     /gene_functions="biosynthetic (rule-based-clusters)
+                     lassopeptide: micJ25"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg72_1"
+                     /sec_met_domain="micJ25 (E-value: 4.9e-25, bitscore: 73.4,
+                     seeds: 5, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MEVKTMGSTHKLLSKLLALSSAEVGGIPGVAVECVDIGRNTSGEG
+                     DLLGTN"
+ORIGIN
+        1 atattgcaca atgggggaaa ccctgatgca gcgacgccgc gtggaggaag aaggttttcg
+       61 gattgtaaac tcctgtcgtt agggacgata atgacggtac ctaacaagaa agcaccggct
+      121 aactacgtgc cagcagccgc ggtaaaacgt agggtgcaag cgttgtccgg aattactggg
+      181 tgtaaaggga gcgcaggcgg accggcaagt tggaagtgaa aactatgggc tcaacccata
+      241 aattgctttc aaaactgctg gccttgagta gtgcagaggt aggtggaatt cccggtgtag
+      301 cggtggaatg cgtagatatc gggaggaaca ccagtggcga aggcgaccta ctgggcacca
+      361 actgacgctg aggctcgaaa gcatgggtag caaacaggat tagataccct ggtagtccat
+      421 gccgtaaacg atgattacta ggtgttggag gattgacccc ttcagtgccg cagttaacac
+      481 aataagtaat ccacctgggg agtacgaccg caaggttgaa actcaaagga attgacgggg
+      541 gcccgcacaa gcagtggagt atgtggttta attcgacgca acgcgaagaa ccttaccaag
+      601 tcttgacatc ctgcgacgat gctggaaaca gtattttcct tcgggacgca gagacaggtg
+      661 gtgcatggtt gtcgtcagct cgtgtcgtga gatgttgggt taagtcccgc aacgagcgca
+      721 accctcgccc tgtgttgcca gcacgtcatg gtgggaactc acgggggacc gccggggtca
+      781 actcggagga aggtggggat gacgtcagat catcatgccc cttacgtcca gggcttcacg
+      841 catgctacaa tggccggtac aacgggatgc gacctcgtga gggggagcgg atcccttaaa
+      901 accggtctca gttcggattg gagtctgcaa cccgactcca tgaaggcgga gtcgctagta
+      961 atcgcggatc agcaacgccg cggtgaatgc gttcccgggc cttgtacaca ccgcccgtca
+     1021 agtcatgaaa gtgggtagca cccgaagccg gtggcccaac ctttttgggg ggagccgtct
+     1081 aaggtgaga
+//

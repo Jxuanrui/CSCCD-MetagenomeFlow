@@ -25,7 +25,7 @@ SEARCH_QUERIES = [
 ]
 
 SEARCH_URL = "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/search/"
-USER_AGENT = "MaxMetagenome/1.0"
+USER_AGENT = "CSCCD-MetagenomeFlow/1.0"
 
 
 def warn(message):

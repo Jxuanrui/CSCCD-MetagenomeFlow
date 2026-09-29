@@ -1,0 +1,45 @@
+# Pathway	S02_Abundance
+UNMAPPED	0.571204
+UNINTEGRATED	0.422677
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis	0.000298401
+PWY-3841: folate transformations II (plants)	0.000270198
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	0.000252723
+PWY-6151: S-adenosyl-L-methionine salvage I	0.000239851
+VALSYN-PWY: L-valine biosynthesis	0.000219986
+ILEUSYN-PWY: L-isoleucine biosynthesis I (from threonine)	0.000189354
+PWY-5686: UMP biosynthesis I	0.000188712
+PWY-7790: UMP biosynthesis II	0.000188712
+PWY-7791: UMP biosynthesis III	0.000188712
+BRANCHED-CHAIN-AA-SYN-PWY: superpathway of branched chain amino acid biosynthesis	0.000185589
+NONMEVIPP-PWY: methylerythritol phosphate pathway I	0.000182891
+PWY-8178: pentose phosphate pathway (non-oxidative branch) II	0.000180522
+PWY-6700: queuosine biosynthesis I (de novo)	0.000178387
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)	0.00017703
+NONOXIPENT-PWY: pentose phosphate pathway (non-oxidative branch) I	0.000171432
+PWY-5103: L-isoleucine biosynthesis III	0.000167383
+PWY-7111: pyruvate fermentation to isobutanol (engineered)	0.000158985
+PWY-7199: pyrimidine deoxyribonucleosides salvage	0.000156827
+PWY-6609: adenine and adenosine salvage III	0.000152799
+PWY-6270: isoprene biosynthesis I	0.000139352
+PWY0-1296: purine ribonucleosides degradation	0.000135344
+PWY-7560: methylerythritol phosphate pathway II	0.000133077
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II	0.000130534
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis	0.000130534
+PWY-6121: 5-aminoimidazole ribonucleotide biosynthesis I	0.00012637
+PWY-6163: chorismate biosynthesis from 3-dehydroquinate	0.000124488
+RIBOSYN2-PWY: flavin biosynthesis I (bacteria and plants)	0.000118595
+HISTSYN-PWY: L-histidine biosynthesis	0.000113198
+ARGSYNBSUB-PWY: L-arginine biosynthesis II (acetyl cycle)	0.000102108
+ARO-PWY: chorismate biosynthesis I	0.000101643
+PWY-4041: &gamma;-glutamyl cycle	9.7161e-05
+ASPASN-PWY: superpathway of L-aspartate and L-asparagine biosynthesis	9.60679e-05
+PWY-7221: guanosine ribonucleotides de novo biosynthesis	9.44237e-05
+PWY-6387: UDP-N-acetylmuramoyl-pentapeptide biosynthesis I (meso-diaminopimelate containing)	9.3952e-05
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)	9.07356e-05
+PWY-7851: coenzyme A biosynthesis II (eukaryotic)	9.07356e-05
+PWY-7238: sucrose biosynthesis II	8.38224e-05
+SER-GLYSYN-PWY: superpathway of L-serine and glycine biosynthesis I	8.27229e-05
+THRESYN-PWY: superpathway of L-threonine biosynthesis	7.39512e-05
+PWY-5695: inosine 5'-phosphate degradation	7.235e-05
+PWY-7242: D-fructuronate degradation	7.21868e-05
+GLUTORN-PWY: L-ornithine biosynthesis I	6.80692e-05

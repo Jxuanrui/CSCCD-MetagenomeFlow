@@ -26,8 +26,8 @@ def resolve_repo(repo_arg):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Query MaxMetagenome ChromaDB collections.")
-    parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
+    parser = argparse.ArgumentParser(description="Query CSCCD-MetagenomeFlow ChromaDB collections.")
+    parser.add_argument("--repo", help="Path to the CSCCD-MetagenomeFlow repository root.")
     parser.add_argument("--query", required=True, help="Query text.")
     parser.add_argument(
         "--collection",

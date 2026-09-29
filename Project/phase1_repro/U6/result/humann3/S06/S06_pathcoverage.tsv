@@ -1,0 +1,59 @@
+# Pathway	S06_Coverage
+UNMAPPED	1.0000000000
+UNINTEGRATED	1.0000000000
+UNINTEGRATED|g__Alistipes.s__Alistipes_putredinis	1.0000000000
+UNINTEGRATED|g__Blautia.s__Blautia_wexlerae	1.0000000000
+UNINTEGRATED|g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	1.0000000000
+UNINTEGRATED|g__Prevotella.s__Prevotella_copri	1.0000000000
+UNINTEGRATED|unclassified	1.0000000000
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis	0.9108033046
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis|g__Prevotella.s__Prevotella_copri	0.3571868080
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis|unclassified	0.3546425109
+PWY-6609: adenine and adenosine salvage III	0.8820495918
+PWY-6609: adenine and adenosine salvage III|unclassified	0.8602853701
+VALSYN-PWY: L-valine biosynthesis	0.7226400343
+VALSYN-PWY: L-valine biosynthesis|g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.3178133298
+PWY-3841: folate transformations II (plants)	0.2771789484
+PWY-6897: thiamine diphosphate salvage II	0.5387712816
+PWY-7238: sucrose biosynthesis II	0.4508118827
+ILEUSYN-PWY: L-isoleucine biosynthesis I (from threonine)	0.3077057658
+HISTSYN-PWY: L-histidine biosynthesis	0.4283450113
+PWY-6163: chorismate biosynthesis from 3-dehydroquinate	0.4096344513
+PWY-7357: thiamine phosphate formation from pyrithiamine and oxythiamine (yeast)	0.4410405416
+PWY-5941: glycogen degradation II	0.3181135144
+BRANCHED-CHAIN-AA-SYN-PWY: superpathway of branched chain amino acid biosynthesis	0.2457148852
+GLCMANNANAUT-PWY: superpathway of N-acetylglucosamine, N-acetylmannosamine and N-acetylneuraminate degradation	0.4527758798
+COA-PWY-1: superpathway of coenzyme A biosynthesis III (mammals)	0.2506331556
+PWY-5973: cis-vaccenate biosynthesis	0.3973592117
+PWY-7663: gondoate biosynthesis (anaerobic)	0.3730058752
+PWY-6703: preQ0 biosynthesis	0.3539613191
+PWY-5103: L-isoleucine biosynthesis III	0.2251733269
+PWY-5686: UMP biosynthesis I	0.1478514563
+COMPLETE-ARO-PWY: superpathway of aromatic amino acid biosynthesis	0.1643442705
+ARO-PWY: chorismate biosynthesis I	0.2796477436
+PWY0-1296: purine ribonucleosides degradation	0.1835924629
+PWY-6151: S-adenosyl-L-methionine salvage I	0.1813670195
+PWY-6123: inosine-5'-phosphate biosynthesis I	0.1753044660
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)	0.2110926438
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)|g__Alistipes.s__Alistipes_putredinis	0.6868655787
+PWY-7851: coenzyme A biosynthesis II (eukaryotic)	0.2110926438
+PWY-6936: seleno-amino acid biosynthesis (plants)	0.1688367051
+NONOXIPENT-PWY: pentose phosphate pathway (non-oxidative branch) I	0.1435902674
+PANTOSYN-PWY: superpathway of coenzyme A biosynthesis I (bacteria)	0.1690025412
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)	0.1923892821
+PWY0-1061: superpathway of L-alanine biosynthesis	0.2297341866
+PWY-6700: queuosine biosynthesis I (de novo)	0.1607714210
+PWY-6700: queuosine biosynthesis I (de novo)|unclassified	0.6997158871
+PWY-8178: pentose phosphate pathway (non-oxidative branch) II	0.1227745484
+PANTO-PWY: phosphopantothenate biosynthesis I	0.1257653953
+PANTO-PWY: phosphopantothenate biosynthesis I|unclassified	0.6128962584
+PWY-6823: molybdopterin biosynthesis	0.1119760197
+PWY-1269: CMP-3-deoxy-D-manno-octulosonate biosynthesis	0.1021947994
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II	0.0956405904
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis	0.0956405904
+THISYNARA-PWY: superpathway of thiamine diphosphate biosynthesis III (eukaryotes)	0.0790355903
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	0.1259809764
+PWY-7237: myo-, chiro- and scyllo-inositol degradation|unclassified	0.6339073108
+PWY-7977: L-methionine biosynthesis IV	0.0436270603
+PWY-5100: pyruvate fermentation to acetate and lactate II	0.0910637267
+PWY-6317: D-galactose degradation I (Leloir pathway)	0.0291012909

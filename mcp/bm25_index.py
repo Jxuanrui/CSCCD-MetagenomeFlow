@@ -1,5 +1,5 @@
 """
-BM25 sparse retrieval layer for MaxMetagenome RAG.
+BM25 sparse retrieval layer for CSCCD-MetagenomeFlow RAG.
 存储位置: mcp/bm25_data/{collection_name}.pkl
 """
 

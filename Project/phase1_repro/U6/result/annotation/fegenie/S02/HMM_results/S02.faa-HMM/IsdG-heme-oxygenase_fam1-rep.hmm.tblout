@@ -1,0 +1,13 @@
+#                                                                       --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                   accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------         -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /home/labuser/Course/Maxmetagenome/envs/fegenie/share/fegenie-1.2/hmms/iron//iron_aquisition-heme_oxygenase//IsdG-heme-oxygenase_fam1-rep.hmm
+# Target file:     Project/Project_example/temp/fegenie/S02//S02.faa
+# Option settings: hmmsearch -o Project/Project_example/result/annotation/fegenie/S02/S02.faa-HMM/IsdG-heme-oxygenase_fam1-rep.hmm.txt --tblout Project/Project_example/result/annotation/fegenie/S02/S02.faa-HMM/IsdG-heme-oxygenase_fam1-rep.hmm.tblout -T 102 --cpu 8 /home/labuser/Course/Maxmetagenome/envs/fegenie/share/fegenie-1.2/hmms/iron//iron_aquisition-heme_oxygenase//IsdG-heme-oxygenase_fam1-rep.hmm Project/Project_example/temp/fegenie/S02//S02.faa 
+# Current dir:     /home/labuser/Course/Maxmetagenome
+# Date:            Wed Jul  1 00:14:11 2026
+# [ok]

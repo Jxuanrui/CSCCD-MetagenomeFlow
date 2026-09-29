@@ -1,0 +1,76 @@
+# Pathway	S03_Abundance
+UNINTEGRATED|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.191435
+UNINTEGRATED|unclassified	0.0970548
+UNINTEGRATED|g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0614505
+UNINTEGRATED|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0309971
+UNINTEGRATED|g__Blautia.s__Ruminococcus_torques	0.01909
+PWY-7238: sucrose biosynthesis II|unclassified	0.000201388
+PWY-7238: sucrose biosynthesis II|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000187244
+PWY-7238: sucrose biosynthesis II|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.000110401
+VALSYN-PWY: L-valine biosynthesis|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000173083
+VALSYN-PWY: L-valine biosynthesis|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	4.80864e-05
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000173582
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis|g__Blautia.s__Ruminococcus_torques	8.12059e-05
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis|g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	2.17953e-05
+ARO-PWY: chorismate biosynthesis I|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0001633
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000236939
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)|unclassified	0.000133525
+PWY-5941: glycogen degradation II|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000163145
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)|unclassified	0.000214739
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000101065
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	7.62169e-05
+PWY-7357: thiamine phosphate formation from pyrithiamine and oxythiamine (yeast)|g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	8.18546e-05
+PWY-1042: glycolysis IV|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000179203
+PWY-6163: chorismate biosynthesis from 3-dehydroquinate|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000140515
+ARGSYNBSUB-PWY: L-arginine biosynthesis II (acetyl cycle)|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000143653
+PWY-5686: UMP biosynthesis I|unclassified	0.000109274
+PWY-7790: UMP biosynthesis II|unclassified	0.000109274
+PWY-7791: UMP biosynthesis III|unclassified	0.000109274
+PWY-6151: S-adenosyl-L-methionine salvage I|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000116841
+PWY-6151: S-adenosyl-L-methionine salvage I|unclassified	6.22746e-05
+PWY-6151: S-adenosyl-L-methionine salvage I|g__Blautia.s__Ruminococcus_torques	2.84281e-05
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.00012588
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II|unclassified	6.7237e-05
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	5.3449e-05
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.00012588
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis|unclassified	6.7237e-05
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	5.3449e-05
+GLUTORN-PWY: L-ornithine biosynthesis I|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000129006
+ARGSYN-PWY: L-arginine biosynthesis I (via L-ornithine)|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000139621
+PWY-8178: pentose phosphate pathway (non-oxidative branch) II|unclassified	5.67896e-05
+PWY-7221: guanosine ribonucleotides de novo biosynthesis|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000125762
+PWY-7221: guanosine ribonucleotides de novo biosynthesis|unclassified	5.26567e-05
+PWY-6121: 5-aminoimidazole ribonucleotide biosynthesis I|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.00011461
+PWY-6121: 5-aminoimidazole ribonucleotide biosynthesis I|unclassified	7.31769e-05
+HISTSYN-PWY: L-histidine biosynthesis|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000114394
+PWY0-1296: purine ribonucleosides degradation|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000148619
+PWY0-1296: purine ribonucleosides degradation|unclassified	6.33482e-05
+PWY-6609: adenine and adenosine salvage III|unclassified	6.61297e-05
+PWY-6123: inosine-5'-phosphate biosynthesis I|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.00014425
+TRNA-CHARGING-PWY: tRNA charging|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000128454
+PWY-3841: folate transformations II (plants)|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	5.77296e-05
+PWY-3841: folate transformations II (plants)|unclassified	4.91002e-05
+PWY-6823: molybdopterin biosynthesis|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000213877
+PWY-6124: inosine-5'-phosphate biosynthesis II|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000151942
+NONOXIPENT-PWY: pentose phosphate pathway (non-oxidative branch) I|unclassified	5.14887e-05
+SER-GLYSYN-PWY: superpathway of L-serine and glycine biosynthesis I|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	9.35101e-05
+PWY-7111: pyruvate fermentation to isobutanol (engineered)|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	7.39517e-05
+RIBOSYN2-PWY: flavin biosynthesis I (bacteria and plants)|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000111593
+THISYNARA-PWY: superpathway of thiamine diphosphate biosynthesis III (eukaryotes)|g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	7.07484e-05
+PWY-6700: queuosine biosynthesis I (de novo)|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	7.57833e-05
+PWY-6700: queuosine biosynthesis I (de novo)|unclassified	7.5635e-05
+GLCMANNANAUT-PWY: superpathway of N-acetylglucosamine, N-acetylmannosamine and N-acetylneuraminate degradation|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	8.23924e-05
+PWY0-1586: peptidoglycan maturation (meso-diaminopimelate containing)|g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	5.88312e-05
+PWY0-1586: peptidoglycan maturation (meso-diaminopimelate containing)|unclassified	5.57198e-05
+GALACTUROCAT-PWY: D-galacturonate degradation I|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000121553
+PWY-6507: 4-deoxy-L-threo-hex-4-enopyranuronate degradation|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000125288
+PWY-I9: L-cysteine biosynthesis VI (from L-methionine)|unclassified	6.15774e-05
+PWY-7228: superpathway of guanosine nucleotides de novo biosynthesis I|unclassified	4.76099e-05
+PWY-7242: D-fructuronate degradation|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.000115415
+PWY-5667: CDP-diacylglycerol biosynthesis I|unclassified	4.3152e-05
+PWY0-1319: CDP-diacylglycerol biosynthesis II|unclassified	4.3152e-05
+PWY-5695: inosine 5'-phosphate degradation|unclassified	5.40104e-05
+PWY-7237: myo-, chiro- and scyllo-inositol degradation|g__Faecalibacterium.s__Faecalibacterium_prausnitzii	9.20317e-05
+PWY-7208: superpathway of pyrimidine nucleobases salvage|unclassified	5.23891e-05
+PWY-6608: guanosine nucleotides degradation III|unclassified	5.01359e-05
+SALVADEHYPOX-PWY: adenosine nucleotides degradation II|unclassified	5.11101e-05

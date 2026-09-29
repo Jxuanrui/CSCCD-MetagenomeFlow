@@ -1,0 +1,14 @@
+X,S02.faa
+iron_aquisition-iron_transport,,0
+iron_aquisition-heme_transport,,0
+iron_aquisition-heme_oxygenase,,0
+iron_aquisition-siderophore_synthesis,,0
+iron_aquisition-siderophore_transport,,0
+iron_aquisition-siderophore_transport_potential,,0
+iron_gene_regulation,,0
+iron_oxidation,,0
+possible_iron_oxidation_and_possible_iron_reduction,,0
+probable_iron_reduction,,0
+iron_reduction,,1
+iron_storage,,0
+magnetosome_formation,,0

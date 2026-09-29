@@ -1,0 +1,120 @@
+LOCUS       k127_159448             1831 bp    DNA              UNK 01-JAN-1980
+DEFINITION  k127_159448 flag=1 multi=6.0000 len=1831.
+ACCESSION   k127_159448
+VERSION     k127_159448
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+COMMENT     ##antiSMASH-Data-START##
+            Version     :: 8.0.4-6c27e57(changed)
+            Run date    :: 2026-09-28 01:06:44
+            NOTE :: This is a single region extracted from a larger record!
+            Orig. start :: 0
+            Orig. end   :: 1831
+            ##antiSMASH-Data-END##
+FEATURES             Location/Qualifiers
+     region          1..1831
+                     /candidate_cluster_numbers="1"
+                     /contig_edge="True"
+                     /product="cyclic-lactone-autoinducer"
+                     /region_number="1"
+                     /rules="(TIGR04223 or AgrB)"
+                     /tool="antismash"
+     cand_cluster    1..1831
+                     /candidate_cluster_number="1"
+                     /contig_edge="True"
+                     /detection_rules="(TIGR04223 or AgrB)"
+                     /kind="single"
+                     /product="cyclic-lactone-autoinducer"
+                     /protoclusters="1"
+                     /tool="antismash"
+     protocluster    1..1831
+                     /aStool="rule-based-clusters"
+                     /category="RiPP"
+                     /contig_edge="True"
+                     /core_location="[223:999](+)"
+                     /cutoff="20000"
+                     /detection_rule="(TIGR04223 or AgrB)"
+                     /neighbourhood="10000"
+                     /product="cyclic-lactone-autoinducer"
+                     /protocluster_number="1"
+                     /tool="antismash"
+     proto_core      224..999
+                     /aStool="rule-based-clusters"
+                     /tool="antismash"
+                     /cutoff="20000"
+                     /detection_rule="(TIGR04223 or AgrB)"
+                     /neighbourhood="10000"
+                     /product="cyclic-lactone-autoinducer"
+                     /protocluster_number="1"
+     CDS             2..223
+                     /locus_tag="ctg1127_1"
+                     /transl_table=11
+                     /translation="MRESVLQKNRELKSDKENKALHGWGLRSVAEIAERHLGALDIYEK
+                     NGMFVVSVLLANDEIGNLGTKEETVGAK"
+     CDS             224..862
+                     /gene_functions="biosynthetic (rule-based-clusters)
+                     cyclic-lactone-autoinducer: AgrB"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg1127_2"
+                     /sec_met_domain="AgrB (E-value: 7.1e-41, bitscore: 128.0,
+                     seeds: 181, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MTSHIKCDILFTWMVSEMIAELSKRMSLFLCKKEIVEQEMAEVYQ
+                     YGFEIIFSTLIGFFITIAIGAVFRMFLVSLVYYFAFVALRQFTGGYHANTYLKCNLIFA
+                     ASTTFIFGMAKIVAYGTYPISFHVMLLLFSLVAIWFKTPVENENKPLSEEQKVRNHRIS
+                     MIVAVIFSGISCFAYQKWVLISATIALTLFVIALMAVIANPSREEENES"
+     CDS             859..999
+                     /gene_functions="biosynthetic (rule-based-clusters)
+                     cyclic-lactone-autoinducer: TIGR04223"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg1127_3"
+                     /sec_met_domain="TIGR04223 (E-value: 9e-13, bitscore: 36.6,
+                     seeds: 127, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MKKVQKSMLDKLASVSKFAAVKAAGATSCVSFHQPKEPKALQNLK
+                     K"
+     CDS             1170..1502
+                     /locus_tag="ctg1127_4"
+                     /transl_table=11
+                     /translation="MEHRSDCEQLIADLVENHFGIEKHLKGCTYLKEAIEIAVQNPIVS
+                     MMKLYELVGLRHGCNAESVEHLIRYAIESAYTKNKMNHYFPEVYGRPSNSMAIRQAAEF
+                     VRTSET"
+     CDS             1752..1829
+                     /locus_tag="ctg1127_5"
+                     /transl_table=11
+                     /translation="MIRDILTTIGEHFWLILILLAELLFA"
+ORIGIN
+        1 gattcgggaa tccgttttgc aaaagaacag ggaattgaaa tcggacaaag aaaacaaggc
+       61 actgcacggc tggggactgc gttctgtcgc tgaaattgcc gaaaggcatc tcggagcgct
+      121 ggatatctac gagaaaaacg gaatgttcgt ggtaagtgtc ttattagcaa atgatgaaat
+      181 cgggaacttg gggacgaaag aagagacggt gggggcaaaa taattgactt cccatataaa
+      241 atgcgatatt ctttttacat ggatggtgag cgaaatgatc gctgaactta gtaaaagaat
+      301 gtcgcttttt ttatgcaaaa aggaaatcgt tgagcaggaa atggcagagg tctatcagta
+      361 tgggtttgaa atcatttttt ccacactgat cggtttcttt atcaccattg caatcggcgc
+      421 tgtttttcga atgtttctgg tttcgctggt gtattatttt gcatttgttg cactgcgtca
+      481 gtttaccggc ggctatcatg cgaatacata tttgaagtgc aacttgattt ttgctgcatc
+      541 gacgacgttt attttcggta tggcaaaaat tgtagcatat ggaacttatc ccattagttt
+      601 tcatgtgatg ttgttgcttt tttcccttgt agcaatatgg ttcaaaactc cggtggaaaa
+      661 tgaaaataag ccgctgtcgg aagaacagaa agtccgcaat cacagaatca gtatgattgt
+      721 agctgtgatc ttttccggga tcagctgctt tgcctatcag aaatgggtat tgatatcggc
+      781 aacaattgcc cttacgctgt ttgtcatagc gttaatggca gtcatagcaa atccaagccg
+      841 agaggaggaa aacgagtcat gaaaaaagtt cagaagtcta tgctggacaa gctggcatct
+      901 gtcagcaagt ttgcagcagt aaaggcagct ggtgctactt cttgtgttag tttccatcag
+      961 ccgaaagaac cgaaagcact gcagaatctg aaaaagtaac aaacagcact gcaccgggcg
+     1021 aatattcgct ctgggtgcgg caatgttgaa acattttcac ccaaatcttc ccaaatacgg
+     1081 catacgaaag tgtgccgcct gaattttatg cacggaatcg tgctgcgata gaacatatgg
+     1141 aacctgtggc tttgtgaaag gagttttttg tggagcatag atcagactgc gaacaactga
+     1201 ttgcagacct tgtagagaat cattttggca tcgaaaagca tctgaaagga tgcacttatt
+     1261 tgaaagaggc gatcgagatt gcagtgcaga atcccatcgt ttctatgatg aaactctatg
+     1321 agctggtcgg actgcggcat gggtgcaacg cagaaagcgt ggagcatctg atccgctatg
+     1381 ccatcgagag cgcctacacc aaaaacaaga tgaaccacta tttcccggaa gtctacggga
+     1441 gaccgtcgaa ttccatggcg attcgccagg cggcggagtt tgtccggaca tccgaaacgt
+     1501 aacattttac atttgcaaaa ttgacgaaac catatggaaa agcacctgtt tgatggaaac
+     1561 atcgggcagg tgctttctct gtcagaaata aaaaaggaaa aaagtagaaa attaattttt
+     1621 ttgaaacttt ataatcattt cgctttcaga taaaaaatag tataataaaa gtagagaaaa
+     1681 atgttatttt gtcaaaacga ctgcgaaaaa ggcagacagg tgccgggaag tcatggaggt
+     1741 atgggtgcgg tatgattcgg gatattttaa caaccatcgg ggaacatttc tggctcattc
+     1801 tgattctgct ggcagaactc ctgtttgcag t
+//

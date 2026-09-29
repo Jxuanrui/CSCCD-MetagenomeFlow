@@ -67,7 +67,7 @@ def warn(message):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Build the GutMGene bridge table.")
-    parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
+    parser.add_argument("--repo", help="Path to the CSCCD-MetagenomeFlow repository root.")
     parser.add_argument(
         "--output-dir",
         default="mcp/data/gutmgene_bridge",

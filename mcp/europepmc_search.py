@@ -11,7 +11,7 @@ import requests
 
 
 BASE_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
-USER_AGENT = "MaxMetagenome/1.0"
+USER_AGENT = "CSCCD-MetagenomeFlow/1.0"
 PAGE_SIZE = 50
 REQUEST_TIMEOUT = 60
 RETRY_INTERVAL_SECONDS = 5

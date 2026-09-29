@@ -1,0 +1,81 @@
+LOCUS       k127_111270             1031 bp    DNA              UNK 01-JAN-1980
+DEFINITION  k127_111270 flag=0 multi=8.9115 len=1031.
+ACCESSION   k127_111270
+VERSION     k127_111270
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+COMMENT     ##antiSMASH-Data-START##
+            Version     :: 8.0.4-c0054a9(changed)
+            Run date    :: 2026-09-27 16:40:25
+            NOTE :: This is a single region extracted from a larger record!
+            Orig. start :: 0
+            Orig. end   :: 1031
+            ##antiSMASH-Data-END##
+FEATURES             Location/Qualifiers
+     region          1..1031
+                     /candidate_cluster_numbers="1"
+                     /contig_edge="True"
+                     /product="cyclic-lactone-autoinducer"
+                     /region_number="1"
+                     /rules="(TIGR04223 or AgrB)"
+                     /tool="antismash"
+     cand_cluster    1..1031
+                     /candidate_cluster_number="1"
+                     /contig_edge="True"
+                     /detection_rules="(TIGR04223 or AgrB)"
+                     /kind="single"
+                     /product="cyclic-lactone-autoinducer"
+                     /protoclusters="1"
+                     /tool="antismash"
+     protocluster    1..1031
+                     /aStool="rule-based-clusters"
+                     /category="RiPP"
+                     /contig_edge="True"
+                     /core_location="[0:435](-)"
+                     /cutoff="20000"
+                     /detection_rule="(TIGR04223 or AgrB)"
+                     /neighbourhood="10000"
+                     /product="cyclic-lactone-autoinducer"
+                     /protocluster_number="1"
+                     /tool="antismash"
+     proto_core      complement(1..435)
+                     /aStool="rule-based-clusters"
+                     /tool="antismash"
+                     /cutoff="20000"
+                     /detection_rule="(TIGR04223 or AgrB)"
+                     /neighbourhood="10000"
+                     /product="cyclic-lactone-autoinducer"
+                     /protocluster_number="1"
+     CDS             complement(1..435)
+                     /gene_functions="biosynthetic (rule-based-clusters)
+                     cyclic-lactone-autoinducer: AgrB"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg22382_1"
+                     /sec_met_domain="AgrB (E-value: 6.7e-37, bitscore: 112.8,
+                     seeds: 181, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MFEKISVAITKVLEDKKIIQSSTKEVCAYGLRQIFSTILNAGTML
+                     LIGFLMQMLIEAILFTVIYIPVRVYAGGYHASTPQRCWAFSAIMLWIALCIVKYTPQMY
+                     FWVITTLSLIACIVVFLLSPVEDRNKRLDEKEHHVYHIRAI"
+ORIGIN
+        1 aattgctcga atatgataaa catgatgttc tttttcatcc aatctcttat ttcgatcttc
+       61 taccggcgac agcaaaaaaa caacgatgca ggctatcaac gacaatgttg taatcaccca
+      121 aaaatacatt tggggcgtgt attttacgat acacagtgca atccataaca ttatcgcaga
+      181 aaacgcccag catcgctgcg gtgtagaagc atgatagcct ccggcatata ctcgaacagg
+      241 aatgtatatc actgtaaata aaatagcttc tatcagcatt tgcattaaaa acccgattag
+      301 aagcattgtc ccagcattta aaattgttga gaatatctgc cgcagaccat aagcacatac
+      361 ttcctttgta gatgattgaa tgattttttt gtcttccaaa acctttgtaa ttgctacaga
+      421 aatcttttca aacatcaaaa ctttcgaagc tttttagctg tttccggaag tttttcctga
+      481 tgactaaacc acacacaagt tgtgtttaca gtcaacgctg tcgccataac agccaaagcc
+      541 gccatacaac ttccaagctt tacagcatac ttgcaaataa agtttttcat tgtaaaatcc
+      601 ccctttcctc aatttgtgtc acattataac ataaaatcgt ttattctgcc gtgacatacc
+      661 gaaaatcgta taattaaatg gcgaaattta aagttttcta tattttgtac agtattttca
+      721 acatctatgt tgaaaataaa aaagatgcag gtaatttttt attacctgca tcttcttagt
+      781 ggatcactaa aatatatatc atcatctttc atacatcatc gcataaacag aaaaaacatt
+      841 tttttcttgc tcatactcaa acttaccatc atattttttt actgtttcta caacattttt
+      901 aattccaagc ccatgacatt cttttctatc ttgttttaat gatagattgt caagtcaagt
+      961 gcaacacaat cagagaaaaa atttttgaag cacctcgaag ggagtcagga aattaagaca
+     1021 tttgcggggg c
+//

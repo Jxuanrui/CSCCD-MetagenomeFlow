@@ -1,0 +1,25 @@
+{
+    "read_files": [
+        "/home/labuser/Course/Maxmetagenome/Project/phase1_repro/U6/result/kneaddata/S02/S02_1.kneaddata.fastq.gz",
+        "/home/labuser/Course/Maxmetagenome/Project/phase1_repro/U6/result/kneaddata/S02/S02_2.kneaddata.fastq.gz"
+    ],
+    "expected_format": "IU",
+    "compatible_fragment_ratio": 1.0,
+    "num_compatible_fragments": 13327,
+    "num_assigned_fragments": 13327,
+    "num_frags_with_concordant_consistent_mappings": 66,
+    "num_frags_with_inconsistent_or_orphan_mappings": 13278,
+    "strand_mapping_bias": 0.5909090909090909,
+    "MSF": 0,
+    "OSF": 0,
+    "ISF": 27,
+    "MSR": 0,
+    "OSR": 0,
+    "ISR": 39,
+    "SF": 6665,
+    "SR": 6613,
+    "MU": 0,
+    "OU": 0,
+    "IU": 0,
+    "U": 0
+}

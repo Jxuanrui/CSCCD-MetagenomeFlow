@@ -1,0 +1,112 @@
+LOCUS       k127_60550              2072 bp    DNA              UNK 01-JAN-1980
+DEFINITION  k127_60550 flag=0 multi=12.9332 len=2072.
+ACCESSION   k127_60550
+VERSION     k127_60550
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+COMMENT     ##antiSMASH-Data-START##
+            Version     :: 8.0.4-c0054a9(changed)
+            Run date    :: 2026-09-27 16:40:25
+            NOTE :: This is a single region extracted from a larger record!
+            Orig. start :: 0
+            Orig. end   :: 2072
+            ##antiSMASH-Data-END##
+FEATURES             Location/Qualifiers
+     region          1..2072
+                     /candidate_cluster_numbers="1"
+                     /contig_edge="True"
+                     /product="arylpolyene"
+                     /region_number="1"
+                     /rules="(APE_KS1 or APE_KS2)"
+                     /tool="antismash"
+     cand_cluster    1..2072
+                     /candidate_cluster_number="1"
+                     /contig_edge="True"
+                     /detection_rules="(APE_KS1 or APE_KS2)"
+                     /kind="single"
+                     /product="arylpolyene"
+                     /protoclusters="1"
+                     /tool="antismash"
+     protocluster    1..2072
+                     /aStool="rule-based-clusters"
+                     /category="PKS"
+                     /contig_edge="True"
+                     /core_location="[1917:2070](-)"
+                     /cutoff="20000"
+                     /detection_rule="(APE_KS1 or APE_KS2)"
+                     /neighbourhood="20000"
+                     /product="arylpolyene"
+                     /protocluster_number="1"
+                     /tool="antismash"
+     proto_core      complement(1918..2070)
+                     /aStool="rule-based-clusters"
+                     /tool="antismash"
+                     /cutoff="20000"
+                     /detection_rule="(APE_KS1 or APE_KS2)"
+                     /neighbourhood="20000"
+                     /product="arylpolyene"
+                     /protocluster_number="1"
+     CDS             complement(3..1928)
+                     /locus_tag="ctg30320_1"
+                     /transl_table=11
+                     /translation="MTAELEKQIREAATLVAVEDLYRPYKPKRRTRAMIAREKGLESLA
+                     NVILLQNLKESVEKVAEAYVSGEKGVENVQDAINGAMDILAEGISDDAKYRTYIRNITM
+                     NKGLLQSTAKDGEQKSVYETYYNYEEPVKKAAGHRILALNRGEDEKILTVKVAAPTEQI
+                     LQYLEKQVITRENPYTTPVLKTVIQDSYSRLIAPSVEREIRSELTDKAQEGAIRVFGKN
+                     LEQLLMQPPIAGKVVLGWDPAFRTGCKLAVVDSTGKVLDTVVIFPTAPQNKVAESKKIL
+                     KDLICKYGISLISVGNGTASRESEQIIVELLKELKEQVQYVIVNEAGASVYSASKLATE
+                     EFPNFDVGQRSAVSIARRLQDPLAELVKIDPKSIGVGQYQHDMNQKNLGEALGGVVEDC
+                     VNKVGVDLNTASASLLEYVSGINKTLAKNIVAYREENGAFKNRKQLLKVAKLGPKAFEQ
+                     CAGFMRITGGDNPLDGTSVHPESYEAAGKLLEKLGYAGEQLSHGGLNGISKKIVDYKKM
+                     AQEMGIGEITLRDIAAELEKPARDPRDEMPRPVLRSDIMEMKDLKPGMVLKGTVRNVID
+                     FGAFVDIGVHQDGLVHISQMTDRYIKHPLEAVSVGDVVDVKILSVDMDKKRISLTISIP
+                     IVEPSQA"
+     CDS             complement(1918..2070)
+                     /gene_functions="biosynthetic (rule-based-clusters)
+                     arylpolyene: APE_KS2"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg30320_2"
+                     /sec_met_domain="APE_KS2 (E-value: 1.8e-20, bitscore: 60.4,
+                     seeds: 16, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MCDAYHFTAPAPGGAGGAACMRLALADGGVVPEQIGYINAHGTST
+                     HLNDS"
+ORIGIN
+        1 cctgcctgtg agggttcaac gatcggaatt gagattgtaa gagaaatcct cttcttgtcc
+       61 atatctacgc ttaaaatctt cacatccacc acgtcgccta cgcttacagc ctctaatgga
+      121 tgcttaatat aacgatctgt catctgggaa atatgtacca gaccatcctg atgaacacca
+      181 atatccacaa acgcgccaaa gtcaatgaca ttgcggacag ttccctttaa taccattccc
+      241 ggctttaagt ctttcatttc cataatgtca cttcttaaaa caggacgagg catttcatct
+      301 cgcgggtctc tggctggttt ttccagttcg gctgcaatat cccgcagtgt aatctcacct
+      361 atacccattt cctgggccat tttcttataa tcaacaatct ttttgctgat gccatttaaa
+      421 ccgccgtgag ataattgttc tccggcgtat cctaactttt ctaacagttt tcctgctgcc
+      481 tcatagcttt ccggatgaac acttgtgcca tctaaaggat tatctcctcc tgtgatcctc
+      541 ataaatccgg cacactgttc aaatgccttc ggccccagtt tagccacctt cagcagctgc
+      601 ttacggttct taaaagcacc attttcttct ctatatgcca ctatgttctt tgccagggtt
+      661 ttattgatgc cggaaacata ttccaacagg gaagcagatg ccgtatttaa atcaacccct
+      721 actttattta cacaatcttc aacaacaccg ccaagcgctt ctcccagatt cttctggttc
+      781 atatcatgct gatactggcc tacaccaatg gatttcggat cgatctttac cagttcagcc
+      841 aggggatcct gcagtcttct tgcaatggaa acagcacttc tctggcctac atcaaagtta
+      901 ggaaattctt ctgtagccag cttacttgca gaatacacag aagcacccgc ctcgtttacg
+      961 atcacatatt gtacctgctc ttttaattcc tttaacagtt ctacaatgat ctgttcagac
+     1021 tccctggaag ccgttccgtt tcctacagag atcaaagaaa tgccatattt acagatcagg
+     1081 tcttttaata tcttctttga ctctgccacc ttattctggg gagcagttgg gaaaatgacc
+     1141 actgtgtcca aaacttttcc agtgctgtct acaacagcca gcttacagcc agttcggaat
+     1201 gccggatccc agcctaatac tacttttccg gcaattggcg gctgcatgag aagctgctct
+     1261 aaattcttgc cgaatacgcg gatcgcacct tcctgtgcct tgtctgtcag ttcgctgcgg
+     1321 atctcgcgtt ccacagaggg cgcgatcaaa cggctgtaac tgtcctggat cacagttttt
+     1381 aatacaggtg ttgtgtatgg attttccctt gtgatcacct gcttctccag gtattgtaaa
+     1441 atctgctctg ttggtgctgc caccttcaca gtgagtattt tctcatcttc ccctctgttt
+     1501 aatgcaagaa tgcggtgtcc ggctgctttt tttacaggtt cttcataatt atagtatgtt
+     1561 tcataaacag atttctgttc cccgtccttt gctgttgact ggagaagacc tttattcatg
+     1621 gtaatgttac gaatataggt gcggtatttt gcatcatcgg aaatgccttc tgcaagaatg
+     1681 tccatagctc cgttaatggc atcctgaacg ttttccactc ccttttcacc agaaacatag
+     1741 gcctctgcca ctttttccac agattccttt aaattctgta aaaggatcac atttgccaaa
+     1801 gactccaggc ccttttcacg ggcgatcata gctcttgtac ggcgttttgg tttgtatggg
+     1861 cggtataaat cttctactgc tactaaagtt gctgcttccc ggatctgttt ttccagttca
+     1921 gctgtcattc aggtgggtgg acgtcccgtg ggcgttgatg tagccgatct gttcaggcac
+     1981 taccccgccg tcggccagcg ccagccgcat acaggccgca ccgcctgcgc cgcccggtgc
+     2041 cggggcggta aagtggtagg cgtcgcagtt ag
+//

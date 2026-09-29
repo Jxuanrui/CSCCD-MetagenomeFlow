@@ -1,0 +1,125 @@
+LOCUS       k127_33097              1383 bp    DNA              UNK 01-JAN-1980
+DEFINITION  k127_33097 flag=1 multi=4.0000 len=1383.
+ACCESSION   k127_33097
+VERSION     k127_33097
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+COMMENT     ##antiSMASH-Data-START##
+            Version     :: 8.0.4-6c27e57(changed)
+            Run date    :: 2026-09-27 18:15:01
+            NOTE :: This is a single region extracted from a larger record!
+            Orig. start :: 0
+            Orig. end   :: 1383
+            ##antiSMASH-Data-END##
+FEATURES             Location/Qualifiers
+     region          1..1383
+                     /candidate_cluster_numbers="1"
+                     /contig_edge="True"
+                     /product="RiPP-like"
+                     /region_number="1"
+                     /rules="(strepbact or Antimicrobial14 or Bacteriocin_IId or
+                     BacteriocIIc_cy or Bacteriocin_II or Bacteriocin_IIi or
+                     Lactococcin or Antimicrobial17 or Lactococcin_972 or
+                     Bacteriocin_IIc or LcnG-beta or Cloacin or Linocin_M18 or
+                     TIGR03651 or TIGR03693 or TIGR03601 or TIGR03795 or
+                     TIGR03975 or DUF692 or TIGR01193 or (YcaO or TIGR03604))"
+                     /tool="antismash"
+     cand_cluster    1..1383
+                     /candidate_cluster_number="1"
+                     /contig_edge="True"
+                     /detection_rules="(strepbact or Antimicrobial14 or
+                     Bacteriocin_IId or BacteriocIIc_cy or Bacteriocin_II or
+                     Bacteriocin_IIi or Lactococcin or Antimicrobial17 or
+                     Lactococcin_972 or Bacteriocin_IIc or LcnG-beta or Cloacin
+                     or Linocin_M18 or TIGR03651 or TIGR03693 or TIGR03601 or
+                     TIGR03795 or TIGR03975 or DUF692 or TIGR01193 or (YcaO or
+                     TIGR03604))"
+                     /kind="single"
+                     /product="RiPP-like"
+                     /protoclusters="1"
+                     /tool="antismash"
+     protocluster    1..1383
+                     /aStool="rule-based-clusters"
+                     /category="RiPP"
+                     /contig_edge="True"
+                     /core_location="[724:904](-)"
+                     /cutoff="20000"
+                     /detection_rule="(strepbact or Antimicrobial14 or
+                     Bacteriocin_IId or BacteriocIIc_cy or Bacteriocin_II or
+                     Bacteriocin_IIi or Lactococcin or Antimicrobial17 or
+                     Lactococcin_972 or Bacteriocin_IIc or LcnG-beta or Cloacin
+                     or Linocin_M18 or TIGR03651 or TIGR03693 or TIGR03601 or
+                     TIGR03795 or TIGR03975 or DUF692 or TIGR01193 or (YcaO or
+                     TIGR03604))"
+                     /neighbourhood="5000"
+                     /product="RiPP-like"
+                     /protocluster_number="1"
+                     /tool="antismash"
+     proto_core      complement(725..904)
+                     /aStool="rule-based-clusters"
+                     /tool="antismash"
+                     /cutoff="20000"
+                     /detection_rule="(strepbact or Antimicrobial14 or
+                     Bacteriocin_IId or BacteriocIIc_cy or Bacteriocin_II or
+                     Bacteriocin_IIi or Lactococcin or Antimicrobial17 or
+                     Lactococcin_972 or Bacteriocin_IIc or LcnG-beta or Cloacin
+                     or Linocin_M18 or TIGR03651 or TIGR03693 or TIGR03601 or
+                     TIGR03795 or TIGR03975 or DUF692 or TIGR01193 or (YcaO or
+                     TIGR03604))"
+                     /neighbourhood="5000"
+                     /product="RiPP-like"
+                     /protocluster_number="1"
+     CDS             complement(33..203)
+                     /locus_tag="ctg1552_1"
+                     /transl_table=11
+                     /translation="MLIFDVPEVKLFLLMIAEIVLYLIAFLCNRKNKDMYIRLFKVSVL
+                     MTLLYYISSRI"
+     CDS             complement(542..709)
+                     /locus_tag="ctg1552_2"
+                     /transl_table=11
+                     /translation="MLKDKKMYLLAIFLLGFGIANLFRNLDFVHHIINLVGLTLITFSL
+                     IFSKWERLKK"
+     CDS             complement(725..904)
+                     /gene_functions="biosynthetic (rule-based-clusters)
+                     RiPP-like: Bacteriocin_IIc"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg1552_3"
+                     /sec_met_domain="Bacteriocin_IIc (E-value: 1.1e-15,
+                     bitscore: 46.0, seeds: 35, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MTTQTMNNFETLDLETLANVEGGGWVKCYAGTIGSALVGSAGGPV
+                     GYWGGALVGYATFC"
+     CDS             complement(1064..1381)
+                     /locus_tag="ctg1552_4"
+                     /transl_table=11
+                     /translation="MTGQRQLLAFARTVASQPKILILDEATANIDSETEAIVQNSLAKM
+                     RRGRTTIAIAHRLSTIQDANCIYVLDKGRIIEHGSHEELLALGGTYHKMYSLQAGVMEG
+                     E"
+ORIGIN
+        1 ctgctgtaag atctcaaaaa agaccttagc gattaaattc tactggagat gtaatacaat
+       61 agcgtcatta gtactgatac tttaaataag cgaatataca tatctttgtt ttttctatta
+      121 caaagaaaag caatcaaata taatacaatc tccgctatca ttagcaagaa taattttact
+      181 tcgggaacat caaaaataag catttgcaag cacctcacgt tcaaagggac aaaaggttac
+      241 tttttaaact gtacccattt tttaaaaagc agactataaa gaagtaaggt tagccccaac
+      301 aagttaatgg tatggtggac tgcatccaaa cttctaaata gattagcgag gcccattcct
+      361 atgagaatgg tagccagtaa atacggtttt gagtttttga acatactttt ctccttaaag
+      421 tgtttttagc tatctgttct caagctatgg ttttattata ggtcgcaagc caacaaaaaa
+      481 gtagtgacat aaatgtcact actcgatttt gatttttagg aactctacat ttcgaatact
+      541 tctatttttt gagccgctcc catttactaa aaatcaaact aaaagtgatt aatgttaacc
+      601 ctaccaaatt aatgatatga tgaacaaaat ctaaatttct aaaaaggtta gcaatcccaa
+      661 atcctaaaag gaaaattgct agtaaataca tttttttatc tttaagcata gggtcaccta
+      721 aatattagca gaatgtggcg taaccaacta aagctcctcc ccagtaacct actgggcctc
+      781 ctgctgatcc tactagagca gatccaattg tgccggcata acacttaacc catccaccac
+      841 cttcaacgtt tgcaagtgtc tcgagatcga gtgtttcaaa attgttcatt gtttgtgttg
+      901 tcatttcaac aacctcctaa aatattattt tttagctttt tctatcaagc tatggtttta
+      961 ttatagggtg gaagacaaca aaaaagtagt gacataaatg tcaccactcg attttgattt
+     1021 ttcagaaatc ttttcgaata tagaatctat gctctaaact agcttactct ccttccatta
+     1081 cacctgcttg taggctgtac atcttgtggt aggtgccgcc gagggctagg agctcctcat
+     1141 ggctaccgtg ttcgatgata cggcccttgt ctaagacata gatgcagttg gcatcttgga
+     1201 ttgttgatag gcggtgggca atggcaatgg ttgtgcgtcc tcgacgcatt tttgctagag
+     1261 aattttgaac aatagcctct gtctctgaat ctatattggc tgtcgcttca tccagaatca
+     1321 aaatcttagg ctggctagca acggtcctag caaaggctag aagctggcgt tggccagttg
+     1381 aaa
+//

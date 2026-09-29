@@ -1,0 +1,17 @@
+#                                                                                                                        --- full sequence ---- --- best 1 domain ---- --- domain number estimation ----
+# target name        accession  query name                                                                    accession    E-value  score  bias   E-value  score  bias   exp reg clu  ov env dom rep inc description of target
+#------------------- ----------                                                          -------------------- ---------- --------- ------ ----- --------- ------ -----   --- --- --- --- --- --- --- --- ---------------------
+k127_1789_1          -          PF07715_sub-TonB_dependent_siderophore_receptor_plug-PirA-PiuA-FepA-RhtA-LvtA -            5.4e-18   61.4   1.9   6.9e-18   61.0   1.9   1.1   1   0   0   1   1   1   1 # 3 # 530 # 1 # ID=347_1;partial=11;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.456
+k127_1362_1          -          PF07715_sub-TonB_dependent_siderophore_receptor_plug-PirA-PiuA-FepA-RhtA-LvtA -            4.7e-11   39.1   0.8   5.6e-11   38.8   0.1   1.5   2   0   0   2   2   2   1 # 1 # 600 # -1 # ID=56_1;partial=10;start_type=ATG;rbs_motif=TAA;rbs_spacer=4bp;gc_cont=0.515
+k127_1479_1          -          PF07715_sub-TonB_dependent_siderophore_receptor_plug-PirA-PiuA-FepA-RhtA-LvtA -              1e-06   25.1   0.5   4.3e-06   23.1   0.2   2.0   2   0   0   2   2   2   1 # 2 # 541 # 1 # ID=52_1;partial=11;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.452
+k127_506_1           -          PF07715_sub-TonB_dependent_siderophore_receptor_plug-PirA-PiuA-FepA-RhtA-LvtA -            8.3e-06   22.2   1.5   2.6e-05   20.6   0.1   2.2   2   1   0   2   2   2   1 # 3 # 587 # -1 # ID=68_1;partial=11;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.407
+#
+# Program:         hmmsearch
+# Version:         3.4 (Aug 2023)
+# Pipeline mode:   SEARCH
+# Query file:      /home/labuser/Course/Maxmetagenome/envs/fegenie/share/fegenie-1.2/hmms/iron//iron_aquisition-siderophore_transport//PF07715_sub-TonB_dependent_siderophore_receptor_plug-PirA-PiuA-FepA-RhtA-LvtA.hmm
+# Target file:     Project/Project_example/temp/fegenie/S02//S02.faa
+# Option settings: hmmsearch -o Project/Project_example/result/annotation/fegenie/S02/S02.faa-HMM/PF07715_sub-TonB_dependent_siderophore_receptor_plug-PirA-PiuA-FepA-RhtA-LvtA.hmm.txt --tblout Project/Project_example/result/annotation/fegenie/S02/S02.faa-HMM/PF07715_sub-TonB_dependent_siderophore_receptor_plug-PirA-PiuA-FepA-RhtA-LvtA.hmm.tblout -T 21 --cpu 8 /home/labuser/Course/Maxmetagenome/envs/fegenie/share/fegenie-1.2/hmms/iron//iron_aquisition-siderophore_transport//PF07715_sub-TonB_dependent_siderophore_receptor_plug-PirA-PiuA-FepA-RhtA-LvtA.hmm Project/Project_example/temp/fegenie/S02//S02.faa 
+# Current dir:     /home/labuser/Course/Maxmetagenome
+# Date:            Wed Jul  1 00:14:43 2026
+# [ok]

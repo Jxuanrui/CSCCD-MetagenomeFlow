@@ -1,0 +1,106 @@
+LOCUS       k127_152604             1473 bp    DNA              UNK 01-JAN-1980
+DEFINITION  k127_152604 flag=1 multi=3.0000 len=1473.
+ACCESSION   k127_152604
+VERSION     k127_152604
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+COMMENT     ##antiSMASH-Data-START##
+            Version     :: 8.0.4-c0054a9(changed)
+            Run date    :: 2026-09-27 16:40:25
+            NOTE :: This is a single region extracted from a larger record!
+            Orig. start :: 0
+            Orig. end   :: 1473
+            ##antiSMASH-Data-END##
+FEATURES             Location/Qualifiers
+     region          1..1473
+                     /candidate_cluster_numbers="1"
+                     /contig_edge="True"
+                     /product="terpene-precursor"
+                     /region_number="1"
+                     /rules="(PT_FPPS_like and not PT_HPP)"
+                     /tool="antismash"
+     cand_cluster    1..1473
+                     /candidate_cluster_number="1"
+                     /contig_edge="True"
+                     /detection_rules="(PT_FPPS_like and not PT_HPP)"
+                     /kind="single"
+                     /product="terpene-precursor"
+                     /protoclusters="1"
+                     /tool="antismash"
+     protocluster    1..1473
+                     /aStool="rule-based-clusters"
+                     /category="terpene"
+                     /contig_edge="True"
+                     /core_location="[1127:1472](-)"
+                     /cutoff="10000"
+                     /detection_rule="(PT_FPPS_like and not PT_HPP)"
+                     /neighbourhood="10000"
+                     /product="terpene-precursor"
+                     /protocluster_number="1"
+                     /tool="antismash"
+     proto_core      complement(1128..1472)
+                     /aStool="rule-based-clusters"
+                     /tool="antismash"
+                     /cutoff="10000"
+                     /detection_rule="(PT_FPPS_like and not PT_HPP)"
+                     /neighbourhood="10000"
+                     /product="terpene-precursor"
+                     /protocluster_number="1"
+     CDS             complement(2..946)
+                     /gene_functions="biosynthetic-additional
+                     (rule-based-clusters) DXP_synthase_N"
+                     /gene_functions="biosynthetic-additional
+                     (rule-based-clusters) TPP_enzyme_C"
+                     /gene_kind="biosynthetic-additional"
+                     /locus_tag="ctg28205_1"
+                     /sec_met_domain="DXP_synthase_N (E-value: 2.7e-113,
+                     bitscore: 364.8, seeds: 174, tool: rule-based-clusters)"
+                     /sec_met_domain="TPP_enzyme_C (E-value: 1.9e-08, bitscore:
+                     21.4, seeds: 323, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MNETDSTLPPLLARITHPSMVADLSLADKQILATELRQTIIRTVA
+                     ANGGHLAPSLGVVELTLALLSVFDPEEDKLVWDVGHQSYAWKLLTGRSENFHTLRQLGG
+                     ISGFPKIEESPFDHFGVGHSSTSVSAALGMAMARDLAGKKNHVLAVIGDGSLTGGLAFE
+                     GLNQAGDMGRRLIVVLNDNEMSISHNVGALSLFLSRNMERGWARRVRREVKDWLKSIPG
+                     IGDEMAEYAHRTHRSLKTVFTPGMLFEALRFNYIGPVNGHNIEEVERHLRMAASIDDQP
+                     VLLHVLTRKGKGYPPAEAQPSKFHGLGKFDVATG"
+     CDS             complement(1128..1472)
+                     /gene_functions="biosynthetic (rule-based-clusters)
+                     terpene-precursor: PT_FPPS_like"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg28205_2"
+                     /sec_met_domain="PT_FPPS_like (E-value: 1.9e-20, bitscore:
+                     60.1, seeds: 145, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MAMFRVACVSGGLLAGASEPDIASLRAYGEALGVTFQIVDDILDE
+                     TADTATLGKPAGSDAEMGKTTYPSLMGLDRSRELAQEFAEKAVDSLSAFSGQDAAFLKG
+                     LALMLVTRNK"
+ORIGIN
+        1 ggcctgtggc gacgtcgaac ttgcccagcc cgtggaattt ggaaggctga gcctcggcgg
+       61 gcgggtaccc cttccccttg cgggtgagca cgtgcagcag gaccggctga tcgtcgatgg
+      121 aggccgccat tctcagatgg cgttccactt cctcgatatt gtgcccgttc accggaccga
+      181 tgtagttgaa gcgcagggcc tcgaaaagca tacccggcgt gaatacggtc ttgaggctgc
+      241 ggtgcgtgcg atgggcgtat tccgccattt catcgccaat gccggggatg gacttgagcc
+      301 agtccttgac ttcccggcgt accctgcgcg cccagccgcg ttccatgttg cggctgagga
+      361 agagggacaa cgcgccgaca ttgtgggaga tcgacatctc gttgtcgttc aggaccacga
+      421 tgaggcgccg gcccatgtcg cccgcctggt tcagcccttc aaaggccagc cctccggtga
+      481 gggagccgtc tccgatgacc gcgagcacat ggtttttctt tcccgccaga tcccgagcca
+      541 tcgccatgcc gagagccgcg gaaacggatg tcgaggagtg tccgacgccg aaatgatcaa
+      601 acgggctttc ttcgattttc ggaaaaccgc tgatgcctcc aagctggcgc aaggtatgga
+      661 agttttccga ccttccggtc agcagcttcc atgcgtagct ctggtgcccc acatcccaga
+      721 cgagcttgtc ttcctcaggg tcgaatacgg aaaggagcgc gagcgtcagc tcgacgacgc
+      781 cgagcgaggg ggccagatgc cctccgttgg cggcaaccgt gcggataatg gtctggcgca
+      841 gttccgtcgc caggatctgc ttgtcggcga gggacaggtc cgccaccatg gaagggtgcg
+      901 tgatgcgggc gagaagggga ggaagggtac tatccgtttc gttcatgaag agtgcgttcc
+      961 tgtggtctgg gcaggttgcc ggggcttggg cgcggggcgc ctgctttgtg gtatgcggaa
+     1021 ctccctgtat agctccgcct tatcgaattg gcaaacggac cttgcggaga gcggcgctcc
+     1081 ccgatgcggg atcggggatg cttcgctcca tcggtttttc agtggcttta tttgttgcgc
+     1141 gtcaccaaca tgagcgcgag ccccttgagg aatgcggcgt cctgtccgga gaaggcgctc
+     1201 aggctgtcga cggctttctc ggcgaactcc tgcgccaatt cgcggctgcg gtcgagcccc
+     1261 atgagtgaag gatatgtggt cttgcccatt tcggcatcgc ttccggcggg ctttccgagc
+     1321 gtggcggtat cggcggtctc atcaaggatg tcgtcgacga tctggaaggt gacgccgagc
+     1381 gcttcgccgt aggcgcgcag gctggcaata tcgggttccg aggctccggc gaggaggccg
+     1441 ccgctgacgc aggccacgcg gaacatggct ccg
+//

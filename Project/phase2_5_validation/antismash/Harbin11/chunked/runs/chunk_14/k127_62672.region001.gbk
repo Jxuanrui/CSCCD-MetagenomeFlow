@@ -1,0 +1,108 @@
+LOCUS       k127_62672              1845 bp    DNA              UNK 01-JAN-1980
+DEFINITION  k127_62672 flag=1 multi=4.0000 len=1845.
+ACCESSION   k127_62672
+VERSION     k127_62672
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+COMMENT     ##antiSMASH-Data-START##
+            Version     :: 8.0.4-6c27e57(changed)
+            Run date    :: 2026-09-27 22:26:30
+            NOTE :: This is a single region extracted from a larger record!
+            Orig. start :: 0
+            Orig. end   :: 1845
+            ##antiSMASH-Data-END##
+FEATURES             Location/Qualifiers
+     region          1..1845
+                     /candidate_cluster_numbers="1"
+                     /contig_edge="True"
+                     /product="T3PKS"
+                     /region_number="1"
+                     /rules="(Chal_sti_synt_C or Chal_sti_synt_N)"
+                     /tool="antismash"
+     cand_cluster    1..1845
+                     /candidate_cluster_number="1"
+                     /contig_edge="True"
+                     /detection_rules="(Chal_sti_synt_C or Chal_sti_synt_N)"
+                     /kind="single"
+                     /product="T3PKS"
+                     /protoclusters="1"
+                     /tool="antismash"
+     protocluster    1..1845
+                     /aStool="rule-based-clusters"
+                     /category="PKS"
+                     /contig_edge="True"
+                     /core_location="[983:1844](+)"
+                     /cutoff="20000"
+                     /detection_rule="(Chal_sti_synt_C or Chal_sti_synt_N)"
+                     /neighbourhood="20000"
+                     /product="T3PKS"
+                     /protocluster_number="1"
+                     /tool="antismash"
+     proto_core      984..1844
+                     /aStool="rule-based-clusters"
+                     /tool="antismash"
+                     /cutoff="20000"
+                     /detection_rule="(Chal_sti_synt_C or Chal_sti_synt_N)"
+                     /neighbourhood="20000"
+                     /product="T3PKS"
+                     /protocluster_number="1"
+     CDS             1..318
+                     /locus_tag="ctg1116_1"
+                     /transl_table=11
+                     /translation="MEKIIEEHFPNDNLKKAINNYEQGYVRLKLNNLDEALTFMNLSLE
+                     QSLETDDVISQACSYRGLGEIYLALEDKGLANTHFKRAIELFESVGEFEGIKEIEELIN
+                     R"
+     CDS             564..797
+                     /locus_tag="ctg1116_2"
+                     /transl_table=11
+                     /translation="MMLNKYIKYLPWMILGALPSYQSATIYARNSFDLFYLTLNFLIVY
+                     IALIVFYENVLRDKCKELFIRIMSNPKKDKQG"
+     CDS             984..1844
+                     /gene_functions="biosynthetic (rule-based-clusters) T3PKS:
+                     Chal_sti_synt_N"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg1116_3"
+                     /sec_met_domain="Chal_sti_synt_N (E-value: 4.4e-09,
+                     bitscore: 23.8, seeds: 21, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MTIGIDKIGFATSPYVLRLEDLAAARDTDPEKLSKGLLLKEQSVA
+                     PITEDIVTLAATAADDILTDEDKEAIDMVILATESGIDQSKAAAVFVHGLLDIQPFARS
+                     FEMKEACYAATAALDYAKLHVEKFPQSKVLVIASDIAKYGIGTPGEPTQGAGAVAMLIS
+                     QNPRILSFNDDNVAQTRDVMDFWRPNYATTPFVNGIYSTQQYLDSLKTTWAEYQKRTGL
+                     TLTDFAAVCFHLPYPKLALKGLKKILDKSLSEEKKDQLQYNFDQSILYSQRVGNIYTGS
+                     LFLGLL"
+ORIGIN
+        1 gaagagaaga taattgaaga gcattttccc aatgataatc taaagaaagc tataaataac
+       61 tacgaacaag gctatgtgag attgaaatta aacaatcttg atgaagctct tacattcatg
+      121 aatctgtcac tggaacaatc tttagagact gatgatgtga tttctcaggc ttgtagctat
+      181 agagggttag gggaaattta tttagccttg gaagataaag gattagccaa cacacatttc
+      241 aaacgagcta tagaactttt cgaaagtgtt ggagagtttg aagggataaa ggaaattgag
+      301 gaattgatta atcgatgatt ttgcatttag attttgtcat tagtttgctt aaataaagta
+      361 cataattgac atgattagct caaaaaattt ttttgttact aaagtaatcg cttcacttat
+      421 cttaaaatag tttttctcca ttcaaactaa tgcaaaataa tattcgtttt tcaatttctc
+      481 taagtgttat cgcttgcatt tttacttaaa aggactacaa taaaagtgaa aaaacaaatc
+      541 ctttaaagta tgcgaggtga tgtatgatgc taaacaagta tatcaagtat cttccttgga
+      601 tgatcctagg agccctcccc tcctatcaat cagcaactat ctatgcccgt aattcatttg
+      661 acttgttcta tctgaccttg aactttctga ttgtgtacat cgctttaatc gtcttctacg
+      721 aaaatgttct aagagacaaa tgcaaagaac tcttcatacg aatcatgagc aatcctaaaa
+      781 aagataagca aggataagaa ttgaaaagcc atctgaggat ggctttttct tatagattct
+      841 ctatttttct ttgaaacatt gcaaaatcgg tcccgagaat gatttccttg ctgatctagc
+      901 tttttcaagg gagttttacc cttaaatatg gtaaaatagt aacgaaatat actagtagat
+      961 atcaaataaa aaagaggtta agaatgacaa ttgggattga taagattggt tttgcgacga
+     1021 gtccttatgt cttgcgttta gaagatttgg ctgctgctcg tgatactgat cccgaaaaac
+     1081 tgagcaaggg tcttctctta aaagaacaaa gtgttgcacc gatcacagaa gacatcgtca
+     1141 cattggctgc tactgcagca gatgatattt taacagacga agataaagaa gcgatcgaca
+     1201 tggtgattct tgcgacagaa tctggaattg accagagtaa ggctgctgct gtgtttgtcc
+     1261 atggcttact agatatccag cctttcgccc gctcttttga gatgaaagaa gcctgctatg
+     1321 ctgcgactgc tgccttggat tatgctaaac tccatgttga aaaatttcca cagagtaagg
+     1381 ttttggtcat tgccagtgac attgctaaat acggaattgg aactcctgga gaaccaacac
+     1441 agggggctgg agcggttgct atgctgatca gccaaaatcc tcgtattcta tcttttaacg
+     1501 atgataatgt tgcccaaaca cgcgatgtca tggatttttg gcgtccaaat tatgcgacaa
+     1561 ctccctttgt gaatgggatt tattcaacgc aacaatatct agattctctg aaaacaacct
+     1621 gggcggaata ccagaaacgg actggcctta ccttgacaga ctttgcggcc gtctgcttcc
+     1681 atttacctta tccaaaatta gctctcaagg gcttgaaaaa aatcttggat aagtcattat
+     1741 cagaagagaa aaaagatcaa ttacaataca actttgatca atcgattcta tacagccaac
+     1801 gcgtaggaaa tatctacact ggatctcttt tcctaggctt gctgt
+//

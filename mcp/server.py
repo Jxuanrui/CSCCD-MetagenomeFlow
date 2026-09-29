@@ -37,8 +37,8 @@ def resolve_repo(repo_arg):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="MaxMetagenome stdio JSON-RPC search server.")
-    parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
+    parser = argparse.ArgumentParser(description="CSCCD-MetagenomeFlow stdio JSON-RPC search server.")
+    parser.add_argument("--repo", help="Path to the CSCCD-MetagenomeFlow repository root.")
     return parser.parse_args()
 
 
@@ -279,7 +279,7 @@ async def main():
             types.Tool(
                 name="meta-server_rag_search",
                 description=(
-                    "Hybrid BM25+dense retrieval over the MaxMetagenome RAG knowledge "
+                    "Hybrid BM25+dense retrieval over the CSCCD-MetagenomeFlow RAG knowledge "
                     "base(s): experience_kb, literature_kb, skill_design_kb, mechanism_kb, signature_kb, or all."
                 ),
                 inputSchema={

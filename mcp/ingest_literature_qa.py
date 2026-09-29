@@ -43,7 +43,7 @@ def find_repo_root(start_path):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Ingest microbiome-fm PMC QA corpus into literature_kb.")
-    parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
+    parser.add_argument("--repo", help="Path to the CSCCD-MetagenomeFlow repository root.")
     parser.add_argument("--parquet", default="/tmp/litqa_train.parquet", help="Downloaded dataset parquet file.")
     parser.add_argument(
         "--license-map",

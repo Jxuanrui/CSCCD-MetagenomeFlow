@@ -35,8 +35,8 @@ def resolve_repo(repo_arg):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Build the MaxMetagenome literature KB index.")
-    parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
+    parser = argparse.ArgumentParser(description="Build the CSCCD-MetagenomeFlow literature KB index.")
+    parser.add_argument("--repo", help="Path to the CSCCD-MetagenomeFlow repository root.")
     parser.add_argument("--max-articles", type=int, help="Maximum number of PMC articles to download.")
     parser.add_argument("--update", action="store_true", help="Skip downstream work when no new PMIDs are found.")
     return parser.parse_args()

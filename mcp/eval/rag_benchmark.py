@@ -74,7 +74,7 @@ def resolve_repo(repo_arg: str | None) -> Path:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Benchmark MaxMetagenome RAG retrieval modes.")
+    parser = argparse.ArgumentParser(description="Benchmark CSCCD-MetagenomeFlow RAG retrieval modes.")
     parser.add_argument("--repo", help="Path to the repository root. Auto-detected by default.")
     parser.add_argument(
         "--mode",

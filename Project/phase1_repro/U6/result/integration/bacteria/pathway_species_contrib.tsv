@@ -1,0 +1,180 @@
+pathway	species	S01	S02	S03	S04	S05	S06
+UNINTEGRATED	unclassified	0.0800	0.1762	0.0971	0.1068	0.0800	0.0957
+UNINTEGRATED	g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0387	0.1555	0.0615	0.0333	0.0212	0.0410
+UNINTEGRATED	g__Blautia.s__Ruminococcus_torques	0.0278	0.0000	0.0191	0.0567	0.0187	0.0000
+UNINTEGRATED	g__Blautia.s__Blautia_wexlerae	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+UNINTEGRATED	g__Fusicatenibacter.s__Fusicatenibacter_saccharivorans	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-6163: chorismate biosynthesis from 3-dehydroquinate	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+ARO-PWY: chorismate biosynthesis I	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-1042: glycolysis IV	unclassified	0.0001	0.0000	0.0000	0.0000	0.0001	0.0000
+ANAGLYCOLYSIS-PWY: glycolysis III (from glucose)	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis	unclassified	0.0001	0.0000	0.0000	0.0001	0.0001	0.0001
+PWY-6609: adenine and adenosine salvage III	unclassified	0.0001	0.0001	0.0001	0.0000	0.0000	0.0001
+NONMEVIPP-PWY: methylerythritol phosphate pathway I	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+COA-PWY-1: superpathway of coenzyme A biosynthesis III (mammals)	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-6151: S-adenosyl-L-methionine salvage I	unclassified	0.0001	0.0000	0.0001	0.0001	0.0000	0.0000
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)	unclassified	0.0001	0.0000	0.0002	0.0001	0.0001	0.0000
+PWY-7851: coenzyme A biosynthesis II (eukaryotic)	unclassified	0.0001	0.0000	0.0000	0.0001	0.0001	0.0000
+GLYCOLYSIS: glycolysis I (from glucose 6-phosphate)	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+PANTO-PWY: phosphopantothenate biosynthesis I	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0001
+PANTOSYN-PWY: superpathway of coenzyme A biosynthesis I (bacteria)	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0000	0.0000	0.0000	0.0000	0.0000	0.0001
+PWY-5695: inosine 5'-phosphate degradation	unclassified	0.0001	0.0000	0.0001	0.0001	0.0000	0.0000
+PWY-5484: glycolysis II (from fructose 6-phosphate)	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-5667: CDP-diacylglycerol biosynthesis I	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY0-1319: CDP-diacylglycerol biosynthesis II	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-3841: folate transformations II (plants)	unclassified	0.0001	0.0000	0.0000	0.0001	0.0000	0.0000
+HSERMETANA-PWY: L-methionine biosynthesis III	unclassified	0.0001	0.0000	0.0000	0.0001	0.0001	0.0000
+SER-GLYSYN-PWY: superpathway of L-serine and glycine biosynthesis I	unclassified	0.0001	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0000	0.0001	0.0000	0.0000	0.0000	0.0000
+PWY-6803: phosphatidylcholine acyl editing	unclassified	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+UNINTEGRATED	g__Gemmiger.s__Gemmiger_formicilis	0.0000	0.0077	0.0000	0.0256	0.0170	0.0000
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	unclassified	0.0000	0.0002	0.0000	0.0001	0.0000	0.0001
+PWY0-1296: purine ribonucleosides degradation	unclassified	0.0000	0.0001	0.0001	0.0001	0.0000	0.0000
+PWY-7238: sucrose biosynthesis II	g__Gemmiger.s__Gemmiger_formicilis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+UNINTEGRATED	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.1914	0.1397	0.0000	0.0000
+UNINTEGRATED	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0310	0.0023	0.0000	0.0000
+PWY-7238: sucrose biosynthesis II	unclassified	0.0000	0.0000	0.0002	0.0001	0.0001	0.0000
+PWY-7238: sucrose biosynthesis II	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+PWY-7238: sucrose biosynthesis II	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis	g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+ARO-PWY: chorismate biosynthesis I	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-5941: glycogen degradation II	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-7357: thiamine phosphate formation from pyrithiamine and oxythiamine (yeast)	g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-1042: glycolysis IV	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+PWY-6163: chorismate biosynthesis from 3-dehydroquinate	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+ARGSYNBSUB-PWY: L-arginine biosynthesis II (acetyl cycle)	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-5686: UMP biosynthesis I	unclassified	0.0000	0.0000	0.0001	0.0001	0.0000	0.0000
+PWY-7790: UMP biosynthesis II	unclassified	0.0000	0.0000	0.0001	0.0001	0.0000	0.0000
+PWY-7791: UMP biosynthesis III	unclassified	0.0000	0.0000	0.0001	0.0001	0.0000	0.0000
+PWY-6151: S-adenosyl-L-methionine salvage I	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6151: S-adenosyl-L-methionine salvage I	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+GLUTORN-PWY: L-ornithine biosynthesis I	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+ARGSYN-PWY: L-arginine biosynthesis I (via L-ornithine)	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-8178: pentose phosphate pathway (non-oxidative branch) II	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-7221: guanosine ribonucleotides de novo biosynthesis	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-7221: guanosine ribonucleotides de novo biosynthesis	unclassified	0.0000	0.0000	0.0001	0.0000	0.0001	0.0000
+PWY-6121: 5-aminoimidazole ribonucleotide biosynthesis I	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6121: 5-aminoimidazole ribonucleotide biosynthesis I	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+HISTSYN-PWY: L-histidine biosynthesis	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY0-1296: purine ribonucleosides degradation	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6123: inosine-5'-phosphate biosynthesis I	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+TRNA-CHARGING-PWY: tRNA charging	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-3841: folate transformations II (plants)	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6823: molybdopterin biosynthesis	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+PWY-6124: inosine-5'-phosphate biosynthesis II	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0002	0.0000	0.0000	0.0000
+NONOXIPENT-PWY: pentose phosphate pathway (non-oxidative branch) I	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+SER-GLYSYN-PWY: superpathway of L-serine and glycine biosynthesis I	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-7111: pyruvate fermentation to isobutanol (engineered)	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+RIBOSYN2-PWY: flavin biosynthesis I (bacteria and plants)	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+THISYNARA-PWY: superpathway of thiamine diphosphate biosynthesis III (eukaryotes)	g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6700: queuosine biosynthesis I (de novo)	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6700: queuosine biosynthesis I (de novo)	unclassified	0.0000	0.0000	0.0001	0.0000	0.0001	0.0001
+GLCMANNANAUT-PWY: superpathway of N-acetylglucosamine, N-acetylmannosamine and N-acetylneuraminate degradation	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY0-1586: peptidoglycan maturation (meso-diaminopimelate containing)	g__Bifidobacterium.s__Bifidobacterium_pseudocatenulatum	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY0-1586: peptidoglycan maturation (meso-diaminopimelate containing)	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+GALACTUROCAT-PWY: D-galacturonate degradation I	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6507: 4-deoxy-L-threo-hex-4-enopyranuronate degradation	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-I9: L-cysteine biosynthesis VI (from L-methionine)	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-7228: superpathway of guanosine nucleotides de novo biosynthesis I	unclassified	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-7242: D-fructuronate degradation	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	g__Faecalibacterium.s__Faecalibacterium_prausnitzii	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-7208: superpathway of pyrimidine nucleobases salvage	unclassified	0.0000	0.0000	0.0001	0.0000	0.0000	0.0000
+PWY-6608: guanosine nucleotides degradation III	unclassified	0.0000	0.0000	0.0001	0.0001	0.0000	0.0000
+SALVADEHYPOX-PWY: adenosine nucleotides degradation II	unclassified	0.0000	0.0000	0.0001	0.0001	0.0000	0.0000
+UNINTEGRATED	g__Bifidobacterium.s__Bifidobacterium_adolescentis	0.0000	0.0000	0.0000	0.0353	0.0000	0.0000
+UNINTEGRATED	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0308	0.0000	0.0000
+UNINTEGRATED	g__Subdoligranulum.s__Subdoligranulum_sp_APC924_74	0.0000	0.0000	0.0000	0.0185	0.0000	0.0000
+UNINTEGRATED	g__Bifidobacterium.s__Bifidobacterium_longum	0.0000	0.0000	0.0000	0.0173	0.0000	0.0000
+UNINTEGRATED	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0095	0.0000	0.0000
+UNINTEGRATED	g__Megamonas.s__Megamonas_hypermegale	0.0000	0.0000	0.0000	0.0084	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Gemmiger.s__Gemmiger_formicilis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Bifidobacterium.s__Bifidobacterium_adolescentis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	unclassified	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Subdoligranulum.s__Subdoligranulum_sp_APC924_74	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+VALSYN-PWY: L-valine biosynthesis	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0002	0.0000	0.0000
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-7237: myo-, chiro- and scyllo-inositol degradation	g__Gemmiger.s__Gemmiger_formicilis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+ARGSYNBSUB-PWY: L-arginine biosynthesis II (acetyl cycle)	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+ARGSYNBSUB-PWY: L-arginine biosynthesis II (acetyl cycle)	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-7238: sucrose biosynthesis II	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-7238: sucrose biosynthesis II	g__Bifidobacterium.s__Bifidobacterium_adolescentis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-7238: sucrose biosynthesis II	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-7238: sucrose biosynthesis II	g__Megamonas.s__Megamonas_hypermegale	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-7111: pyruvate fermentation to isobutanol (engineered)	unclassified	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+GLUTORN-PWY: L-ornithine biosynthesis I	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+GLUTORN-PWY: L-ornithine biosynthesis I	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)	g__Megamonas.s__Megamonas_hypermegale	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+GLYCOGENSYNTH-PWY: glycogen biosynthesis I (from ADP-D-Glucose)	g__Bifidobacterium.s__Bifidobacterium_adolescentis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-5667: CDP-diacylglycerol biosynthesis I	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY0-1319: CDP-diacylglycerol biosynthesis II	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PEPTIDOGLYCANSYN-PWY: peptidoglycan biosynthesis I (meso-diaminopimelate containing)	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-6385: peptidoglycan biosynthesis III (mycobacteria)	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+UDPNAGSYN-PWY: UDP-N-acetyl-D-glucosamine biosynthesis I	unclassified	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+UDPNAGSYN-PWY: UDP-N-acetyl-D-glucosamine biosynthesis I	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+UDPNAGSYN-PWY: UDP-N-acetyl-D-glucosamine biosynthesis I	g__Bifidobacterium.s__Bifidobacterium_longum	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+UDPNAGSYN-PWY: UDP-N-acetyl-D-glucosamine biosynthesis I	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-6387: UDP-N-acetylmuramoyl-pentapeptide biosynthesis I (meso-diaminopimelate containing)	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+NONOXIPENT-PWY: pentose phosphate pathway (non-oxidative branch) I	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+ARO-PWY: chorismate biosynthesis I	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-6163: chorismate biosynthesis from 3-dehydroquinate	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-6163: chorismate biosynthesis from 3-dehydroquinate	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-6936: seleno-amino acid biosynthesis (plants)	unclassified	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+SER-GLYSYN-PWY: superpathway of L-serine and glycine biosynthesis I	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+SER-GLYSYN-PWY: superpathway of L-serine and glycine biosynthesis I	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+COA-PWY-1: superpathway of coenzyme A biosynthesis III (mammals)	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-7851: coenzyme A biosynthesis II (eukaryotic)	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-6122: 5-aminoimidazole ribonucleotide biosynthesis II	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-6277: superpathway of 5-aminoimidazole ribonucleotide biosynthesis	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-5941: glycogen degradation II	g__Bifidobacterium.s__Bifidobacterium_adolescentis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-7663: gondoate biosynthesis (anaerobic)	unclassified	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+HSERMETANA-PWY: L-methionine biosynthesis III	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY0-1296: purine ribonucleosides degradation	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-6124: inosine-5'-phosphate biosynthesis II	g__Bifidobacterium.s__Bifidobacterium_adolescentis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-6609: adenine and adenosine salvage III	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PANTO-PWY: phosphopantothenate biosynthesis I	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-6317: D-galactose degradation I (Leloir pathway)	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-5384: sucrose degradation IV (sucrose phosphorylase)	unclassified	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-5384: sucrose degradation IV (sucrose phosphorylase)	g__Bifidobacterium.s__Bifidobacterium_longum	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-6527: stachyose degradation	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-5188: tetrapyrrole biosynthesis I (from glutamate)	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0001	0.0000	0.0000
+PWY-5188: tetrapyrrole biosynthesis I (from glutamate)	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-5659: GDP-mannose biosynthesis	g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-7371: 1,4-dihydroxy-6-naphthoate biosynthesis II	g__Megamonas.s__Megamonas_rupellensis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+PWY-7371: 1,4-dihydroxy-6-naphthoate biosynthesis II	g__Megamonas.s__Megamonas_funiformis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+UNINTEGRATED	g__Clostridium.s__Clostridium_sp_CAG_452	0.0000	0.0000	0.0000	0.0000	0.0095	0.0000
+ARGSYNBSUB-PWY: L-arginine biosynthesis II (acetyl cycle)	unclassified	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+PWY-3841: folate transformations II (plants)	g__Clostridium.s__Clostridium_sp_CAG_452	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)	g__Gemmiger.s__Gemmiger_formicilis	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+PWY-8187: L-arginine degradation XIII (reductive Stickland reaction)	unclassified	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+PWY-7199: pyrimidine deoxyribonucleosides salvage	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+PWY-7221: guanosine ribonucleotides de novo biosynthesis	g__Blautia.s__Ruminococcus_torques	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+GLUTORN-PWY: L-ornithine biosynthesis I	unclassified	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+PWY0-1296: purine ribonucleosides degradation	g__Gemmiger.s__Gemmiger_formicilis	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+LACTOSECAT-PWY: lactose and galactose degradation I	unclassified	0.0000	0.0000	0.0000	0.0000	0.0001	0.0000
+PANTO-PWY: phosphopantothenate biosynthesis I	g__Lachnospiraceae_unclassified.s__Eubacterium_rectale	0.0000	0.0000	0.0000	0.0000	0.0000	0.0000
+UNINTEGRATED	g__Alistipes.s__Alistipes_putredinis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0667
+UNINTEGRATED	g__Prevotella.s__Prevotella_copri	0.0000	0.0000	0.0000	0.0000	0.0000	0.0509
+DTDPRHAMSYN-PWY: dTDP-&beta;-L-rhamnose biosynthesis	g__Prevotella.s__Prevotella_copri	0.0000	0.0000	0.0000	0.0000	0.0000	0.0001
+COA-PWY: coenzyme A biosynthesis I (prokaryotic)	g__Alistipes.s__Alistipes_putredinis	0.0000	0.0000	0.0000	0.0000	0.0000	0.0001

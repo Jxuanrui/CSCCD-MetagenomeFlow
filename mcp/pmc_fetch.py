@@ -11,7 +11,7 @@ import requests
 
 EUROPE_PMC_SEARCH_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 EUROPE_PMC_FULLTEXT_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTextXML"
-USER_AGENT = "MaxMetagenome/1.0"
+USER_AGENT = "CSCCD-MetagenomeFlow/1.0"
 
 
 def warn(message):

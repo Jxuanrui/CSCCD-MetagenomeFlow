@@ -1,1 +1,1 @@
-"""Evaluation utilities for MaxMetagenome retrieval benchmarks."""
+"""Evaluation utilities for CSCCD-MetagenomeFlow retrieval benchmarks."""

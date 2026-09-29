@@ -17,8 +17,8 @@ COLLECTION = "signature_kb"
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Build the MaxMetagenome signature_kb index.")
-    parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
+    parser = argparse.ArgumentParser(description="Build the CSCCD-MetagenomeFlow signature_kb index.")
+    parser.add_argument("--repo", help="Path to the CSCCD-MetagenomeFlow repository root.")
     parser.add_argument("--force", action="store_true", help="Delete and rebuild the signature_kb collection.")
     parser.add_argument("--incremental", action="store_true", help="Only rebuild when the bridge table changed.")
     parser.add_argument("--batch-size", type=int, default=64, help="Embedding batch size.")

@@ -1,0 +1,106 @@
+LOCUS       k127_91311              1857 bp    DNA              UNK 01-JAN-1980
+DEFINITION  k127_91311 flag=1 multi=6.0000 len=1857.
+ACCESSION   k127_91311
+VERSION     k127_91311
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+COMMENT     ##antiSMASH-Data-START##
+            Version     :: 8.0.4-6c27e57(changed)
+            Run date    :: 2026-09-28 00:44:23
+            NOTE :: This is a single region extracted from a larger record!
+            Orig. start :: 0
+            Orig. end   :: 1857
+            ##antiSMASH-Data-END##
+FEATURES             Location/Qualifiers
+     region          1..1857
+                     /candidate_cluster_numbers="1"
+                     /contig_edge="True"
+                     /product="terpene-precursor"
+                     /region_number="1"
+                     /rules="(PT_FPPS_like and not PT_HPP)"
+                     /tool="antismash"
+     cand_cluster    1..1857
+                     /candidate_cluster_number="1"
+                     /contig_edge="True"
+                     /detection_rules="(PT_FPPS_like and not PT_HPP)"
+                     /kind="single"
+                     /product="terpene-precursor"
+                     /protoclusters="1"
+                     /tool="antismash"
+     protocluster    1..1857
+                     /aStool="rule-based-clusters"
+                     /category="terpene"
+                     /contig_edge="True"
+                     /core_location="[874:1855](+)"
+                     /cutoff="10000"
+                     /detection_rule="(PT_FPPS_like and not PT_HPP)"
+                     /neighbourhood="10000"
+                     /product="terpene-precursor"
+                     /protocluster_number="1"
+                     /tool="antismash"
+     proto_core      875..1855
+                     /aStool="rule-based-clusters"
+                     /tool="antismash"
+                     /cutoff="10000"
+                     /detection_rule="(PT_FPPS_like and not PT_HPP)"
+                     /neighbourhood="10000"
+                     /product="terpene-precursor"
+                     /protocluster_number="1"
+     CDS             1..861
+                     /locus_tag="ctg1109_1"
+                     /transl_table=11
+                     /translation="MEKHSDCYFQLFTNATLLTEEVAFRLKKMGNVTPLISIEGLKDES
+                     DIRRGKDGVLDRTIRGVRACRKARLIFGVAASICRSNYEDLVSRAHIERMAREGALYLW
+                     YYIYRPVGAVPNVENALTKEQIRDFRRFIVEQRRDAPLFIIDTYWDDKGKALCPAATGM
+                     SHHISPSGAVEFCPPLQMARDFINGDASNLVELFRDSRFLADLRKMTAETSRGCILLED
+                     PGKMWRFLEQQGAIDTTTRGTVREEYQKMNPVPGHDMEGEEIPEQNVFYRLLKKKYFFG
+                     FGAYG"
+     CDS             875..1855
+                     /gene_functions="biosynthetic (rule-based-clusters)
+                     terpene-precursor: PT_FPPS_like"
+                     /gene_kind="biosynthetic"
+                     /locus_tag="ctg1109_2"
+                     /sec_met_domain="PT_FPPS_like (E-value: 5.7e-20, bitscore:
+                     58.5, seeds: 145, tool: rule-based-clusters)"
+                     /transl_table=11
+                     /translation="MENKLIHNIPASYAERDELRNRIQAFVDDLTIQPPLSLDDLSNFA
+                     DQLIREYALDVEVRGWLMVEIHNQVWKETVASIPYERRVLLLPKCLSNSAKCQAEIDEL
+                     GLLCHRCSHCSIPDLQDKAESLGIMSIVAEGFTSVVGLIQNRVVDSVIGVSCLDSLEKA
+                     FPLLISNAVPGLAIPLNTSGCKDTHVDYEYVVRMMGMRSDNEARLLDYDGLRADLKRWF
+                     SKENLAGHFSPAKDQTSSVALEWMGGEGKRWRPYLLAATYLALTGGAEVPDDVQRAAIA
+                     VECFHKASLVHDDIQDNDKERYGKPTINALYGVPIAINVGDILLGE"
+ORIGIN
+        1 atggagaaac attcggactg ctacttccaa ttgtttacca acgctacttt gctgacagaa
+       61 gaggtggcct ttcgcttaaa aaagatggga aatgttactc ctctgatcag tatcgaagga
+      121 ttgaaagacg agagcgatat ccgccgtggg aaagatggcg tattggatcg tacgatccgt
+      181 ggagtgcgtg cctgtcggaa agcccgtttg attttcggtg tagctgccag tatatgccgg
+      241 agtaattatg aggatttggt gagtcgggcc catatcgaac ggatggctag ggagggtgcg
+      301 ctctatttgt ggtattatat ctatcgtccg gtgggagcgg ttcctaatgt ggagaatgcg
+      361 ttgactaagg agcaaattag ggatttccgt cggtttattg tcgagcaacg gagggatgcg
+      421 cccttgttta ttatcgatac ttattgggat gataagggaa aagccctatg tccggcggcg
+      481 acgggtatga gccatcatat atctccgtcg ggggcggtcg agttttgccc gcctttacag
+      541 atggctaggg actttattaa tggggatgcc tcaaacttgg tggagctatt ccgtgattca
+      601 aggtttttgg cggatctgcg gaaaatgaca gccgagacat ccaggggctg tatccttttg
+      661 gaagatcccg gaaaaatgtg gagattcttg gaacaacagg gtgcgataga tactacgact
+      721 cggggtacgg taagggagga atatcagaaa atgaacccgg ttcccggtca tgatatggaa
+      781 ggggaggaga ttcccgagca gaatgttttt tacagactct tgaagaagaa atactttttt
+      841 ggatttggag cttacggtta atctttgagt acgcatggaa aacaaactga tacataacat
+      901 accggcatct tatgctgaac gggatgaatt gcgtaatcga attcaagcat ttgtggacga
+      961 tttaacgatc cagcccccac tgtccttgga cgatttgtcg aacttcgcgg atcaattgat
+     1021 tcgtgagtat gcactagacg tagaggtaag agggtggctg atggtagaga tccataatca
+     1081 agtatggaag gaaacggtcg cttccattcc ctatgagaga cgtgtattac tactacctaa
+     1141 gtgtttgagt aattctgcta aatgccaggc ggaaattgat gaattaggtc ttttatgcca
+     1201 tcgatgtagt cattgttcga ttcccgatct tcaagataaa gcggaaagtc tgggcataat
+     1261 gagtattgtc gcggaaggtt ttacttccgt ggtaggcttg atacagaatc gggtagttga
+     1321 ttcagtgatc ggggtaagtt gcttggattc tttagaaaaa gcttttccct tgcttatcag
+     1381 taatgctgtt ccgggcttgg ctatacccct aaatacgtcc ggatgtaagg atacccatgt
+     1441 tgattatgaa tatgtggttc gtatgatggg gatgcgctcg gataatgagg ctaggctgtt
+     1501 ggattatgat ggattacgag cggatttgaa aagatggttc tcgaaagaga atttagcagg
+     1561 ccatttctct ccggctaaag accaaacctc ttcggtcgcc ttagaatgga tgggcggtga
+     1621 aggcaagcga tggcgtcctt atttattggc ggctacttat ctggctttga ccgggggggc
+     1681 tgaggttccg gacgatgtac agcgggccgc tattgcggtg gaatgtttcc ataaagcctc
+     1741 tttagtgcat gatgacatac aagataatga taaggagcgg tacggtaaac caacgataaa
+     1801 tgctttgtat ggtgtgccta tagcgattaa tgtcggtgat atcttattgg gtgaagg
+//

@@ -1,0 +1,74 @@
+# Phase 1 Baseline Manifest (Step 0 Freeze)
+# Generated: 2026-09-25 (read-only freeze; no production code modified)
+# Purpose: 定义 Phase 1 全程执行的冻结态与样本全集; golden baseline = pre-fix reference, NOT ground truth (用户决定 §8).
+
+freeze:
+  git_head: 139879a8484ec2021f79d954f4ba15b27365250b
+  git_head_subject: "fix(readme): restore Community section (WeChat card) lost to the badge-grid truncation"
+  dirty_workspace:
+    count: 33            # 31 用户进行中修改(mcp/mining/agents 线) + CLAUDE.md(本次 MCP 文档同步) + docs/plans/(未跟踪)
+    diff_sha256_prefix: e8f9432d87afa37e
+    status_sha256_prefix: 3513a3252025b64a
+    policy: Phase 1 commits 仅触碰各 ticket 声明文件; 进行中修改永不提交/丢弃
+  env_manifests: 57 files (docs/manifests/envs/*.txt)
+  env_db_combined_sha256_prefix: dacb154a1e4f3186   # cat envs/*.txt databases.yaml | sha256sum
+  db_first_level_dirs: 58
+  databases_yaml_entries: 58
+  config_sha256_prefix: 47d2a3438274b081            # pipeline/config/config.yaml
+  execution_mode: glm-router MCP 迁移至 .zcode/config.json 已完成; 新会话恢复 Flash 路由; 若不可用则 main-agent fallback(标准不降, 用户确认)
+  recovery_snapshot:   # 用户决定 §2: T-10 前最后一道只读恢复保护
+    dir: .zcode/phase1_recovery/ (gitignored; 请勿清理该目录直至 Phase 1 结束)
+    files:
+      unstaged_20260925.patch: "git diff --binary 全量 (sha256 prefix e8f9432d87afa37e, 与 dirty_workspace.diff_sha256_prefix 一致 ✓)"
+      staged_20260925.patch: "git diff --cached --binary (空, 无 staged 条目)"
+      status_20260925.txt: "git status --porcelain 快照"
+      untracked_20260925.list: "untracked 文件清单"
+      untracked_content_20260925.tar.gz: "untracked 文件内容打包 (docs/plans/ + scripts/tests/benchmark/)"
+    restore_recipe: "git stash list 确认干净 → git checkout -- . → git apply unstaged_20260925.patch → tar xzf untracked_content_20260925.tar.gz; staged 为空无需处理"
+
+sample_universe:      # 用户决定 §7: 三集合显式定义; 禁止以 ls result_dir 当样本全集
+  declared_samples:   # metadata.csv 声明
+    project01: [Sample1, Sample2, Sample3, Sample4, Sample10, Sample11, Sample12, Sample13, Sample14, Sample15]
+    project_example: [S01, S02, S03, S04, S05, S06]
+  available_results:  # 结果目录实际存在
+    project01_coverm_quant: 13 files (= declared 10 + Sample16/17/18 stale artifacts, 见 u1)
+    project01_kneaddata: 10 (无 16/17/18)
+    project01_raw_data: 10 (Sample1/2/3/4/10-15, paired ×2 = 20 fastq)
+  benchmark_eligible: # metadata valid ∩ required inputs/results present ∩ identity confirmed
+    project01: [Sample1, Sample2, Sample3, Sample4, Sample10, Sample11, Sample12, Sample13, Sample14, Sample15]  # 待 T-02 逐样本核验后确认
+    tier_c_selection: PENDING (T-02, 按普通/高复杂度/病毒真菌丰富三准则)
+
+u1_reconciliation:    # 只读追查, 本阶段不修复(用户决定 §3)
+  scope: Project01 result 目录 13 vs metadata 10
+  extra_samples: [Sample16, Sample17, Sample18]
+  first_seen_source: 39_coverm_quant 批量调用, 2026-07-01 15:33-15:34 (temp/logs/coverm_quant/Sample1{6,7,8}.log.gz)
+  mechanism: coverm 对不存在的 kneaddata 输入报错 (failed to open ... No such file or directory), 遗留 0 字节 tsv ×3 + 失败日志 ×3; data/ 无其 raw fastq, kneaddata/ 无其目录
+  downstream_impact: ZERO — 98d 样本枚举来自 samplesheet (read_samples) 而非目录枚举; mag_integration_table 无 16/17/18 列; integration/stat/viz_crosscohort grep 零命中
+  classification: C (Test / development artifact) — 批量调用使用了超集样本清单的失败残留 [Sample16/17/18 同判]
+  table:  # sample_id | in_metadata | in_result_dir | in_raw | in_manifest(databases) | in_major_summary_tables | first_seen_source | timestamp | likely_status | notes
+    - {sample_id: Sample16, in_metadata: no,  in_result_dir: "coverm_quant/空tsv", in_raw: no, in_major_summary_tables: no, first_seen_source: 39_coverm_quant, timestamp: "2026-07-01T15:33", likely_status: C-test-artifact, notes: "kneaddata 输入缺失, coverm ERROR"}
+    - {sample_id: Sample17, in_metadata: no,  in_result_dir: "coverm_quant/空tsv", in_raw: no, in_major_summary_tables: no, first_seen_source: 39_coverm_quant, timestamp: "2026-07-01T15:34", likely_status: C-test-artifact, notes: "同 Sample16"}
+    - {sample_id: Sample18, in_metadata: no,  in_result_dir: "coverm_quant/空tsv", in_raw: no, in_major_summary_tables: no, first_seen_source: 39_coverm_quant, timestamp: "2026-07-01T15:34", likely_status: C-test-artifact, notes: "同 Sample16"}
+  disposition: Phase 1 不删除/不改名/不补 metadata; 处置(删除残留)留待用户 Phase 1 后决定
+
+tier_a_golden_baseline:
+  checksum_file: scripts/tests/benchmark/phase1_tierA_golden.sha256
+  files: 4366 (Project_example/result + Test_CI_fixture/result 全部既有输出, 2.96G)
+  checksum_file_sha256_prefix: d6ce0d45e6b4bd2a
+  scope_note: 既有输出冻结, 非全管线重跑; 受影响步骤在各 ticket reproduction 时先复跑对账(排除陈旧输出干扰)
+  interpretation: pre-fix reference; 确认的 correctness fix 修复后输出允许不一致——条件是 root cause 可解释且不相关部分逐字节一致
+
+t19_mag1_reproduction:
+  status: NOT_REPRODUCED (2026-09-25 正式复现关闭, evidence: docs/plans/phase1_evidence/T19_not_reproduced.md)
+  reproduction_result:  # /tmp/t19_repro.py, seed=20260925
+    coverm_files: "13 (10 valid + 3 empty U-1 artifacts)"
+    derep_vs_98d_unmatched: 0   # 213 vs 213
+    covermkeys_vs_98d_unmatched: 0   # union 213 keys, both directions
+    trace: "20 MAG × 10 TPM columns = 200 cells, mismatches=0"
+    verdict: NOT REPRODUCED — 98d join 正确, 零代码修改
+  root_of_suspicion: 静态审计漏看 CoverM Genome 列本就输出去扩展名 basename 且 98d 有 .strip()+skipped_empty 防御
+
+pending_decisions_on_record:
+  - T-02 Tier C 选样 (三准则, 限 Benchmark Eligible)
+  - U-1 残留处置 (Phase 1 后)
+  - subject_id 语义 NEEDS CONFIRMATION (Phase 3 接线前)

@@ -32,7 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Build the BugSigDB signature bridge table.")
     parser.add_argument("--all", action="store_true", help="Keep all body sites/hosts, not just human gut.")
     parser.add_argument("--refresh", action="store_true", help="Re-download the dump even if the cache exists.")
-    parser.add_argument("--repo", help="Path to the MaxMetagenome repository root.")
+    parser.add_argument("--repo", help="Path to the CSCCD-MetagenomeFlow repository root.")
     return parser.parse_args()
 
 

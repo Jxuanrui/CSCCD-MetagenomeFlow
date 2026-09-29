@@ -1,0 +1,12 @@
+{
+    "salmon_version": "0.14.1",
+    "index": "/home/labuser/Course/Maxmetagenome/Project/phase1_repro/U6/result/assembly/salmon/index",
+    "libType": "A",
+    "threads": "8",
+    "meta": [],
+    "validateMappings": [],
+    "mates1": "/home/labuser/Course/Maxmetagenome/Project/phase1_repro/U6/result/kneaddata/S06/S06_1.kneaddata.fastq.gz",
+    "mates2": "/home/labuser/Course/Maxmetagenome/Project/phase1_repro/U6/result/kneaddata/S06/S06_2.kneaddata.fastq.gz",
+    "output": "/home/labuser/Course/Maxmetagenome/Project/phase1_repro/U6/result/assembly/salmon/S06",
+    "auxDir": "aux_info"
+}
