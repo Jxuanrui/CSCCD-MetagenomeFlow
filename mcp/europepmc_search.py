@@ -116,10 +116,7 @@ SEARCH_TOPICS = [
         "id": "funomic_fungi_marker",
         "terms": '(FunOMIC AND ("fungi marker" OR fungal marker))',
     },
-    {
-        "id": "ccmetagen_eukaryote_classification",
-        "terms": '(CCMetagen AND ("eukaryote classification" OR eukaryotic classification))',
-    },
+    # removed 2026-09-29: CCMetagen tool retired by user
     {
         "id": "microfisher_its_extraction",
         "terms": '(MicroFisher AND ("ITS extraction" OR ITS))',

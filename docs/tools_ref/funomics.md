@@ -48,7 +48,7 @@ FunOMIC (conda envs/funomic) → FunOMIC (系统 PATH) → DIAMOND blastx + db/f
 | 工具 | 方法 | 数据库 | 推荐场景 |
 |------|------|--------|---------|
 | **FunOMIC** | 标记基因 + 功能蛋白 | 160万 marker + 340万蛋白 | **推荐**，如果已安装 |
-| CCMetagen | KMA + NCBI nt 全库 | NCBI nt | 无近缘参考也可检测 |
+| ~~CCMetagen~~（已移除 2026-09-29） | KMA + NCBI nt 全库 | NCBI nt | 曾作为无近缘参考的补充，现由 75/77 覆盖 |
 | MetaPhlAn4 真核 | 标记基因 | 约 1 万真核基因组 | 与细菌分析保持一致 |
 
 ## 注意事项
@@ -56,7 +56,7 @@ FunOMIC (conda envs/funomic) → FunOMIC (系统 PATH) → DIAMOND blastx + db/f
 - 因此当前运行路径是 DIAMOND 回退模式，需要 `db/funomic/P/FunOMIC.P.v1.dmnd`
 - `db/funomic/T/` 中的 `.bt2l` 索引已部署，后续若拿到可安装的 FunOMIC 包可直接复用
 - FunOMIC 输出为 `classification.tsv`，包含 feature / classification / abundance 三列
-- 建议与 CCMetagen（76）和 MicroFisher（77）结果取共识
+- 建议与 MicroFisher（77）结果取共识（CCMetagen/76 已于 2026-09-29 移除）
 
 ## 官方链接
 - 安装尝试：`https://github.com/zhanglab/FunOMIC.git`（2026-06-11 实测返回 `Repository not found`）

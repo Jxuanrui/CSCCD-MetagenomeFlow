@@ -211,6 +211,12 @@ def main():
         if entry_id in REGISTRY_EXEMPT_FILES:
             continue
         if entry.get("status") in ("deprecated", "removed") or entry_id in RULE_ONLY_ENTRIES:
+            if entry.get("status") == "removed":
+                ap = entry.get("archive_path")
+                if ap and not (REPO / ap).exists():
+                    issues.append(
+                        f"[registry] {entry_id}: archive_path 不存在: {ap}"
+                    )
             continue
         if entry_id not in scripts:
             issues.append(f"[registry] {entry_id}: 已注册但 scripts/ 下无对应文件")

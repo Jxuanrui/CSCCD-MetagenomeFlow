@@ -84,7 +84,7 @@
 
 - 核心工具：MetaPhlAn4、HUMAnN3、Kraken2/Bracken、MEGAHIT、MetaBAT/MaxBin/SemiBin、CheckM2、GTDB-Tk、dRep、StrainPhlAn、Centrifuger GTDB
 - 病毒组：geNomad、VirSorter2、CheckV、iPHoP、vOTU 95% ANI、PHAROKKA
-- 真菌组：mycobiome ITS/WGS、FunOMIC、CCMetagen、MicroFisher
+- 真菌组：mycobiome ITS/WGS、FunOMIC、MicroFisher
 - 统计分析：alpha/beta diversity、vegan、phyloseq、ANCOM-BC2、DESeq2、LEfSe、MMUPHin、ConQuR、SIAMCAT、curatedMetagenomicData
 - 基准：CAMI、CAMI2
 - 多组学：multi-omics integration、metagenomics-metabolomics correlation

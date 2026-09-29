@@ -214,11 +214,9 @@ questions:
     expected_doc_prefixes: ["blast-gutdb-fungi"]
     dimension: mycobiome
     subset: easy
-  - id: ccmetagen_kma_pantaxa
-    query: "CCMetagen KMA 全域分类 真核 原虫 稀有真菌 nt 库"
-    expected_doc_prefixes: ["ccmetagen-eukaryote-classification"]
-    dimension: mycobiome
-    subset: easy
+  # retired 2026-09-29: ccmetagen tool removed by user; expected doc archived
+  # (archive/cleanup_20260929/docs_experience/). Do NOT reinstate without
+  # restoring the doc AND the tool.
   - id: diversity_alpha_beta
     query: "alpha beta 多样性 Shannon Chao1 Bray PERMANOVA phyloseq"
     expected_doc_prefixes: ["diversity-analysis-alpha-beta"]

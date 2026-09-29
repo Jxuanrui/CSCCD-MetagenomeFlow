@@ -1656,6 +1656,7 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 # 说明：76_fun_ccmetagen.sh 已从 Snakemake pipeline rule all 中移除
 #       registry.yaml 中状态已更新为 removed
 #       真菌分类由 71/72/75/77 四条路径覆盖，CCMetagen 不影响分析完整性
+#       2026-09-29：脚本与文档已归档至 archive/cleanup_20260929/
 
 
 

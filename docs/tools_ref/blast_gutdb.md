@@ -31,15 +31,15 @@ bash scripts/74_fun_blast_gutdb.sh -s SAMPLE -t 16 -w /path/to/workdir -r ~/Cour
 qseqid   sseqid   pident   length   mismatch   gapopen   qstart   qend   sstart   send   evalue   bitscore
 ```
 
-## 与 FunOMIC / CCMetagen 的对比
+## 与 FunOMIC 的对比（CCMetagen 已于 2026-09-29 移除）
 
 | 工具 | 方法 | 数据库 | 速度 | 精度 |
 |------|------|--------|------|------|
 | FunOMIC（75） | marker + 功能蛋白 | 1.6M markers + 3.4M proteins | 中 | 高（推荐） |
-| CCMetagen（76） | KMA | NCBI nt 全库 | 较慢 | 全面 |
+| ~~CCMetagen（76）~~（已移除 2026-09-29） | KMA | NCBI nt 全库 | 较慢 | 全面 |
 | **BLAST GutDB**（74） | DIAMOND blastx | 肠道真菌库 47G | 最慢 | 高（参考依赖） |
 
-建议优先级：FunOMIC > CCMetagen > BLAST GutDB（含计算时间与精度权衡）
+建议优先级：FunOMIC > BLAST GutDB（含计算时间与精度权衡；CCMetagen 已于 2026-09-29 移除）
 
 ## 注意事项
 - 数据库 47 GB，位于 `db/gutdb/`

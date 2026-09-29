@@ -532,6 +532,11 @@ scripts/tests/
 scripts/hooks/pre-commit + scripts/install_git_hooks.sh — git pre-commit hook（增量检查，阻断模式）
 Project/Test_CI_fixture/              — 专用4样本测试数据集（与Project01物理隔离）
 pipeline/config/config.test_ci.yaml   — 层三DAG测试专用config
+
+**验收规约（2026-09-29 质量审核decision）**：凡对 fixture 做 Snakemake dry-run 验收（含单规则 `-n -p -R <rule>`），
+一律使用 `snakemake -s pipeline/Snakefile --configfile pipeline/config/config.test_ci.yaml -n [target]`；
+**禁止**用 `--config workdir=... samplesheet=...` 手动拼参（会漏掉 `metadata`，统计类规则串用
+Project01 分组表导致假阳性验收）。
 ```
 
 **日常使用**：
