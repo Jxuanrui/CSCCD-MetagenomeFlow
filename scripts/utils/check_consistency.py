@@ -84,6 +84,57 @@ def load_skills():
     return skills
 
 
+class DuplicateKeyLoader(yaml.SafeLoader):
+    """记录同层重复键的 SafeLoader 子类。
+
+    yaml.safe_load 遇重复键会静默取最后一个值；本 loader 额外把重复键
+    记录到实例属性 duplicates（(键, 首次行号, 重复行号) 元组列表），
+    构造行为与 SafeLoader 完全一致，对无重复键的文件零干扰。
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.duplicates = []
+
+    def construct_mapping(self, node, deep=False):
+        first_line = {}
+        for key_node, _value_node in node.value:
+            if key_node.tag == "tag:yaml.org,2002:merge":
+                continue  # 合并键 "<<" 允许出现多次，不计入重复
+            key = self.construct_object(key_node, deep=True)
+            if isinstance(key, list):
+                key = tuple(key)
+            try:
+                hash(key)
+            except TypeError:
+                continue  # 不可哈希键交给基类按原行为报错
+            line = key_node.start_mark.line + 1
+            if key in first_line:
+                self.duplicates.append((key, first_line[key], line))
+            else:
+                first_line[key] = line
+        return super().construct_mapping(node, deep=deep)
+
+
+def check_yaml_duplicate_keys():
+    """用 DuplicateKeyLoader 检查 registry 与全部技能卡的同层重复键。"""
+    issues = []
+    paths = [REPO / "agents/registry.yaml"]
+    paths += sorted((REPO / "agents/skills").glob("*.yaml"))
+    for path in paths:
+        loader = DuplicateKeyLoader(path.read_text())
+        try:
+            loader.get_single_data()
+        finally:
+            loader.dispose()
+        for key, first_line, dup_line in loader.duplicates:
+            issues.append(
+                f"[yaml] {path.relative_to(REPO)}: 重复键 '{key}' "
+                f"(首次出现在第 {first_line} 行, 重复出现在第 {dup_line} 行)"
+            )
+    return issues
+
+
 def resolve_rule(rule_ref):
     """Return (rule_file, rule_name) or (None, None) for a rule reference."""
     if not rule_ref:
@@ -203,6 +254,8 @@ def main():
     scripts = set(iter_analysis_scripts())
     skills = load_skills()
     rule_names = load_rule_names()
+
+    issues.extend(check_yaml_duplicate_keys())
 
     for script in sorted(scripts):
         if script not in registry and not _is_companion_script(script, registry):
