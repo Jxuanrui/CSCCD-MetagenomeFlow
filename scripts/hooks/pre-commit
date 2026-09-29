@@ -49,7 +49,7 @@ while IFS= read -r f; do
         sz=$(stat -c%s "$f" 2>/dev/null || echo 0)
         [ "${sz}" -gt 5242880 ] && BLOCKED="${BLOCKED}${f} (${sz} bytes)\n"
     fi
-done < <(git diff --cached --name-only --diff-filter=AC)
+done < <(git diff --cached --name-only --diff-filter=ACM)
 if [ -n "${BLOCKED}" ]; then
     echo "[BLOCK] staged large/binary run artifacts violate E-4-3 (no big binaries in git):"
     printf '%b' "${BLOCKED}"

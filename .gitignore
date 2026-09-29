@@ -21,6 +21,8 @@ Project/*/data/
 Project/*/result/
 Project/*/temp/
 Project/*/logs/
+# 递归兜底：深层 localDB 副本（Project/<prog>/<sample>/result/.../localDB/，一层通配匹配不到）
+Project/**/localDB/
 # 多层验证产物目录（Project/<program>/<sample>/result/ 结构，二进制产物，不入库；
 # manifest/报告类如需入库以 ! 反选具体文件）——2026-09-29 E-4-3 提前处置，质量审核建议
 Project/phase1_repro/

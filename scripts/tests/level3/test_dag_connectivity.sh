@@ -52,7 +52,7 @@ echo "[PASS] DAG dry-run OK, ${JOB_COUNT:-?} total jobs resolved, no connectivit
 #    Supervisor finding 2026-09-29: explicit-target dry-runs required.
 #    Targets MUST be absolute (WORKDIR-constant rules declare absolute paths).
 echo "[INFO] Explicit-target dry-run for off-DAG crosscohort chain..."
-FIXTURE="$(python3 -c "import yaml;print(yaml.safe_load(open('${CONFIG}'))['workdir'])")"
+FIXTURE="$("${REPO_ROOT}/miniforge3/bin/python" -c "import yaml;print(yaml.safe_load(open('${CONFIG}'))['workdir'])")"
 OFFLOG="$(mktemp)"
 if ! "${SNAKEMAKE}" -s "${SNAKEFILE}" --configfile "${CONFIG}" -n -- \
         "${FIXTURE}/result/viz_crosscohort/crosscohort_done.txt" \
