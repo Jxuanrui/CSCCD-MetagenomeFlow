@@ -2049,7 +2049,7 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
     # bash scripts/install_git_hooks.sh   # 一次性安装 pre-commit hook（符号链接）
 
     echo "[INFO] shellcheck 0.11.0 已安装于 envs/shellcheck"
-    echo "       pre-commit hook 安装: bash scripts/install_git_hooks.sh"
+    bash scripts/install_git_hooks.sh   # 自动安装 pre-commit hook（2026-09-29 起强制；幂等）
     echo "       全量扫描: bash scripts/tests/level1/run_shellcheck_all.sh"
     echo "       三层CI统一入口: bash scripts/tests/run_ci_checks.sh --level all"
 

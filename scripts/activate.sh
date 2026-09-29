@@ -31,4 +31,10 @@
     # 优先使用项目内 conda R（与 Bioconductor 包版本一致）
     export PATH="${PROJ_DIR}/miniforge3/bin:${PATH}"
 
+    # pre-commit 门禁自愈安装（.git/hooks 不进 git，clone/换机后自动补装；幂等）
+    if [ -d "${PROJ_DIR}/.git" ] && [ ! -e "${PROJ_DIR}/.git/hooks/pre-commit" ] \
+        && [ -x "${PROJ_DIR}/scripts/install_git_hooks.sh" ]; then
+        bash "${PROJ_DIR}/scripts/install_git_hooks.sh" >/dev/null 2>&1 || true
+    fi
+
     echo "[CSCCD-MetagenomeFlow] 环境已激活  PROJ_DIR=${PROJ_DIR}"

@@ -1,5 +1,0 @@
-gene	pfam_family	evalue	score	full_line
-S01|k127_1000_1	FamilyA	1e-40	140.0	FamilyA	-	S01|k127_1000_1	-	1e-40	140.0	1	1
-S01|k127_1000_1	FamilyB	1e-20	60.0	FamilyB	-	S01|k127_1000_1	-	1e-20	60.0	2	2
-S01|k127_1000_1	FamilyC	1e-10	35.0	FamilyC	-	S01|k127_1000_1	-	1e-10	35.0	3	3
-S01|k127_1004_1	FamilyD	5e-30	99.5	FamilyD	-	S01|k127_1004_1	-	5e-30	99.5	1	1
