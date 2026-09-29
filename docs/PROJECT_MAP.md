@@ -534,9 +534,11 @@ Project/Test_CI_fixture/              — 专用4样本测试数据集（与Proj
 pipeline/config/config.test_ci.yaml   — 层三DAG测试专用config
 
 **验收规约（2026-09-29 质量审核decision）**：凡对 fixture 做 Snakemake dry-run 验收（含单规则 `-n -p -R <rule>`），
-一律使用 `snakemake -s pipeline/Snakefile --configfile pipeline/config/config.test_ci.yaml -n [target]`；
+一律使用 `snakemake -s pipeline/Snakefile --configfile pipeline/config/config.test_ci.yaml -n <target>`；
 **禁止**用 `--config workdir=... samplesheet=...` 手动拼参（会漏掉 `metadata`，统计类规则串用
-Project01 分组表导致假阳性验收）。
+Project01 分组表导致假阳性验收）。**过渡期约束**（crosscohort.smk 的 `{workdir}` 通配与其余
+9 个规则文件的 `WORKDIR` 常量路径域不一致，相对路径 target 会触发 MissingInput）：
+**target 必须写绝对路径**，直至 §待approve的路径域结构修复获批落地。
 ```
 
 **日常使用**：
