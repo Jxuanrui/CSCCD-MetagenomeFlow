@@ -15,7 +15,7 @@
 #   [✓] §2.3 MetaPhlAn4 数据库（mpa_vOct22_CHOCOPhlAnSGB_202212，已识别）测试通过
 #   [✓] §2.4 LEfSe（biobakery channel）测试通过
 #   [✓] §2.5 Kraken2 2.1.3 + Bracken 3.1 测试通过
-#   [✓] §2.6 Kraken2 数据库（pluspf_20240112，hash 77G，classify 正常）测试通过
+#   [✓] §2.6 Kraken2 数据库（k2_pluspf_20251015，hash 77G，classify 正常）测试通过
 #   [✓] §3.1 assembly（MEGAHIT 1.2.9 / SPAdes 3.15.5 / QUAST 5.0.2 / Prodigal 2.6.3 / CD-HIT 4.8.1 / salmon 1.2.0）测试通过（MEGAHIT 端到端）
 #   [✓] §3.2 eggNOG-mapper 2.1.13（pip 安装，Python 3.9）测试通过
 #   [✓] §3.3 eggNOG 数据库（5.0.2，39G+8.7G，--data_dir 参数指定，无软链接）测试通过（DB version 5.0.2 识别）
@@ -28,7 +28,7 @@
 #   [✓] §4.7 CheckM2（Python 3.8 + scikit-learn=0.23.2 + numpy<1.24）测试通过
 #   [✓] §4.8 CheckM2 数据库（uniref100.KO.1.dmnd 2.9 GB）测试通过
 #   [✓] §5.1 VIBRANT 1.2.1（envs/vibrant）+ CheckV（envs/checkv）测试通过（zlib冲突已拆分独立环境）
-#   [✓] §5.2 AMRFinderPlus 3.10.1 + RGI 4.0.3 + CARD 数据库 测试通过
+#   [✓] §5.2 AMRFinderPlus 4.0.23 + RGI 6.0.5 + CARD 数据库 测试通过
 #   [✓] §5.3 dbCAN3 + 数据库（3.5 GB）测试通过
 #   [✓] §5.4 StrainPhlAn4 4.2.4（复用 humann4 环境）测试通过（补装 samtools/mafft/fasttree）
 #   [✓] §5.5 antiSMASH 7.1.0（--no-channel-priority 安装）测试通过
@@ -396,9 +396,9 @@
     conda run --prefix ${envs}/kraken2 conda list | grep bracken
 
 
-# --- 2.6 Kraken2 数据库  [✓ pluspf_20240112 / hash 77G / classify 正常] ---
+# --- 2.6 Kraken2 数据库  [✓ k2_pluspf_20251015 / hash 77G / classify 正常] ---
 
-    # 注：服务器现有 k2_pluspf_20240112（pluspf 完整版）
+    # 注：服务器现有 k2_pluspf_20251015（pluspf 完整版；磁盘 mtime 2026-06-01，manifest 记录一致）
     mkdir -p ${db}/kraken2/{pluspf,pluspf16g}
 
     if [ "${INSTALL_MODE}" = "bank" ]; then
@@ -714,7 +714,7 @@ CHECKM_CFG
     echo "CheckV 数据库就绪: ${db}/checkv/"
 
 
-# --- 5.2 AMR + MGE：AMRFinderPlus 3.10.1 + RGI 4.0.3 (CARD)  [✓] ---
+# --- 5.2 AMR + MGE：AMRFinderPlus 4.0.23 + RGI 6.0.5 (CARD)  [✓] ---
 
     conda create --prefix ${envs}/amr -y
     conda install --prefix ${envs}/amr -y \
