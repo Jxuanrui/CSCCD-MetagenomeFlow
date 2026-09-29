@@ -1,0 +1,104 @@
+name: "Functional Redundancy"
+script_id: "96c_functional_redundancy"
+purpose: "功能冗余度分析"
+category: "functional_ecology"
+dimension: "multi_omics"
+description: "联合功能丰度矩阵和物种/分类丰度矩阵，估计每项功能的有效贡献物种数（Function Dispersion Index, FDI）、每个物种的功能多样性（SFD）以及功能与物种丰度的相关关系，并识别低冗余、强关联或具有机器学习重要性的关键功能。适用于评估群落功能对物种丢失的潜在稳健性、发现依赖少数类群的脆弱功能、比较不同微生物维度的功能保险效应，以及为干预靶点排序。"
+
+parameters:
+  functional_file:
+    type: "path"
+    default: ~
+    range: "有效的 function-by-sample TSV 文件"
+    tuning_advice: "使用与研究问题匹配的功能层级，如细菌 KEGG KO、病毒 VOG；建议预先去除极低丰度和极低流行率功能。"
+  taxonomy_file:
+    type: "path"
+    default: ~
+    range: "有效的 species/taxonomy-by-sample TSV 文件"
+    tuning_advice: "功能表与分类表必须共享足够样本；物种层级通常比高阶分类更能反映贡献分散度。"
+  output_dir:
+    type: "path"
+    default: "{workdir}/result/stat/{dimension}/functional_redundancy"
+    range: "可写目录"
+    tuning_advice: "不同维度和功能类型应使用独立输出目录。"
+  dimension:
+    type: "string"
+    default: "bacteria"
+    range: ["bacteria", "fungi", "virus"]
+    tuning_advice: "必须与功能和分类输入来源一致；病毒分析默认以 viral family 作为分类贡献代理。"
+  type:
+    type: "string"
+    default: "kegg_ko"
+    range: "kegg_ko、arg、vog 或其他功能类型"
+    tuning_advice: "选择粒度稳定且注释覆盖率足够的功能层级；过细的基因 ID 会增加稀疏性并降低 FDI 稳定性。"
+  ml_importance:
+    type: "path"
+    default: ~
+    range: "可选的 SHAP/特征重要性 CSV"
+    tuning_advice: "提供时应含 function/feature 列和 rank 或 importance 列；用于优先标记同时低冗余且具有预测价值的功能。"
+
+inputs:
+  - name: "functional_abundance"
+    format: "TSV"
+    path_pattern: "{workdir}/result/integration/{dimension}/{type}_abundance.tsv"
+    required: true
+    description: "功能为行、样本为列的非负丰度矩阵。"
+  - name: "taxonomy_abundance"
+    format: "TSV"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy.tsv 或 result/integration/{dimension}/viral_family_abundance.tsv"
+    required: true
+    description: "分类单元为行、样本为列的丰度矩阵。"
+  - name: "ml_importance"
+    format: "CSV"
+    path_pattern: "用户指定"
+    required: false
+    description: "可选的机器学习特征重要性或 SHAP 排名表。"
+
+outputs:
+  - name: "function_dispersion_index"
+    format: "CSV"
+    path_pattern: "{output_dir}/function_dispersion_index.csv"
+    description: "每项功能的 FDI、贡献物种数和最大贡献者。"
+  - name: "species_functional_diversity"
+    format: "CSV"
+    path_pattern: "{output_dir}/species_functional_diversity.csv"
+    description: "每个物种的功能多样性、贡献功能数和主要功能。"
+  - name: "keystone_functions"
+    format: "CSV"
+    path_pattern: "{output_dir}/keystone_functions.csv"
+    description: "低冗余、强物种关联或 ML 高重要性的候选关键功能。"
+  - name: "summary"
+    format: "TXT"
+    path_pattern: "{output_dir}/functional_redundancy_summary.txt"
+    description: "低/高冗余功能计数及冗余-相关性关系摘要。"
+  - name: "visualizations"
+    format: "PDF"
+    path_pattern: "{output_dir}/{redundancy_correlation_scatter,redundancy_heatmap}.pdf"
+    description: "FDI 与物种-功能相关性散点图及冗余热图。"
+
+interpretation:
+  typical_ranges:
+    - "FDI 可解释为有效贡献物种数；FDI < 2 为脚本定义的低冗余功能，FDI >= 3 为高冗余功能。"
+    - "低 FDI 且由单一物种贡献比例很高的功能，对该物种丰度波动更敏感，应优先作为潜在脆弱功能检查。"
+    - "较高 SFD 表示该物种参与的功能更丰富，但也可能受总体丰度和注释覆盖率影响。"
+  alerts:
+    - "功能与分类矩阵共享样本过少时，相关性和 FDI 不稳定；建议至少保留足够的生物学重复并报告样本数。"
+    - "病毒 viral family 或真菌高阶分类仅是贡献代理，FDI 不应等同于真实物种级功能冗余。"
+    - "低冗余不代表功能必然重要，应结合丰度、差异显著性、疾病关联和 ML 重要性综合排序。"
+
+troubleshooting:
+  - problem: "功能表与分类表没有共享样本"
+    solution: "统一两个矩阵的样本列名、去除路径或前后缀差异，并确认矩阵方向均为 feature-by-sample。"
+  - problem: "FDI 大量缺失或所有功能值接近 1"
+    solution: "检查输入是否过度稀疏、是否仅保留一个分类贡献者；适当降低预过滤强度，并确认功能丰度与分类丰度已采用兼容尺度。"
+  - problem: "keystone_functions.csv 为空"
+    solution: "确认存在 FDI < 2 或显著物种-功能关联；若使用 ml_importance，检查功能 ID 与重要性文件是否可匹配。空结果可表示当前数据不支持低冗余关键功能。"
+
+example_command: "bash scripts/96c_functional_redundancy.sh -f result/integration/bacteria/kegg_ko_abundance.tsv -t result/metaphlan4/merged/taxonomy.tsv -o result/stat/bacteria/functional_redundancy -d bacteria -y kegg_ko"
+
+references:
+  - "Louca S, Polz MF, Mazel F, et al. Function and functional redundancy in microbial systems. Nature Ecology & Evolution. 2018;2:936-943."
+  - "Moya A, Ferrer M. Functional redundancy-induced stability of gut microbiota subjected to disturbance. Trends in Microbiology. 2016;24:402-413."
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"

@@ -1,0 +1,23 @@
+id: "74f_fun_phf_aggregate"
+script: "scripts/74f_fun_phf_aggregate.sh"
+dimension: "fungi"
+rule_type: "aggregate"
+description: "Aggregate per-sample .rc files into merged abundance matrix + taxonomy annotation"
+inputs:
+  - name: sample_rc_files
+    path_pattern: "result/fungi/phf_profiler/{sample}/{sample}.rc"
+    required: true
+outputs:
+  - name: merged_abundance
+    path_pattern: "result/fungi/phf_profiler/merged_abundance.tsv"
+    description: "Cluster x samples abundance matrix"
+  - name: merged_abundance_with_taxonomy
+    path_pattern: "result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv"
+    description: "Merged abundance + 7-level taxonomy annotation"
+depends_on: ["74e_fun_phf_profiler"]
+benchmarks:
+  typical_runtime_min: 1
+  peak_memory_gb: 1
+known_issues: []
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_phf_aggregate"

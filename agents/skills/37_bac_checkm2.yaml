@@ -1,0 +1,37 @@
+id: "37_bac_checkm2"
+name: "CheckM2 MAG Quality Assessment"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::checkm2"
+
+inputs:
+  - name: bins
+    path_pattern: "{workdir}/result/binning/dastool/*/bins/*.fa"
+    required: true
+    description: "All DAS_Tool bins across samples"
+
+outputs:
+  - name: report
+    path_pattern: "{workdir}/result/binning/checkm2/quality_report.tsv"
+    description: "CheckM2 quality report (completeness, contamination, etc.)"
+  - name: filtered
+    path_pattern: "{workdir}/result/binning/checkm2/checkm2_filtered/filtered_report.tsv"
+    description: "MAGs filtered at completeness>=50%, contamination<=10%"
+
+depends_on:
+  - "36_bac_dastool"
+
+conda_env: "envs/checkm2"
+
+parameters:
+  completeness_min: 50
+  contamination_max: 10
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "CheckM2 requires DIAMOND DB (uniref100.KO.1.dmnd) in db/checkm2/"
+    workaround: "Download from https://zenodo.org/records/... and place in db/checkm2/"

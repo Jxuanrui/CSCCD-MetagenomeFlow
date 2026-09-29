@@ -1,0 +1,37 @@
+id: "85_fun_amr"
+script: "scripts/85_fun_amr.sh"
+tool: "AMRFinderPlus"
+tool_version: "3.12+"
+conda_env: "envs/amr"
+description: "Aggregate antifungal resistance gene annotation with AMRFinderPlus."
+dimension: "mycobiome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "faa_files"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.faa"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "amr_results"
+    path_pattern: "{workdir}/result/fungi/amr/amrfinder_results.tsv"
+    description: "AMRFinderPlus resistance calls."
+
+depends_on:
+  - "80_fun_prodigal"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_amr"
+

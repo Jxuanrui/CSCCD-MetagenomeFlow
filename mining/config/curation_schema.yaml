@@ -1,0 +1,131 @@
+# ============================================================================
+# Curation schema & inclusion predicate — gut-metagenome auto-mining subsystem
+# Phase 0 deliverable. Ratified decisions (2026-09-21):
+#   - kingdom scope: bacteria first (light tier); virome/mycobiome deferred
+#   - disease scope: all-disease scan (no CVD-only filter)
+#   - release policy: internal resource first, flip to public after QA gates
+#   - discovery primary: seqout MCP (GEO/SRA/ENA/DRA/GEA/GSA/ArrayExpress)
+# Field alignment: curatedMetagenomicData 3 sampleMetadata (gold standard),
+# GMrepo v3 phenotype vocabulary, BugSigDB signature fields.
+# Ontologies: body_site -> UBERON, disease -> MONDO (ZOOMA/OxO/OLS4/OntoGPT).
+# ============================================================================
+version: 0.2.0
+created: 2026-09-21
+status: ratified-2026-09-21
+decisions_2026_09_21:
+  fields: bmi/medication added as nullable, opportunistic fill only (no dedicated GLM extraction)
+  whitelist: two-tier UBERON — luminal admitted, mucosal admitted-with-flag
+  depth_gate: min_total_bases is a soft flag; hard floors are per-tool at processing time
+
+scope:
+  kingdom: bacteria          # Phase 3 light tier runs bacteria only
+  disease: all               # full-disease scan across BugSigDB-wide space
+  release_policy: internal   # flip to `public` after quality gates stabilize
+
+# --- Inclusion predicate: a RUN is admitted only if ALL hold ---------------
+inclusion_predicate:
+  host_organism: Homo sapiens            # NCBITaxon:9606
+  body_site_uberon:                      # two-tier whitelist (2026-09-21 decision)
+    tier_1_luminal:                      # admit + process + signature comparison
+      - UBERON:0001988   # feces
+      - UBERON:0000059   # gut
+      - UBERON:0001155   # colon
+      # extend via OLS4 descendants ONLY (large intestine, cecum, rectum,
+      # sigmoid colon, ...); never hand-add IDs
+    tier_2_mucosal_flagged:              # admit + flag, excluded from default comparison
+      sample_type_bias: true             # mucosa / biopsy / swab / ileostomy effluent
+      terms_source: OLS4 descendants     # resolved programmatically, same no-hand-ID rule
+  library_strategy: WGS
+  min_total_bases:                       # soft floor, NOT a hard admission gate
+    mode: soft
+    value: 500000000                     # 0.5 Gb junk filter; recalibrate after seed audit
+    action: low_depth_flag               # below value -> flag run row, do not drop
+
+exclusion_rules:
+  - amplicon_16S_18S_ITS                 # caught by triage gates below
+  - transcriptomic_library_source        # RNA-seq / metatranscriptome
+  - mock_or_synthetic                    # flag for QC use, do not delete
+
+# --- Triage gates: all three must pass before entering the processing tier -
+triage_gates:
+  gate_1_metadata:
+    tool: seqout MCP (search_structured / list_library_strategies)
+    rule: LIBRARY_STRATEGY == WGS
+  gate_2_mgnify:
+    tool: MGnify v6 API v2 (auto 16S/18S + primer detection)
+    rule: no marker-gene call on any run
+  gate_3_sketch:
+    tool: sylph (scripts/15c_bac_sylph.sh)
+    rule: bacterial content sanity check passes
+
+# --- Per-sample curation card (cMD3-aligned) -------------------------------
+fields:
+  identity:
+    - project_accession     # BioProject (PRJN*/PRJE*/GSA)
+    - study_accession       # SRP/ERP/DRP/GSE/E-*/GSA-study
+    - sample_accession      # BioSample/SRS/ERS/DRS
+    - run_accessions        # [SRR/ERR/DRR]
+    - source_archive        # SRA|ENA|DRA|GEA|GSA|ArrayExpress
+    - first_public          # ISO-8601
+  biology:
+    body_site:
+      ontology: UBERON
+      source_priority: [seqout_enriched, zooma, ontogpt_glm, human]
+    disease:
+      ontology: MONDO
+      source_priority: [seqout_enriched, zooma, oxo, ontogpt_glm, human]
+    condition_group:        # BugSigDB orientation for signature mining
+      allowed: [case, control, healthy]
+    age_years: {type: float, unit: years}
+    sex: {allowed: [male, female, unknown]}
+    country: {format: ISO-3166-1}
+    bmi:                                 # 2026-09-21: nullable, opportunistic fill only
+      type: float
+      nullable: true
+      fill: seqout_enriched_only         # no dedicated GLM extraction in v1
+      coverage_tracked: true
+    medication:                          # same policy as bmi (antibiotic use etc.)
+      type: string
+      nullable: true
+      fill: seqout_enriched_only
+      coverage_tracked: true
+  sequencing:
+    - platform
+    - instrument_model
+    - library_strategy
+    - library_source
+    - avg_read_length
+    - total_bases
+    - run_count
+  provenance:
+    seed_source:
+      allowed: [cMD3, GMrepo, Meta2DB, MGnify, seqout, bigquery_incremental]
+    curation_method:
+      allowed: [inherited, zooma, oxo, ontogpt_glm, human]
+    curation_confidence: {type: float, range: [0.0, 1.0]}
+    curated_at: {format: ISO-8601}
+
+# --- Quality gates ----------------------------------------------------------
+quality_gates:
+  blind_test:
+    method: cMD3 manually-curated samples, field-agreement blind audit
+    baseline: TBD        # establish in M2
+  spot_check:
+    rate: 100 per 1000 newly curated samples, human review mandatory
+  data_retention:
+    raw_reads: delete after profiling completes
+    keep: [profiles, integration tables (98b), provenance JSON]
+
+# --- Seed registry sources (Phase 1 inherited stock) ------------------------
+seed_sources:
+  cMD3:
+    access: Bioconductor ExperimentHub / GitHub sampleMetadata
+    expect_samples: 22710
+  GMrepo_v3:
+    access: REST API + bulk download (gmrepo.humangut.info)
+    expect_samples: 58903     # gut total; WGS subset ~17,618 pre-separated
+  Meta2DB:
+    access: Zenodo record (feature tables + harmonized metadata)
+    expect_samples: 13897
+  MGnify_v6:
+    access: API v2 + mgnipy (cross-check only at this stage)

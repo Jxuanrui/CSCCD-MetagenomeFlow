@@ -1,0 +1,55 @@
+---
+# manifest.yaml — Nayfach et al. 2021 Nature Biotechnology
+# CheckV: quality and completeness assessment for metagenome-assembled viral genomes
+
+id: "Nayfach2021_NatBiotechnol"
+pmid: "34816326"
+doi: "10.1038/s41587-021-01100-6"
+title: "CheckV assesses the quality and completeness of metagenome-assembled viral genomes"
+journal: "Nature Biotechnology"
+volume: 39
+issue: 5
+pages: "578-585"
+year: 2021
+impact_factor: 36.6
+paper_type: tool_paper
+primary_dimension: virome
+cross_dimensions: []
+dimension: virome
+keywords: [CheckV, virome-quality-control, completeness-estimation, contamination-detection, provirus-detection, DTR, AAI, HMM, viral-genomes, vMAG]
+citation_in_scripts: [54, 62]  # 54_vir_checkv_contig.sh, 62_vir_checkv_mag.sh
+
+code_availability:
+  github: "https://bitbucket.org/berkeleylab/checkv/"
+  portal: "https://genome.jgi.doe.gov/portal/CheckV/CheckV.home.html"
+  pypi: "https://pypi.org/project/checkv/"
+  local_original: null
+  local_adapted: null
+
+replication:
+  replicated_by: "JiXuanRui"
+  replicated_date: "2026-06-16"
+  data_accessibility: "full"          # CheckV DB downloadable; benchmark genomes publicly described
+  code_accessibility: "full"          # Official package + documentation available
+  environment_reproducibility: "high" # envs/checkv in project
+  result_verifiability: "medium"      # Quality tiers stable; exact completeness depends on DB release
+  method_fidelity: "high"             # Official CheckV end_to_end workflow used
+
+coverage:
+  implemented:
+    - id: "54"
+      script: "scripts/54_vir_checkv_contig.sh"
+      paper_section: "Methods > CheckV quality assessment workflow"
+    - id: "62"
+      script: "scripts/62_vir_checkv_mag.sh"
+      paper_section: "Methods > Genome completeness and host contamination estimation"
+  new_scripts: []
+  gaps:
+    - name: "Low-length 5 kb filtering"
+      description: "Paper benchmark commonly reports >=5 kb viral contigs; CSCCD-MetagenomeFlow keeps shorter gut-phage fragments when upstream callers emit them"
+      paper_section: "Methods > Benchmark datasets"
+      priority: medium
+    - name: "Benchmark-grade contamination simulations"
+      description: "Project uses CheckV for QC/filtering, not for reproducing the paper's synthetic fragmentation and host-contamination benchmarks"
+      paper_section: "Results > Quality estimation benchmarks"
+      priority: low

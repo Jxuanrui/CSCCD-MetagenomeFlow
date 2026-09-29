@@ -1,0 +1,80 @@
+id: "79b_fun_veba_qc"
+script: "scripts/79b_fun_veba_qc.sh"
+tool: "tiara+busco"
+tool_version: "1.0.3+6.1.0"
+conda_env: "envs/tiara, envs/busco"
+description: "Eukaryotic candidate QC: Tiara deep-learning domain re-confirmation + BUSCO lineage-specific completeness assessment. VEBA binning-eukaryotic methodology reference (no source code reused, AGPLv3-clean)."
+dimension: "fungi"
+category: "binning"
+rule_type: "per_sample"
+
+inputs:
+  - name: "eukfinder_results"
+    path_pattern: "{workdir}/result/fungi/eukfinder/{sample}/results.txt"
+    required: true
+    description: "Eukfinder candidate eukaryotic contigs (79 output)"
+
+outputs:
+  - name: "veba_qc_done"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/{sample}.veba_qc.done"
+    description: "Sentinel file: SUCCESS or EMPTY status"
+  - name: "veba_qc_summary"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/{sample}.veba_qc_summary.tsv"
+    description: "QC summary: lineage, complete BUSCOs, total BUSCOs, completeness %, fragmented, missing"
+  - name: "tiara_confirmed_fasta"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/tiara_confirmed_eukaryota.fa"
+    description: "Tiara-confirmed eukaryotic contigs (domain re-verification)"
+  - name: "busco_full_table"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/busco/run_*/full_table.tsv"
+    description: "BUSCO full results table"
+
+depends_on:
+  - "79_fun_eukfinder"
+required_by:
+  - "79c_fun_coverm_depth"
+
+params:
+  sample: "{sample}"
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  force: "false"
+
+benchmarks:
+  typical_runtime_min: 15-30
+  typical_input_size_mb: 10-50
+  peak_memory_gb: 4
+
+workflow:
+  - stage: "Extract eukaryotic candidates"
+    description: "Parse Eukfinder results.txt, extract contigs classified as eukaryote"
+  - stage: "Tiara domain re-confirmation"
+    description: "Run Tiara deep-learning classifier to re-verify domain assignment"
+  - stage: "BUSCO completeness"
+    description: "Run BUSCO in auto-lineage mode to assess genome completeness"
+  - stage: "Generate summary"
+    description: "Extract completeness metrics to summary.tsv"
+
+validation:
+  test_samples: ["Sample4", "Sample10", "Sample11", "Sample12"]
+  success_cases:
+    - sample: "Sample4"
+      result: "SUCCESS"
+      lineage: "saccharomycetaceae_odb12.2"
+      completeness: 73.5
+      notes: "Real eukaryotic signal detected"
+  empty_cases:
+    - sample: "Sample10"
+      result: "EMPTY"
+      reason: "Low sequencing depth, no eukaryotic candidates after Tiara filter"
+      notes: "Expected outcome, not a failure"
+
+known_issues:
+  - description: "BUSCO auto-lineage may take 10-20 min on first run to download lineage databases"
+    workaround: "Lineages cached in db/busco_downloads/, subsequent runs ~2 min"
+  - description: "Empty candidates (0 contigs) at low depth samples"
+    workaround: "Script exits 0 with empty.flag sentinel, not an error"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_veba_qc"

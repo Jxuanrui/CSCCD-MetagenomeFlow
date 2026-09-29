@@ -1,0 +1,92 @@
+id: "98f_cross_domain_orthogroup"
+script: "scripts/98f_cross_domain_orthogroup.sh"
+tool: "mmseqs2"
+tool_version: "15.6f452"
+conda_env: "envs/cluster"
+description: "Cross-domain protein-level orthogroup detection using MMseqs2 easy-cluster. VEBA cluster methodology reference (no source code reused). More biologically meaningful than nucleotide ANI (98e) for distant evolutionary relationships."
+dimension: "stats"
+category: "integration"
+rule_type: "aggregate"
+
+inputs:
+  - name: "bacterial_proteins"
+    path_pattern: "{workdir}/result/annotation/prokka/*/*.faa"
+    required: true
+    description: "Prokka-predicted proteins from bacterial MAGs"
+  - name: "viral_proteins"
+    path_pattern: "{workdir}/result/virus/pharokka/*/*.faa OR {workdir}/result/virus/prodigal/*/*.faa"
+    required: true
+    description: "Pharokka or Prodigal-predicted proteins from viral vOTUs"
+  - name: "eukaryotic_proteins"
+    path_pattern: "{workdir}/result/fungi/veba_qc/*/euk_mags/bin.*/metaeuk/*.proteins.faa"
+    required: false
+    description: "MetaEuk-predicted proteins from eukaryotic MAGs (79f output)"
+
+outputs:
+  - name: "orthogroup_table"
+    path_pattern: "{workdir}/result/cross_domain/orthogroup/orthogroup_table.tsv"
+    description: "Orthogroup assignments: protein_id, orthogroup_id, genome_id, domain"
+  - name: "orthogroup_stats"
+    path_pattern: "{workdir}/result/cross_domain/orthogroup/orthogroup_stats.tsv"
+    description: "Per-orthogroup statistics: orthogroup_id, size, num_genomes, domains, cross_domain_flag"
+  - name: "cross_domain_orthogroups"
+    path_pattern: "{workdir}/result/cross_domain/orthogroup/cross_domain_orthogroups.tsv"
+    description: "Orthogroups spanning multiple domains (high-confidence cross-domain homology)"
+
+depends_on:
+  - "41_bac_prokka"
+  - "64_vir_pharokka"
+  - "55_vir_prodigal_gv"
+  - "79f_fun_metaeuk_per_bin"
+required_by: []
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+  threads: "{cpus}"
+  min_seq_id: "0.3"
+  coverage: "0.8"
+  force: "false"
+
+benchmarks:
+  typical_runtime_sec: 130
+  typical_input_proteins: 790567
+  peak_memory_gb: 32
+
+workflow:
+  - stage: "Collect protein sequences"
+    description: "Discover and concatenate all bacterial/viral/fungal protein FASTA files"
+  - stage: "MMseqs2 easy-cluster"
+    description: "Cluster proteins with --min-seq-id 0.3 -c 0.8 (loose thresholds for distant homology)"
+  - stage: "Parse clusters"
+    description: "Extract orthogroup assignments from MMseqs2 cluster TSV"
+  - stage: "Identify cross-domain orthogroups"
+    description: "Flag orthogroups containing proteins from multiple domains"
+  - stage: "Generate outputs"
+    description: "Write orthogroup_table.tsv, orthogroup_stats.tsv, cross_domain_orthogroups.tsv"
+
+validation:
+  test_dataset: "Project01 production data"
+  input_proteins: 790567
+  output_orthogroups: 191762
+  cross_domain_orthogroups: 30387
+  runtime_sec: 130
+  notes: "Successfully clustered real multi-domain protein dataset"
+
+parameter_rationale:
+  min_seq_id:
+    value: "0.3"
+    reason: "Loose threshold to capture distant homology across domains"
+    note: "30% sequence identity is at the twilight zone of homology detection but appropriate for cross-domain analysis"
+  coverage:
+    value: "0.8"
+    reason: "Require 80% alignment coverage to avoid spurious domain-only matches"
+
+known_limitations:
+  - description: "Cross-domain orthogroups may include convergent evolution cases"
+    notes: "Protein-level homology is more reliable than nucleotide ANI but not perfect"
+    recommendation: "Validate biologically interesting cross-domain orthogroups with phylogenetic analysis"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/statistics.smk::cross_domain_orthogroup"

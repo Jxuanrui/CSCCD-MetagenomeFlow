@@ -1,0 +1,59 @@
+---
+# manifest.yaml — Yan et al. 2024 Cell 187 技能包元数据
+# 格式：RO-Crate provenance + PaperBench rubric + nf-core meta.yml 融合
+
+id: "Yan2024_Cell187"
+pmid: "38307030"
+doi: "10.1016/j.cell.2024.01.034"
+title: "A cultivated gut fungal catalog integrates multi-omics data to advance microbiome research"
+journal: "Cell"
+volume: 187
+year: 2024
+impact_factor: 45.5
+paper_type: application_paper        # tool_paper | benchmark_paper | application_paper | review
+primary_dimension: fungi
+cross_dimensions: []
+dimension: fungi                      # kept for backward compat
+keywords: [gut-mycobiome, fungal-catalog, metagenomics, Singular-Escrow, bowtie2, abundance-profiling]
+citation_in_scripts: [74a, 74e, 74f] # project scripts that directly implement this paper's methods
+
+code_availability:
+  github: "https://github.com/yexianingyue/Cultivated-Gut-Fungi"
+  zenodo: null
+  local_original: "skills/replications/fungi/Yan2024_Cell187/code/original/"
+  local_adapted:  "skills/replications/fungi/Yan2024_Cell187/code/adapted/"
+
+replication:
+  replicated_by: "JiXuanRui"
+  replicated_date: "2026-06-15"
+  data_accessibility: "partial"         # PHF DB via Baidu pan; CGF via NCBI PRJNA833221
+  code_accessibility: "partial"         # GitHub has profiling algo; stats scripts incomplete
+  environment_reproducibility: "high"   # All tools in envs/assembly (bowtie2 2.4.5)
+  result_verifiability: "medium"        # Can verify .rc output format; exact values require same data
+  method_fidelity: "high"               # Bowtie2 + Singular/Escrow exactly matches paper
+
+coverage:
+  implemented:
+    - id: "74a"
+      script: "scripts/74a_fun_gut_db_build.sh"
+      paper_section: "Methods > Database construction"
+    - id: "74e"
+      script: "scripts/74e_fun_phf_profiler.sh"
+      paper_section: "Methods > Metagenomics mapping and quantification"
+    - id: "74f"
+      script: "scripts/74f_fun_phf_aggregate.sh"
+      paper_section: "Methods > Abundance matrix construction"
+  new_scripts: []
+  gaps:
+    - name: "SMGC annotation"
+      description: "Secondary metabolite gene cluster annotation (antiSMASH fungi mode)"
+      paper_section: "Methods > Genome annotation > SMGCs"
+      priority: low
+    - name: "Cross-kingdom co-occurrence"
+      description: "Fungal-bacterial co-occurrence network analysis"
+      paper_section: "Results > Fig 5"
+      priority: medium
+    - name: "Overseas cohort validation"
+      description: "Multi-cohort validation using overseas profile data"
+      paper_section: "Results > Fig 6"
+      priority: low

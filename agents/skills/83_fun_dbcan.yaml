@@ -1,0 +1,37 @@
+id: "83_fun_dbcan"
+script: "scripts/83_fun_dbcan.sh"
+tool: "run_dbcan"
+tool_version: "4.x"
+conda_env: "envs/dbcan"
+description: "Aggregate fungal CAZyme annotation using dbCAN."
+dimension: "mycobiome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "faa_files"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.faa"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "overview"
+    path_pattern: "{workdir}/result/fungi/dbcan/overview.txt"
+    description: "dbCAN overview summary."
+
+depends_on:
+  - "80_fun_prodigal"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_dbcan"
+

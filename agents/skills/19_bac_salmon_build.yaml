@@ -1,0 +1,38 @@
+id: "19_bac_salmon_build"
+script: "scripts/19_bac_salmon_build.sh"
+tool: "salmon"
+tool_version: "1.2.0"
+conda_env: "envs/assembly"
+description: "Build Salmon quasi-mapping index from the non-redundant gene catalog (nucleotide_nr.fa). Aggregate step — runs once, index shared by all per-sample quant jobs."
+dimension: "bacteria"
+category: "assembly"
+rule_type: "aggregate"
+
+inputs:
+  - name: "nr_fna"
+    path_pattern: "{workdir}/result/assembly/cdhit/nucleotide_nr.fa"
+    required: true
+
+outputs:
+  - name: "index_info"
+    path_pattern: "{workdir}/result/assembly/salmon/index/info.json"
+    description: "Salmon index sentinel file. Existence indicates index is complete and valid."
+
+depends_on:
+  - "18_bac_cdhit"
+required_by:
+  - "20_bac_salmon_quant"
+
+params:
+  threads: "{cpus}"
+
+benchmarks:
+  typical_runtime_min: 3
+  peak_memory_gb: 8
+  note: "Fast step; index size scales with NR gene catalog size."
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "pipeline/rules/bacteria_assembly.smk::salmon_build"

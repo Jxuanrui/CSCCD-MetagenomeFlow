@@ -1,0 +1,57 @@
+id: "18_bac_cdhit"
+script: "scripts/18_bac_cdhit.sh"
+tool: "cd-hit-est"
+tool_version: "4.8.1"
+conda_env: "envs/assembly"
+description: "Cross-sample gene catalog construction via CD-HIT-EST (95% identity, 90% coverage). Aggregate rule: collects all per-sample prodigal .fna files, filters <100bp, clusters, and translates to protein."
+dimension: "bacteria"
+category: "assembly"
+rule_type: "aggregate"
+
+inputs:
+  - name: "fna_files"
+    path_pattern: "{workdir}/result/assembly/prodigal/{sample}/{sample}.fna"
+    required: true
+    note: "All per-sample .fna files discovered automatically. All samples must complete prodigal before this step."
+
+outputs:
+  - name: "nr_fna"
+    path_pattern: "{workdir}/result/assembly/cdhit/nucleotide_nr.fa"
+    description: "Non-redundant gene catalog (nucleotide). Input for Salmon index build (script 19)."
+  - name: "nr_faa"
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    description: "Non-redundant protein sequences. Input for eggNOG (21), KEGG (22), AMRFinder (23), CARD (24), dbCAN (25), VFDB (26), BacMet (27)."
+  - name: "clstr"
+    path_pattern: "{workdir}/result/assembly/cdhit/nucleotide_nr.fa.clstr"
+    description: "CD-HIT cluster membership file."
+
+depends_on:
+  - "17_bac_prodigal"
+required_by:
+  - "19_bac_salmon_build"
+  - "21_bac_eggnog"
+  - "22_bac_kegg"
+
+params:
+  identity: "0.95"
+  coverage: "0.9"
+  alignment: "local (-G 0)"
+  clustering: "greedy-accurate (-g 1)"
+  strands: "both (-r 1)"
+  min_gene_len: "100 bp"
+  note: "Parameters follow MetaHIT/IGC international gene catalog standard"
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 60
+  note: "Scales with total gene count. For 3M genes on 16 threads: ~15-30 min."
+
+known_issues:
+  - description: "CD-HIT memory usage can spike for very large gene sets (>5M genes). Monitor with -M 0."
+    workaround: "If OOM, use cd-hit-est-2d for two-pass batch clustering."
+  - description: "seqkit translate warning on sequences with non-standard bases — safe to ignore."
+    workaround: "Translated protein sequences are still correct; warnings are non-fatal."
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "pipeline/rules/bacteria_assembly.smk::cdhit"

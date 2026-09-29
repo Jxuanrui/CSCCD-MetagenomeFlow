@@ -1,0 +1,46 @@
+id: "69_vir_vcontact3"
+script: "scripts/69_vir_vcontact3.sh"
+tool: "vConTACT3"
+tool_version: "3.0+"
+conda_env: "envs/vcontact3"
+description: "Viral taxonomy classification via gene-sharing network (vConTACT3)."
+dimension: "virome"
+category: "taxonomy"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+  - name: "prodigal_faa"
+    path_pattern: "{workdir}/result/virus/pharokka/prodigal-gv.faa"
+    required: true
+
+outputs:
+  - name: "overview"
+    path_pattern: "{workdir}/result/virus/vcontact3/genome_by_genome_overview.csv"
+    description: "vConTACT3 taxonomic assignment overview."
+  - name: "network_files"
+    path_pattern: "{workdir}/result/virus/vcontact3/*.graphml"
+    description: "Gene-sharing network (graphml / cytoscape / d3js)."
+
+depends_on:
+  - "56_vir_votu_gen"
+  - "64_vir_pharokka"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "vConTACT3 downloads reference DB automatically if not found."
+  - "Large vOTU sets may require --reduce-memory flag."
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_vcontact3"

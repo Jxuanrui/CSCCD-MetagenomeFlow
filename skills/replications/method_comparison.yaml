@@ -1,0 +1,157 @@
+# CSCCD-MetagenomeFlow Method Comparison Registry
+# Purpose: 对同一分析任务，记录各工具的文献依据、适用场景和项目决策
+# 供 /mgx-ask 回答"用哪个工具"类问题，避免用户翻阅多篇文献
+# 更新规则：每收录一篇新文献后，检查是否影响已有比较结论并更新 project_decision
+
+comparisons:
+
+  # ────────────────────────────────────────────────────────────────────
+  # 真菌分类 / Fungi taxonomic profiling
+  # ────────────────────────────────────────────────────────────────────
+  - task: "fungi_profiling"
+    question: "宏基因组样本中真菌丰度定量选哪个工具？"
+    tools: [PHF_bowtie2, FunOMIC, CCMetagen, MicroFisher, Kraken2_fungi, MetaPhlAn4_euk]
+    paper_evidence:
+      - paper_id: Yan2024_Cell187
+        recommends: PHF_bowtie2
+        reason: "760 cultivated gut fungal genomes + Singular/Escrow multi-mapping assignment; outperforms Kraken2 for gut mycobiome (low signal, high host background)"
+        context: "human gut metagenomics, shotgun WGS"
+        strength: high
+      - paper_id: null
+        recommends: FunOMIC
+        reason: "1.6M fungal markers + 3.4M functional proteins; better for functional profiling"
+        context: "when downstream functional analysis is needed"
+        strength: medium
+    project_decision: "PHF (74e/74f) as primary + FunOMIC (75) as complement; take consensus"
+    decision_date: "2026-06-15"
+    project_scripts: [74e, 74f, 75, 71, 72]
+    notes: "MetaPhlAn4-euk outputs UNCLASSIFIED for all Project_example samples — not suitable as primary method for gut mycobiome"
+
+  # ────────────────────────────────────────────────────────────────────
+  # 基因组 Binning
+  # ────────────────────────────────────────────────────────────────────
+  - task: "metagenome_binning"
+    question: "MAG挖掘用哪个binning工具或组合？"
+    tools: [MetaBAT2, MaxBin2, SemiBin2, CONCOCT, DAS_Tool]
+    paper_evidence:
+      - paper_id: null
+        recommends: SemiBin2
+        reason: "Self-supervised learning; outperforms MetaBAT2/MaxBin2 in high-diversity samples; built-in environment models for human gut"
+        context: "complex gut microbiome, >50 samples or known environment"
+        strength: high
+      - paper_id: Jie2026_NatGenet
+        recommends: "[MetaBAT2, MaxBin2, CONCOCT] + DAS_Tool"
+        reason: "Multi-tool ensemble dereplicated by DAS_Tool outperforms single tools; used for large-scale 10k+ sample catalog"
+        context: "large-scale catalog construction, diverse microbiome types"
+        strength: high
+    project_decision: "MetaBAT2 + MaxBin2 + SemiBin2 → DAS_Tool integration (36); mirrors best-practice multi-tool approach"
+    decision_date: "2026-06-16"
+    project_scripts: [33, 34, 35, 36]
+
+  # ────────────────────────────────────────────────────────────────────
+  # 病毒鉴定 / Virus identification
+  # ────────────────────────────────────────────────────────────────────
+  - task: "virus_identification"
+    question: "宏基因组中病毒序列鉴定选哪个工具？"
+    tools: [geNomad, VirSorter2, VIBRANT, DeepVirFinder]
+    paper_evidence:
+      - paper_id: null
+        recommends: "[geNomad, VirSorter2] intersection"
+        reason: "geNomad uses neural network + marker genes + lifestyle prediction; VirSorter2 specializes in diverse virus types; intersection reduces FP"
+        context: "gut metagenomics, phage/provirus detection"
+        strength: high
+      - paper_id: Jie2026_NatGenet
+        recommends: "[geNomad, DeepVirFinder, VIBRANT]"
+        reason: "Three-tool consensus used for large vaginal virome catalog; completeness >50% via CheckV filter"
+        context: "multi-body-site catalog, diverse viruses"
+        strength: medium
+    project_decision: "geNomad (52) + VirSorter2 (53) intersection → CheckV (54) filter; matches field best practice"
+    decision_date: "2026-06-16"
+    project_scripts: [52, 53, 54]
+
+  # ────────────────────────────────────────────────────────────────────
+  # 大规模 SRA 批量分析 / Large-scale SRA metagenome analysis
+  # ────────────────────────────────────────────────────────────────────
+  - task: "large_scale_sra_analysis"
+    question: "需要批量下载并分析 SRA 公共数据集用什么框架？"
+    tools: [TOFU_MAaPO, nf_core_mag, MIntO]
+    paper_evidence:
+      - paper_id: Wacker2026_NatCommun
+        recommends: TOFU_MAaPO
+        reason: "Nextflow pipeline; direct SRA accession input; 12-77% more HQ MAGs vs 3 established pipelines; processed 16462 samples in <55h"
+        context: "large-scale public data reanalysis, HPC environment"
+        strength: high
+    project_decision: "Reference only — CSCCD-MetagenomeFlow uses local Snakemake pipeline; TOFU-MAaPO useful as benchmark/comparison for public data retrieval"
+    decision_date: "2026-06-16"
+    project_scripts: []
+    notes: "Wacker2026 Nextflow vs CSCCD-MetagenomeFlow Snakemake: different target use cases; complementary not competing"
+
+  # ────────────────────────────────────────────────────────────────────
+  # 细菌物种分类 / Bacterial taxonomy
+  # ────────────────────────────────────────────────────────────────────
+  - task: "bacteria_taxonomy"
+    question: "细菌物种组成分类用哪个工具？"
+    tools: [MetaPhlAn4, Kraken2_Bracken, Centrifuger, mOTUs3]
+    paper_evidence:
+      - paper_id: null
+        recommends: MetaPhlAn4
+        reason: "Marker gene-based, strain-level resolution, lowest FP among read-based tools; >99k SGBs including unknowns"
+        context: "species-level profiling, downstream functional analysis with HUMAnN3"
+        strength: high
+      - paper_id: null
+        recommends: Kraken2_Bracken
+        reason: "Fastest k-mer method; recommended when speed > precision; Bracken re-estimates abundances"
+        context: "large cohort screening, rough profiling"
+        strength: medium
+      - paper_id: null
+        recommends: Centrifuger
+        reason: "Protein-level precision; GTDB R226 reference; better for novel organisms"
+        context: "when GTDB-consistent classification needed"
+        strength: medium
+    project_decision: "MetaPhlAn4 (11) as primary + Kraken2 (14) as complement + Centrifuger (15) for GTDB consistency"
+    decision_date: "2026-06-16"
+    project_scripts: [11, 14, 15]
+
+  # ────────────────────────────────────────────────────────────────────
+  # 病毒基因组注释 / Virus genome annotation
+  # ────────────────────────────────────────────────────────────────────
+  - task: "virus_annotation"
+    question: "病毒vOTU/vMAG功能注释选哪个工具？"
+    tools: [PHAROKKA, VIBRANT, Prokka, vConTACT3, PHOLD]
+    paper_evidence:
+      - paper_id: null
+        recommends: PHAROKKA
+        reason: "End-to-end phage annotation in <3 min/contig; PHROG database (38k profiles); ARG detection; GFF + TSV output; designed for phages specifically (not misapplication of Prokka)"
+        context: "phage vOTU annotation, pipeline integration"
+        strength: high
+      - paper_id: null
+        recommends: PHOLD
+        reason: "Structural dark matter ORF annotation via PDB homology; recovers 40-60% of hypothetical proteins missed by PHAROKKA; complements rather than replaces PHAROKKA"
+        context: "when functional recovery from unknowns is a priority"
+        strength: medium
+    project_decision: "PHAROKKA (64) as primary + PHOLD (65) as structural complement; VOG HMM scan (66) for cross-kingdom reference"
+    decision_date: "2026-06-16"
+    project_scripts: [64, 65, 66]
+    notes: "vConTACT3 (69) handles taxonomy rather than function — orthogonal to this comparison"
+
+  # ────────────────────────────────────────────────────────────────────
+  # 宏基因组组装 / Metagenome assembly
+  # ────────────────────────────────────────────────────────────────────
+  - task: "bacteria_assembly"
+    question: "宏基因组组装用MEGAHIT还是metaSPAdes？"
+    tools: [MEGAHIT, metaSPAdes, IDBA_UD]
+    paper_evidence:
+      - paper_id: Jie2026_NatGenet
+        recommends: metaSPAdes
+        reason: "Jie2026 large-scale catalog used metaSPAdes -k 21,33,55,77 --memory 81 for 13,632 samples; better contiguity for MAG recovery at scale"
+        context: "large-scale catalog, high-memory servers (≥100G RAM)"
+        strength: medium
+      - paper_id: null
+        recommends: MEGAHIT
+        reason: "3-5x faster, ~3x lower RAM; comparable MAG number in benchmarks; suitable for low-resource or large-cohort processing"
+        context: "single-server deployment, RAM <64G, throughput priority"
+        strength: high
+    project_decision: "MEGAHIT (16) — project default for portability on single-server (<64G RAM); metaSPAdes recommended when HPC available and catalog quality is priority"
+    decision_date: "2026-06-16"
+    project_scripts: [16]
+    notes: "Parameter deviation from Jie2026: project uses MEGAHIT vs paper's metaSPAdes; documented in Jie2026_NatGenet/params.yaml"

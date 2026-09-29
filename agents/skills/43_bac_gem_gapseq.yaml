@@ -1,0 +1,58 @@
+id: "43_bac_gem_gapseq"
+script: "scripts/43_bac_gem_gapseq.sh"
+tool: "gapseq"
+tool_version: "1.2"
+conda_env: "envs/gapseq"
+description: "Genome-scale metabolic model (GEM) reconstruction from MAG assemblies using gapseq. Generates draft SBML models with gap-filled pathways. Legacy method - CarveMe (43b) recommended for production due to 60x speed advantage."
+dimension: "bacteria"
+category: "binning"
+rule_type: "per_mag"
+
+inputs:
+  - name: "mag_fasta"
+    path_pattern: "{workdir}/result/binning/drep/dereplicated_genomes/{mag}.fa"
+    required: true
+    description: "Dereplicated MAG assembly (dRep output)"
+
+outputs:
+  - name: "sbml_model"
+    path_pattern: "{workdir}/result/gem/gapseq/{mag}/{mag}.xml"
+    description: "SBML-formatted genome-scale metabolic model"
+  - name: "reactions_table"
+    path_pattern: "{workdir}/result/gem/gapseq/{mag}/{mag}-Reactions.tbl"
+    description: "Reaction table with EC numbers and pathway assignments"
+  - name: "pathways_table"
+    path_pattern: "{workdir}/result/gem/gapseq/{mag}/{mag}-Pathways.tbl"
+    description: "Pathway completeness scores"
+
+depends_on:
+  - "38_bac_drep"
+required_by:
+  - "43c_bac_gem_cobrapy_fba"
+
+params:
+  mag_name: "{mag}"
+  threads: "1"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  medium: "rich"
+
+benchmarks:
+  typical_runtime_min: 600
+  typical_input_size_mb: 3
+  peak_memory_gb: 8
+
+performance_notes:
+  - "Runtime: ~10 hours per MAG (single-threaded)"
+  - "Not parallelizable at per-MAG level (R-based, single-core bottleneck)"
+  - "213 MAG dataset: ~90 days serial, ~5.6 days on 16-core (if truly parallel)"
+  - "CarveMe (43b) completes same task in 10-15 min/MAG (60x faster)"
+
+known_issues:
+  - description: "Extremely slow performance makes it impractical for large MAG sets (>10 MAGs)."
+    workaround: "Use CarveMe (43b_bac_gem_carveme.sh) instead. gapseq retained for compatibility and comparative analysis only."
+  - description: "Initial test on Sample10__111 failed after 2.5 hours with incomplete output."
+    status: "Abandoned in favor of CarveMe after performance evaluation"
+
+integration_status: "manual"
+integrated_date: "2026-08-06"

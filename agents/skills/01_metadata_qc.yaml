@@ -1,0 +1,40 @@
+id: "01_metadata_qc"
+script: "scripts/01_metadata_qc.sh"
+tool: "Rscript"
+tool_version: "tidyverse"
+conda_env: "envs/r_stat"
+description: "Validate and standardize project metadata.csv (group/sample-id consistency) and emit a QC report before downstream statistics."
+dimension: "statistics"
+category: "qc"
+rule_type: "aggregate"
+
+inputs:
+  - name: "metadata_csv"
+    path_pattern: "{workdir}/metadata.csv"
+    required: true
+
+outputs:
+  - name: "metadata_tsv"
+    path_pattern: "{workdir}/result/stat/metadata.tsv"
+    description: "Standardized metadata table."
+  - name: "qc_report"
+    path_pattern: "{workdir}/result/stat/metadata_qc_report.txt"
+    description: "Human-readable QC report."
+  - name: "status_tsv"
+    path_pattern: "{workdir}/result/stat/metadata_status.tsv"
+    description: "Per-sample QC status table."
+
+depends_on: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_metadata_qc"

@@ -1,0 +1,40 @@
+id: "21_bac_eggnog"
+name: "eggNOG-mapper v2 Comprehensive Annotation"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::eggnog"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: annotations
+    path_pattern: "{workdir}/result/annotation/eggnog/eggnog.emapper.annotations"
+    description: "Main annotation table (COG/KO/GO/EC/CAZy per gene)"
+  - name: seed_orthologs
+    path_pattern: "{workdir}/result/annotation/eggnog/eggnog.emapper.seed_orthologs"
+    description: "OG ortholog hits from DIAMOND search"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/eggnog"
+db_path: "db/eggnog"
+
+parameters:
+  method: "diamond"
+  input_type: "proteins"
+
+benchmarks:
+  typical_runtime_min: 120
+  peak_memory_gb: 32
+
+known_issues:
+  - description: "--dbmem loads eggNOG SQLite into RAM (32GB), significantly speeds up annotation step"
+    workaround: "Add --dbmem to emapper.py call if memory allows"
+  - description: "Two-step workflow (--no_annot first, then --no_search) useful for HPC cluster"
+    workaround: "Current script runs single-step; modify for HPC if needed"

@@ -1,0 +1,42 @@
+id: "66_vir_vog"
+script: "scripts/66_vir_vog.sh"
+tool: "HMMER3 (hmmscan)"
+tool_version: "3.3+"
+conda_env: "envs/assembly"
+description: "Cross-species viral HMM scanning using VOGDB (virus orthologous groups)."
+dimension: "virome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "prodigal_faa"
+    path_pattern: "{workdir}/result/virus/pharokka/prodigal-gv.faa"
+    required: true
+
+outputs:
+  - name: "vog_hits"
+    path_pattern: "{workdir}/result/virus/vog/vog_hits.tsv"
+    description: "HMMER --tblout hits (VOG accessions per protein)."
+  - name: "vog_annot"
+    path_pattern: "{workdir}/result/virus/vog/vog_annot.tsv"
+    description: "VOG annotations with functional descriptions (VOG → function)."
+
+depends_on:
+  - "64_vir_pharokka"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "VOGDB HMM database (vogdb/VOG.hmm) must be pre-downloaded and hmmpressed."
+  - "If no VOG DB available, script exits gracefully with empty result."
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_vog"

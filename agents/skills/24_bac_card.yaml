@@ -1,0 +1,41 @@
+id: "24_bac_card"
+name: "CARD/RGI Comprehensive Resistance Gene Annotation"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::card"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: txt
+    path_pattern: "{workdir}/result/annotation/card/rgi_results.txt"
+    description: "RGI text report with Best_Hit_ARO, resistance mechanism, cut-off (Perfect/Strict/Loose)"
+  - name: json
+    path_pattern: "{workdir}/result/annotation/card/rgi_results.json"
+    description: "RGI JSON report for downstream programmatic access"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/rgi"
+db_path: "db/card/card.json"
+
+parameters:
+  alignment_tool: "DIAMOND"
+  cutoff: ["Perfect", "Strict"]
+  include_loose: true
+
+benchmarks:
+  typical_runtime_min: 45
+  peak_memory_gb: 12
+
+known_issues:
+  - description: "rgi load must run before rgi main to load local CARD DB; script handles this automatically"
+    workaround: "If rgi load fails, check card.json path: db/card/card.json"
+  - description: "--include_loose returns more hits but lower specificity; filter to Strict+Perfect for publication"
+    workaround: "awk -F'\\t' '$24==\"Perfect\" || $24==\"Strict\"' rgi_results.txt"

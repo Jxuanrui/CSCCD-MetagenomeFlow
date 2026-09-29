@@ -1,0 +1,53 @@
+id: "16_bac_megahit"
+script: "scripts/16_bac_megahit.sh"
+tool: "megahit"
+tool_version: "1.2.9"
+conda_env: "envs/assembly"
+description: "De novo metagenome assembly with MEGAHIT. Outputs per-sample contigs.fa for downstream gene prediction and MAG binning."
+dimension: "bacteria"
+category: "assembly"
+rule_type: "per_sample"
+
+inputs:
+  - name: "r1"
+    path_pattern: "{workdir}/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "r2"
+    path_pattern: "{workdir}/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "contigs"
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    description: "Final assembled contigs. Input for scripts 17 (Prodigal), 32 (CoverM depth), 33-35 (binning)."
+  - name: "log"
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.megahit.log"
+    description: "MEGAHIT assembly log (k-mer list, memory usage, contig statistics)."
+
+depends_on:
+  - "02_qc_kneaddata"
+required_by:
+  - "17_bac_prodigal"
+  - "32_bac_coverm_depth"
+
+params:
+  threads: "{cpus}"
+  presets: "meta-large"
+  min_contig_len: "500"
+  memory: "0.9"
+  note: "For MAG recovery workflows, use --min-contig-len 1000 or 1500"
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 50
+  note: "Varies widely by sample size. Uses 90% available RAM (-m 0.9)."
+
+known_issues:
+  - description: "MEGAHIT fails if output directory already exists (without --force). Script uses a temp subdir to avoid this."
+    workaround: "Script handles this internally via _megahit_tmp subdirectory."
+  - description: "If final.contigs.fa is empty, likely causes: too few reads, memory exhaustion, or --min-contig-len too high."
+    workaround: "Check megahit.log; reduce --min-contig-len or increase RAM."
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "pipeline/rules/bacteria_assembly.smk::megahit"

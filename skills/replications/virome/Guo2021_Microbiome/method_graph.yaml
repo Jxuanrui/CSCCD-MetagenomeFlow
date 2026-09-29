@@ -1,0 +1,87 @@
+# method_graph.yaml — Guo2021_Microbiome
+# VirSorter2 viral sequence detection DAG
+
+nodes:
+  - id: assembled_contigs
+    type: method_node
+    description: "Assembled metagenomic contigs from virus-oriented assembly"
+    script: scripts/51_vir_megahit.sh
+
+  - id: gene_annotation
+    type: method_node
+    tool: "Prodigal + HMM hallmark genes"
+    description: "Predict genes and scan viral hallmark HMM profiles across multiple virus groups"
+    paper_section: "Methods > Viral hallmark annotation"
+    config:
+      type: config_node
+      hallmark_source: "VirSorter2 curated HMM sets"
+      features: [hallmark_genes, gene_density]
+
+  - id: kmer_feature_extraction
+    type: method_node
+    tool: VirSorter2
+    description: "Compute sequence composition and k-mer-derived features for classifier input"
+    paper_section: "Methods > Sequence feature representation"
+    config:
+      type: config_node
+      feature_family: "k-mer and coding statistics"
+
+  - id: multi_classifier_panel
+    type: method_node
+    tool: "VirSorter2 classifier ensemble"
+    description: "Apply five dedicated models for dsDNA phages, ssDNA viruses, RNA viruses, NCLDVs, and lavidaviridae"
+    paper_section: "Methods > Multi-classifier design"
+    config:
+      type: config_node
+      classifiers: [dsDNAphage, ssDNA, RNA, NCLDV, lavidaviridae]
+
+  - id: score_thresholding
+    type: method_node
+    tool: VirSorter2
+    description: "Combine features into final viral scores and retain predictions above threshold"
+    paper_section: "Methods > Final score interpretation"
+    config:
+      type: config_node
+      min_score: 0.5
+      include_groups: [dsDNAphage, ssDNA, RNA, NCLDV, lavidaviridae]
+
+  - id: virsorter2_calling
+    type: method_node
+    tool: VirSorter2
+    version: "2.2.x"
+    script: scripts/53_vir_virsorter2.sh
+    paper_section: "Methods > VirSorter2 run configuration"
+    config:
+      type: config_node
+      min_length: 1500
+      output: "final-viral-combined.fa"
+
+  - id: downstream_intersection
+    type: method_node
+    tool: "VirSorter2 + geNomad consensus"
+    description: "Intersection with geNomad predictions reduces false positives before CheckV"
+    paper_section: "Project adaptation"
+    note: "Precision-oriented integration choice in CSCCD-MetagenomeFlow"
+
+edges:
+  - from: assembled_contigs
+    to: gene_annotation
+  - from: assembled_contigs
+    to: kmer_feature_extraction
+  - from: gene_annotation
+    to: multi_classifier_panel
+  - from: kmer_feature_extraction
+    to: multi_classifier_panel
+  - from: multi_classifier_panel
+    to: score_thresholding
+  - from: score_thresholding
+    to: virsorter2_calling
+  - from: virsorter2_calling
+    to: downstream_intersection
+
+performance_benchmarks:
+  dsDNA_recall: 0.954
+  dsDNA_precision: 0.901
+  vs_DeepVirFinder: "higher recall for RNA and ssDNA viruses"
+  breadth: "supports dsDNA, ssDNA, RNA, NCLDV, and lavidaviridae"
+  integration_goal: "broad recall upstream, precision restored by geNomad intersection"

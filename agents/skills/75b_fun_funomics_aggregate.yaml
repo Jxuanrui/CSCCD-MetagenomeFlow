@@ -1,0 +1,46 @@
+id: "75b_fun_funomics_aggregate"
+script: "scripts/75b_fun_funomics_aggregate.sh"
+tool: "Python"
+tool_version: "3"
+conda_env: "envs/assembly"
+description: "Aggregate FunOMIC per-sample classifications into species count, relative-abundance, and CLR matrices."
+dimension: "fungi"
+category: "taxonomy"
+rule_type: "aggregate"
+
+inputs:
+  - name: "classification"
+    path_pattern: "{workdir}/result/fungi/funomic/{sample}/{sample}_classification.tsv"
+    required: true
+
+outputs:
+  - name: "funomic_species_count"
+    path_pattern: "{workdir}/result/integration/fungi/funomic_species_count.tsv"
+    description: "Species-by-sample FunOMIC count matrix."
+  - name: "funomic_species_relab"
+    path_pattern: "{workdir}/result/integration/fungi/normalized/funomic_species_relab.tsv"
+    description: "Species-by-sample relative-abundance matrix."
+  - name: "funomic_species_clr"
+    path_pattern: "{workdir}/result/integration/fungi/normalized/funomic_species_clr.tsv"
+    description: "Species-by-sample CLR-transformed matrix."
+
+depends_on:
+  - "75_fun_funomics"
+required_by:
+  - "98d_fun_integration_tables"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/mycobiome.smk::funomics_aggregate"

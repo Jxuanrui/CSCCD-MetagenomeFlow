@@ -1,0 +1,40 @@
+id: "62_vir_checkv_mag"
+script: "scripts/62_vir_checkv_mag.sh"
+tool: "CheckV"
+tool_version: "1.0.3"
+conda_env: "envs/checkv"
+description: "vMAG quality assessment — per-bin CheckV with complete/high/medium-quality filter."
+dimension: "virome"
+category: "quality_control"
+rule_type: "aggregate"
+
+inputs:
+  - name: "vmag_bins"
+    path_pattern: "{workdir}/result/virus/vmag/bins/vMAG/*.fasta"
+    required: true
+
+outputs:
+  - name: "quality_summary"
+    path_pattern: "{workdir}/result/virus/vmag/checkv/quality_summary.tsv"
+    description: "Merged CheckV quality report for all vMAGs."
+  - name: "filtered_vmags"
+    path_pattern: "{workdir}/result/virus/vmag/vmag_filtered/*.fasta"
+    description: "High-quality vMAGs (complete / high / medium quality)."
+
+depends_on:
+  - "61_vir_vmag"
+required_by:
+  - "63_vir_coverm_quant"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_checkv_mag"

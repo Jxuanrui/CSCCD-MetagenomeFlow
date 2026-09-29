@@ -1,0 +1,218 @@
+{
+  "generated_at": "2026-09-23T04:14:48Z",
+  "policy": "index now, download later (URLs + join keys only; 1-2 verification files per source)",
+  "registry": {
+    "seed_runs": 63803,
+    "incremental_candidates": 2804,
+    "total_keys": 66607
+  },
+  "sources": {
+    "mgnify": {
+      "api": "https://www.ebi.ac.uk/metagenomics/api/v2",
+      "biome_lineage": "root:Host-associated:Human:Digestive system:Large intestine:Fecal",
+      "studies_indexed": 331,
+      "analyses_indexed": 82021,
+      "experiment_type_split": {
+        "Amplicon": 48544,
+        "Assembly": 21858,
+        "Metagenomic": 11295,
+        "Metatranscriptomic": 323,
+        "Unknown": 1
+      },
+      "pipeline_split_shotgun": {
+        "V1": 778,
+        "V2": 1350,
+        "V3": 2856,
+        "V4": 113,
+        "V4.1": 3877,
+        "V5": 329,
+        "V6": 1992
+      },
+      "shotgun_analyses": 11295,
+      "shotgun_analyses_in_registry": 5517,
+      "registry_keys_with_mgnify_analysis": {
+        "any": 2645,
+        "via_seed_runs": 2645,
+        "via_incremental_only": 0
+      },
+      "registry_coverage_rate": 0.0397,
+      "raw_pages": "mining/sources/raw/mgnify/pages/*.jsonl (per-study, resume-safe)",
+      "annotations": "annotations_json NULL by policy; deterministic FTP template verified on probes (mgnify_annotation_probes table)"
+    },
+    "agp": {
+      "origin": "qiita public_download sample_information study_id=10317",
+      "samples_indexed": 42340,
+      "phenotype_columns": 1402,
+      "n_nonnull_phenotypes_avg": 852.9,
+      "gz_size_bytes": 12992972,
+      "accession_columns_found": "none",
+      "joinable_to_registry": 648,
+      "quirk": "no ENA/BioSample accession columns in qiita sample_info; join requires ENA alias bridge (AGP studies PRJEB11419/ERP012803 sample aliases == qiita sample_name), deferred",
+      "registry_heuristic_presence": {
+        "seed_runs_matching_american_gut": 549
+      },
+      "bridged_at": "2026-09-23T04:30:44Z",
+      "bridged_with_accessions": 34528,
+      "bridge_match_rate": 0.8155
+    },
+    "imsms": {
+      "origin": "ibdmdb.org products_MGX_2017-08-12 (HMP2 iMSMS)",
+      "samples_indexed": 1638,
+      "with_tax_and_func_urls": 1638,
+      "metadata_rows": 2892,
+      "metadata_row_found": 1638,
+      "head_probes_bytes": {
+        "https://g-227ca.190ebd.75bc.data.globus.org/ibdmdb/products/HMP2/MGX/taxonomic_profile3_WGS/CSM5FZ3N_P_taxonomic_profile_3.tsv": "19539",
+        "https://g-227ca.190ebd.75bc.data.globus.org/ibdmdb/products/HMP2/MGX/func_profile3_WGS/CSM5FZ3N_P_humann3.tar.bz2": "1284792"
+      },
+      "joinable_to_registry": 1638,
+      "quirk": "hmp2_metadata.csv (490 cols) has no ENA accessions; CSM-style External IDs need ERS alias mapping via ENA (ERP005534/PRJEB24483), deferred",
+      "registry_heuristic_presence": {
+        "seed_runs_matching_ibd_hmp2": 1949
+      },
+      "bridged_at": "2026-09-23T04:30:44Z",
+      "bridged_with_accessions": 1360,
+      "bridge_match_rate": 0.8303
+    }
+  },
+  "overlap_matrix_vs_registry": {
+    "registry_total_keys": 66607,
+    "mgnify_shotgun_analyses_matching": 5517,
+    "mgnify_registry_keys_covered": 2645,
+    "mgnify_coverage_fraction": 0.0397,
+    "agp_keys_covered": 549,
+    "imsms_keys_covered": 2944,
+    "note": "AGP/iMSMS bridged via ENA alias tables (see bridges section); counts refreshed at bridge time",
+    "agp_samples_in_registry": 648,
+    "imsms_samples_in_registry": 1638
+  },
+  "verification_downloads": {
+    "imsms_tax_tsv_bytes": 19539,
+    "imsms_func_tarbz2_bytes": 1284792,
+    "mgnify_annotation_probes": 31,
+    "mgnify_probe_download_groups_head_bytes": {
+      "all": 844478,
+      "quality_control": 136395,
+      "taxonomies.closed_reference.motus": 2909,
+      "taxonomies.closed_reference.silva-lsu": 11936,
+      "taxonomies.closed_reference.silva-ssu": 8487,
+      "asv.stats": null,
+      "primer_identification": null,
+      "taxonomies.asv.DADA2-PR2": null,
+      "taxonomies.asv.DADA2-SILVA": null,
+      "taxonomies.closed_reference.SILVA-LSU": null,
+      "taxonomies.closed_reference.SILVA-SSU": null,
+      "taxonomies.closed_reference.PR2": null
+    }
+  },
+  "deferred_download_estimate": {
+    "method": "HEAD-verified per-file sizes x counts; tiers by file selection",
+    "tiers": {
+      "compact_profiles_only (motus/silva + GO/pfam/ko/ips summaries, ~1MB/analysis V5-V6)": {
+        "mgnify_shotgun_all": 11.29,
+        "mgnify_shotgun_in_registry": 5.52
+      },
+      "full_interpro_TSV_included (V5 only, +62.8MB/analysis)": {
+        "mgnify_v5_all": 20.66,
+        "mgnify_v5_in_registry": 9.55
+      },
+      "imsms_tax_plus_func_all": 2.14,
+      "agp": 0
+    },
+    "combined_compact_plus_imsms": {
+      "all": 13.44,
+      "in_registry_only": 7.66
+    },
+    "notes": "V6 lacks functional annotation files (motus/SILVA only, per probes); V1-V4.1 legacy layouts vary (contigs/assembly artifacts dominate 'all' group); registry-only subset assumes phase-2 downloads limited to in_seed_registry=1"
+  },
+  "timestamps": {
+    "mgnify_indexed_at": "2026-09-23T04:07:30Z",
+    "agp_indexed_at": "2026-09-23T02:46:13Z",
+    "imsms_indexed_at": "2026-09-23T02:49:18Z",
+    "summary_generated_at": "2026-09-23T04:14:48Z",
+    "bridges_built_at": "2026-09-23T04:30:44Z"
+  },
+  "bridges": {
+    "agp": {
+      "rows": 42340,
+      "matched": 34528,
+      "match_rate": 0.8155,
+      "methods": {
+        "exact": 34525,
+        "norm": 3
+      },
+      "unmatched": 7812,
+      "runs_attached": 46951,
+      "ena": {
+        "files": {
+          "ERP012803.tsv": {
+            "rows": 46948,
+            "new_runs_merged": 46948
+          },
+          "PRJEB11419.tsv": {
+            "rows": 46948,
+            "new_runs_merged": 0
+          }
+        },
+        "ena_runs": 46948,
+        "ena_samples": 34525
+      },
+      "registry": {
+        "in_registry": 648,
+        "in_registry_bridged": 648,
+        "in_registry_alias_only_unbridged": 0,
+        "registry_paths": {
+          "run_index": 648,
+          "sample_accession_key": 0,
+          "cmd3_alias_key": 0
+        },
+        "registry_keys_covered": 549
+      }
+    },
+    "imsms": {
+      "rows": 1638,
+      "matched": 1360,
+      "match_rate": 0.8303,
+      "methods": {
+        "ena_alias(PRJNA398089)->site_sub_coll->external_id": 1276,
+        "ena_alias(PRJNA398089)->site_sub_coll->external_id+ssc_shared": 84
+      },
+      "unmatched": 278,
+      "runs_attached": 1360,
+      "alias_suffix_counts": {
+        "": 1000,
+        "MTX": 762,
+        "MGX": 317,
+        "TR": 21,
+        "MVX": 703,
+        "BP": 176
+      },
+      "quirk_counters": {
+        "ext_with_multiple_ssc": 0,
+        "ssc_shared_by_multiple_ext": 84
+      },
+      "registry": {
+        "in_registry": 1638,
+        "in_registry_bridged": 1360,
+        "in_registry_alias_only_unbridged": 278,
+        "registry_paths": {
+          "run_index": 1360,
+          "sample_accession_key": 0,
+          "cmd3_alias_key": 1627
+        },
+        "registry_keys_covered": 2944
+      },
+      "negative_evidence": {
+        "ERP005534": "HMP1 study (CCIS aliases, 424 samples) \u2014 not HMP2/iMSMS",
+        "PRJEB24483": "empty filereport \u2014 accession not present in ENA portal",
+        "PRJNA398089": "actual ENA-mirrored HMP2 project (BioProject); alias=site_sub_coll(+suffix)"
+      }
+    },
+    "generated_at": "2026-09-23T04:30:44Z",
+    "raw_dir": "mining/sources/raw/bridges/",
+    "mechanism_notes": {
+      "agp": "registry rows reached are the 549 Meta2DB 2022_American_Gut_Project keys (PRJEB11419), joined through their ERR run lists; 648 qiita sample_names collapse onto those 549 keys (re-sequencing duplicates share runs)",
+      "imsms": "run_index hits resolve to GMrepo SRS-keyed seed_runs rows carrying HMP2 SRR runs (1317 distinct keys); cMD3 alias keys cMD3:HMP_2019_ibdmdb:<sample_id> exist for 1627/1638 samples"
+    }
+  }
+}
