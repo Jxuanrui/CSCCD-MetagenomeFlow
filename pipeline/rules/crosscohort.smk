@@ -8,20 +8,20 @@ rule crosscohort_validation:
     Generates 8 core visualizations + optional meta-analysis.
     """
     input:
-        ml_sentinel = "{workdir}/result/stat/bacteria/ml/siamcat_done.txt",
-        metadata = "{workdir}/metadata.csv",
-        abundance = "{workdir}/result/metaphlan4/merged/taxonomy.tsv"
+        ml_sentinel = WORKDIR + "/result/stat/bacteria/ml/siamcat_done.txt",
+        metadata = WORKDIR + "/metadata.csv",
+        abundance = WORKDIR + "/result/metaphlan4/merged/taxonomy.tsv"
     output:
-        sentinel = "{workdir}/result/viz_crosscohort/crosscohort_done.txt",
-        auc_summary = "{workdir}/result/viz_crosscohort/auc_summary.tsv",
-        forest_plot = "{workdir}/result/viz_crosscohort/forest_plot_auc.pdf",
-        waterfall = "{workdir}/result/viz_crosscohort/waterfall_auc.pdf",
-        roc_overlay = "{workdir}/result/viz_crosscohort/roc_overlay_all_cohorts.pdf",
-        upset = "{workdir}/result/viz_crosscohort/upset_shared_features.pdf",
-        stability_heatmap = "{workdir}/result/viz_crosscohort/heatmap_feature_stability.pdf",
-        pcoa_batch = "{workdir}/result/viz_crosscohort/pcoa_batch_effect.pdf",
-        calibration = "{workdir}/result/viz_crosscohort/calibration_per_cohort.pdf",
-        effect_corr = "{workdir}/result/viz_crosscohort/effect_correlation_matrix.pdf"
+        sentinel = WORKDIR + "/result/viz_crosscohort/crosscohort_done.txt",
+        auc_summary = WORKDIR + "/result/viz_crosscohort/auc_summary.tsv",
+        forest_plot = WORKDIR + "/result/viz_crosscohort/forest_plot_auc.pdf",
+        waterfall = WORKDIR + "/result/viz_crosscohort/waterfall_auc.pdf",
+        roc_overlay = WORKDIR + "/result/viz_crosscohort/roc_overlay_all_cohorts.pdf",
+        upset = WORKDIR + "/result/viz_crosscohort/upset_shared_features.pdf",
+        stability_heatmap = WORKDIR + "/result/viz_crosscohort/heatmap_feature_stability.pdf",
+        pcoa_batch = WORKDIR + "/result/viz_crosscohort/pcoa_batch_effect.pdf",
+        calibration = WORKDIR + "/result/viz_crosscohort/calibration_per_cohort.pdf",
+        effect_corr = WORKDIR + "/result/viz_crosscohort/effect_correlation_matrix.pdf"
     params:
         repo = config.get("repo", "~/Course/Maxmetagenome"),
         group_col = config.get("group_col", "Group"),
@@ -32,11 +32,11 @@ rule crosscohort_validation:
         force_flag = config.get("force", False) and "--force" or "",
     threads: 1
     log:
-        "{workdir}/logs/stat/crosscohort/97_crosscohort.log"
+        WORKDIR + "/logs/stat/crosscohort/97_crosscohort.log"
     shell:
         """
         bash {params.repo}/scripts/97_stat_crosscohort.sh \
-            -w {wildcards.workdir} \
+            -w {WORKDIR} \
             -r {params.repo} \
             -m {input.metadata} \
             -g {params.group_col} \
@@ -53,10 +53,10 @@ rule viz_statistics_all:
     Generate all statistics visualizations including cross-cohort validation.
     """
     input:
-        ml = "{workdir}/result/stat/bacteria/ml/siamcat_done.txt",
-        crosscohort = "{workdir}/result/viz_crosscohort/crosscohort_done.txt"
+        ml = WORKDIR + "/result/stat/bacteria/ml/siamcat_done.txt",
+        crosscohort = WORKDIR + "/result/viz_crosscohort/crosscohort_done.txt"
     output:
-        sentinel = "{workdir}/result/viz_statistics_all_done.txt"
+        sentinel = WORKDIR + "/result/viz_statistics_all_done.txt"
     params:
         force_flag = config.get("force", False) and "--force" or "",
     shell:

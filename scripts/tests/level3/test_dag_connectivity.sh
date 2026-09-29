@@ -46,3 +46,27 @@ fi
 
 JOB_COUNT="$(grep -E '^total' "${LOG}" | awk '{print $2}')"
 echo "[PASS] DAG dry-run OK, ${JOB_COUNT:-?} total jobs resolved, no connectivity errors."
+
+# ── Off-DAG chains: rules NOT in rule all (e.g. crosscohort_validation,
+#    viz_statistics_all) are invisible to the full dry-run above.
+#    Supervisor finding 2026-09-29: explicit-target dry-runs required.
+#    Targets MUST be absolute (WORKDIR-constant rules declare absolute paths).
+echo "[INFO] Explicit-target dry-run for off-DAG crosscohort chain..."
+FIXTURE="$(python3 -c "import yaml;print(yaml.safe_load(open('${CONFIG}'))['workdir'])")"
+OFFLOG="$(mktemp)"
+if ! "${SNAKEMAKE}" -s "${SNAKEFILE}" --configfile "${CONFIG}" -n -- \
+        "${FIXTURE}/result/viz_crosscohort/crosscohort_done.txt" \
+        "${FIXTURE}/result/viz_statistics_all_done.txt" > "${OFFLOG}" 2>&1; then
+    echo "[FAIL] off-DAG chain dry-run exited non-zero:"
+    cat "${OFFLOG}"
+    rm -f "${OFFLOG}"
+    exit 1
+fi
+if grep -qE "MissingInputException|MissingRuleException|AmbiguousRuleException|CircularDependencyError" "${OFFLOG}"; then
+    echo "[FAIL] off-DAG chain connectivity issue:"
+    grep -E "MissingInputException|MissingRuleException|AmbiguousRuleException|CircularDependencyError" -A5 "${OFFLOG}"
+    rm -f "${OFFLOG}"
+    exit 1
+fi
+rm -f "${OFFLOG}"
+echo "[PASS] Off-DAG chain (crosscohort + viz_statistics_all) resolves."

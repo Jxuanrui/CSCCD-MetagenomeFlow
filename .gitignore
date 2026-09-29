@@ -21,6 +21,10 @@ Project/*/data/
 Project/*/result/
 Project/*/temp/
 Project/*/logs/
+# 多层验证产物目录（Project/<program>/<sample>/result/ 结构，二进制产物，不入库；
+# manifest/报告类如需入库以 ! 反选具体文件）——2026-09-29 E-4-3 提前处置，质量审核建议
+Project/phase1_repro/
+Project/phase2_5_validation/
 /Project/_archive_*/
 # 从项目目录迁移出的归档数据（二进制，体积大，不入库）
 *.pyc
