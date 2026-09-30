@@ -410,10 +410,36 @@ to_relab <- function(m) {
   sweep(m, 2, cs, "/")
 }
 
+# B3-PREQ①-R #3 (2026-09-30, user decision #3 / M-96-Q6): BAC| domain filter.
+# MetaPhlAn merged tables carry every rank as its own row; only k__Bacteria
+# lineages ending at the s__ (species) rank are ML features. Rows from other
+# domains (k__Eukaryota/k__Archaea/k__Viruses), unranked rows (UNCLASSIFIED)
+# and higher-rank bacteria rows are dropped BEFORE the per-block relab
+# conversion, so the BAC| relative abundance is computed over the retained
+# species universe. P01 measured: 23 non-bacteria-domain rows (8 Eukaryota +
+# 15 Archaea), 1625 kept species rows, 743 higher-rank bacteria rows.
+filter_bac_domain <- function(m) {
+  feat <- rownames(m)
+  is_bacteria <- startsWith(feat, "k__Bacteria")
+  is_species <- grepl("\\|s__[^|]*$", feat)
+  keep <- is_bacteria & is_species
+  dropped_domain <- sum(!is_bacteria & startsWith(feat, "k__"))
+  dropped_unranked <- sum(!startsWith(feat, "k__"))
+  dropped_rank <- sum(is_bacteria & !is_species)
+  cat(sprintf(
+    "[INPUT-GOVERNANCE] BAC| domain filter: kept %d k__Bacteria s__ row(s); dropped %d non-bacteria-domain row(s), %d unranked row(s), %d higher-rank bacteria row(s)\n",
+    sum(keep), dropped_domain, dropped_unranked, dropped_rank))
+  log_status("bac_domain_filter", "OK",
+             sprintf("kept_s_species=%d dropped_domain=%d dropped_unranked=%d dropped_higher_rank=%d",
+                     sum(keep), dropped_domain, dropped_unranked, dropped_rank))
+  m[keep, , drop = FALSE]
+}
+
 load_matrix <- function(dimension) {
   blocks <- list()
   if (dimension %in% c("bacteria", "all")) {
-    blocks$BAC <- read_abundance_table(bact_table)
+    # B3-PREQ①-R #3: species-level k__Bacteria rows only
+    blocks$BAC <- filter_bac_domain(read_abundance_table(bact_table))
   }
   if (dimension %in% c("virus", "all")) {
     # B3-PREQ①-R #1: 98c relab matrix + metadata defensive assertion

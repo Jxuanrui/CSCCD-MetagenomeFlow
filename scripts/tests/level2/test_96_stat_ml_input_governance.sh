@@ -266,4 +266,23 @@ grep -q "^relab_convert_BAC	OK	" "${ALL_ML}/siamcat_status.tsv" \
     || fail "BAC| block was not relab-converted (single-scale drift risk)"
 echo "[OK] B2: per-block relab rows present; FUN| survived ${FUN_AFTER}/${FUN_TOTAL} (was 0 pre-fix)"
 
-echo "[PASS] 96 input governance sections A+B (#1 virus source = 98c, #2 per-block relab prefilter)"
+# ==============================================================================
+# Section C (#3): BAC| domain filter drop counts (same -d all run as B)
+#   Fixture constructs 7 non-bacteria domain rows (4 k__Eukaryota + 3
+#   k__Archaea), 1 UNCLASSIFIED row, 3 higher-rank bacteria rows and 24
+#   k__Bacteria s__ species rows.
+# ==============================================================================
+DD_ROW="$(sed -n 's/^bac_domain_filter	OK	kept_s_species=\([0-9]*\) dropped_domain=\([0-9]*\) dropped_unranked=\([0-9]*\) dropped_higher_rank=\([0-9]*\)$/\1 \2 \3 \4/p' "${ALL_ML}/siamcat_status.tsv")"
+[ -n "${DD_ROW}" ] || fail "status.tsv lacks bac_domain_filter counts row"
+set -- ${DD_ROW}
+DD_KEPT="$1"; DD_DOM="$2"; DD_UNR="$3"; DD_RANK="$4"
+[ "${DD_KEPT}" = "24" ] || fail "domain filter kept ${DD_KEPT} s__ rows, expected 24"
+[ "${DD_DOM}" = "7" ] || fail "domain filter dropped_domain=${DD_DOM}, expected 7 (4 Eukaryota + 3 Archaea rows constructed)"
+[ "${DD_UNR}" = "1" ] || fail "domain filter dropped_unranked=${DD_UNR}, expected 1 (UNCLASSIFIED)"
+[ "${DD_RANK}" = "3" ] || fail "domain filter dropped_higher_rank=${DD_RANK}, expected 3 (k__Bacteria + 2 phyla)"
+grep -q "BAC| domain filter: kept 24 k__Bacteria s__ row(s); dropped 7 non-bacteria-domain" \
+    "${PROJ}/logs/stat/ml/96_stat_ml_siamcat.log" \
+    || fail "domain filter counts missing from the run log"
+echo "[OK] C1: domain filter counts kept=24 dropped_domain=7 dropped_unranked=1 dropped_higher_rank=3 (matches constructed fixture)"
+
+echo "[PASS] 96 input governance sections A-C (#1 98c source, #2 per-block relab, #3 domain filter)"
