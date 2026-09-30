@@ -154,7 +154,7 @@ fi
 # T-22 扩大修复: 平铺 region GBK 到 sample 目录 — 28b (maxdepth-1 glob) 与
 # Project01 历史 monolithic 布局的消费契约。full-record 原子分块保证
 # contig+region 文件名全局唯一, 平铺无冲突。
-# 28:61 的 rm -rf 保证进入此处时目录为全新重建, cp -n 不会遇到旧副本。
+# 28:64 的 rm -rf 保证进入此处时目录为全新重建, cp -n 不会遇到旧副本。
 find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" -exec cp -n {} "${RESULT_DIR}/" \;
 
 # T-11 原则: 平铺失败绝不得伪装为成功 — 副本数必须等于 chunk 原件数,
