@@ -24,9 +24,11 @@ Required:
 
 Optional:
   -d  Dimension: bacteria|virus|fungi|all (default: bacteria)
-      'all' stacks BAC|/VIR|/FUN| features; the FUN| arm requires the 98d
-      fungi integration table (result/integration/fungi/normalized/
-      funomic_species_relab.tsv)
+      'all' stacks BAC|/VIR|/FUN| features; the VIR| arm requires the 98c
+      virus integration table (result/integration/virus/
+      votu_annotation_matrix_relab.tsv, vOTU_RELAB_<sample> columns) and the
+      FUN| arm requires the 98d fungi integration table
+      (result/integration/fungi/normalized/funomic_species_relab.tsv)
   -M  Fungi input method: auto|phf|funomic|metaphlan4 (default: auto)
   --folds  Cross-validation folds (default: 10)
   --repeats N  Outer repeat loop: N independent split+train+evaluate passes
@@ -61,7 +63,10 @@ REPO="$(cd "${REPO}" && pwd)"
 mgx_begin
 
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
-VIR_TABLE="${WORKDIR}/result/virus/votu/votu_table.tsv"
+# B3-PREQ①-R #1 (2026-09-30): the virus input is the 98c integration product
+# votu_annotation_matrix_relab.tsv (vOTU x vOTU_RELAB_<sample> columns), not
+# the raw script-60 votu_table.tsv. The old 60-path is fully retired.
+VIR_TABLE="${WORKDIR}/result/integration/virus/votu_annotation_matrix_relab.tsv"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 PHF_FUNGI_TABLE="${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv"
 # 98d_fun_integration_tables.sh writes the FunOMIC species relab under
@@ -190,6 +195,15 @@ if [ "${DIMENSION}" = "all" ] && [ ! -f "${FUN_TABLE}" ]; then
     exit 1
 fi
 
+# B3-PREQ①-R #1: -d virus / -d all require the 98c virus relab integration
+# table. Fail fast and name the producer (98c) instead of silently degrading
+# to an older abundance table. Also checked after the resume gate (P2-2).
+if { [ "${DIMENSION}" = "virus" ] || [ "${DIMENSION}" = "all" ]; } && [ ! -f "${VIR_TABLE}" ]; then
+    echo "[ERROR] -d ${DIMENSION} requires the virus integration table: ${VIR_TABLE}"
+    echo "[ERROR] Run scripts/98c_vir_integration_tables.sh first (96 consumes the vOTU_RELAB_<sample> columns)"
+    exit 1
+fi
+
 echo "[INFO] Running SIAMCAT ML analysis"
 
 if ! [[ "${REPEATS}" =~ ^[1-9][0-9]*$ ]]; then
@@ -309,6 +323,58 @@ read_abundance_table <- function(path) {
   mat[rowSums(mat) > 0, , drop = FALSE]
 }
 
+# B3-PREQ①-R #1 (2026-09-30): virus input = 98c votu_annotation_matrix_relab.tsv.
+# The 98c table interleaves vOTU_TPM_<sample>, vOTU_RELAB_<sample> and ~20
+# annotation columns (vOTU_length, checkv_completeness, ...); only the
+# vOTU_RELAB_ block is abundance data. Column names are matched EXPLICITLY by
+# the vOTU_RELAB_ prefix (never by the generic numeric-column heuristic), the
+# prefix is stripped to recover sample names, and vOTU_name is the feature id.
+read_vir_relab_matrix <- function(path) {
+  raw <- readr::read_tsv(path, show_col_types = FALSE, comment = "#")
+  if (!"vOTU_name" %in% names(raw)) {
+    stop("98c virus table lacks the vOTU_name feature column: ", path)
+  }
+  relab_cols <- grep("^vOTU_RELAB_", names(raw), value = TRUE)
+  if (length(relab_cols) == 0) {
+    stop("98c virus table has no vOTU_RELAB_<sample> columns: ", path)
+  }
+  samples <- sub("^vOTU_RELAB_", "", relab_cols)
+  tab <- raw %>%
+    dplyr::select(feature = vOTU_name, dplyr::all_of(relab_cols))
+  names(tab) <- c("feature", samples)
+  tab[samples] <- coerce_numeric_df(tab[samples])
+  tab <- tab %>%
+    dplyr::group_by(feature) %>%
+    dplyr::summarise(dplyr::across(dplyr::all_of(samples), ~ sum(.x, na.rm = TRUE)), .groups = "drop")
+  mat <- as.matrix(tab[, samples, drop = FALSE])
+  rownames(mat) <- tab$feature
+  mat[is.na(mat)] <- 0
+  mat[rowSums(mat) > 0, , drop = FALSE]
+}
+
+# B3-PREQ①-R #1 defensive assertion: a block's sample columns must overlap the
+# metadata by at least min_n samples, else a LOUD error naming the block and
+# its input table (never a silent drop to zero features downstream). Sample
+# columns present in the table but absent from metadata only WARN - the
+# metadata intersection later in the script handles the actual subsetting.
+assert_block_samples <- function(block_label, mat, meta_ids, src, min_n = 10L) {
+  cols <- colnames(mat)
+  matched <- intersect(cols, meta_ids)
+  if (length(matched) < min_n) {
+    stop(sprintf(
+      "[INPUT-GOVERNANCE] %s block: only %d/%d sample column(s) match metadata sample ids (need >=%d). Input: %s | table samples: %s | metadata samples: %s",
+      block_label, length(matched), length(cols), min_n, src,
+      paste(utils::head(cols, 8), collapse = ","),
+      paste(utils::head(meta_ids, 8), collapse = ",")))
+  }
+  unmatched <- setdiff(cols, meta_ids)
+  if (length(unmatched) > 0) {
+    message(sprintf("[WARN] %s block: %d sample column(s) not present in metadata (excluded from ML): %s",
+                    block_label, length(unmatched), paste(utils::head(unmatched, 10), collapse = ",")))
+  }
+  invisible(matched)
+}
+
 read_fungi_profiles <- function(dir_path) {
   files <- Sys.glob(file.path(dir_path, "*", "*_profile.txt"))
   if (length(files) == 0) stop("No fungi profile files found")
@@ -331,18 +397,24 @@ read_fungi_profiles <- function(dir_path) {
 
 load_matrix <- function(dimension) {
   if (dimension == "bacteria") return(read_abundance_table(bact_table))
-  if (dimension == "virus") return(read_abundance_table(vir_table))
+  if (dimension == "virus") {
+    # B3-PREQ①-R #1: 98c relab matrix + metadata defensive assertion
+    vir <- read_vir_relab_matrix(vir_table)
+    assert_block_samples("VIR", vir, rownames(meta), vir_table)
+    return(vir)
+  }
   if (dimension == "fungi") {
     if (nzchar(fungi_abund_table)) return(read_abundance_table(fungi_abund_table))
     return(read_fungi_profiles(fungi_dir))
   }
   if (dimension == "all") {
     # W-C1(2): BAC| + VIR| + FUN| stack; the fungi arm is the 98d
-    # integration table (species x samples relab), same prefilter/label
-    # flow downstream as B/V (the :341 prefilter and metadata intersect
-    # operate on the stacked matrix).
+    # integration table (species x samples relab), the virus arm is the 98c
+    # relab matrix, same prefilter/label flow downstream as B (the :341
+    # prefilter and metadata intersect operate on the stacked matrix).
     bac <- read_abundance_table(bact_table)
-    vir <- read_abundance_table(vir_table)
+    vir <- read_vir_relab_matrix(vir_table)
+    assert_block_samples("VIR", vir, rownames(meta), vir_table)
     fun <- read_abundance_table(fun_table)
     common <- Reduce(intersect, list(colnames(bac), colnames(vir), colnames(fun)))
     if (length(common) < 4) stop("Insufficient common samples for all-dimension ML")
