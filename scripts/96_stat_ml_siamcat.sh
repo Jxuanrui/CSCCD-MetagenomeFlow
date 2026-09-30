@@ -29,6 +29,10 @@ Optional:
       funomic_species_relab.tsv)
   -M  Fungi input method: auto|phf|funomic|metaphlan4 (default: auto)
   --folds  Cross-validation folds (default: 10)
+  --repeats N  Outer repeat loop: N independent split+train+evaluate passes
+               (default: 1 = current single-pass behavior). Repeat i uses
+               seed 20260928+(i-1); outputs siamcat_repeats_detail.tsv
+               (one row per repeat) and a mean +/- sd auc summary
   --force  Re-run even if sentinel exists
   --skip-shap  Skip SHAP feature attribution for the randomForest model
                (SHAP is much slower than the other visualizations; skip on
@@ -40,11 +44,12 @@ EOF
 DIMENSION="bacteria"
 FUNGI_METHOD="auto"
 FOLDS="10"
+REPEATS="1"
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
 export MGX_OPTS_STRING="w:WORKDIR r:REPO t:THREADS m:METADATA_CSV g:GROUP_COL d:DIMENSION M:FUNGI_METHOD"
 export MGX_OPTS_FLAG="force skip-shap"
-export MGX_OPTS_LONG="folds:FOLDS"
+export MGX_OPTS_LONG="folds:FOLDS repeats:REPEATS"
 mgx_parse "$@"
 mgx_require WORKDIR REPO THREADS METADATA_CSV GROUP_COL
 
@@ -186,7 +191,12 @@ fi
 
 echo "[INFO] Running SIAMCAT ML analysis"
 
-export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE FUN_TABLE RESULT_DIR
+if ! [[ "${REPEATS}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "[ERROR] --repeats must be a positive integer, got: ${REPEATS}"
+    exit 1
+fi
+
+export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS REPEATS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE FUN_TABLE RESULT_DIR
 
 RUN_LOG="${LOG_DIR:-${RESULT_DIR}}/96_stat_ml_siamcat.run.log"
 mkdir -p "$(dirname "${RUN_LOG}")"
@@ -229,6 +239,7 @@ metadata_csv <- Sys.getenv("METADATA_CSV")
 group_col <- Sys.getenv("GROUP_COL")
 dimension <- Sys.getenv("DIMENSION")
 folds <- as.integer(Sys.getenv("FOLDS", "10"))
+repeats <- max(1L, as.integer(Sys.getenv("REPEATS", "1")))
 bact_table <- Sys.getenv("BACT_TABLE")
 vir_table <- Sys.getenv("VIR_TABLE")
 fun_table <- Sys.getenv("FUN_TABLE")
@@ -393,40 +404,6 @@ run_step("normalize_filter_split", {
   # Subject-aware CV 语义不变：metadata 带 subject/id 列时同 subject 样本不跨 fold。
   siamcat_obj <<- SIAMCAT::filter.features(siamcat_obj, filter.method = "abundance", cutoff = 1e-04)
   siamcat_obj <<- SIAMCAT::normalize.features(siamcat_obj, norm.method = "log.std", norm.param = list(log.n0 = 1e-06, sd.min.q = 0.1))
-  set.seed(20260928)  # M-LEAK-01: reproducible split manifest anchor
-  # M-LEAK-01: SIAMCAT refuses when test folds cannot hold >=1 sample per
-  # class (e.g. 10 samples x 10 folds). Cap folds deterministically at the
-  # minority-class size; only activates where the run would otherwise hard-
-  # fail, and the effective value is written to the split manifest.
-  folds_eff <- max(2L, min(folds, min(as.integer(table(meta$label)))))
-  if (folds_eff != folds) cat(sprintf("[M-LEAK-01] folds capped %d -> %d (minority class)\n", folds, folds_eff))
-  subject_col <- grep("^(subject_id|patient_id|subject|patient)$", names(meta), value = TRUE)[1]
-  grouped <- FALSE
-  if (!is.na(subject_col)) {
-    n_per_sub <- table(meta[[subject_col]])
-    if (max(n_per_sub) > 1) {
-      # real grouping constraint: one subject's samples never straddle folds.
-      # SIAMCAT contract: inseparable = metadata COLUMN NAME (meta is already
-      # attached to the siamcat object at init), stratify must be FALSE.
-      siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds_eff, num.resample = 1,
-                                                 stratify = FALSE, inseparable = subject_col)
-      grouped <- TRUE
-      cat(sprintf("[M-LEAK-01] grouped split by %s (subjects=%d, max=%d samples/subject)\n",
-                  subject_col, length(n_per_sub), max(n_per_sub)))
-    } else {
-      cat("[M-LEAK-01] subject column present but all 1:1 - grouping vacuous, sample-level split (declared)\n")
-    }
-  }
-  if (!grouped) {
-    siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds_eff, num.resample = 1)
-  }
-  writeLines(c(paste0("seed=", 20260928),
-               paste0("folds=", folds_eff), paste0("folds_requested=", folds), paste0("resample=1"),
-               paste0("split_unit=", ifelse(grouped, paste0("SUBJECT(", subject_col, ")"), "SAMPLE")),
-               paste0("subject_column=", ifelse(is.na(subject_col), "NONE", subject_col)),
-               paste0("multi_sample_subjects=", ifelse(!is.na(subject_col), sum(table(meta[[subject_col]]) > 1), 0)),
-               paste0("n_samples=", ncol(mat))),
-             file.path(result_dir, "split_manifest.txt"))
 })
 
 models <- list(
@@ -438,7 +415,53 @@ models <- list(
 aucs <- list()
 metrics <- list()
 
-for (nm in names(models)) {
+# W-C1(3) outer repeat loop (A-2 protocol section 5, >=10 repeats):
+# seed_i = base_seed + (i - 1), so repeat 1 keeps the historical anchor
+# 20260928 and --repeats 1 (default) stays behavior-identical to the
+# previous single-pass run. Each repeat redraws the split and retrains all
+# models; filter/normalize stay OUTSIDE the loop (b1 section 6 verified:
+# they take effect once on the whole object, not per fold). Per-repeat
+# rds/PDF artifacts overwrite, so the canonical files hold the LAST
+# repeat's model; per-repeat AUCs land in siamcat_repeats_detail.tsv and
+# siamcat_auc_summary.tsv becomes the mean +/- sd aggregation (A-2: single
+# repeat values are never quoted alone).
+base_seed <- 20260928L
+split_seeds_ok <- integer()
+for (rep_i in seq_len(repeats)) {
+  seed_rep <- base_seed + rep_i - 1L
+  split_ok <- run_step(if (repeats == 1L) "data_split" else paste0("data_split_rep", rep_i), {
+    set.seed(seed_rep)  # M-LEAK-01: reproducible split anchor (repeat-shifted)
+    # M-LEAK-01: SIAMCAT refuses when test folds cannot hold >=1 sample per
+    # class (e.g. 10 samples x 10 folds). Cap folds deterministically at the
+    # minority-class size; only activates where the run would otherwise hard-
+    # fail, and the effective value is written to the split manifest.
+    folds_eff <- max(2L, min(folds, min(as.integer(table(meta$label)))))
+    if (folds_eff != folds) cat(sprintf("[M-LEAK-01] folds capped %d -> %d (minority class)\n", folds, folds_eff))
+    subject_col <- grep("^(subject_id|patient_id|subject|patient)$", names(meta), value = TRUE)[1]
+    grouped <- FALSE
+    if (!is.na(subject_col)) {
+      n_per_sub <- table(meta[[subject_col]])
+      if (max(n_per_sub) > 1) {
+        # real grouping constraint: one subject's samples never straddle folds.
+        # SIAMCAT contract: inseparable = metadata COLUMN NAME (meta is already
+        # attached to the siamcat object at init), stratify must be FALSE.
+        siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds_eff, num.resample = 1,
+                                                   stratify = FALSE, inseparable = subject_col)
+        grouped <- TRUE
+        cat(sprintf("[M-LEAK-01] grouped split by %s (subjects=%d, max=%d samples/subject)\n",
+                    subject_col, length(n_per_sub), max(n_per_sub)))
+      } else {
+        cat("[M-LEAK-01] subject column present but all 1:1 - grouping vacuous, sample-level split (declared)\n")
+      }
+    }
+    if (!grouped) {
+      siamcat_obj <<- SIAMCAT::create.data.split(siamcat_obj, num.folds = folds_eff, num.resample = 1)
+    }
+  })
+  if (!isTRUE(split_ok)) next
+  split_seeds_ok <- c(split_seeds_ok, seed_rep)
+
+  for (nm in names(models)) {
   success <- run_step(paste0("train_", nm), {
     model_obj <- SIAMCAT::train.model(siamcat_obj, method = models[[nm]])
     model_obj <- SIAMCAT::make.predictions(model_obj)
@@ -485,7 +508,8 @@ for (nm in names(models)) {
         degenerate <- "yes"
         cat(sprintf("[WARN] %s: degenerate model (no selected features / intercept-only); flagged degenerate=yes\n", nm))
       }
-      aucs[[nm]] <- tibble(model = nm, auc = as.numeric(auc_val), degenerate = degenerate)
+      aucs[[paste0(nm, if (repeats > 1L) paste0("_rep", rep_i) else "")]] <-
+        tibble(model = nm, rep = rep_i, seed = seed_rep, auc = as.numeric(auc_val), degenerate = degenerate)
       # M-METRICS-01: export the full evaluation panel, not AUC alone.
       # W-C1(1) label fix (A6, 2026-09-30): the old
       #   y <- as.integer(as.character(lbl) == names(table(as.character(lbl)))[2])
@@ -500,7 +524,7 @@ for (nm in names(models)) {
       # dead code: SIAMCAT 2.10.0 exports no predict(), the call always
       # errored into NULL, and the panel always used pred_matrix(model_obj)
       # (out-of-fold CV predictions - never a resubstitution path).
-      extra <- list(model = nm, auc_roc = as.numeric(auc_val), auc_pr = NA_real_,
+      extra <- list(rep = rep_i, seed = seed_rep, model = nm, auc_roc = as.numeric(auc_val), auc_pr = NA_real_,
                     sensitivity = NA_real_, specificity = NA_real_, ppv = NA_real_,
                     n_predictions = 0L, calibration_error = NA_real_)
       p_obj <- tryCatch(SIAMCAT::pred_matrix(model_obj), error = function(e) NULL)
@@ -531,19 +555,55 @@ for (nm in names(models)) {
           extra$calibration_error <- if (any(ok)) mean(abs(obs[ok] - pr_mean[ok])) else NA_real_
         }
       }
-      metrics[[nm]] <- tibble::as_tibble(extra)
+      metrics[[paste0(nm, if (repeats > 1L) paste0("_rep", rep_i) else "")]] <- tibble::as_tibble(extra)
     }
   }
 }
+}
+
+# Split manifest: byte-identical to the historical single-run format when
+# --repeats 1; records every successful repeat seed when repeats > 1
+# (A-2 section 5: seeds land on disk with the results).
+if (length(split_seeds_ok) > 0) {
+  writeLines(c(paste0("seed=", split_seeds_ok[1]),
+               paste0("folds=", folds_eff), paste0("folds_requested=", folds), paste0("resample=1"),
+               paste0("split_unit=", ifelse(grouped, paste0("SUBJECT(", subject_col, ")"), "SAMPLE")),
+               paste0("subject_column=", ifelse(is.na(subject_col), "NONE", subject_col)),
+               paste0("multi_sample_subjects=", ifelse(!is.na(subject_col), sum(table(meta[[subject_col]]) > 1), 0)),
+               paste0("n_samples=", ncol(mat)),
+               if (repeats > 1L) paste0("repeats=", repeats),
+               if (repeats > 1L) paste0("seed_rep", seq_along(split_seeds_ok), "=", split_seeds_ok)),
+             file.path(result_dir, "split_manifest.txt"))
+}
+
 metrics_df <- bind_rows(metrics)
 if (nrow(metrics_df) > 0) {
+  metrics_df <- if (repeats > 1L) {
+    dplyr::select(metrics_df, rep, seed, model, dplyr::everything())
+  } else {
+    dplyr::select(metrics_df, model, auc_roc, auc_pr, sensitivity, specificity, ppv, n_predictions, calibration_error)
+  }
   readr::write_tsv(metrics_df, file.path(result_dir, "siamcat_metrics.tsv"))
   cat("[M-METRICS-01] siamcat_metrics.tsv:", nrow(metrics_df), "models x",
       ncol(metrics_df), "metrics (auc_roc/auc_pr/sens/spec/ppv/calibration)\n")
 }
 
-auc_df <- bind_rows(aucs)
-if (nrow(auc_df) == 0) stop("No model AUCs generated")
+auc_detail <- bind_rows(aucs)
+if (nrow(auc_detail) == 0) stop("No model AUCs generated")
+if (repeats == 1L) {
+  auc_df <- dplyr::select(auc_detail, model, auc, degenerate)
+} else {
+  readr::write_tsv(dplyr::select(auc_detail, rep, seed, model, auc, degenerate),
+                   file.path(result_dir, "siamcat_repeats_detail.tsv"))
+  auc_df <- auc_detail %>%
+    dplyr::left_join(dplyr::select(metrics_df, rep, model, auc_pr), by = c("rep", "model")) %>%
+    dplyr::group_by(model) %>%
+    dplyr::summarise(auc_mean = mean(auc), auc_sd = stats::sd(auc),
+                     auc_pr_mean = mean(auc_pr), auc_pr_sd = stats::sd(auc_pr),
+                     n_repeats = dplyr::n_distinct(rep),
+                     n_degenerate = sum(degenerate == "yes"), .groups = "drop") %>%
+    dplyr::mutate(degenerate = ifelse(n_degenerate == n_repeats, "yes", "no"))
+}
 readr::write_tsv(auc_df, file.path(result_dir, "siamcat_auc_summary.tsv"))
 n_degen <- sum(auc_df$degenerate == "yes")
 if (n_degen > 0) {
