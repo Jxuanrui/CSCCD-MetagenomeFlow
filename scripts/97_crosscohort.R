@@ -613,9 +613,12 @@ if (nrow(results_df) > 0) {
       boxsize = 0.3,
       col = forestplot::fpColors(box = "#4575b4", line = "#4575b4"),
       xlog = FALSE,
-      xticks = seq(0.5, 1.0, 0.1),
-      clip = c(0.5, 1.0),
-      grid = TRUE
+      # U-02 扩展(质量审核 P0-2): 0.5-1.0 clip 会把 AUC<0.5 的差模型整段裁出图外,
+      # 在图上抵消方向修复——改为全量程并加 0.5 参考线(grid=1)
+      xticks = seq(0, 1.0, 0.1),
+      clip = c(0, 1.0),
+      grid = c(0.5, 1),
+      grid.col = "gray60"
     )
 
     dev.off()

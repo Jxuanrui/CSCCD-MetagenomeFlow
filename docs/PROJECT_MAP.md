@@ -493,8 +493,8 @@ git commit -m "feat: integrate <script_id> into Snakemake pipeline + skill libra
 
 **核心功能**：
 - ✅ 本地多队列模式（推荐）：从多个项目目录读取数据
-- ✅ 模型迁移验证：在训练队列训练 → 测试队列预测
-- ✅ 8 个核心可视化：森林图/瀑布图/ROC叠加/UpSet/特征稳定性热图/PCoA批次/校准曲线/效应相关
+- ✅ 模型迁移验证：训练队列(role=in_sample，不计入外部汇总) → 外部队列预测；AUC 方向显式固定（levels+direction），失败/跳过显式语义（FAILED/SKIPPED 文件）
+- ✅ 核心可视化（条件产出）：森林图(0–1 全量程)/瀑布图/ROC叠加/UpSet/特征稳定性热图/PCoA批次/校准曲线/效应相关——declared 契约为哨兵+auc_summary+crosscohort_metrics 三件（图件为副产物，单 cohort 时部分结构性跳过）
 - ✅ Meta-analysis：随机效应模型合并 AUC + I² 异质性评估
 
 **使用场景**：
