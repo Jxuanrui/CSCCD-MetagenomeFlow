@@ -814,7 +814,14 @@ if (repeats == 1L) {
                      auc_pr_mean = mean(auc_pr), auc_pr_sd = stats::sd(auc_pr),
                      n_repeats = dplyr::n_distinct(rep),
                      n_degenerate = sum(degenerate == "yes"), .groups = "drop") %>%
-    dplyr::mutate(degenerate = ifelse(n_degenerate == n_repeats, "yes", "no"),
+    # B3-PREQ①-R #5 (2026-09-30, user decision #5): the repeats>1 summary
+    # discloses degenerate repeats via n_degenerate and adds stderr columns
+    # (sd / sqrt(n_repeats)); the mean +/- sd aggregation INCLUDES degenerate
+    # repeats - that is stated explicitly in siamcat_done.txt so nobody quotes
+    # the mean as if it were degenerate-free.
+    dplyr::mutate(auc_stderr = auc_sd / sqrt(n_repeats),
+                  auc_pr_stderr = auc_pr_sd / sqrt(n_repeats),
+                  degenerate = ifelse(n_degenerate == n_repeats, "yes", "no"),
                   aligned_by = "sample_id")
 }
 readr::write_tsv(auc_df, file.path(result_dir, "siamcat_auc_summary.tsv"))
@@ -824,9 +831,22 @@ if (n_degen > 0) {
               n_degen, paste(auc_df$model[auc_df$degenerate == "yes"], collapse = ", ")))
 }
 readr::write_tsv(bind_rows(status_log), file.path(result_dir, "siamcat_status.tsv"))
-writeLines(c("SIAMCAT AUC summary", capture.output(print(auc_df)),
-             if (n_degen > 0) paste0("NOTE: ", n_degen, " model(s) degenerate=yes (no selected features / intercept-only); rds kept for 97 but NOT counted as successful models")),
+# B3-PREQ①-R #5: degenerate-disclosure note lines. When repeats > 1 and any
+# repeat is degenerate, the mean +/- sd aggregation that INCLUDES those
+# degenerate repeats is stated next to the summary itself.
+degen_notes <- c(
+  if (n_degen > 0) paste0("NOTE: ", n_degen, " model(s) degenerate=yes (no selected features / intercept-only); rds kept for 97 but NOT counted as successful models"),
+  if (repeats > 1L && n_degen > 0) "NOTE: auc_mean +/- auc_sd (and auc_stderr) INCLUDE degenerate repeats - see the n_degenerate column here and per-repeat flags in siamcat_repeats_detail.tsv",
+  if (repeats > 1L && n_degen == 0) "NOTE: repeats>1 aggregation auc_mean +/- auc_sd / auc_stderr; n_degenerate=0 for every model in this run")
+writeLines(c("SIAMCAT AUC summary", capture.output(print(auc_df)), degen_notes),
            file.path(result_dir, "siamcat_done.txt"))
+# 96_ml_visualization.R later overwrites siamcat_done.txt with a completion
+# timestamp (its line 183); persist the disclosure notes so the bash stage can
+# re-append them AFTER visualization and the final sentinel stays
+# self-describing (B3-PREQ①-R #5). The scratch file is removed after use.
+if (length(degen_notes) > 0) {
+  writeLines(degen_notes, file.path(result_dir, "siamcat_done.notes"))
+}
 RSCRIPT
 )
 
@@ -852,6 +872,14 @@ EXIT_CODE=$?
 if [ ${EXIT_CODE} -ne 0 ]; then
     echo "[ERROR] 96_ml_visualization.R failed with exit code ${EXIT_CODE}"
     exit ${EXIT_CODE}
+fi
+
+# B3-PREQ①-R #5: 96_ml_visualization.R overwrites siamcat_done.txt with a
+# completion timestamp; re-append the degenerate-disclosure notes stashed by
+# the ML stage so the final sentinel carries them.
+if [ -s "${RESULT_DIR}/siamcat_done.notes" ]; then
+    cat "${RESULT_DIR}/siamcat_done.notes" >> "${SENTINEL}"
+    rm -f "${RESULT_DIR}/siamcat_done.notes"
 fi
 
 mgx_end "siamcat"

@@ -347,4 +347,50 @@ grep -q "98c_vir_integration_tables.sh" "${FIXTURE}/precedence.out" \
     || fail "--combination V did not take precedence over -d bacteria (virus gate never fired)"
 echo "[OK] D4: invalid combination rejected; --combination precedes -d (V gate fired with -d bacteria)"
 
-echo "[PASS] 96 input governance sections A-D (#1 98c source, #2 per-block relab, #3 domain filter, #4 combination)"
+# ==============================================================================
+# Section E (#5): repeats>1 degenerate disclosure + --repeats 1 compatibility
+# ==============================================================================
+
+echo "[INFO] E1: --repeats 2 run (B block)..."
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group -d bacteria --repeats 2 --force --skip-shap
+B_ML="${PROJ}/result/stat/bacteria/ml"
+[ -s "${B_ML}/siamcat_done.txt" ] || fail "--repeats 2 run sentinel missing"
+[ -s "${B_ML}/siamcat_repeats_detail.tsv" ] || fail "--repeats 2 did not write siamcat_repeats_detail.tsv"
+R2_HDR="$(head -1 "${B_ML}/siamcat_auc_summary.tsv")"
+grep -qw "n_degenerate" <<<"${R2_HDR}" || fail "repeats>1 summary lacks n_degenerate column"
+grep -qw "auc_stderr" <<<"${R2_HDR}" || fail "repeats>1 summary lacks auc_stderr column"
+DET_HDR="$(head -1 "${B_ML}/siamcat_repeats_detail.tsv")"
+for col in rep seed model auc degenerate; do
+    grep -qw "${col}" <<<"${DET_HDR}" || fail "siamcat_repeats_detail.tsv lacks column ${col}"
+done
+N_DET_ROWS="$(( $(wc -l < "${B_ML}/siamcat_repeats_detail.tsv") - 1 ))"
+[ "${N_DET_ROWS}" -ge 2 ] || fail "siamcat_repeats_detail.tsv has ${N_DET_ROWS} row(s), expected >=2 (2 repeats x >=1 model)"
+grep -q "^repeats=2$" "${B_ML}/split_manifest.txt" || fail "split_manifest lacks repeats=2"
+grep -q "^seed_rep1=" "${B_ML}/split_manifest.txt" || fail "split_manifest lacks seed_rep1"
+grep -q "^seed_rep2=" "${B_ML}/split_manifest.txt" || fail "split_manifest lacks seed_rep2"
+grep -qE "INCLUDE degenerate repeats|n_degenerate=0 for every model" "${B_ML}/siamcat_done.txt" \
+    || fail "siamcat_done.txt lacks the repeats>1 degenerate-disclosure note line"
+echo "[OK] E1: repeats>1 summary has n_degenerate + auc_stderr; detail rows=${N_DET_ROWS}; disclosure note present"
+
+echo "[INFO] E2: --repeats 1 stays compatible with the pre-change single-pass format..."
+# --force only bypasses the sentinel; clear the repeats=2 artifacts first so
+# the assertion checks what THIS run writes, not the previous run's leftovers.
+rm -f "${B_ML}/siamcat_repeats_detail.tsv"
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group -d bacteria --repeats 1 --force --skip-shap
+R1_HDR="$(head -1 "${B_ML}/siamcat_auc_summary.tsv")"
+[ "${R1_HDR}" = "model	auc	degenerate	aligned_by" ] \
+    || fail "--repeats 1 summary header changed: ${R1_HDR}"
+[ ! -f "${B_ML}/siamcat_repeats_detail.tsv" ] \
+    || fail "--repeats 1 unexpectedly wrote siamcat_repeats_detail.tsv"
+if grep -q "^repeats=" "${B_ML}/split_manifest.txt"; then
+    fail "--repeats 1 split_manifest unexpectedly carries a repeats= line"
+fi
+grep -q "^combination=B$" "${B_ML}/split_manifest.txt" \
+    || fail "-d bacteria manifest lacks combination=B"
+echo "[OK] E2: --repeats 1 byte-compatible single-run summary, no repeats artifacts"
+
+echo "[PASS] 96 input governance sections A-E (#1 98c source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure)"
