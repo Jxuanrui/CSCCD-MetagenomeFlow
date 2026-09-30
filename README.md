@@ -226,7 +226,7 @@ Full index with per-script documentation lives in `Tutorial.md` (2,500+ lines, C
 | `mechanism_kb` | 5,295 | Microbe → metabolite → host-gene relations (GutMGene + MicrobiomeKG) |
 | `signature_kb` | 7,669 | Condition-stratified abundance signatures (BugSigDB; CVD-relevant) |
 
-Retrieval is hybrid BM25 + dense vectors with reciprocal rank fusion (`BAAI/bge-small-zh-v1.5` embeddings). A versioned 45-question benchmark with per-index fingerprints guards retrieval quality (hybrid R@3 = 0.98); `scripts/utils/check_rag_drift.sh` flags when the index and the recorded benchmark diverge. Indexers support `--incremental` for 20-50x faster rebuilds during iteration.
+Retrieval is hybrid BM25 + dense vectors with reciprocal rank fusion (`BAAI/bge-small-zh-v1.5` embeddings). A versioned 44-question benchmark with per-index fingerprints guards retrieval quality (hybrid R@3 = 0.98); `scripts/utils/check_rag_drift.sh` flags when the index and the recorded benchmark diverge. Indexers support `--incremental` for 20-50x faster rebuilds during iteration.
 
 ### MCP Servers
 
