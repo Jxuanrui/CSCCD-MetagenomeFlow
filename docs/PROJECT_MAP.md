@@ -298,7 +298,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 94 | `scripts/94_stat_visualization.sh` | 统一可视化（热图/PCoA/桑基图/UpSet）。Snakemake rule：`stat_visualization`（**2026-07-16 修正**：registry 曾误报此 rule 自2026-06-08已集成，实际直到2026-07-16才真正接入 `rule all`） | ggplot2 (R) |
 | 95a | `scripts/95a_stat_batch_correct.sh` | 多中心批次校正 Top10 方法（**Phase 2b 验证**：包依赖齐全，ComBat-seq 正常；其他方法因 API 变更需修复） | MBECS/ConQuR/MMUPHin (R) |
 | 95b | `scripts/95b_stat_batch_evaluate.sh` | 批次校正评估报告（**Phase 2b**：存在 vegan::adonis2 公式拼接 bug，待 Phase 3 修复） | MBECS (R) |
-| 96 | `scripts/96_stat_ml_siamcat.sh` | ML筛选+ROC评估（lasso/RF/SVM/enet 10折交叉验证，Top10特征+AUC对比），输出至 result/stat/bacteria/ml/（默认 bacteria 维度；all 模式为 result/stat/ml/，流水线不调用） | SIAMCAT (R) |
+| 96 | `scripts/96_stat_ml_siamcat.sh` | ML筛选+ROC评估（lasso/ridge/enet/randomForest 10折交叉验证，Top10特征+AUC对比；W-C1 起：标签按样本名对齐+退化模型标记、-d all 含 FUN| 需 98d 表、--repeats N 外层循环出 mean±sd、指标含 AUC-PR/sens/spec/PPV/校准），输出至 result/stat/bacteria/ml/（默认 bacteria 维度；all 模式为 result/stat/ml/，流水线不调用） | SIAMCAT (R) |
 | 96(func) | `scripts/96_stat_functional.sh` | **功能差异分析**：对细菌/真菌/病毒各类功能表（KEGG-KO/COG/CAZyme/ARG/VFDB等，共20个 dimension×func_type 组合）执行差异分析。配套脚本 `96_stat_functional.R`（2026-07-16 由 `96_functional.R` 改名对齐）。Snakemake rule：`stat_functional` | R |
 | 96(permanova) | `scripts/96_functional_permanova.sh` | 对96_stat_functional的功能组成结果执行 PERMANOVA 检验。Snakemake rule：`stat_functional_permanova` | vegan (R) |
 | 96(integrated) | `scripts/96_functional_integrated.sh` | 多数据库整合可视化，按维度汇总96_stat_functional各func_type结果。Snakemake rule：`stat_functional_integrated` | R |
