@@ -24,6 +24,9 @@ Required:
 
 Optional:
   -d  Dimension: bacteria|virus|fungi|all (default: bacteria)
+      'all' stacks BAC|/VIR|/FUN| features; the FUN| arm requires the 98d
+      fungi integration table (result/integration/fungi/normalized/
+      funomic_species_relab.tsv)
   -M  Fungi input method: auto|phf|funomic|metaphlan4 (default: auto)
   --folds  Cross-validation folds (default: 10)
   --force  Re-run even if sentinel exists
@@ -56,7 +59,12 @@ BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
 VIR_TABLE="${WORKDIR}/result/virus/votu/votu_table.tsv"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 PHF_FUNGI_TABLE="${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv"
-FUNOMIC_FUNGI_TABLE="${WORKDIR}/result/integration/fungi/funomic_species_relab.tsv"
+# 98d_fun_integration_tables.sh writes the FunOMIC species relab under
+# result/integration/fungi/normalized/ (Step6 normalize_table output).
+FUNOMIC_FUNGI_TABLE="${WORKDIR}/result/integration/fungi/normalized/funomic_species_relab.tsv"
+# W-C1(2): -d all fungi input = the 98d integration table (species x samples,
+# relative abundance), stacked with the FUN| feature prefix alongside BAC|/VIR|.
+FUN_TABLE="${FUNOMIC_FUNGI_TABLE}"
 FUNGI_ABUND_TABLE=""
 case "${DIMENSION}" in
     all) RESULT_DIR="${WORKDIR}/result/stat/ml" ;;
@@ -158,6 +166,13 @@ esac
 
 echo "[INFO] Fungi input: METHOD=${FUNGI_METHOD} TABLE=${FUNGI_ABUND_TABLE:-${FUNGI_DIR}}"
 
+# W-C1(2): -d all requires the 98d fungi integration table (BAC|/VIR|/FUN| stack)
+if [ "${DIMENSION}" = "all" ] && [ ! -f "${FUN_TABLE}" ]; then
+    echo "[ERROR] -d all requires the fungi integration table: ${FUN_TABLE}"
+    echo "[ERROR] Run scripts/98d_fun_integration_tables.sh first"
+    exit 1
+fi
+
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] Sentinel exists, skipping: ${SENTINEL}"
     run_ml_visualization
@@ -171,7 +186,7 @@ fi
 
 echo "[INFO] Running SIAMCAT ML analysis"
 
-export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE RESULT_DIR
+export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE FUN_TABLE RESULT_DIR
 
 RUN_LOG="${LOG_DIR:-${RESULT_DIR}}/96_stat_ml_siamcat.run.log"
 mkdir -p "$(dirname "${RUN_LOG}")"
@@ -216,6 +231,7 @@ dimension <- Sys.getenv("DIMENSION")
 folds <- as.integer(Sys.getenv("FOLDS", "10"))
 bact_table <- Sys.getenv("BACT_TABLE")
 vir_table <- Sys.getenv("VIR_TABLE")
+fun_table <- Sys.getenv("FUN_TABLE")
 fungi_dir <- Sys.getenv("FUNGI_DIR")
 fungi_abund_table <- Sys.getenv("FUNGI_ABUND_TABLE")
 result_dir <- Sys.getenv("RESULT_DIR")
@@ -309,13 +325,19 @@ load_matrix <- function(dimension) {
     return(read_fungi_profiles(fungi_dir))
   }
   if (dimension == "all") {
+    # W-C1(2): BAC| + VIR| + FUN| stack; the fungi arm is the 98d
+    # integration table (species x samples relab), same prefilter/label
+    # flow downstream as B/V (the :341 prefilter and metadata intersect
+    # operate on the stacked matrix).
     bac <- read_abundance_table(bact_table)
     vir <- read_abundance_table(vir_table)
-    common <- intersect(colnames(bac), colnames(vir))
+    fun <- read_abundance_table(fun_table)
+    common <- Reduce(intersect, list(colnames(bac), colnames(vir), colnames(fun)))
     if (length(common) < 4) stop("Insufficient common samples for all-dimension ML")
     return(rbind(
       `rownames<-`(bac[, common, drop = FALSE], paste0("BAC|", rownames(bac))),
-      `rownames<-`(vir[, common, drop = FALSE], paste0("VIR|", rownames(vir)))
+      `rownames<-`(vir[, common, drop = FALSE], paste0("VIR|", rownames(vir))),
+      `rownames<-`(fun[, common, drop = FALSE], paste0("FUN|", rownames(fun)))
     ))
   }
   stop("Unsupported dimension: ", dimension)
