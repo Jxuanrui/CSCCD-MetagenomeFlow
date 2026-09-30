@@ -90,6 +90,7 @@ for line in open(src):
     else: seq.append(line.strip())
 if name: recs.append((name, "".join(seq)))
 recs.sort(key=lambda r: -len(r[1]))  # bp-balanced greedy (largest-first)
+k = min(k, len(recs))  # T-22: fewer records than bins -> empty chunk files antismash rejects
 bins = [([], 0) for _ in range(k)]
 for name, s in recs:
     bins.sort(key=lambda b: b[1])
@@ -139,7 +140,13 @@ if [ ${FAILED_ANY} -ne 0 ]; then
     exit 1
 fi
 
-# BGC 统计基于全部 chunk 的 region GBK(与既有 N_BGC 口径一致: gbk 计数)
-N_BGC=$(find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" 2>/dev/null | wc -l)
+# T-22 扩大修复: 平铺 region GBK 到 sample 目录 — 28b (maxdepth-1 glob) 与
+# Project01 历史 monolithic 布局的消费契约。full-record 原子分块保证
+# contig+region 文件名全局唯一, 平铺无冲突; cp -n 幂等(--force 时目录整体重建)。
+find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" -exec cp -n {} "${RESULT_DIR}/" \; 2>/dev/null || true
+
+# BGC 统计基于平铺后的 region GBK(与既有 N_BGC 口径一致: gbk 计数)
+N_BGC=$(find "${RESULT_DIR}" -maxdepth 1 -name "*.region*.gbk" 2>/dev/null | wc -l)
+CHUNKS_DONE=$(find "${RESULT_DIR}" -maxdepth 1 -type d -name 'chunk_*' 2>/dev/null | wc -l)
 touch "${SENTINEL}"
-echo "[antismash] 完成，耗时 ${SECONDS}s | BGC: ${N_BGC} | chunks: ${CHUNK_N} | 输出: ${RESULT_DIR}/"
+echo "[antismash] 完成，耗时 ${SECONDS}s | BGC: ${N_BGC} | chunks: ${CHUNKS_DONE} | 输出: ${RESULT_DIR}/"

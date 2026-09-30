@@ -57,14 +57,21 @@ RESULT_DIR="${WORKDIR}/result/annotation/antismash/${SAMPLE}"
 SENTINEL="${RESULT_DIR}/antismash_done.txt"
 
 # --- Assertions ---------------------------------------------------------------
+# chunked 语义（E-HARD-02-ADOPT + T-22 修复后）：
+#   - sentinel = merge 门通过（全 chunk 成功）
+#   - region GBK 平铺于 sample 目录（28b maxdepth-1 消费契约）
+#   - 合并产物 {sample}.contigs.{json,gbk} 自 chunked 采纳起不再产出
+#     （无生产消费者；monolithic 时代断言随之退役）
 fail() { echo "[FAIL] $1"; exit 1; }
 
 [ -f "${SENTINEL}" ] || fail "sentinel missing: ${SENTINEL}"
-[ -s "${RESULT_DIR}/${SAMPLE}.contigs.json" ] || fail "antismash output JSON missing: ${RESULT_DIR}/${SAMPLE}.contigs.json"
-[ -s "${RESULT_DIR}/${SAMPLE}.contigs.gbk" ] || fail "annotated GenBank missing: ${RESULT_DIR}/${SAMPLE}.contigs.gbk"
 
-N_REGIONS=$(find "${RESULT_DIR}" -name "*.region*.gbk" 2>/dev/null | wc -l || true)
-echo "[INFO] regions found: ${N_REGIONS} (informational; gut contigs may legitimately have 0)"
+N_SRC=$(find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" 2>/dev/null | wc -l || true)
+N_FLAT=$(find "${RESULT_DIR}" -maxdepth 1 -name "*.region*.gbk" 2>/dev/null | wc -l || true)
+[ "${N_FLAT}" -eq "${N_SRC}" ] || fail "flatten broken: flat=${N_FLAT} chunk-sources=${N_SRC} (28b maxdepth-1 contract)"
+
+N_REGIONS="${N_FLAT}"
+echo "[INFO] regions flattened: ${N_REGIONS} (informational; gut contigs may legitimately have 0)"
 
 echo ""
 echo "=============================================================================="
