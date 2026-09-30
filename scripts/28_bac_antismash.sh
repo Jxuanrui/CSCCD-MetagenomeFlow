@@ -72,7 +72,8 @@ echo "[antismash] 样本: ${SAMPLE} | 线程: ${CPUS}"
 
 # E-HARD-02-ADOPT: chunked execution (validated equivalent to monolithic on
 # Sample11, docs/plans/phase2_5_evidence/antismash_chunking_reconciliation.md).
-# Purpose: reliability / resume / failure isolation ONLY - scientific params
+# Purpose: reliability / failure isolation ONLY (reruns rebuild all chunks;
+# resume is a backlog item, see T-23) - scientific params
 # are byte-identical to the frozen monolithic command. Atomic unit = full
 # FASTA record (never split a sequence). Per-chunk DONE/FAILED sentinels
 # preserve the T-11 semantics; the sample-level done sentinel is written only
@@ -170,7 +171,7 @@ fi
 # T-22 扩大修复: 平铺 region GBK 到 sample 目录 — 28b (maxdepth-1 glob) 与
 # Project01 历史 monolithic 布局的消费契约。full-record 原子分块保证
 # contig+region 文件名全局唯一, 平铺无冲突。
-# 28:64 的 rm -rf 保证进入此处时目录为全新重建, cp -n 不会遇到旧副本。
+# 上方 'antiSMASH 不允许写入已存在目录' 处的 rm -rf 保证进入此处时目录为全新重建, cp -n 不会遇到旧副本。
 find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" -exec cp -n {} "${RESULT_DIR}/" \;
 
 # T-11 原则: 平铺失败绝不得伪装为成功 — 副本数必须等于 chunk 原件数,

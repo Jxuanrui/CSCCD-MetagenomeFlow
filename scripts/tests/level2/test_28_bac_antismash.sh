@@ -78,3 +78,26 @@ echo "==========================================================================
 echo "[PASS] 28_bac_antismash integration test: exit 0, sentinel present,"
 echo "       output structure valid, ${N_REGIONS} region(s) on ${N_CONTIGS} real contigs."
 echo "=============================================================================="
+
+# --- T-24 regression: all-short input fails explicitly, no bogus chunk_* dir ---
+echo "[INFO] T-24 regression: all-short (500-999bp) input must fail explicitly"
+SHORT_W="$(mktemp -d)"
+SHORT_S="T24S"
+mkdir -p "${SHORT_W}/result/assembly/megahit/${SHORT_S}"
+python3 - "${SHORT_W}/result/assembly/megahit/${SHORT_S}/${SHORT_S}.contigs.fa" <<'PYSHORT'
+import sys, random
+random.seed(24)
+with open(sys.argv[1], "w") as f:
+    for i in range(10):
+        f.write(f">s{i}\n" + "".join(random.choice("ACGT") for _ in range(700)) + "\n")
+PYSHORT
+SHORT_DIR="${SHORT_W}/result/annotation/antismash/${SHORT_S}"
+if bash "${REPO_ROOT}/scripts/28_bac_antismash.sh" -s "${SHORT_S}" -t 2 -w "${SHORT_W}" -r "${REPO_ROOT}" --force > /dev/null 2>&1; then
+    rm -rf "${SHORT_W}"; fail "T-24: all-short input unexpectedly succeeded"
+fi
+[ -f "${SHORT_DIR}/antismash_FAILED.txt" ] || { rm -rf "${SHORT_W}"; fail "T-24: FAILED marker missing"; }
+grep -q "eligible_records=0" "${SHORT_DIR}/antismash_FAILED.txt" || { rm -rf "${SHORT_W}"; fail "T-24: FAILED marker lacks eligible_records=0"; }
+[ -d "${SHORT_DIR}/chunk_*" ] && { rm -rf "${SHORT_W}"; fail "T-24: bogus literal chunk_* dir created"; }
+[ -f "${SHORT_DIR}/antismash_done.txt" ] && { rm -rf "${SHORT_W}"; fail "T-24: sentinel written on failure (T-11 breach)"; }
+rm -rf "${SHORT_W}"
+echo "[PASS] T-24: explicit failure, no bogus dir, no sentinel"
