@@ -66,6 +66,9 @@ source ~/Course/CSCCD-MetagenomeFlow/scripts/activate.sh
 - 看到 `[CSCCD-MetagenomeFlow] 环境已激活` 即成功
 - `PROJ_DIR` 路径指向正确的项目根目录
 - 若报错，检查 `miniforge3/` 目录是否存在
+- **2026-09-29 起**：激活会设置 `PYTHONNOUSERSITE=1`——`~/.local` 下个人临时安装的 pip 包
+  在各分析环境中**不再生效**（隔离串包）。如需临时用某个包，请装进对应 env
+  （`envs/<name>/bin/pip install`），不要依赖用户目录。
 
 **LLM 调用方式（Prompt）**：
 ```

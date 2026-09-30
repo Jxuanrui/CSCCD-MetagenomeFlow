@@ -10,12 +10,10 @@
 #   multi-path (lib64) scanning handled; ORPHAN packages (INSTALLER=conda
 #   yet not governed by any conda-meta record, e.g. bakta-1.12.0) are OUT
 #   OF SCOPE — per-env read-only orphan sweep required before each E-2 item.
-# regenerate (run from repo root):
-#   PYTHONNOUSERSITE=1 python3 - <<'EOF' ... criterion as above: glob
-#   envs/<e>/lib*/python*/site-packages/{*.dist-info,*.egg-info}, realpath
-#   dedup, exclude conda-meta files match + INSTALLER=conda + conda-name
-#   match (version/-pyX.Y stripped) ... EOF  (kept inline here, no script
-#   file per ponytail; see plan E-4-1 v3 trail for full lineage)
+# regeneration: no dedicated script (ponytail); re-derive from the
+#   criterion above — glob each env's site-packages dist-info/egg-info,
+#   realpath-dedup, apply the three exclusion rules, write per-env
+#   sections. Full v1→v3 lineage in docs/plans E-4-1 row.
 # 329 packages across 8 envs; paths sanitized; regenerate after pip installs
 
 [assembly]
