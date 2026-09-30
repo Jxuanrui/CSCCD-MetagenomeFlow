@@ -2049,6 +2049,10 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 
     echo "[INFO] shellcheck 0.11.0 已安装于 envs/shellcheck"
     bash "${PROJ_DIR}/scripts/install_git_hooks.sh"   # 自动安装 pre-commit hook（2026-09-29 起强制；幂等；绝对路径防 bank 模式 cwd 漂移）
+    # pip 包清单（2026-09-29 E-4-1）：conda explicit lock 覆盖不到 pip 安装的包，
+    # 权威清单在 docs/manifests/pip_snapshot.txt（判据与重生成步骤见该文件头）。
+    # 本安装器不自动按清单补装——自动安装逻辑待 E-2 回滚演练实证后再议（质量审核decision）。
+    echo "       pip 包清单: docs/manifests/pip_snapshot.txt"
     echo "       全量扫描: bash scripts/tests/level1/run_shellcheck_all.sh"
     echo "       三层CI统一入口: bash scripts/tests/run_ci_checks.sh --level all"
 
