@@ -363,9 +363,11 @@ run_step("normalize_filter_split", {
   #     也都在 create.data.split 之前——原注释"prevalence only / cutoff 在 SIAMCAT
   #     内部 post-split per fold 执行"的表述不实。三者均不用标签，属轻度泄漏
   #     （无监督全队列统计量参与特征保留与归一化尺度，方向偏乐观、幅度有界）。
-  # (2) 处置：本注释先行如实化；是否将过滤/归一化移入 fold 内，待 SIAMCAT
-  #     filter.features/normalize.features 的内部时序语义查证（candidate_research，
-  #     见 b1_preprocessing_timing_audit.md §6）后在 M-LEAK-02 中决定。
+  # (2) 处置：b1_preprocessing_timing_audit.md §6 已 verified（2026-09-30 源码
+  #     查证，SIAMCAT 2.10.0/2.14.0 反编译逐字相同）：filter.features 与
+  #     normalize.features 均在调用时对全对象立即生效、不按 fold 重做
+  #     （train.model 只取已归一化全矩阵按 fold 选行）。泄漏定性成立；是否
+  #     将过滤/归一化移入 fold 内由 M-LEAK-02 立项另行决定。
   # Subject-aware CV 语义不变：metadata 带 subject/id 列时同 subject 样本不跨 fold。
   siamcat_obj <<- SIAMCAT::filter.features(siamcat_obj, filter.method = "abundance", cutoff = 1e-04)
   siamcat_obj <<- SIAMCAT::normalize.features(siamcat_obj, norm.method = "log.std", norm.param = list(log.n0 = 1e-06, sd.min.q = 0.1))
@@ -420,12 +422,27 @@ for (nm in names(models)) {
     model_obj <- SIAMCAT::make.predictions(model_obj)
     model_obj <- SIAMCAT::evaluate.predictions(model_obj)
     saveRDS(model_obj, file.path(result_dir, paste0("siamcat_", nm, ".rds")))
-    pdf(file.path(result_dir, paste0("siamcat_", nm, "_evaluation.pdf")), width = 10, height = 8)
-    SIAMCAT::model.evaluation.plot(model_obj)
-    dev.off()
-    pdf(file.path(result_dir, paste0("siamcat_", nm, "_interpretation.pdf")), width = 10, height = 8)
-    SIAMCAT::model.interpretation.plot(model_obj, consens.thres = 0.5, limits = c(0, 20))
-    dev.off()
+    # W-C1(1): diagnostic PDFs are non-fatal. model.interpretation.plot()
+    # errors with "No features were selected for plotting!" on degenerate
+    # (intercept-only) models; killing the whole train step there would make
+    # the model vanish from the summary instead of being flagged
+    # degenerate=yes below.
+    tryCatch({
+      pdf(file.path(result_dir, paste0("siamcat_", nm, "_evaluation.pdf")), width = 10, height = 8)
+      SIAMCAT::model.evaluation.plot(model_obj)
+      dev.off()
+    }, error = function(e) {
+      try(grDevices::dev.off(), silent = TRUE)
+      cat(sprintf("[WARN] %s: evaluation plot failed: %s\n", nm, conditionMessage(e)))
+    })
+    tryCatch({
+      pdf(file.path(result_dir, paste0("siamcat_", nm, "_interpretation.pdf")), width = 10, height = 8)
+      SIAMCAT::model.interpretation.plot(model_obj, consens.thres = 0.5, limits = c(0, 20))
+      dev.off()
+    }, error = function(e) {
+      try(grDevices::dev.off(), silent = TRUE)
+      cat(sprintf("[WARN] %s: interpretation plot failed: %s\n", nm, conditionMessage(e)))
+    })
     eval_obj <- SIAMCAT::eval_data(model_obj)
     auc_val <- eval_obj$auroc %||% eval_obj$auc %||% NA_real_
     list(model = nm, auc = auc_val)
@@ -436,34 +453,61 @@ for (nm in names(models)) {
       model_obj <- readRDS(result_file)
       eval_obj <- SIAMCAT::eval_data(model_obj)
       auc_val <- eval_obj$auroc %||% eval_obj$auc %||% NA_real_
-      aucs[[nm]] <- tibble(model = nm, auc = as.numeric(auc_val))
-      # M-METRICS-01: export the full evaluation panel, not AUC alone
-      pred <- tryCatch(SIAMCAT::predict(model_obj, siamcat_obj), error = function(e) NULL)
+      # W-C1(1) degenerate guard: training "succeeded" but selected zero
+      # effective features (intercept-only; e.g. cv.glmnet lambda.1se keeps
+      # nothing). The rds stays on disk (97 reports it as-is), but the row is
+      # flagged degenerate=yes and excluded from the successful-model count.
+      degenerate <- "no"
+      fw <- tryCatch(SIAMCAT::feature_weights(model_obj), error = function(e) NULL)
+      if (is.null(fw) || nrow(fw) == 0 || all(is.na(fw$mean.weight)) || all(fw$mean.weight == 0)) {
+        degenerate <- "yes"
+        cat(sprintf("[WARN] %s: degenerate model (no selected features / intercept-only); flagged degenerate=yes\n", nm))
+      }
+      aucs[[nm]] <- tibble(model = nm, auc = as.numeric(auc_val), degenerate = degenerate)
+      # M-METRICS-01: export the full evaluation panel, not AUC alone.
+      # W-C1(1) label fix (A6, 2026-09-30): the old
+      #   y <- as.integer(as.character(lbl) == names(table(as.character(lbl)))[2])
+      #   y <- rep(y, length.out = nrow(p_obj))
+      # deparse-compared the label OBJECT (3 fields), producing periodic
+      # pseudo-labels - every panel metric was garbage. Labels are now taken
+      # from SIAMCAT::label(siamcat_obj)$label (named +/-1 vector) and aligned
+      # BY SAMPLE NAME against pred_matrix rownames (97's common_ids rule:
+      # sort(intersect(...))); positional recycling is forbidden, and failed
+      # alignment leaves the panel metrics NA with a WARN.
+      # The removed first branch SIAMCAT::predict(model_obj, siamcat_obj) was
+      # dead code: SIAMCAT 2.10.0 exports no predict(), the call always
+      # errored into NULL, and the panel always used pred_matrix(model_obj)
+      # (out-of-fold CV predictions - never a resubstitution path).
       extra <- list(model = nm, auc_roc = as.numeric(auc_val), auc_pr = NA_real_,
                     sensitivity = NA_real_, specificity = NA_real_, ppv = NA_real_,
                     n_predictions = 0L, calibration_error = NA_real_)
-      if (!is.null(pred)) {
-        p_obj <- tryCatch(SIAMCAT::pred_matrix(pred), error = function(e) NULL)
-      } else {
-        p_obj <- tryCatch(SIAMCAT::pred_matrix(model_obj), error = function(e) NULL)
-      }
-      lbl <- SIAMCAT::label(siamcat_obj)
-      if (!is.null(p_obj) && nrow(p_obj) > 0) {
-        y <- as.integer(as.character(lbl) == names(table(as.character(lbl)))[2])
-        y <- rep(y, length.out = nrow(p_obj))
-        pr <- tryCatch(PRROC::pr.curve(scores.class0 = p_obj[, 1], weights.class0 = y), error = function(e) NULL)
-        if (!is.null(pr)) extra$auc_pr <- as.numeric(pr$auc.integral)
-        pred_class <- ifelse(p_obj[, 1] >= 0.5, 1L, 0L)
-        extra$n_predictions <- nrow(p_obj)
-        tp <- sum(pred_class == 1 & y == 1); fn <- sum(pred_class == 0 & y == 1)
-        fp <- sum(pred_class == 1 & y == 0); tn <- sum(pred_class == 0 & y == 0)
-        extra$sensitivity <- if (tp + fn > 0) tp / (tp + fn) else NA_real_
-        extra$specificity <- if (tn + fp > 0) tn / (tn + fp) else NA_real_
-        extra$ppv <- if (tp + fp > 0) tp / (tp + fp) else NA_real_
-        bins <- cut(p_obj[, 1], breaks = seq(0, 1, 0.1), include.lowest = TRUE)
-        obs <- tapply(y, bins, mean); pr_mean <- tapply(p_obj[, 1], bins, mean)
-        ok <- !is.na(obs)
-        extra$calibration_error <- if (any(ok)) mean(abs(obs[ok] - pr_mean[ok])) else NA_real_
+      p_obj <- tryCatch(SIAMCAT::pred_matrix(model_obj), error = function(e) NULL)
+      lbl <- tryCatch(SIAMCAT::label(siamcat_obj)$label, error = function(e) NULL)
+      if (!is.null(p_obj) && nrow(p_obj) > 0 && !is.null(lbl)) {
+        ids <- sort(intersect(rownames(p_obj), names(lbl)))
+        if (length(ids) == 0) {
+          cat(sprintf("[WARN] %s: no sample-name overlap between pred_matrix and label - panel metrics stay NA\n", nm))
+        } else {
+          if (length(ids) < nrow(p_obj)) {
+            cat(sprintf("[WARN] %s: %d prediction row(s) without a matching label dropped from the panel\n",
+                        nm, nrow(p_obj) - length(ids)))
+          }
+          y <- as.integer(lbl[ids] == 1)
+          scores <- p_obj[ids, 1]
+          pr <- tryCatch(PRROC::pr.curve(scores.class0 = scores, weights.class0 = y), error = function(e) NULL)
+          if (!is.null(pr)) extra$auc_pr <- as.numeric(pr$auc.integral)
+          pred_class <- ifelse(scores >= 0.5, 1L, 0L)
+          extra$n_predictions <- length(ids)
+          tp <- sum(pred_class == 1 & y == 1); fn <- sum(pred_class == 0 & y == 1)
+          fp <- sum(pred_class == 1 & y == 0); tn <- sum(pred_class == 0 & y == 0)
+          extra$sensitivity <- if (tp + fn > 0) tp / (tp + fn) else NA_real_
+          extra$specificity <- if (tn + fp > 0) tn / (tn + fp) else NA_real_
+          extra$ppv <- if (tp + fp > 0) tp / (tp + fp) else NA_real_
+          bins <- cut(scores, breaks = seq(0, 1, 0.1), include.lowest = TRUE)
+          obs <- tapply(y, bins, mean); pr_mean <- tapply(scores, bins, mean)
+          ok <- !is.na(obs)
+          extra$calibration_error <- if (any(ok)) mean(abs(obs[ok] - pr_mean[ok])) else NA_real_
+        }
       }
       metrics[[nm]] <- tibble::as_tibble(extra)
     }
@@ -479,8 +523,15 @@ if (nrow(metrics_df) > 0) {
 auc_df <- bind_rows(aucs)
 if (nrow(auc_df) == 0) stop("No model AUCs generated")
 readr::write_tsv(auc_df, file.path(result_dir, "siamcat_auc_summary.tsv"))
+n_degen <- sum(auc_df$degenerate == "yes")
+if (n_degen > 0) {
+  cat(sprintf("[WARN] %d degenerate model(s) (degenerate=yes): %s - rds kept, NOT counted as successful models\n",
+              n_degen, paste(auc_df$model[auc_df$degenerate == "yes"], collapse = ", ")))
+}
 readr::write_tsv(bind_rows(status_log), file.path(result_dir, "siamcat_status.tsv"))
-writeLines(c("SIAMCAT AUC summary", capture.output(print(auc_df))), file.path(result_dir, "siamcat_done.txt"))
+writeLines(c("SIAMCAT AUC summary", capture.output(print(auc_df)),
+             if (n_degen > 0) paste0("NOTE: ", n_degen, " model(s) degenerate=yes (no selected features / intercept-only); rds kept for 97 but NOT counted as successful models")),
+           file.path(result_dir, "siamcat_done.txt"))
 RSCRIPT
 )
 
