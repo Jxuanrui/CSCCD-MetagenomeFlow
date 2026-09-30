@@ -950,11 +950,12 @@ CHECKM_CFG
     "
 
 
-# --- 6.6 activate.sh 中加入 Rlib 路径 ---
+# --- 6.6 activate.sh 中加入 Rlib 路径（幂等，W-C2：0Install-956 修复） ---
 
-    # 将 Rlib 路径写入 activate.sh，每次 source 后 R 自动找到项目包
-    echo "export R_LIBS_USER=\"${PROJ_DIR}/Rlib\"" \
-        >> ${PROJ_DIR}/scripts/activate.sh
+    # 将 Rlib 路径写入 activate.sh（先查重再追加——原实现每次运行都会重复追加一行）
+    grep -q "export R_LIBS_USER=" "${PROJ_DIR}/scripts/activate.sh" 2>/dev/null || \
+        echo "export R_LIBS_USER=\"${PROJ_DIR}/Rlib\"" \
+            >> ${PROJ_DIR}/scripts/activate.sh
 
 
 # --- 6.7 版本验证 ---
