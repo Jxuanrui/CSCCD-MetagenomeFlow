@@ -6,6 +6,15 @@ rule crosscohort_validation:
     """
     Cross-cohort validation with local multi-cohort support.
     Generates 8 core visualizations + optional meta-analysis.
+
+    Declared-output contract (P3-U-03/U-04 batch, 2026-09-30): only the
+    sentinel + auc_summary.tsv + crosscohort_metrics.tsv are declared. The
+    PDF plots (forest/waterfall/roc_overlay/upset/heatmap/pcoa/calibration/
+    effect_correlation) are undeclared byproducts: several of them
+    (effect_correlation_matrix, calibration_per_cohort, upset, ...) are
+    legitimately absent in single-cohort or sparse runs, and declaring them
+    caused MissingOutputException false alarms. Upstream 96 SKIPPED =>
+    97 writes a SKIPPED sentinel plus header-only tables and exits 0.
     """
     input:
         ml_sentinel = WORKDIR + "/result/stat/bacteria/ml/siamcat_done.txt",
@@ -14,20 +23,14 @@ rule crosscohort_validation:
     output:
         sentinel = WORKDIR + "/result/viz_crosscohort/crosscohort_done.txt",
         auc_summary = WORKDIR + "/result/viz_crosscohort/auc_summary.tsv",
-        forest_plot = WORKDIR + "/result/viz_crosscohort/forest_plot_auc.pdf",
-        waterfall = WORKDIR + "/result/viz_crosscohort/waterfall_auc.pdf",
-        roc_overlay = WORKDIR + "/result/viz_crosscohort/roc_overlay_all_cohorts.pdf",
-        upset = WORKDIR + "/result/viz_crosscohort/upset_shared_features.pdf",
-        stability_heatmap = WORKDIR + "/result/viz_crosscohort/heatmap_feature_stability.pdf",
-        pcoa_batch = WORKDIR + "/result/viz_crosscohort/pcoa_batch_effect.pdf",
-        calibration = WORKDIR + "/result/viz_crosscohort/calibration_per_cohort.pdf",
-        effect_corr = WORKDIR + "/result/viz_crosscohort/effect_correlation_matrix.pdf"
+        metrics = WORKDIR + "/result/viz_crosscohort/crosscohort_metrics.tsv"
     params:
         repo = config.get("repo", "~/Course/Maxmetagenome"),
         group_col = config.get("group_col", "Group"),
         source_mode = config.get("crosscohort_source", "local"),
         cohorts = ("--cohorts " + config["crosscohort_cohorts"]) if config.get("crosscohort_cohorts") else "",
         train_cohort = ("--train-cohort " + config["crosscohort_train"]) if config.get("crosscohort_train") else "",
+        test_cohorts = ("--test-cohorts " + config["crosscohort_test"]) if config.get("crosscohort_test") else "",
         meta_analysis = "--meta-analysis" if config.get("crosscohort_meta_analysis", False) else "",
         force_flag = config.get("force", False) and "--force" or "",
     threads: 1
@@ -43,6 +46,7 @@ rule crosscohort_validation:
             --source {params.source_mode} \
             {params.cohorts} \
             {params.train_cohort} \
+            {params.test_cohorts} \
             {params.meta_analysis} \
             {params.force_flag} > {log} 2>&1
         """
