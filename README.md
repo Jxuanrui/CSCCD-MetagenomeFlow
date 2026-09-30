@@ -9,10 +9,10 @@ Developed by the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cere
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
 [![Conda](https://img.shields.io/badge/conda%20envs-57-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-183-blue)]()
+[![Scripts](https://img.shields.io/badge/scripts-180-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-**183 scripts · 143 Snakemake rules · 57 conda envs · ~1.2 TB databases**
+**180 scripts · 143 Snakemake rules · 57 conda envs · ~1.2 TB databases**
 
 ---
 
@@ -51,6 +51,8 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 ### Recent Updates
 
 > Details: `git log v1.1.4-baseline..HEAD` (private dev history)
+
+- **v1.4.1 (2026-09-30)** — Integrity & governance hardening (all internal fixes, no interface changes): antiSMASH chain triple-defect fix (empty-chunk binning, region-GBK flatten contract for 28b, short-contig prefilter) with permanent CI regression guards for all three failure-semantics defenses (T-11/T-22/T-24); cross-cohort validation chain rebuilt (nine defects: direction pinning, role-aware in-sample/external split, T-11 failure semantics, dual-arm reporting with uncorrected primary + MMUPHin sensitivity, meta-analysis delta-method SE, duplicate-ID guard, external-validation metrics with sample-name alignment); 98c fail-fast on missing vOTU identity map (was: silent 100% evidence drop); repository hygiene (CCMetagen retired end-to-end, 946 tracked run-artifacts untracked, 1.66 GiB dangling objects reclaimed, E-5 archival batch with RAG rebuild); engineering governance (supervisor review channel with 20+ gate audits, three-gate pre-commit hook with self-healing install, pip-only package inventory v3, PYTHONNOUSERSITE isolation, absolute database freeze with mechanical guards); RAG benchmark governance (two-tier release standard, baseline v2, freshness clause).
 
 - **v1.4.0 (2026-09)** — Evidence & interpretation layer + ML validity: Phase 2 evidence layer closed (taxonomy cross-validation, virome host/detection/AMG evidence contracts, cross-domain edge contract, DA consensus views); antiSMASH chunked execution adopted in production script 28; Phase 3 opened with subject-aware CV, reproducible split manifests and full metrics panel (PR-AUC/sensitivity/specificity); production write guard for Project01; global rename to CSCCD-MetagenomeFlow; supervisor review channel + user governance rules (path hygiene, DB freeze, doc sync).
 
