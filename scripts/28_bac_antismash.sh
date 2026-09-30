@@ -111,6 +111,22 @@ for i, (lst, _) in enumerate(bins):
         for name, s in lst: f.write(name + "\n" + s + "\n")
 PYSPLIT
 
+# T-24: eligible-record guard — a non-empty input whose contigs are ALL
+# <1000bp yields zero chunk files; without this guard the unexpanded glob
+# literal 'chunk_*.fa' would create a bogus directory and fail with a
+# misleading antismash error. Explicit fail with a clear message instead
+# (semantics per supervisor ruling: fail loudly, keep T-11 intact).
+if [ "$(find "${CHUNKS_DIR}" -maxdepth 1 -name 'chunk_*.fa' 2>/dev/null | wc -l)" -eq 0 ]; then
+    {
+        echo "status=FAILED"
+        echo "timestamp=$(date -Iseconds)"
+        echo "eligible_records=0"
+        echo "note=no contigs >=1000bp after prefilter (all input records below antismash's 1000bp minimum); nothing for antismash to analyze"
+    } > "${RESULT_DIR}/antismash_FAILED.txt"
+    echo "[antismash] ERROR: 无 >=1000bp 的合格 contig（全短样本），无法进行 antiSMASH 分析，样本显式失败（T-24 语义）"
+    exit 1
+fi
+
 FAILED_ANY=0
 for C_FA in "${CHUNKS_DIR}"/chunk_*.fa; do
     CID=$(basename "${C_FA}" .fa)

@@ -156,7 +156,7 @@ Every reported result carries traceable evidence — what was observed, by which
 
 ## Reliability Engineering
 
-- **Chunked antiSMASH execution** (validated on a 284 Mb assembly: identical BGC universe, 289/289 regions): full-record chunks with per-chunk DONE/FAILED sentinels, resume re-runs only failed chunks, merge gated on all-chunks-success.
+- **Chunked antiSMASH execution** (validated on a 284 Mb assembly: identical BGC universe, 289/289 regions): full-record chunks with per-chunk DONE/FAILED sentinels, merge gated on all-chunks-success. (Reruns currently rebuild all chunks; per-chunk resume is a registered backlog item, not yet implemented.)
 - **Failure semantics**: tool failures never masquerade as "completed with no result" (explicit FAILED markers; downstream consumers refuse them).
 - **Production write guard**: destructive re-runs against production project directories are blocked by default and require an explicit environment override.
 - **Input validation at every entry**: sample sheets are checked for duplicates, illegal IDs and missing reads before any compute starts (bash and Snakemake entries alike).
