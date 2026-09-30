@@ -395,36 +395,62 @@ read_fungi_profiles <- function(dir_path) {
   merged[rowSums(merged) > 0, , drop = FALSE]
 }
 
+# B3-PREQ①-R #2 (2026-09-30, user decision #3 / M-96-Q1): per-block relative
+# abundance conversion. Each feature block (BAC|/VIR|/FUN|) is divided by its
+# OWN column sums so every block lives on a 0-1 relative-abundance scale
+# before the prevalence/mean-relab prefilter. This replaces the old stacked
+# filter whose single colSums() denominator mixed blocks with incomparable
+# magnitudes (metaphlan4 % vs 98c/98d relab), which could crush an entire
+# block (observed: FUN| features wiped out). SIAMCAT input is now uniformly
+# relab-valued; -d bacteria gets the same treatment so single-dimension runs
+# never drift from all-mode semantics.
+to_relab <- function(m) {
+  cs <- colSums(m)
+  cs[!is.finite(cs) | cs <= 0] <- 1
+  sweep(m, 2, cs, "/")
+}
+
 load_matrix <- function(dimension) {
-  if (dimension == "bacteria") return(read_abundance_table(bact_table))
-  if (dimension == "virus") {
+  blocks <- list()
+  if (dimension %in% c("bacteria", "all")) {
+    blocks$BAC <- read_abundance_table(bact_table)
+  }
+  if (dimension %in% c("virus", "all")) {
     # B3-PREQ①-R #1: 98c relab matrix + metadata defensive assertion
-    vir <- read_vir_relab_matrix(vir_table)
-    assert_block_samples("VIR", vir, rownames(meta), vir_table)
-    return(vir)
+    blocks$VIR <- read_vir_relab_matrix(vir_table)
+    assert_block_samples("VIR", blocks$VIR, rownames(meta), vir_table)
   }
   if (dimension == "fungi") {
-    if (nzchar(fungi_abund_table)) return(read_abundance_table(fungi_abund_table))
-    return(read_fungi_profiles(fungi_dir))
+    blocks$FUN <- if (nzchar(fungi_abund_table)) {
+      read_abundance_table(fungi_abund_table)
+    } else {
+      read_fungi_profiles(fungi_dir)
+    }
+  }
+  if (dimension == "all") {
+    blocks$FUN <- read_abundance_table(fun_table)
+  }
+  for (nm in names(blocks)) {
+    blocks[[nm]] <- to_relab(blocks[[nm]])
+    log_status(paste0("relab_convert_", nm), "OK",
+               sprintf("n_features=%d n_samples=%d scale=0-1 (block column sums -> 1)",
+                       nrow(blocks[[nm]]), ncol(blocks[[nm]])))
   }
   if (dimension == "all") {
     # W-C1(2): BAC| + VIR| + FUN| stack; the fungi arm is the 98d
     # integration table (species x samples relab), the virus arm is the 98c
-    # relab matrix, same prefilter/label flow downstream as B (the :341
-    # prefilter and metadata intersect operate on the stacked matrix).
-    bac <- read_abundance_table(bact_table)
-    vir <- read_vir_relab_matrix(vir_table)
-    assert_block_samples("VIR", vir, rownames(meta), vir_table)
-    fun <- read_abundance_table(fun_table)
-    common <- Reduce(intersect, list(colnames(bac), colnames(vir), colnames(fun)))
+    # relab matrix, same prefilter/label flow downstream as B (the prefilter
+    # and metadata intersect operate on the stacked matrix).
+    common <- Reduce(intersect, lapply(blocks, colnames))
     if (length(common) < 4) stop("Insufficient common samples for all-dimension ML")
     return(rbind(
-      `rownames<-`(bac[, common, drop = FALSE], paste0("BAC|", rownames(bac))),
-      `rownames<-`(vir[, common, drop = FALSE], paste0("VIR|", rownames(vir))),
-      `rownames<-`(fun[, common, drop = FALSE], paste0("FUN|", rownames(fun)))
+      `rownames<-`(blocks$BAC[, common, drop = FALSE], paste0("BAC|", rownames(blocks$BAC))),
+      `rownames<-`(blocks$VIR[, common, drop = FALSE], paste0("VIR|", rownames(blocks$VIR))),
+      `rownames<-`(blocks$FUN[, common, drop = FALSE], paste0("FUN|", rownames(blocks$FUN)))
     ))
   }
-  stop("Unsupported dimension: ", dimension)
+  if (length(blocks) == 0) stop("Unsupported dimension: ", dimension)
+  blocks[[1]]
 }
 
 meta <- read_metadata(metadata_csv, group_col)
@@ -444,8 +470,27 @@ meta$label <- droplevels(as.factor(meta$label))
 if (nlevels(meta$label) < 2) stop("Need at least two classes")
 positive_level <- levels(meta$label)[2]
 
-filtered <- mat[rowMeans(mat > 0) >= 0.05 & rowMeans(mat / pmax(colSums(mat)[col(mat)], 1)) >= 1e-4, , drop = FALSE]
+# B3-PREQ①-R #2: with per-block relab conversion done in load_matrix, the
+# second clause below is the mean per-sample relative abundance within the
+# block (col sums are 1), i.e. the SAME threshold semantics as the historical
+# rowMeans(mat/colSums(mat)) >= 1e-4 - but each block is now judged on its
+# own scale, so no block can be crushed by another block's magnitude.
+filtered <- mat[rowMeans(mat > 0) >= 0.05 & rowMeans(mat) >= 1e-4, , drop = FALSE]
 if (nrow(filtered) < 5) stop("Too few features after filtering")
+
+# Per-block surviving feature counts -> siamcat_status.tsv (spec #2:
+# "per-block 转换与各块存活特征数写 status.tsv")
+{
+  blk_names <- if (dimension == "all") c("BAC", "VIR", "FUN") else toupper(substr(dimension, 1, 3))
+  for (nm in blk_names) {
+    pfx <- paste0(nm, "|")
+    n_before <- if (dimension == "all") sum(startsWith(rownames(mat), pfx)) else nrow(mat)
+    n_after <- if (dimension == "all") sum(startsWith(rownames(filtered), pfx)) else nrow(filtered)
+    log_status(paste0("prefilter_", nm), "OK",
+               sprintf("features_after=%d/%d (prevalence>=0.05 AND mean_relab>=1e-4, per-block relab scale)",
+                       n_after, n_before))
+  }
+}
 
 siamcat_obj <- NULL
 run_step("siamcat_init", {

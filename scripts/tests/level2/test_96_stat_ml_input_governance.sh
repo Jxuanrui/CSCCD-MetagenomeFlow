@@ -234,4 +234,36 @@ grep -q "VIR block: 1 sample column(s) not present in metadata" "${PROJ}/logs/st
     || fail "expected WARN for EXTRA1 (V table sample not in metadata) in the run log"
 echo "[OK] A3: -d virus: 12/12 metadata samples analyzed, EXTRA1 WARNed, no annotation-column leak"
 
-echo "[PASS] 96 input governance section A (#1 virus source = 98c)"
+# ==============================================================================
+# Section B (#2): per-block relative-abundance prefilter (FUN| must survive)
+# ==============================================================================
+
+echo "[INFO] B1: -d all end-to-end on the three real-format blocks..."
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group -d all --force --skip-shap
+
+ALL_ML="${PROJ}/result/stat/ml"
+[ -s "${ALL_ML}/siamcat_done.txt" ] || fail "-d all run sentinel missing"
+[ -s "${ALL_ML}/siamcat_status.tsv" ] || fail "-d all run status table missing"
+
+echo "[INFO] B2: asserting per-block relab conversion + FUN| survival in siamcat_status.tsv..."
+for blk in BAC VIR FUN; do
+    grep -q "^relab_convert_${blk}	OK	" "${ALL_ML}/siamcat_status.tsv" \
+        || fail "status.tsv lacks relab_convert_${blk} OK row (per-block conversion)"
+done
+FUN_SURV="$(sed -n 's/^prefilter_FUN	OK	features_after=\([0-9]*\)\/\([0-9]*\).*/\1 \2/p' "${ALL_ML}/siamcat_status.tsv")"
+FUN_AFTER="$(echo "${FUN_SURV}" | cut -d' ' -f1)"
+FUN_TOTAL="$(echo "${FUN_SURV}" | cut -d' ' -f2)"
+[ -n "${FUN_AFTER}" ] || fail "status.tsv lacks prefilter_FUN row with features_after"
+[ "${FUN_AFTER}" -gt 0 ] \
+    || fail "FUN| block has 0 surviving features (scale regression: per-block relab must keep FUN| alive; got ${FUN_AFTER}/${FUN_TOTAL})"
+for blk in BAC VIR; do
+    grep -q "^prefilter_${blk}	OK	features_after=" "${ALL_ML}/siamcat_status.tsv" \
+        || fail "status.tsv lacks prefilter_${blk} surviving-count row"
+done
+grep -q "^relab_convert_BAC	OK	" "${ALL_ML}/siamcat_status.tsv" \
+    || fail "BAC| block was not relab-converted (single-scale drift risk)"
+echo "[OK] B2: per-block relab rows present; FUN| survived ${FUN_AFTER}/${FUN_TOTAL} (was 0 pre-fix)"
+
+echo "[PASS] 96 input governance sections A+B (#1 virus source = 98c, #2 per-block relab prefilter)"
