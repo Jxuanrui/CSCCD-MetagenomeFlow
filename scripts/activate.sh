@@ -44,8 +44,8 @@
 
     # 隔离用户目录 Python 包（2026-09-29 质量审核建议+用户批准）：各 env 只用自身
     # site-packages，杜绝 ~/.local 串包（曾致 pip 清单虚高 89 个幻影包）。
-    # 已在 Test_CI_fixture 验证：L1/L3 全绿、L2 5/6 绿（test_28 antismash 为
-    # 双向一致的既有缺陷，与本变量无关，登记于 phase1_defect_ledger T-22）。
+    # 已在 Test_CI_fixture 验证：L1/L3 全绿、L2 6/6 绿（test_28 antismash 缺陷
+    # T-22 已于 2026-09-30 修复，全量 CI 三层 8/8 PASS）。
     export PYTHONNOUSERSITE=1
 
     echo "[CSCCD-MetagenomeFlow] 环境已激活  PROJ_DIR=${PROJ_DIR}"

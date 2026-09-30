@@ -4,12 +4,15 @@
 # 功  能: 次级代谢产物生物合成基因簇（BGC）预测（antiSMASH）
 #         工具版本：antiSMASH 8.0.4（conda env: antismash8；Blin et al. 2025，101 cluster types；
 #                   旧 7.1.0 env/db 冻结保留可回滚）
-# 依  赖: 16_bac_megahit.sh 的输出（{sample}.contigs.fa，≥1000bp）
+# 依  赖: 16_bac_megahit.sh 的输出（{sample}.contigs.fa；本脚本自行预过滤 <1000bp，
+#         MEGAHIT 默认 MIN_CONTIG_LEN=500 会放入 500-999bp contig）
 # 输  入: ${WORKDIR}/result/assembly/megahit/{sample}/{sample}.contigs.fa
-# 输  出: ${WORKDIR}/result/antismash/{sample}/
-#           {sample}.gbk           — 结果 GenBank 文件
-#           {sample}.json          — 结果 JSON（API用）
-#           index.html             — 可视化报告
+# 输  出: ${WORKDIR}/result/annotation/antismash/{sample}/
+#           antismash_done.txt     — 成功哨兵（merge 门=全 chunk 成功+平铺校验通过）
+#           *.region*.gbk          — region GenBank（chunk 结果平铺至本层，28b 契约）
+#           chunk_XX/              — 各 chunk 完整输出（含 chunk_XX.gbk/json/zip/index.html）
+#           _chunks/               — 分块输入 FASTA（原子单位=完整 record，不切序列）
+#         注：chunked 模式不再产出样本级 {sample}.gbk/json/index.html（无生产消费者）
 #
 # ── 注意 ─────────────────────────────────────────────────────────────────────
 #   antiSMASH 按样本运行（per-sample），宏基因组模式下不使用全基因组注释步骤
@@ -89,6 +92,14 @@ for line in open(src):
         name, seq = line, []
     else: seq.append(line.strip())
 if name: recs.append((name, "".join(seq)))
+# T-22/C2: pre-filter <1000bp records (validated approach per skill card 28).
+# antiSMASH rejects records below its 1000bp minimum; a chunk holding only
+# short contigs fails the whole sample. MEGAHIT default MIN_CONTIG_LEN=500
+# (16_bac_megahit.sh) lets 500-999bp contigs reach here.
+n_all = len(recs)
+recs = [r for r in recs if len(r[1]) >= 1000]
+if len(recs) < n_all:
+    print(f"prefilter: dropped {n_all - len(recs)} records <1000bp ({n_all} -> {len(recs)})")
 recs.sort(key=lambda r: -len(r[1]))  # bp-balanced greedy (largest-first)
 k = min(k, len(recs))  # T-22: fewer records than bins -> empty chunk files antismash rejects
 bins = [([], 0) for _ in range(k)]
@@ -142,11 +153,26 @@ fi
 
 # T-22 扩大修复: 平铺 region GBK 到 sample 目录 — 28b (maxdepth-1 glob) 与
 # Project01 历史 monolithic 布局的消费契约。full-record 原子分块保证
-# contig+region 文件名全局唯一, 平铺无冲突; cp -n 幂等(--force 时目录整体重建)。
-find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" -exec cp -n {} "${RESULT_DIR}/" \; 2>/dev/null || true
+# contig+region 文件名全局唯一, 平铺无冲突。
+# 28:61 的 rm -rf 保证进入此处时目录为全新重建, cp -n 不会遇到旧副本。
+find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" -exec cp -n {} "${RESULT_DIR}/" \;
+
+# T-11 原则: 平铺失败绝不得伪装为成功 — 副本数必须等于 chunk 原件数,
+# 否则写样本级 FAILED 并退出 (磁盘满/权限错/同名跳过都会在此暴露)。
+N_SRC=$(find "${RESULT_DIR}"/chunk_* -maxdepth 1 -name "*.region*.gbk" 2>/dev/null | wc -l)
+N_FLAT=$(find "${RESULT_DIR}" -maxdepth 1 -name "*.region*.gbk" 2>/dev/null | wc -l)
+if [ "${N_FLAT}" -ne "${N_SRC}" ]; then
+    {
+        echo "status=FAILED"
+        echo "timestamp=$(date -Iseconds)"
+        echo "note=flatten incomplete: chunk sources=${N_SRC}, flattened=${N_FLAT}; sentinel NOT written"
+    } > "${RESULT_DIR}/antismash_FAILED.txt"
+    echo "[antismash] ERROR: 平铺不完整 (src=${N_SRC}, flat=${N_FLAT}), 样本不标记完成"
+    exit 1
+fi
 
 # BGC 统计基于平铺后的 region GBK(与既有 N_BGC 口径一致: gbk 计数)
-N_BGC=$(find "${RESULT_DIR}" -maxdepth 1 -name "*.region*.gbk" 2>/dev/null | wc -l)
+N_BGC="${N_FLAT}"
 CHUNKS_DONE=$(find "${RESULT_DIR}" -maxdepth 1 -type d -name 'chunk_*' 2>/dev/null | wc -l)
 touch "${SENTINEL}"
 echo "[antismash] 完成，耗时 ${SECONDS}s | BGC: ${N_BGC} | chunks: ${CHUNKS_DONE} | 输出: ${RESULT_DIR}/"
