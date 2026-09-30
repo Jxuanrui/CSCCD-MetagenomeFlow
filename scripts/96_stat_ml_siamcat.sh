@@ -509,7 +509,8 @@ for (rep_i in seq_len(repeats)) {
         cat(sprintf("[WARN] %s: degenerate model (no selected features / intercept-only); flagged degenerate=yes\n", nm))
       }
       aucs[[paste0(nm, if (repeats > 1L) paste0("_rep", rep_i) else "")]] <-
-        tibble(model = nm, rep = rep_i, seed = seed_rep, auc = as.numeric(auc_val), degenerate = degenerate)
+        tibble(model = nm, rep = rep_i, seed = seed_rep, auc = as.numeric(auc_val),
+               degenerate = degenerate, aligned_by = "sample_id")
       # M-METRICS-01: export the full evaluation panel, not AUC alone.
       # W-C1(1) label fix (A6, 2026-09-30): the old
       #   y <- as.integer(as.character(lbl) == names(table(as.character(lbl)))[2])
@@ -524,9 +525,12 @@ for (rep_i in seq_len(repeats)) {
       # dead code: SIAMCAT 2.10.0 exports no predict(), the call always
       # errored into NULL, and the panel always used pred_matrix(model_obj)
       # (out-of-fold CV predictions - never a resubstitution path).
+      # W-C1(4): every auc/metrics row carries aligned_by="sample_id" so the
+      # alignment convention stays traceable in the artifacts (A-2 note;
+      # column naming matches 97's crosscohort_metrics style).
       extra <- list(rep = rep_i, seed = seed_rep, model = nm, auc_roc = as.numeric(auc_val), auc_pr = NA_real_,
                     sensitivity = NA_real_, specificity = NA_real_, ppv = NA_real_,
-                    n_predictions = 0L, calibration_error = NA_real_)
+                    n_predictions = 0L, calibration_error = NA_real_, aligned_by = "sample_id")
       p_obj <- tryCatch(SIAMCAT::pred_matrix(model_obj), error = function(e) NULL)
       lbl <- tryCatch(SIAMCAT::label(siamcat_obj)$label, error = function(e) NULL)
       if (!is.null(p_obj) && nrow(p_obj) > 0 && !is.null(lbl)) {
@@ -581,7 +585,7 @@ if (nrow(metrics_df) > 0) {
   metrics_df <- if (repeats > 1L) {
     dplyr::select(metrics_df, rep, seed, model, dplyr::everything())
   } else {
-    dplyr::select(metrics_df, model, auc_roc, auc_pr, sensitivity, specificity, ppv, n_predictions, calibration_error)
+    dplyr::select(metrics_df, model, auc_roc, auc_pr, sensitivity, specificity, ppv, n_predictions, calibration_error, aligned_by)
   }
   readr::write_tsv(metrics_df, file.path(result_dir, "siamcat_metrics.tsv"))
   cat("[M-METRICS-01] siamcat_metrics.tsv:", nrow(metrics_df), "models x",
@@ -591,9 +595,9 @@ if (nrow(metrics_df) > 0) {
 auc_detail <- bind_rows(aucs)
 if (nrow(auc_detail) == 0) stop("No model AUCs generated")
 if (repeats == 1L) {
-  auc_df <- dplyr::select(auc_detail, model, auc, degenerate)
+  auc_df <- dplyr::select(auc_detail, model, auc, degenerate, aligned_by)
 } else {
-  readr::write_tsv(dplyr::select(auc_detail, rep, seed, model, auc, degenerate),
+  readr::write_tsv(dplyr::select(auc_detail, rep, seed, model, auc, degenerate, aligned_by),
                    file.path(result_dir, "siamcat_repeats_detail.tsv"))
   auc_df <- auc_detail %>%
     dplyr::left_join(dplyr::select(metrics_df, rep, model, auc_pr), by = c("rep", "model")) %>%
@@ -602,7 +606,8 @@ if (repeats == 1L) {
                      auc_pr_mean = mean(auc_pr), auc_pr_sd = stats::sd(auc_pr),
                      n_repeats = dplyr::n_distinct(rep),
                      n_degenerate = sum(degenerate == "yes"), .groups = "drop") %>%
-    dplyr::mutate(degenerate = ifelse(n_degenerate == n_repeats, "yes", "no"))
+    dplyr::mutate(degenerate = ifelse(n_degenerate == n_repeats, "yes", "no"),
+                  aligned_by = "sample_id")
 }
 readr::write_tsv(auc_df, file.path(result_dir, "siamcat_auc_summary.tsv"))
 n_degen <- sum(auc_df$degenerate == "yes")
