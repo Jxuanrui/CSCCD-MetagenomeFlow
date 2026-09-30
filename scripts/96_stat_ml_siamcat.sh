@@ -357,12 +357,16 @@ run_step("check_confounders", {
 })
 
 run_step("normalize_filter_split", {
-  # M-LEAK-01: feature filtering now happens BEFORE split on prevalence only
-  # (no label/全队列 abundance 信息), and the heavier abundance cutoff is
-  # applied INSIDE SIAMCAT's own pipeline (post-split per fold by the
-  # package). Subject-aware CV: when metadata carries a subject/id column,
-  # samples of one subject never straddle train/test (inseparable). With the
-  # current 1:1 subject:sample data this is behaviour-neutral insurance.
+  # M-LEAK-01 注释更正（2026-09-30，B-1 审计 + 用户approve #3）：
+  # (1) 上方 :341 的预过滤第二子句是【全队列】平均相对丰度阈值（rowMeans(mat/colSums)），
+  #     本行 filter.features(abundance, 1e-04) 与 normalize.features(log.std) 的调用点
+  #     也都在 create.data.split 之前——原注释"prevalence only / cutoff 在 SIAMCAT
+  #     内部 post-split per fold 执行"的表述不实。三者均不用标签，属轻度泄漏
+  #     （无监督全队列统计量参与特征保留与归一化尺度，方向偏乐观、幅度有界）。
+  # (2) 处置：本注释先行如实化；是否将过滤/归一化移入 fold 内，待 SIAMCAT
+  #     filter.features/normalize.features 的内部时序语义查证（candidate_research，
+  #     见 b1_preprocessing_timing_audit.md §6）后在 M-LEAK-02 中决定。
+  # Subject-aware CV 语义不变：metadata 带 subject/id 列时同 subject 样本不跨 fold。
   siamcat_obj <<- SIAMCAT::filter.features(siamcat_obj, filter.method = "abundance", cutoff = 1e-04)
   siamcat_obj <<- SIAMCAT::normalize.features(siamcat_obj, norm.method = "log.std", norm.param = list(log.n0 = 1e-06, sd.min.q = 0.1))
   set.seed(20260928)  # M-LEAK-01: reproducible split manifest anchor

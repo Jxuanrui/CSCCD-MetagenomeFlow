@@ -424,7 +424,18 @@ def canonical_lookup_factory(id_map_path):
                 ambiguous.add(bare)
             by_bare[bare] = parts[2]
     except FileNotFoundError:
-        pass
+        # T-25 (2026-09-30, user-approved fail-fast): a missing votu_id_map
+        # previously degraded to an empty lookup -> 100% of host/detection
+        # relations silently dropped as orphan (proven by A-4 controlled
+        # comparison: no-map run = 15,236,060 orphans / 0 relations).
+        # Fail loudly instead, aligned with T-16 semantics.
+        sys.stderr.write(
+            "[98c][FATAL] votu_id_map not found: %s\n"
+            "[98c][FATAL] canonical vOTU identity is unavailable — regenerate via "
+            "56_vir_votu_gen.sh then 60_vir_votu_table.sh -m before integration.\n"
+            % id_map_path
+        )
+        sys.exit(1)
     def lookup(name):
         name = name[:-6] if name.endswith(".fasta") else name
         if name in by_original:
