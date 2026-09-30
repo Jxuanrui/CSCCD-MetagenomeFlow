@@ -2,6 +2,19 @@
 # Loaded by mcp/eval/rag_benchmark.py; do not embed questions in the script.
 version: v2
 created: 2026-09-19
+# Baseline v2@2026-09-30 (user-ratified): hybrid R@1=0.80 / R@3=0.98 / R@5=1.00 /
+# MRR@5=0.892 (44 questions; ccmetagen question retired 2026-09-29). Down from the
+# v1-era R@1=0.84 because two expected docs (fastp-quality-control,
+# phold-dark-matter-annotation) were desensitization-edited after 09-20 without a
+# benchmark rerun (see ledger KNOWN_ISSUE 'RAG baseline drift' and
+# .claude/reviews/benchmark_20260930_e5b_*.json). This is the new reference point;
+# do NOT raise the score back by editing expected_doc_prefixes (goalpost-moving).
+# Release standard (two-tier, user-ratified 2026-09-30):
+#   HARD gate: R@5 = 1.00, every expected doc in top-5, hard subset not lower.
+#   SOFT gate: R@1 may drop at most 2 queries, each with per-query raw-JSON proof
+#              of what took rank-1 and why; beyond that, veto the change.
+# Baseline freshness: before any docs/ content change, rebuild-and-benchmark on the
+#   pre-change HEAD the same day (JSON must carry index fingerprint + git sha).
 source: >
   Questions 1-30 extracted verbatim from mcp/eval/rag_benchmark.py
   GOLDEN_QUESTIONS/HARD_QUESTION_IDS (the 2026-07-04 30-question set).
