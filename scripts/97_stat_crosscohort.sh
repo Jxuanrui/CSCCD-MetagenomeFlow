@@ -32,6 +32,8 @@ Optional:
                     the train cohort is always evaluated with role=in_sample)
   --condition       Condition for curatedMGD: CRC|T2D|IBD (default: CRC)
   --meta-analysis   Enable meta-analysis with random-effects model
+  --no-mmuphin      Disable the MMUPHin sensitivity arm; the primary result
+                    (batch_correction=none, uncorrected) is always computed
   --force           Re-run even if sentinel exists
   -h, --help        Show this help message
 
@@ -40,6 +42,10 @@ write result/viz_crosscohort/crosscohort_FAILED.txt and exit non-zero; the
 crosscohort_done.txt sentinel is only written after all outputs succeed.
 If upstream script 96 skipped model training (insufficient samples), this
 script writes a SKIPPED sentinel plus header-only tables and exits 0.
+Primary result = uncorrected (batch_correction=none); the MMUPHin-corrected
+arm is co-reported as a sensitivity analysis (rows in the metrics tables).
+A fresh (non-skipped) run first clears stale outputs of the previous round
+(PDFs, meta_analysis_results.tsv, mmuphin_colsums.tsv) in the output dir.
 
 Output directory: ${WORKDIR}/result/viz_crosscohort/
 
@@ -65,10 +71,15 @@ CONDITION="CRC"
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
 export MGX_OPTS_STRING="w:WORKDIR r:REPO m:METADATA_CSV g:GROUP_COL"
-export MGX_OPTS_FLAG="force meta-analysis"
+export MGX_OPTS_FLAG="force meta-analysis no-mmuphin"
 export MGX_OPTS_LONG="source:SOURCE cohorts:COHORTS train-cohort:TRAIN_COHORT test-cohorts:TEST_COHORTS condition:CONDITION"
 mgx_parse "$@"
 mgx_require WORKDIR REPO METADATA_CSV GROUP_COL
+
+# W2-1: MMUPHin arm toggle (default on = sensitivity arm co-reported;
+# --no-mmuphin restricts the run to the primary uncorrected result)
+MMUPHIN_SENSITIVITY=1
+if [ "${NO_MMUPHIN:-0}" -eq 1 ]; then MMUPHIN_SENSITIVITY=0; fi
 
 # Ensure absolute paths so R sub-processes receive them correctly
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
@@ -87,8 +98,8 @@ LOG_FILE="${LOG_DIR}/97_stat_crosscohort_$(date +%Y%m%d_%H%M%S).log"
 exec > >(tee -a "${LOG_FILE}") 2>&1
 
 # Header-only tables for skip paths; columns MUST match 97_crosscohort.R
-AUC_SUMMARY_HEADER="cohort	role	auc	auc_ci_low	auc_ci_high	n_case	n_control	n_samples"
-METRICS_HEADER="cohort	role	decision_threshold	n_samples	n_case	n_control	auroc	auc_ci_low	auc_ci_high	auprc	sensitivity	specificity	ppv"
+AUC_SUMMARY_HEADER="cohort	role	batch_correction	auc	auc_ci_low	auc_ci_high	n_case	n_control	n_samples"
+METRICS_HEADER="cohort	role	batch_correction	decision_threshold	n_samples	n_case	n_control	auroc	auc_ci_low	auc_ci_high	auprc	sensitivity	specificity	ppv	n_features_zero_filled"
 
 skip_run() {
     echo "[INFO] SKIPPED: ${1}"
@@ -111,8 +122,15 @@ if [ ! -f "${METADATA_CSV}" ]; then
 fi
 
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
-    echo "[INFO] Sentinel exists, skipping: ${SENTINEL}"
-    echo "[INFO] Use --force to re-run"
+    # W2-6: a SKIPPED sentinel is not a completed run - say so explicitly
+    # instead of silently skipping as if results existed (still exit 0).
+    if grep -q "^SKIPPED" "${SENTINEL}"; then
+        echo "[INFO] Sentinel exists but marks a SKIPPED run: ${SENTINEL}"
+        echo "[INFO] upstream skipped, rerun 96 then 97 --force"
+    else
+        echo "[INFO] Sentinel exists, skipping: ${SENTINEL}"
+        echo "[INFO] Use --force to re-run"
+    fi
     exit 0
 fi
 
@@ -168,13 +186,18 @@ echo "  Test cohorts: ${TEST_COHORTS:-<default: all except train>}"
 echo "  Group column: ${GROUP_COL}"
 echo "  Metadata: ${METADATA_CSV}"
 echo "  Meta-analysis: ${META_ANALYSIS}"
+echo "  MMUPHin sensitivity arm: ${MMUPHIN_SENSITIVITY} (primary result is always batch_correction=none)"
 
 # Export variables for R script
-export WORKDIR REPO METADATA_CSV GROUP_COL SOURCE COHORTS TRAIN_COHORT TEST_COHORTS CONDITION META_ANALYSIS ML_DIR RESULT_DIR
+export WORKDIR REPO METADATA_CSV GROUP_COL SOURCE COHORTS TRAIN_COHORT TEST_COHORTS CONDITION META_ANALYSIS MMUPHIN_SENSITIVITY ML_DIR RESULT_DIR
 
 # Fresh run: clear stale sentinel / FAILED marker so a previous failure or
-# success can never leak into this run's outcome (T-11)
+# success can never leak into this run's outcome (T-11), and clear the
+# previous round's outputs (W2-6, §4.4 output hygiene): old PDFs, the
+# meta-analysis table and the MMUPHin colSums evidence. The skip paths
+# above return before this point, so resume/skip semantics are untouched.
 rm -f "${SENTINEL}" "${FAILED_FILE}"
+rm -f "${RESULT_DIR}"/*.pdf "${RESULT_DIR}/meta_analysis_results.tsv" "${RESULT_DIR}/mmuphin_colsums.tsv"
 
 echo "[INFO] Running R script for cross-cohort analysis..."
 

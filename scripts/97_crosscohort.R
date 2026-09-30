@@ -23,6 +23,24 @@
 #       => explicit SKIPPED sentinel + header-only tables + exit 0.
 #   U-05 the PCoA cohort vector no longer clobbers the per-cohort label list
 #       used by the calibration section.
+#
+# W2 batch (2026-09-30, supervisor W1 review + user decision #2):
+#   W2-1 (user decision #2) UNCORRECTED is the PRIMARY result
+#       (batch_correction=none); the MMUPHin-corrected matrix is co-reported
+#       as a SENSITIVITY arm (batch_correction=mmuphin). Both arms are rows
+#       in auc_summary.tsv / crosscohort_metrics.tsv; plots, the external
+#       pooled line and the meta-analysis use the primary (none) arm only.
+#       --no-mmuphin (MMUPHIN_SENSITIVITY=0) disables the sensitivity arm.
+#   W2-2 (P3-U-08) meta-analysis SE on logit scale via delta method:
+#       se_logit = (ci_high - ci_low) / 3.92 / (auc * (1 - auc)); rows with
+#       logit-unbounded AUC/CI (AUC == 0/1, CI touching 0/1) are dropped
+#       with an INFO note instead of crashing.
+#   W2-3 (P3-U-09) sample IDs shared across cohorts fail hard (duplicate ID +
+#       conflicting cohort names in the message).
+#   W2-4 metrics table gains n_features_zero_filled per cohort (taxa the
+#       frozen normalization zero-fills because the cohort lacks them).
+#   W2-5 when the MMUPHin arm runs, mmuphin_colsums.tsv records per-sample
+#       colSums before/after correction (consistency evidence).
 # ==============================================================================
 
 options(stringsAsFactors = FALSE, warn = 1)
@@ -67,6 +85,7 @@ train_cohort <- Sys.getenv("TRAIN_COHORT")
 test_cohorts_str <- Sys.getenv("TEST_COHORTS", "")
 condition <- Sys.getenv("CONDITION", "CRC")
 meta_analysis <- as.logical(as.integer(Sys.getenv("META_ANALYSIS", "0")))
+mmuphin_sensitivity <- as.logical(as.integer(Sys.getenv("MMUPHIN_SENSITIVITY", "1")))
 ml_dir <- Sys.getenv("ML_DIR")
 result_dir <- Sys.getenv("RESULT_DIR")
 
@@ -74,11 +93,16 @@ dir.create(result_dir, recursive = TRUE, showWarnings = FALSE)
 
 SENTINEL_FILE <- file.path(result_dir, "crosscohort_done.txt")
 FAILED_FILE <- file.path(result_dir, "crosscohort_FAILED.txt")
-AUC_SUMMARY_HEADER <- c("cohort", "role", "auc", "auc_ci_low", "auc_ci_high",
-                        "n_case", "n_control", "n_samples")
-METRICS_HEADER <- c("cohort", "role", "decision_threshold", "n_samples",
-                    "n_case", "n_control", "auroc", "auc_ci_low", "auc_ci_high",
-                    "auprc", "sensitivity", "specificity", "ppv")
+MMUPHIN_COLSUMS_FILE <- file.path(result_dir, "mmuphin_colsums.tsv")
+# W2-1: uncorrected predictions are the primary result; the MMUPHin arm is a
+# co-reported sensitivity analysis.
+PRIMARY_ARM <- "none"
+AUC_SUMMARY_HEADER <- c("cohort", "role", "batch_correction", "auc", "auc_ci_low",
+                        "auc_ci_high", "n_case", "n_control", "n_samples")
+METRICS_HEADER <- c("cohort", "role", "batch_correction", "decision_threshold",
+                    "n_samples", "n_case", "n_control", "auroc", "auc_ci_low",
+                    "auc_ci_high", "auprc", "sensitivity", "specificity", "ppv",
+                    "n_features_zero_filled")
 
 write_header_only <- function(path, header) {
   writeLines(paste(header, collapse = "\t"), path)
@@ -117,6 +141,8 @@ cat("  Source mode:", source_mode, "\n")
 cat("  Cohorts:", cohorts_str, "\n")
 cat("  Train cohort:", train_cohort, "\n")
 cat("  Test cohorts (explicit):", if (nzchar(test_cohorts_str)) test_cohorts_str else "<default: all except train>", "\n")
+cat("  Primary result arm: uncorrected (batch_correction=", PRIMARY_ARM, ")\n", sep = "")
+cat("  MMUPHin sensitivity arm:", if (mmuphin_sensitivity) "enabled" else "disabled (MMUPHIN_SENSITIVITY=0)", "\n")
 
 # ============================================================================
 # Load SIAMCAT model from script 96 (or propagate its SKIPPED status)
@@ -236,10 +262,32 @@ load_curated_cohort <- function(dataset_name) {
   })
 }
 
+# P3-U-09: a sample ID shared by two loaded cohorts would silently alias
+# samples in the merged matrix, the MMUPHin batch vector and every
+# per-cohort table keyed by sample name - fatal, with the conflicting
+# cohorts named in the message.
+assert_no_duplicate_samples <- function(cohort_list) {
+  all_ids <- unlist(lapply(cohort_list, function(x) colnames(x$abundance)),
+                    use.names = FALSE)
+  if (anyDuplicated(all_ids) == 0) return(invisible(TRUE))
+  owner_of <- unlist(lapply(cohort_list, function(x) {
+    stats::setNames(rep(x$cohort, ncol(x$abundance)), colnames(x$abundance))
+  }), use.names = FALSE)
+  names(owner_of) <- all_ids
+  dup_ids <- unique(all_ids[duplicated(all_ids)])
+  conflicts <- vapply(dup_ids, function(id) {
+    paste0(id, " [", paste(unique(owner_of[all_ids == id]), collapse = " & "), "]")
+  }, FUN.VALUE = character(1))
+  fail_hard("duplicate_samples", paste0(
+    "sample IDs shared across cohorts: ", paste(conflicts, collapse = "; "),
+    " - cohort sample IDs must be disjoint"))
+}
+
 # P3-U-03: retained but annotated - the correction is computed jointly across
-# all loaded cohorts, INCLUDING the training cohort; external metrics are
-# therefore conditional on this correction. Failures fall back to uncorrected
-# input with an explicit note (never silently reported as corrected).
+# all loaded cohorts, INCLUDING the training cohort. W2-1: this is now the
+# SENSITIVITY arm; the primary result is computed on the uncorrected input.
+# Failures fall back to the primary arm only with an explicit note (never
+# silently reported as corrected).
 perform_batch_correction <- function(cohort_list, train_cohort_name) {
   note <- "skipped_single_cohort"
   if (length(cohort_list) < 2) {
@@ -251,9 +299,9 @@ perform_batch_correction <- function(cohort_list, train_cohort_name) {
     return(list(cohorts = cohort_list, note = "skipped_no_mmuphin"))
   }
 
-  cat("[INFO] Performing batch correction across cohorts\n")
+  cat("[INFO] Performing batch correction across cohorts (SENSITIVITY arm)\n")
   cat("[INFO] NOTE: batch correction is computed jointly INCLUDING the training cohort (",
-      train_cohort_name, ") - external metrics are conditional on this correction\n", sep = "")
+      train_cohort_name, ") - sensitivity metrics are conditional on this correction\n", sep = "")
 
   # Merge all abundance matrices. unname(): unlist() attaches a names
   # attribute that would propagate through dimnames and fail MMUPHin's
@@ -285,6 +333,19 @@ perform_batch_correction <- function(cohort_list, train_cohort_name) {
       control = list(verbose = FALSE, diagnostic_plot = NULL)
     )
     corrected_mat <- corrected$feature_abd_adj %||% merged_mat
+
+    # W2-5: per-sample colSums before/after correction - consistency
+    # evidence that the adjustment did (or did not) shift sample totals.
+    cs_before <- colSums(merged_mat)
+    cs_after <- colSums(corrected_mat)[colnames(merged_mat)]
+    colsums_df <- tibble(
+      sample_id = colnames(merged_mat),
+      cohort = unname(batch_vec[colnames(merged_mat)]),
+      colsum_before = as.numeric(cs_before),
+      colsum_after = as.numeric(cs_after)
+    )
+    write_tsv(colsums_df, MMUPHIN_COLSUMS_FILE)
+    cat("[INFO] MMUPHin colSums evidence (before/after) written:", MMUPHIN_COLSUMS_FILE, "\n")
 
     # Split back to cohorts
     for (i in seq_along(cohort_list)) {
@@ -335,6 +396,7 @@ if (source_mode == "local") {
 
   for (cohort_name in cohort_names) {
     cohort_list[[cohort_name]] <- load_local_cohort(cohort_name, parent_dir)
+    assert_no_duplicate_samples(cohort_list)  # P3-U-09
   }
 
 } else if (source_mode == "curated") {
@@ -352,6 +414,7 @@ if (source_mode == "local") {
   datasets <- dataset_map[[condition]] %||% dataset_map$CRC
   for (ds in datasets) {
     cohort_list[[ds]] <- load_curated_cohort(ds)
+    assert_no_duplicate_samples(cohort_list)  # P3-U-09
   }
   if (identical(train_cohort, "first_available") || !nzchar(train_cohort)) {
     train_cohort <- names(cohort_list)[1]
@@ -403,10 +466,21 @@ cohort_roles <- stats::setNames(
 cat("[INFO] Roles - train:", train_cohort, "| external:",
     if (length(test_cohorts) > 0) paste(test_cohorts, collapse = ", ") else "(none)", "\n")
 
-# Batch correction
-bc <- perform_batch_correction(cohort_list, train_cohort)
-cohort_list <- bc$cohorts
-batch_correction_note <- bc$note
+# W2-1 (user decision #2): the UNCORRECTED input is the primary arm; the
+# MMUPHin-corrected matrices are a co-reported sensitivity arm. cohort_list
+# itself stays uncorrected (it feeds the primary arm and the descriptive
+# plots); the correction runs on a shallow copy - R copy-on-modify semantics
+# keep the raw matrices untouched.
+arms <- list(none = cohort_list)
+if (mmuphin_sensitivity) {
+  bc <- perform_batch_correction(lapply(cohort_list, function(x) x), train_cohort)
+  batch_correction_note <- bc$note
+  if (startsWith(bc$note, "MMUPHin")) arms$mmuphin <- bc$cohorts
+} else {
+  batch_correction_note <- "disabled (MMUPHIN_SENSITIVITY=0)"
+}
+cat("[INFO] Analysis arms:", paste(names(arms), collapse = ", "),
+    "- primary:", PRIMARY_ARM, "| MMUPHin sensitivity arm:", batch_correction_note, "\n")
 
 # ============================================================================
 # Model Transfer & Prediction (P3-U-04: failures are fatal, never warnings)
@@ -414,21 +488,20 @@ batch_correction_note <- bc$note
 
 cat("[INFO] Performing model transfer and prediction\n")
 
-cohort_results <- list()
-cohort_metrics <- list()
-cohort_predictions <- list()
-cohort_labels <- list()
+cohort_results <- list()      # arm -> cohort -> auc tibble (W2-1)
+cohort_metrics <- list()      # arm -> cohort -> metrics tibble (W2-1)
+cohort_predictions <- list()  # arm -> cohort -> named prediction vector
+cohort_labels <- list()       # arm -> cohort -> named label vector
 
 DECISION_THRESHOLD <- 0.5
 
 for (cohort_name in eval_cohorts) {
   cat("[INFO] Predicting on cohort:", cohort_name, "(role:", cohort_roles[[cohort_name]], ")\n")
 
-  cohort_data <- cohort_list[[cohort_name]]
-  abund <- cohort_data$abundance
-  meta <- cohort_data$metadata
+  meta <- cohort_list[[cohort_name]]$metadata
 
-  # P3-U-01: label set must match the training classes exactly
+  # P3-U-01: label set must match the training classes exactly.
+  # Label validation is arm-independent (metadata is shared across arms).
   true_labels <- meta[[group_col]]
   names(true_labels) <- as.character(meta$sample_id)
   if (is.null(true_labels) || all(is.na(true_labels))) {
@@ -439,7 +512,7 @@ for (cohort_name in eval_cohorts) {
   if (any(!keep)) cat("[INFO] ", cohort_name, ": dropping ", sum(!keep), " sample(s) with NA labels\n", sep = "")
   true_labels <- true_labels[keep]
   meta <- meta[keep, , drop = FALSE]
-  abund <- abund[, as.character(meta$sample_id), drop = FALSE]
+  kept_ids <- as.character(meta$sample_id)
 
   unexpected <- setdiff(unique(true_labels), c(positive_level, negative_level))
   if (length(unexpected) > 0) {
@@ -456,146 +529,165 @@ for (cohort_name in eval_cohorts) {
                      ", control=", n_control, ")"))
   }
 
-  tryCatch({
-    # Frozen normalization requires every training-retained feature to exist in
-    # the holdout matrix: zero-fill taxa absent from this cohort.
-    union_feats <- union(rownames(abund), norm_retained)
-    filled <- matrix(0, nrow = length(union_feats), ncol = ncol(abund),
-                     dimnames = list(union_feats, colnames(abund)))
-    filled[rownames(abund), ] <- abund
-    n_filled <- length(setdiff(norm_retained, rownames(abund)))
-    if (n_filled > 0) {
-      cat("[INFO] ", cohort_name, ": zero-filled ", n_filled,
-          " training feature(s) absent from this cohort\n", sep = "")
-    }
+  # W2-4: model-retained taxa absent from this cohort's RAW matrix - the
+  # count the frozen normalization zero-fills. A property of cohort vs
+  # model, so the same value stamps every arm's rows.
+  n_zero_filled <- length(setdiff(norm_retained,
+                                  rownames(cohort_list[[cohort_name]]$abundance)))
+  if (n_zero_filled > 0) {
+    cat("[INFO] ", cohort_name, ": ", n_zero_filled,
+        " model feature(s) absent from this cohort (zero-filled by frozen normalization)\n", sep = "")
+  }
 
-    meta_df <- as.data.frame(meta)
-    rownames(meta_df) <- as.character(meta_df$sample_id)
+  meta_df <- as.data.frame(meta)
+  rownames(meta_df) <- as.character(meta_df$sample_id)
 
-    holdout_obj <- SIAMCAT::siamcat(
-      feat = filled, meta = meta_df,
-      label = group_col, case = positive_level, verbose = 0
-    )
-    pred_obj <- SIAMCAT::make.predictions(
-      siamcat = siamcat_model, siamcat.holdout = holdout_obj,
-      normalize.holdout = TRUE, verbose = 0
-    )
+  for (arm_name in names(arms)) {
+    abund <- arms[[arm_name]][[cohort_name]]$abundance[, kept_ids, drop = FALSE]
 
-    pred_matrix <- SIAMCAT::pred_matrix(pred_obj)
-    pred_vector <- rowMeans(pred_matrix, na.rm = TRUE)
-    if (all(is.na(pred_vector))) {
-      fail_hard(paste0("predict_", cohort_name), "predictions are all NA")
-    }
+    tryCatch({
+      # Frozen normalization requires every training-retained feature to exist in
+      # the holdout matrix: zero-fill taxa absent from this cohort.
+      union_feats <- union(rownames(abund), norm_retained)
+      filled <- matrix(0, nrow = length(union_feats), ncol = ncol(abund),
+                       dimnames = list(union_feats, colnames(abund)))
+      filled[rownames(abund), ] <- abund
 
-    # Align predictions and labels BY SAMPLE NAME (never by position)
-    common_ids <- sort(intersect(names(pred_vector), names(true_labels)))
-    if (length(common_ids) == 0) {
-      fail_hard(paste0("align_", cohort_name), "no overlapping sample names between predictions and labels")
-    }
-    if (length(common_ids) < length(pred_vector)) {
-      cat("[INFO] ", cohort_name, ": ", length(pred_vector) - length(common_ids),
-          " prediction(s) without metadata label dropped\n", sep = "")
-    }
-    pred_vector <- pred_vector[common_ids]
-    y_labels <- true_labels[common_ids]
+      holdout_obj <- SIAMCAT::siamcat(
+        feat = filled, meta = meta_df,
+        label = group_col, case = positive_level, verbose = 0
+      )
+      pred_obj <- SIAMCAT::make.predictions(
+        siamcat = siamcat_model, siamcat.holdout = holdout_obj,
+        normalize.holdout = TRUE, verbose = 0
+      )
 
-    # P3-U-02: explicit levels/direction - no auto-flip of bad models
-    roc_obj <- pROC::roc(response = y_labels, predictor = pred_vector,
-                         levels = c(negative_level, positive_level),
-                         direction = "<", quiet = TRUE)
-    auc_val <- as.numeric(pROC::auc(roc_obj))
-    ci_val <- as.numeric(pROC::ci.auc(roc_obj))
+      pred_matrix <- SIAMCAT::pred_matrix(pred_obj)
+      pred_vector <- rowMeans(pred_matrix, na.rm = TRUE)
+      if (all(is.na(pred_vector))) {
+        fail_hard(paste0("predict_", cohort_name, "_", arm_name), "predictions are all NA")
+      }
 
-    y01 <- as.integer(y_labels == positive_level)
-    auprc_val <- NA_real_
-    if (requireNamespace("PRROC", quietly = TRUE)) {
-      pr_obj <- PRROC::pr.curve(scores.class0 = pred_vector,
-                                weights.class0 = y01, curve = FALSE)
-      auprc_val <- as.numeric(pr_obj$auc.integral)
-    }
+      # Align predictions and labels BY SAMPLE NAME (never by position)
+      common_ids <- sort(intersect(names(pred_vector), names(true_labels)))
+      if (length(common_ids) == 0) {
+        fail_hard(paste0("align_", cohort_name), "no overlapping sample names between predictions and labels")
+      }
+      if (length(common_ids) < length(pred_vector)) {
+        cat("[INFO] ", cohort_name, ": ", length(pred_vector) - length(common_ids),
+            " prediction(s) without metadata label dropped\n", sep = "")
+      }
+      pred_vector <- pred_vector[common_ids]
+      y_labels <- true_labels[common_ids]
 
-    pred_class <- as.integer(pred_vector >= DECISION_THRESHOLD)
-    tp <- sum(pred_class == 1 & y01 == 1); fn <- sum(pred_class == 0 & y01 == 1)
-    fp <- sum(pred_class == 1 & y01 == 0); tn <- sum(pred_class == 0 & y01 == 0)
+      # P3-U-02: explicit levels/direction - no auto-flip of bad models
+      roc_obj <- pROC::roc(response = y_labels, predictor = pred_vector,
+                           levels = c(negative_level, positive_level),
+                           direction = "<", quiet = TRUE)
+      auc_val <- as.numeric(pROC::auc(roc_obj))
+      ci_val <- as.numeric(pROC::ci.auc(roc_obj))
 
-    cohort_results[[cohort_name]] <- tibble(
-      cohort = cohort_name,
-      role = cohort_roles[[cohort_name]],
-      auc = auc_val,
-      auc_ci_low = ci_val[1],
-      auc_ci_high = ci_val[3],
-      n_case = n_case,
-      n_control = n_control,
-      n_samples = length(common_ids)
-    )
+      y01 <- as.integer(y_labels == positive_level)
+      auprc_val <- NA_real_
+      if (requireNamespace("PRROC", quietly = TRUE)) {
+        pr_obj <- PRROC::pr.curve(scores.class0 = pred_vector,
+                                  weights.class0 = y01, curve = FALSE)
+        auprc_val <- as.numeric(pr_obj$auc.integral)
+      }
 
-    cohort_metrics[[cohort_name]] <- tibble(
-      cohort = cohort_name,
-      role = cohort_roles[[cohort_name]],
-      decision_threshold = DECISION_THRESHOLD,
-      n_samples = length(common_ids),
-      n_case = n_case,
-      n_control = n_control,
-      auroc = auc_val,
-      auc_ci_low = ci_val[1],
-      auc_ci_high = ci_val[3],
-      auprc = auprc_val,
-      sensitivity = if (tp + fn > 0) tp / (tp + fn) else NA_real_,
-      specificity = if (tn + fp > 0) tn / (tn + fp) else NA_real_,
-      ppv = if (tp + fp > 0) tp / (tp + fp) else NA_real_
-    )
+      pred_class <- as.integer(pred_vector >= DECISION_THRESHOLD)
+      tp <- sum(pred_class == 1 & y01 == 1); fn <- sum(pred_class == 0 & y01 == 1)
+      fp <- sum(pred_class == 1 & y01 == 0); tn <- sum(pred_class == 0 & y01 == 0)
 
-    cohort_predictions[[cohort_name]] <- pred_vector
-    cohort_labels[[cohort_name]] <- y_labels
+      cohort_results[[arm_name]][[cohort_name]] <- tibble(
+        cohort = cohort_name,
+        role = cohort_roles[[cohort_name]],
+        batch_correction = arm_name,
+        auc = auc_val,
+        auc_ci_low = ci_val[1],
+        auc_ci_high = ci_val[3],
+        n_case = n_case,
+        n_control = n_control,
+        n_samples = length(common_ids)
+      )
 
-    # Save individual ROC plot
-    pdf(file.path(result_dir, paste0(gsub("[^A-Za-z0-9]+", "_", cohort_name), "_roc.pdf")),
-        width = 6, height = 6)
-    plot(roc_obj, main = paste("ROC Curve:", cohort_name),
-         col = "#d73027", lwd = 2)
-    text(0.6, 0.2, sprintf("AUC = %.3f", auc_val), cex = 1.2)
-    dev.off()
+      cohort_metrics[[arm_name]][[cohort_name]] <- tibble(
+        cohort = cohort_name,
+        role = cohort_roles[[cohort_name]],
+        batch_correction = arm_name,
+        decision_threshold = DECISION_THRESHOLD,
+        n_samples = length(common_ids),
+        n_case = n_case,
+        n_control = n_control,
+        auroc = auc_val,
+        auc_ci_low = ci_val[1],
+        auc_ci_high = ci_val[3],
+        auprc = auprc_val,
+        sensitivity = if (tp + fn > 0) tp / (tp + fn) else NA_real_,
+        specificity = if (tn + fp > 0) tn / (tn + fp) else NA_real_,
+        ppv = if (tp + fp > 0) tp / (tp + fp) else NA_real_,
+        n_features_zero_filled = n_zero_filled
+      )
 
-    cat("    AUC =", round(auc_val, 3), "| AUPRC =", round(auprc_val, 3),
-        "| sens =", round(tp / (tp + fn), 3), "| spec =", round(tn / (tn + fp), 3),
-        "| PPV =", round(if (tp + fp > 0) tp / (tp + fp) else NA, 3), "\n")
-  }, error = function(e) {
-    fail_hard(paste0("predict_", cohort_name), conditionMessage(e))
-  })
+      cohort_predictions[[arm_name]][[cohort_name]] <- pred_vector
+      cohort_labels[[arm_name]][[cohort_name]] <- y_labels
+
+      # Per-cohort ROC pdf: primary arm only, so file names stay stable; the
+      # sensitivity arm is fully represented in the tables (W2-1).
+      if (identical(arm_name, PRIMARY_ARM)) {
+        pdf(file.path(result_dir, paste0(gsub("[^A-Za-z0-9]+", "_", cohort_name), "_roc.pdf")),
+            width = 6, height = 6)
+        plot(roc_obj, main = paste("ROC Curve:", cohort_name),
+             col = "#d73027", lwd = 2)
+        text(0.6, 0.2, sprintf("AUC = %.3f", auc_val), cex = 1.2)
+        dev.off()
+      }
+
+      cat("    [", arm_name, "] AUC =", round(auc_val, 3), "| AUPRC =", round(auprc_val, 3),
+          "| sens =", round(tp / (tp + fn), 3), "| spec =", round(tn / (tn + fp), 3),
+          "| PPV =", round(if (tp + fp > 0) tp / (tp + fp) else NA, 3), "\n")
+    }, error = function(e) {
+      fail_hard(paste0("predict_", cohort_name, "_", arm_name), conditionMessage(e))
+    })
+  }
 }
 
-# Combine results (P3-U-04: empty tables are a failure, not a silent success)
-results_df <- bind_rows(cohort_results)
-metrics_df <- bind_rows(cohort_metrics)
+# Combine results (P3-U-04: empty tables are a failure, not a silent success).
+# W2-1: both arms are rows of the tables; the primary (uncorrected) arm
+# drives the pooled line, the plots and the meta-analysis.
+results_df <- bind_rows(lapply(cohort_results, bind_rows))
+metrics_df <- bind_rows(lapply(cohort_metrics, bind_rows))
 if (nrow(results_df) == 0 || nrow(metrics_df) == 0) {
   fail_hard("summarize", "no per-cohort results produced")
 }
 write_tsv(results_df, file.path(result_dir, "auc_summary.tsv"))
 write_tsv(metrics_df, file.path(result_dir, "crosscohort_metrics.tsv"))
 
-external_df <- metrics_df %>% filter(role == "external")
+results_primary <- results_df %>% filter(batch_correction == PRIMARY_ARM)
+external_df <- metrics_df %>% filter(role == "external", batch_correction == PRIMARY_ARM)
 external_summary_line <- if (nrow(external_df) > 0) {
-  paste0(sprintf("External cohorts pooled mean AUROC = %.3f (k=%d, threshold=%.1f)",
-                 mean(external_df$auroc), nrow(external_df), DECISION_THRESHOLD))
+  paste0(sprintf("External cohorts pooled mean AUROC = %.3f (k=%d, threshold=%.1f, primary arm=%s)",
+                 mean(external_df$auroc), nrow(external_df), DECISION_THRESHOLD, PRIMARY_ARM))
 } else {
   "0 external cohorts - in-sample only run (training cohort excluded from external aggregation by design)"
 }
 
-cat("[INFO] Cross-cohort AUC summary (role column marks the training cohort as in_sample):\n")
+cat("[INFO] Cross-cohort AUC summary (batch_correction column: primary =",
+    PRIMARY_ARM, "; mmuphin rows are the sensitivity arm; role marks the training cohort in_sample):\n")
 print(results_df)
 cat("[INFO]", external_summary_line, "\n")
 
 # ============================================================================
-# Visualization 1: Forest Plot (AUC)
+# Visualization 1: Forest Plot (AUC) - primary (uncorrected) arm (W2-1)
 # ============================================================================
 
 cat("[INFO] Generating forest plot for AUC\n")
 
-if (nrow(results_df) > 0) {
+if (nrow(results_primary) > 0) {
   tryCatch({
-    pdf(file.path(result_dir, "forest_plot_auc.pdf"), width = 10, height = max(6, nrow(results_df) * 0.8))
+    pdf(file.path(result_dir, "forest_plot_auc.pdf"), width = 10, height = max(6, nrow(results_primary) * 0.8))
 
-    forest_data <- results_df %>%
+    forest_data <- results_primary %>%
       mutate(
         mean = auc,
         lower = auc_ci_low,
@@ -626,14 +718,14 @@ if (nrow(results_df) > 0) {
 }
 
 # ============================================================================
-# Visualization 2: Waterfall Plot (AUC)
+# Visualization 2: Waterfall Plot (AUC) - primary (uncorrected) arm (W2-1)
 # ============================================================================
 
 cat("[INFO] Generating waterfall plot for AUC\n")
 
-if (nrow(results_df) > 0) {
+if (nrow(results_primary) > 0) {
   tryCatch({
-    p <- ggplot(results_df %>% arrange(desc(auc)),
+    p <- ggplot(results_primary %>% arrange(desc(auc)),
                 aes(x = reorder(cohort, auc), y = auc, fill = role)) +
       geom_col(width = 0.7) +
       geom_errorbar(aes(ymin = auc_ci_low, ymax = auc_ci_high), width = 0.3) +
@@ -651,18 +743,18 @@ if (nrow(results_df) > 0) {
 }
 
 # ============================================================================
-# Visualization 3: ROC Overlay (All Cohorts)
+# Visualization 3: ROC Overlay (All Cohorts) - primary (uncorrected) arm (W2-1)
 # ============================================================================
 
 cat("[INFO] Generating ROC overlay plot\n")
 
-if (length(cohort_predictions) > 0) {
+if (length(cohort_predictions[[PRIMARY_ARM]]) > 0) {
   tryCatch({
     roc_list <- list()
 
-    for (cohort_name in names(cohort_predictions)) {
-      pred <- cohort_predictions[[cohort_name]]
-      label <- cohort_labels[[cohort_name]]
+    for (cohort_name in names(cohort_predictions[[PRIMARY_ARM]])) {
+      pred <- cohort_predictions[[PRIMARY_ARM]][[cohort_name]]
+      label <- cohort_labels[[PRIMARY_ARM]][[cohort_name]]
 
       # P3-U-02: explicit levels/direction here as well
       roc_obj <- pROC::roc(response = label, predictor = pred,
@@ -701,6 +793,8 @@ if (length(cohort_predictions) > 0) {
 
 # ============================================================================
 # Visualization 4: UpSet - Shared Significant Features
+# (Visualizations 4-6 and 8 describe the DATA, so they read the uncorrected
+#  cohort matrices = the primary arm; W2-1)
 # ============================================================================
 
 cat("[INFO] Generating UpSet plot for shared features\n")
@@ -831,18 +925,18 @@ tryCatch({
 }, error = function(e) fail_hard("plot_pcoa", conditionMessage(e)))
 
 # ============================================================================
-# Visualization 7: Calibration Curves per Cohort
+# Visualization 7: Calibration Curves per Cohort - primary arm (W2-1)
 # ============================================================================
 
 cat("[INFO] Generating calibration curves\n")
 
-if (length(cohort_predictions) > 0) {
+if (length(cohort_predictions[[PRIMARY_ARM]]) > 0) {
   tryCatch({
     calib_plots <- list()
 
-    for (cohort_name in names(cohort_predictions)) {
-      pred <- cohort_predictions[[cohort_name]]
-      label <- cohort_labels[[cohort_name]]
+    for (cohort_name in names(cohort_predictions[[PRIMARY_ARM]])) {
+      pred <- cohort_predictions[[PRIMARY_ARM]][[cohort_name]]
+      label <- cohort_labels[[PRIMARY_ARM]][[cohort_name]]
 
       # Bin predictions; P3-U-01: positive class from the model, not
       # levels(factor(label))[1]
@@ -930,49 +1024,68 @@ if (length(cohort_list) < 2) {
 # ============================================================================
 
 if (meta_analysis) {
-  ma_df <- results_df %>% filter(role == "external")
-  if (nrow(ma_df) >= 3) {
-    cat("[INFO] Performing random-effects meta-analysis on", nrow(ma_df), "EXTERNAL cohorts\n")
-
-    tryCatch({
-      # Transform AUC to logit for meta-analysis
-      ma_df <- ma_df %>%
-        mutate(
-          logit_auc = log(auc / (1 - auc)),
-          se_logit = (auc_ci_high - auc_ci_low) / (2 * 1.96)  # approximate SE
-        )
-
-      ma_model <- metafor::rma(yi = logit_auc, sei = se_logit, data = ma_df, method = "REML")
-
-      # Save meta-analysis results
-      ma_summary <- tibble(
-        pooled_logit_auc = ma_model$beta[1],
-        pooled_se = ma_model$se,
-        pooled_ci_low = ma_model$ci.lb,
-        pooled_ci_high = ma_model$ci.ub,
-        I2 = ma_model$I2,
-        Q = ma_model$QE,
-        Q_pvalue = ma_model$QEp,
-        tau2 = ma_model$tau2
-      )
-
-      # Back-transform to AUC scale
-      ma_summary <- ma_summary %>%
-        mutate(
-          pooled_auc = exp(pooled_logit_auc) / (1 + exp(pooled_logit_auc)),
-          pooled_auc_ci_low = exp(pooled_ci_low) / (1 + exp(pooled_ci_low)),
-          pooled_auc_ci_high = exp(pooled_ci_high) / (1 + exp(pooled_ci_high))
-        )
-
-      write_tsv(ma_summary, file.path(result_dir, "meta_analysis_results.tsv"))
-
-      cat("[INFO] Meta-analysis summary:\n")
-      cat("  Pooled AUC:", round(ma_summary$pooled_auc, 3), "\n")
-      cat("  I2:", round(ma_summary$I2, 1), "%\n")
-      cat("  Heterogeneity Q p-value:", format.pval(ma_summary$Q_pvalue, digits = 3), "\n")
-    }, error = function(e) fail_hard("meta_analysis", conditionMessage(e)))
+  ma_df <- results_df %>% filter(role == "external", batch_correction == PRIMARY_ARM)
+  if (nrow(ma_df) == 0) {
+    cat("[INFO] Meta-analysis skipped: no external cohorts (primary arm", PRIMARY_ARM, ")\n")
   } else {
-    cat("[INFO] Meta-analysis skipped: needs >= 3 external cohorts, have", nrow(ma_df), "\n")
+    # P3-U-08: logit(AUC) is unbounded when AUC hits 0/1 or the CI touches
+    # 0/1 - such rows cannot enter a logit-scale meta-analysis. Drop them
+    # with an explicit INFO instead of producing Inf/NaN and crashing.
+    ma_bounded <- ma_df %>%
+      filter(auc > 0, auc < 1, auc_ci_low > 0, auc_ci_high < 1)
+    ma_dropped <- setdiff(ma_df$cohort, ma_bounded$cohort)
+    if (length(ma_dropped) > 0) {
+      cat("[INFO] Meta-analysis: dropping cohort(s) with logit-unbounded AUC/CI",
+          "(AUC=0/1 or CI touching 0/1):", paste(ma_dropped, collapse = ", "), "\n")
+    }
+    if (nrow(ma_bounded) >= 3) {
+      cat("[INFO] Performing random-effects meta-analysis on", nrow(ma_bounded),
+          "EXTERNAL cohorts (primary arm", PRIMARY_ARM, ")\n")
+
+      tryCatch({
+        # Transform AUC to logit for meta-analysis.
+        # P3-U-08: SE via delta method - the AUC-scale CI width maps to the
+        # logit scale divided by the derivative of logit at the point
+        # estimate: se_logit = se_auc / (auc * (1 - auc)).
+        ma_bounded <- ma_bounded %>%
+          mutate(
+            logit_auc = log(auc / (1 - auc)),
+            se_logit = (auc_ci_high - auc_ci_low) / 3.92 / (auc * (1 - auc))
+          )
+
+        ma_model <- metafor::rma(yi = logit_auc, sei = se_logit, data = ma_bounded, method = "REML")
+
+        # Save meta-analysis results
+        ma_summary <- tibble(
+          pooled_logit_auc = ma_model$beta[1],
+          pooled_se = ma_model$se,
+          pooled_ci_low = ma_model$ci.lb,
+          pooled_ci_high = ma_model$ci.ub,
+          I2 = ma_model$I2,
+          Q = ma_model$QE,
+          Q_pvalue = ma_model$QEp,
+          tau2 = ma_model$tau2
+        )
+
+        # Back-transform to AUC scale
+        ma_summary <- ma_summary %>%
+          mutate(
+            pooled_auc = exp(pooled_logit_auc) / (1 + exp(pooled_logit_auc)),
+            pooled_auc_ci_low = exp(pooled_ci_low) / (1 + exp(pooled_ci_low)),
+            pooled_auc_ci_high = exp(pooled_ci_high) / (1 + exp(pooled_ci_high))
+          )
+
+        write_tsv(ma_summary, file.path(result_dir, "meta_analysis_results.tsv"))
+
+        cat("[INFO] Meta-analysis summary:\n")
+        cat("  Pooled AUC:", round(ma_summary$pooled_auc, 3), "\n")
+        cat("  I2:", round(ma_summary$I2, 1), "%\n")
+        cat("  Heterogeneity Q p-value:", format.pval(ma_summary$Q_pvalue, digits = 3), "\n")
+      }, error = function(e) fail_hard("meta_analysis", conditionMessage(e)))
+    } else {
+      cat("[INFO] Meta-analysis skipped: needs >= 3 logit-bounded external cohorts, have",
+          nrow(ma_bounded), "of", nrow(ma_df), "(primary arm", PRIMARY_ARM, ")\n")
+    }
   }
 }
 
@@ -994,10 +1107,16 @@ writeLines(c(
   paste("Positive (case) class:", positive_level),
   paste("Negative (control) class:", negative_level),
   paste("Decision threshold (sens/spec/PPV):", DECISION_THRESHOLD),
-  paste("Batch correction:", batch_correction_note),
+  paste0("PRIMARY result: batch_correction = ", PRIMARY_ARM,
+         " (uncorrected); MMUPHin arm is a sensitivity analysis"),
+  paste("MMUPHin sensitivity arm:", batch_correction_note),
+  if (file.exists(MMUPHIN_COLSUMS_FILE)) {
+    paste("MMUPHin colSums evidence (per-sample before/after):", MMUPHIN_COLSUMS_FILE)
+  },
+  paste("Metrics extra column: n_features_zero_filled per cohort (frozen-normalization zero-fill count)"),
   external_summary_line,
   "",
-  "AUC Summary (role=in_sample rows are the training cohort and are excluded from external aggregation):",
+  "AUC Summary (batch_correction=none rows are the PRIMARY result; role=in_sample rows are the training cohort and are excluded from external aggregation):",
   capture.output(print(results_df))
 ), SENTINEL_FILE)
 
