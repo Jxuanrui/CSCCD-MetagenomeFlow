@@ -28,6 +28,8 @@ Project/**/localDB/
 # ——2026-09-29 E-4-3 提前处置，质量审核建议
 Project/phase1_repro/
 Project/phase2_5_validation/
+# A-4 一次性隔离物化产物（sidecar 证据存档，不入库；报告在 .claude/reviews/）
+Project/A4_sidecar_isolated/
 /Project/_archive_*/
 # 从项目目录迁移出的归档数据（二进制，体积大，不入库）
 *.pyc
