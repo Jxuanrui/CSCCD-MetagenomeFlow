@@ -1,0 +1,34 @@
+id: "67_vir_bacphlip"
+script: "scripts/67_vir_bacphlip.sh"
+tool: "BACPHLIP"
+tool_version: "0.9+"
+conda_env: "envs/bacphlip"
+description: "Bacteriophage lifestyle prediction (lytic vs temperate via random forest)."
+dimension: "virome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+
+outputs:
+  - name: "bacphlip_tsv"
+    path_pattern: "{workdir}/result/virus/bacphlip/bacphlip_results.tsv"
+    description: "Lifestyle predictions with probability scores (virulent vs temperate)."
+
+depends_on:
+  - "56_vir_votu_gen"
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_bacphlip"

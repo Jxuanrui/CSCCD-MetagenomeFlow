@@ -1,0 +1,49 @@
+id: "67b_vir_phastyle"
+script: "scripts/67b_vir_phastyle.sh"
+tool: "ProkBERT-PhaStyle"
+tool_version: "prokbert 0.0.48 / model neuralbioinfo/PhaStyle-mini (transformers 4.53.2)"
+conda_env: "envs/prokbert"
+description: "Phage lifestyle prediction (virulent vs temperate) with a genomic language model, as a third verification vote alongside 67 BACPHLIP and 72 PhaGCN3. Verification layer; results are not consumed downstream."
+dimension: "virome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+
+outputs:
+  - name: "phastyle_tsv"
+    path_pattern: "{workdir}/result/virus/phastyle/phastyle_results.tsv"
+    description: "Per-vOTU lifestyle call with probabilities (sequence_id, fasta_id, predicted_label, score_temperate, score_virulent). 512bp contiguous segments aggregated by weighted voting; class_1=virulent, class_0=temperate."
+  - name: "sentinel"
+    path_pattern: "{workdir}/result/virus/phastyle/phastyle_done.txt"
+    description: "Completion marker with total/virulent/temperate counts; 'empty_input' on graceful degradation."
+
+depends_on:
+  - "56_vir_votu_gen"
+required_by: []
+
+params:
+  threads: "{cpus} (torch threads capped at 8)"
+  model: "neuralbioinfo/PhaStyle-mini (default; --model to override)"
+  batch_size: "32 (default; --batch-size to override)"
+  note: "Opt-in verification layer, not in rule all; trigger via -R phastyle or the phastyle_done.txt target"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+  note: "CPU inference scales linearly with total bp; ~160MB of vOTU sequence is several hours on 8 CPU threads. GPU environments accelerate automatically (fp16)."
+
+known_issues:
+  - description: "First run needs network to download ~80MB of model weights from HuggingFace."
+    workaround: "Script auto-detects: huggingface.co when reachable, otherwise hf-mirror.com (HF_ENDPOINT/HF_HOME overridable); afterwards the HF cache is reused offline (local_files_only fallback in the driver)."
+  - description: "prokbert 0.0.48 is incompatible with transformers>=5 and pulls CUDA torch wheels (~6.3GB env)."
+    workaround: "Env pins transformers==4.53.2 and installs torch/torchvision from the CPU index (env is 1.8GB)."
+  - description: "Sequences shorter than the 256bp segment minimum yield no predictions."
+    workaround: "Script writes a header-only results file plus an 'empty_input' sentinel and exits 0 (verification layer must not block the queue)."
+
+integration_status: "integrated"
+integrated_date: "2026-09-19"
+snakemake_rule: "pipeline/rules/virome.smk::phastyle"

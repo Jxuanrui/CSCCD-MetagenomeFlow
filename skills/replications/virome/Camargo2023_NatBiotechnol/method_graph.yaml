@@ -1,0 +1,91 @@
+# method_graph.yaml — Camargo2023_NatBiotechnol
+# geNomad classification pipeline DAG
+
+nodes:
+  - id: input_contigs
+    type: method_node
+    description: "Assembled contigs from metagenomic assembly (MEGAHIT/metaSPAdes)"
+    script: scripts/16_bac_megahit.sh
+
+  - id: gene_prediction
+    type: method_node
+    tool: Prodigal-gv
+    description: "Predict ORFs using virus-adapted genetic codes"
+    paper_section: "Methods > Gene prediction"
+
+  - id: marker_annotation
+    type: method_node
+    tool: "geNomad marker DB (200k+ profiles)"
+    description: "DIAMOND search against 200,000+ curated marker proteins"
+    paper_section: "Methods > Marker gene annotation"
+    config:
+      type: config_node
+      database: "genomad_db"
+      evalue: 1e-3
+
+  - id: nn_classifier
+    type: method_node
+    tool: "Deep neural network (geNomad)"
+    description: "Sequence feature extraction via convolutional neural network"
+    paper_section: "Methods > Neural network classifier"
+
+  - id: crf_model
+    type: method_node
+    tool: "Conditional Random Field (geNomad)"
+    description: "Structured prediction capturing gene-order dependencies for plasmid/virus/chromosome classification"
+    paper_section: "Methods > CRF sequence scoring"
+    config:
+      type: config_node
+      classifier: CRF
+      classes: [plasmid, virus, chromosome]
+
+  - id: geNomad_annotate
+    type: method_node
+    tool: geNomad
+    version: "1.x"
+    script: scripts/52_vir_genomad.sh
+    paper_section: "Methods > geNomad end-to-end classification"
+    config:
+      type: config_node
+      min_score_virus: 0.7
+      min_score_plasmid: 0.7
+      min_virus_hallmark_genes: 1
+
+  - id: taxonomy_assignment
+    type: method_node
+    tool: "geNomad taxonomy module"
+    script: scripts/57_vir_votu_genomad.sh
+    description: "Taxonomic assignment of viral sequences via marker gene phylogenetics"
+    paper_section: "Methods > Virus taxonomy classification"
+
+  - id: lifestyle_prediction
+    type: method_node
+    tool: "geNomad lifestyle module"
+    description: "Temperate vs virulent prediction based on integrase/excisionase presence"
+    paper_section: "Methods > Lifestyle prediction"
+    note: "Integrated in CSCCD-MetagenomeFlow output; BACPHLIP (script 67) used as complement"
+
+edges:
+  - from: input_contigs
+    to: gene_prediction
+  - from: gene_prediction
+    to: marker_annotation
+  - from: input_contigs
+    to: nn_classifier
+  - from: marker_annotation
+    to: crf_model
+  - from: nn_classifier
+    to: crf_model
+  - from: crf_model
+    to: geNomad_annotate
+  - from: geNomad_annotate
+    to: taxonomy_assignment
+  - from: geNomad_annotate
+    to: lifestyle_prediction
+
+performance_benchmarks:
+  virus_MCC: 0.953
+  plasmid_MCC: 0.778
+  vs_VirSorter2: "higher recall at comparable precision"
+  vs_VIBRANT: "higher MCC on prokaryotic datasets"
+  vs_DeepVirFinder: "substantially higher accuracy (DNN+CRF vs DNN only)"

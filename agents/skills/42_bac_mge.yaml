@@ -1,0 +1,107 @@
+id: "42_bac_mge"
+name: "Mobile Genetic Elements (MGE) Comprehensive Annotation"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::bac_mge"
+
+description: |
+  Comprehensive MGE annotation covering 5 HGT carrier types:
+  - ISfinder: Insertion Sequences (IS elements)
+  - ICEberg: Integrative Conjugative Elements (ICEs/IMEs)
+  - integrall: Integrons (class 1/2/3)
+  - transposase: Transposase HMM (Tn transposons)
+  - mobileOG: Comprehensive MGE classification (plasmid/IS/transposon/integron/phage)
+
+inputs:
+  - name: assembled_contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+    description: "Assembled contigs from MEGAHIT"
+  - name: proteins_per_sample
+    path_pattern: "{workdir}/result/assembly/prodigal/{sample}/{sample}.faa"
+    required: true
+    description: "Predicted proteins from Prodigal"
+  - name: nr_proteins
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "CD-HIT dereplicated NR protein set (for mobileOG aggregate)"
+
+outputs:
+  - name: isfinder_hits
+    path_pattern: "{workdir}/result/mge/isfinder/{sample}/isfinder_hits.tsv"
+    description: "IS element hits (MMseqs2 easy-search, --min-seq-id 0.9)"
+  - name: iceberg_hits
+    path_pattern: "{workdir}/result/mge/iceberg/{sample}/iceberg_hits.tsv"
+    description: "ICE/IME hits (blastn, 70% identity)"
+  - name: integrall_hits
+    path_pattern: "{workdir}/result/mge/integrall/{sample}/integrall_hits.tsv"
+    description: "Integron hits (blastn, 90% identity, class 1/2/3)"
+  - name: transposase_hits
+    path_pattern: "{workdir}/result/mge/transposase/{sample}/transposase_hits.tsv"
+    description: "Transposase HMM hits (hmmscan tblout)"
+  - name: mobileog_nr_hits
+    path_pattern: "{workdir}/result/mge/mobileog/mobileog_nr_hits.tsv"
+    description: "NR-level MGE classification (DIAMOND, aggregate across all samples)"
+
+depends_on:
+  - "16_bac_megahit"
+  - "17_bac_prodigal"
+  - "18_bac_cdhit"
+
+conda_env: "envs/assembly"
+additional_envs:
+  - "envs/dbcan"  # for hmmscan (transposase)
+
+databases:
+  - name: ISfinder
+    path: "{repo}/db/ISfinder/ISfinder.fasta"
+    size: "~150MB"
+  - name: ICEberg
+    path: "{repo}/db/ICEberg/ICEberg_seq.fasta"
+    size: "~50MB"
+  - name: integrall
+    path: "{repo}/db/integrall/integrall_seq.fasta"
+    size: "~20MB"
+  - name: transposase_HMM
+    path: "{repo}/db/transposase/transposase.hmm"
+    size: "~5MB"
+  - name: mobileOG
+    path: "{repo}/db/mobileog/mobileOG-db-beatrix-1.6.dmnd"
+    size: "~1.2GB"
+
+parameters:
+  isfinder_identity: 0.9
+  isfinder_evalue: "1e-5"
+  iceberg_identity: 70
+  iceberg_evalue: "1e-5"
+  integrall_identity: 90
+  integrall_evalue: "1e-5"
+  mobileog_identity: 60
+  mobileog_evalue: "1e-5"
+  mobileog_min_score: 30
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 8
+  notes: "5 parallel analyses, mobileOG is aggregate (runs once)"
+
+known_issues:
+  - description: "mobileOG runs at NR level (aggregate), not per-sample; first sample triggers it"
+    workaround: "Script auto-checks existence of mobileog_nr_hits.tsv, skips if present"
+  - description: "Transposase HMM scan can be slow for large contig sets"
+    workaround: "Use --skip-transposase if only interested in sequence-based MGE"
+
+scientific_context: |
+  MGE analysis is critical for understanding horizontal gene transfer (HGT) in microbiomes.
+  - ISfinder: Tracks IS elements, key drivers of genome plasticity
+  - ICEberg: ICEs carry antibiotic resistance and virulence genes
+  - integrall: Integrons are hotspots for antibiotic resistance cassettes
+  - mobileOG: Comprehensive classification including plasmid-borne genes
+  Combined with 42b_bac_plasmidfinder for complete HGT landscape.
+
+references:
+  - "Siguier et al. 2006 NAR (ISfinder)"
+  - "Liu et al. 2019 NAR (ICEberg2)"
+  - "Moura et al. 2009 NAR (integrall)"
+  - "Brown et al. 2022 NAR (mobileOG)"

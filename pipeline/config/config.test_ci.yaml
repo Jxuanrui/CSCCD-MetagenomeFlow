@@ -1,0 +1,17 @@
+samplesheet: "~/Course/CSCCD-MetagenomeFlow/Project/Test_CI_fixture/samplesheet.csv"
+
+workdir: "~/Course/CSCCD-MetagenomeFlow/Project/Test_CI_fixture"
+repo: "~/Course/CSCCD-MetagenomeFlow"
+
+# CI dry-run only -- kept low so an accidental real run stays cheap.
+threads_per_job: 2
+max_jobs: 1
+
+# Legacy field (backward compat)
+cpus: 2
+
+humann_speed: "standard"
+
+# metadata for statistical analysis (91-98)
+metadata: "~/Course/CSCCD-MetagenomeFlow/Project/Test_CI_fixture/metadata.csv"
+group_col: "group"

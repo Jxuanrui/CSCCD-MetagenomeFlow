@@ -1,0 +1,50 @@
+id: "39b_bac_instrain_map"
+name: "inStrain Read Mapping"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::instrain_map"
+
+inputs:
+  - name: drep_done
+    path_pattern: "{workdir}/result/binning/drep/drep_done.txt"
+    required: true
+    description: "dRep sentinel file confirming dereplicated MAGs exist"
+  - name: reads
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_[12].kneaddata.fastq.gz"
+    required: true
+    description: "Host-filtered paired-end reads"
+
+outputs:
+  - name: bam
+    path_pattern: "{workdir}/result/binning/instrain_map/{sample}/{sample}.sorted.bam"
+    description: "Sorted BAM of reads mapped to concatenated dereplicated MAGs"
+  - name: bai
+    path_pattern: "{workdir}/result/binning/instrain_map/{sample}/{sample}.sorted.bam.bai"
+    description: "BAM index required by inStrain profile"
+  - name: combined_mags
+    path_pattern: "{workdir}/result/binning/instrain_map/combined_mags.fa"
+    description: "Shared reference: all dereplicated MAGs concatenated (built once via atomic lock)"
+  - name: combined_stb
+    path_pattern: "{workdir}/result/binning/instrain_map/combined_mags.stb"
+    description: "Scaffold-to-bin mapping file (generated via parse_stb.py --reverse)"
+
+depends_on:
+  - "38_bac_drep"
+  - "02_qc_kneaddata"
+
+conda_env: "envs/coverm, envs/drep"
+
+parameters:
+  mapping_mode: "minimap2-sr"
+  threads: 16
+
+benchmarks:
+  typical_runtime_min: 15
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "Atomic lock pattern: mkdir-based lock with 600-retry (20min timeout) prevents concurrent combined_mags.fa builds"
+    workaround: "If timeout occurs, check for stale lock directory and remove manually"
+  - description: "BAM indexing requires samtools from envs/coverm (inStrain env lacks it)"
+    workaround: "Script explicitly runs 'conda run --prefix envs/coverm samtools index' after mapping"

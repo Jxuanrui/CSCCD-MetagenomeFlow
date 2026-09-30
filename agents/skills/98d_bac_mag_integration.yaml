@@ -1,0 +1,50 @@
+id: "98d_bac_mag_integration"
+script: "scripts/98d_bac_mag_integration.sh"
+tool: "bash + awk"
+conda_env: "n/a (pure shell/awk)"
+description: "Integrate bacterial MAG-level taxonomy (GTDB-Tk), quality (CheckM2), dereplication clustering (dRep Wdb), and per-sample abundance (CoverM) into one MAG integration table."
+dimension: "bacteria"
+category: "integration"
+rule_type: "aggregate"
+
+inputs:
+  - name: "drep_done"
+    path_pattern: "{workdir}/result/binning/drep/.done"
+    required: true
+  - name: "gtdbtk_summary"
+    path_pattern: "{workdir}/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv"
+    required: true
+  - name: "checkm2_report"
+    path_pattern: "{workdir}/result/binning/checkm2/quality_report.tsv"
+    required: true
+  - name: "coverm_quant"
+    path_pattern: "{workdir}/result/binning/coverm_quant/{sample}.tsv"
+    required: true
+
+outputs:
+  - name: "mag_integration_table"
+    path_pattern: "{workdir}/result/integration/bacteria/mag_integration_table.tsv"
+    description: "Per-MAG integrated taxonomy/quality/clustering/abundance table."
+
+depends_on:
+  - "38_bac_drep"
+  - "40_bac_gtdbtk"
+  - "checkm2"
+  - "coverm_quant"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/statistics.smk::bac_mag_integration"
+
+known_issues:
+  - description: "Prior to 2026-07-16 GTDB-Tk input path was hardcoded to result/binning/gtdbtk/gtdbtk.bac120.summary.tsv, which does not match the real output path result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv."
+    workaround: "Path corrected during the 2026-07-16 Phase 2 integration pass; verified via a full Snakemake dry-run DAG build."

@@ -1,0 +1,40 @@
+id: "81_fun_eggnog"
+script: "scripts/81_fun_eggnog.sh"
+tool: "eggNOG-mapper"
+tool_version: "2.1.13"
+conda_env: "envs/eggnog"
+description: "Aggregate fungal functional annotation with eggNOG-mapper."
+dimension: "mycobiome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "faa_files"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.faa"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "annotations"
+    path_pattern: "{workdir}/result/fungi/eggnog/eggnog.emapper.annotations"
+    description: "Main fungal annotation table."
+  - name: "seed_orthologs"
+    path_pattern: "{workdir}/result/fungi/eggnog/eggnog.emapper.seed_orthologs"
+    description: "Seed ortholog hits."
+
+depends_on:
+  - "80_fun_prodigal"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_eggnog"
+

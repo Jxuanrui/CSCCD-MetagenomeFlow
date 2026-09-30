@@ -1,0 +1,96 @@
+---
+# method_graph.yaml — TOFU-MAaPO high-level Nextflow DAG
+
+nodes:
+  - id: sra_fetch
+    type: method_node
+    tool: "SRA Toolkit"
+    version: null
+    script: null
+    paper_section: "Methods > SRA data acquisition"
+    config:
+      type: config_node
+      source: "Sequence Read Archive"
+      execution_model: "batch retrieval in Nextflow channels"
+
+  - id: qc
+    type: method_node
+    tool: fastp
+    version: null
+    script: null
+    paper_section: "Methods > Read quality control"
+
+  - id: host_removal
+    type: method_node
+    tool: Bowtie2
+    version: null
+    script: null
+    paper_section: "Methods > Host read removal"
+    config:
+      type: config_node
+      target: "host reference genome"
+
+  - id: assembly
+    type: method_node
+    tool: "metaSPAdes or MEGAHIT"
+    version: null
+    script: null
+    paper_section: "Methods > Metagenome assembly"
+    config:
+      type: config_node
+      strategy: "assembler selected per run profile"
+
+  - id: binning
+    type: method_node
+    tool: "MetaBAT2 + MaxBin2 + SemiBin2 + DAS_Tool"
+    version: null
+    script: null
+    paper_section: "Methods > Genome binning"
+    config:
+      type: config_node
+      ensemble: true
+      refinement: "DAS_Tool consensus over three binners"
+
+  - id: mag_qc
+    type: method_node
+    tool: CheckM2
+    version: null
+    script: null
+    paper_section: "Methods > MAG quality assessment"
+    config:
+      type: config_node
+      completeness_min: 50
+      contamination_max: 5
+
+  - id: taxonomy
+    type: method_node
+    tool: GTDB-Tk
+    version: null
+    script: null
+    paper_section: "Methods > Taxonomic classification"
+
+  - id: abundance_profiling
+    type: method_node
+    tool: "MetaPhlAn4 + Kraken2"
+    version: null
+    script: null
+    paper_section: "Methods > Assembly-free taxonomic profiling"
+    config:
+      type: config_node
+      mode: "parallel reference profiling branch"
+
+edges:
+  - from: sra_fetch
+    to: qc
+  - from: qc
+    to: host_removal
+  - from: host_removal
+    to: assembly
+  - from: assembly
+    to: binning
+  - from: binning
+    to: mag_qc
+  - from: mag_qc
+    to: taxonomy
+  - from: host_removal
+    to: abundance_profiling

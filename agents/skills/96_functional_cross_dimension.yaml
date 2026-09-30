@@ -1,0 +1,38 @@
+id: "96_functional_cross_dimension"
+script: "scripts/96_functional_cross_dimension.sh"
+tool: "Rscript"
+tool_version: "companion script scripts/96_functional_cross_dimension.R"
+conda_env: "envs/r_stat"
+description: "Cross-dimension comparison of significant functional signals (bacteria vs fungi vs virus), consuming 96_stat_functional's outputs for all three dimensions."
+dimension: "statistics"
+category: "functional_differential"
+rule_type: "aggregate"
+
+inputs:
+  - name: "functional_done_sentinels"
+    path_pattern: "{workdir}/result/stat/{dimension}/functional/{func_type}/{dimension}_functional_{func_type}_done.txt"
+    required: true
+
+outputs:
+  - name: "cross_dimension_done"
+    path_pattern: "{workdir}/result/stat/cross_dimension/functional/cross_dimension_functional_done.txt"
+    description: "Single cross-dimension summary sentinel."
+
+depends_on:
+  - "96_stat_functional"
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_functional_cross_dimension"
+
+known_issues:
+  - description: "Prior to 2026-07-16 this script's input path pointed at an intermediate 96_stat_functional output path that did not match what the renamed/verified 96_stat_functional.sh actually produces."
+    workaround: "Path corrected during the 2026-07-16 Phase 2 integration pass; verified via a full Snakemake dry-run DAG build."

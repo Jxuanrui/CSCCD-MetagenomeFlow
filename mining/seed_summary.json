@@ -1,0 +1,126 @@
+{
+  "built_at": "2026-09-21",
+  "schema_version": "0.2.0 (mining/config/curation_schema.yaml)",
+  "dedupe_priority": [
+    "cMD3",
+    "GMrepo",
+    "Meta2DB"
+  ],
+  "final_deduped_total": 63803,
+  "db_row_count": 63803,
+  "sources": {
+    "cMD3": {
+      "pulled_rows": 33007,
+      "dropped_nonhuman": 668,
+      "alias_key_rows": 22721,
+      "biosample_key_rows": 9618,
+      "acquisition": "waldronlab/curatedMetagenomicDataCuration master tarball (per-study plain-text TSVs; upstream source of cMD3 sampleMetadata)",
+      "failures": [],
+      "merged_via_run_collision": 297,
+      "contributed_final_rows": 32042
+    },
+    "GMrepo": {
+      "pulled_rows": 118865,
+      "dropped_amplicon": 87018,
+      "alias_key_rows": 0,
+      "biosample_key_rows": 29214,
+      "acquisition": "bulk SQL-dump sample_to_run_info.txt.gz from documented gmrepo.humangut.info/Downloads/SQLDumps/ (REST POST /api/* returned HTTP 500 on v3 server; docs recommend bulk downloads)",
+      "failures": [
+        "POST /api/get_all_phenotypes and /api/getCuratedProjectsList -> HTTP 500",
+        "sample_to_disease_info.txt.gz missing (returns SPA HTML); disease/phenotype taken from sample_to_run_info columns"
+      ],
+      "groups_kept": 29214,
+      "merged_via_run_collision": 1624,
+      "contributed_final_rows": 27590
+    },
+    "Meta2DB": {
+      "pulled_rows": 13897,
+      "dropped_nonhuman": 0,
+      "dropped_non_wgs": 0,
+      "alias_key_rows": 7353,
+      "biosample_key_rows": 6544,
+      "acquisition": "Zenodo record 17315984, file meta2db_metadata.csv (2025-10-13)",
+      "failures": [],
+      "merged_via_run_collision": 7479,
+      "contributed_final_rows": 4171
+    }
+  },
+  "overlap_matrix": {
+    "cMD3_and_GMrepo": 1624,
+    "cMD3_and_Meta2DB": 6810,
+    "GMrepo_and_Meta2DB": 1966,
+    "all_three": 578
+  },
+  "canonical_key_survival": {
+    "biosample_accession": 40090,
+    "fallback_alias": 23713,
+    "biosample_rate": 0.6283,
+    "per_source_owned_rows": {
+      "cMD3": {
+        "biosample": 9613,
+        "alias": 22429
+      },
+      "GMrepo": {
+        "biosample": 27590,
+        "alias": 0
+      },
+      "Meta2DB": {
+        "biosample": 2887,
+        "alias": 1284
+      }
+    }
+  },
+  "field_coverage_nonnull_fraction": {
+    "project_accession": 0.4961,
+    "study_accession": 0.0,
+    "sample_accession": 0.6283,
+    "run_accessions": 1.0,
+    "source_archive": 0.6014,
+    "first_public": 0.1052,
+    "body_site": 0.5148,
+    "body_site_uberon": 0.0,
+    "disease": 0.946,
+    "disease_mondo": 0.0,
+    "condition_group": 0.9623,
+    "age_years": 0.3691,
+    "sex": 1.0,
+    "country": 0.9825,
+    "bmi": 0.3234,
+    "medication": 0.3468,
+    "platform": 0.9955,
+    "instrument_model": 0.5942,
+    "library_strategy": 1.0,
+    "library_source": 0.1706,
+    "avg_read_length": 0.1052,
+    "total_bases": 0.1052,
+    "run_count": 0.93,
+    "seed_source": 1.0,
+    "curation_method": 1.0,
+    "curation_confidence": 1.0,
+    "curated_at": 1.0,
+    "seed_sources_all": 1.0,
+    "sample_type_bias": 1.0
+  },
+  "total_bases_percentiles": {
+    "n_with_total_bases": 6715,
+    "p10": 953630400,
+    "p50": 4595600800,
+    "p90": 10047639709
+  },
+  "flag_counts": {
+    "sample_type_bias_true": 0,
+    "low_depth_flag_true": 372
+  },
+  "predicate_application": "lenient-inherited: dropped only source-labeled non-human (cMD3 Mus musculus) and source-labeled amplicon (GMrepo experiment_type=AMPLICON); no body-site text drops; ontology columns left NULL for later mapping",
+  "low_depth_floor_total_bases": 500000000,
+  "notes": [
+    "cMD3: GitHub waldronlab/curatedMetagenomicData stores sampleMetadata only as binary .rda; used companion curation repo TSVs instead (current master, newer than NBT 2025 snapshot).",
+    "cMD3 alias sample_ids resolved to BioSample via study sra_meta.tsv Run->BioSample where possible.",
+    "Dedupe bridges BioSample alias namespaces (SRS/ERS vs SAMN/SAMEA/SAMD) via globally-unique run accessions: a lower-priority row sharing any run with a registered row merges into it.",
+    "GMrepo: REST POST endpoints HTTP 500; used documented bulk dump. Disease = phenotype label.",
+    "Meta2DB: 52% rows lack BioSample; fallback alias = project+host_subject_id sample alias.",
+    "GMrepo body_site is NULL: v3 dump carries no body-site column; DB scope is human gut.",
+    "body_site_uberon / disease_mondo intentionally NULL in v1 (ontology mapping is a later stage).",
+    "sample_type_bias is 0 everywhere: no body-site text in any source carries mucosal/biopsy/swab/ileostomy indicators."
+  ]
+}

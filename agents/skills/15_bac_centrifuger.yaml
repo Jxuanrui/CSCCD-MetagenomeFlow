@@ -1,0 +1,50 @@
+id: "15_bac_centrifuger"
+script: "scripts/15_bac_centrifuger.sh"
+tool: "centrifuger"
+tool_version: "1.0.5"
+conda_env: "envs/assembly"
+description: "Protein-level taxonomic classification with Centrifuger + GTDB R226. Generates per-read classifications and Kraken2-format kreport for downstream analysis."
+dimension: "bacteria"
+category: "taxonomy"
+rule_type: "per_sample"
+
+inputs:
+  - name: "r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "kreport"
+    path_pattern: "{workdir}/result/centrifuger/{sample}/{sample}.kreport.tsv"
+    description: "Kraken2-format report; main result for diversity/differential analysis."
+  - name: "classifications_gz"
+    path_pattern: "{workdir}/result/centrifuger/{sample}/{sample}.classifications.tsv.gz"
+    description: "Per-read classification result (compressed). Can be deleted after kreport is generated."
+
+depends_on:
+  - "02_qc_kneaddata"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  database: "db/centrifuger/cfr_gtdb_r226+refseq_hvfc"
+
+benchmarks:
+  typical_runtime_min: 60
+  peak_memory_gb: 120
+  note: "166G database requires >120G RAM; 2.3× slower than Kraken2 but higher species/genus accuracy"
+
+known_issues:
+  - description: "High memory requirement (~120G RAM) for the 166G GTDB R226+RefSeq database."
+    workaround: "Ensure ≥128G RAM on the compute node; use Kraken2 (script 14) on memory-constrained servers."
+  - description: "classifications.tsv can be 500M-2G per sample. Script pipes through gzip."
+    workaround: "Delete .classifications.tsv.gz after kreport generated if disk is tight."
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::centrifuger"

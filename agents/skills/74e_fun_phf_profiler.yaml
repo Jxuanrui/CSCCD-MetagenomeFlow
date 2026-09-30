@@ -1,0 +1,26 @@
+id: "74e_fun_phf_profiler"
+script: "scripts/74e_fun_phf_profiler.sh"
+dimension: "fungi"
+rule_type: "per_sample"
+description: "Per-sample fungi abundance profiling: 5-step Bowtie2 filter + Singular/Escrow (GPA.py), Yan et al. 2024 Cell 187"
+inputs:
+  - name: kneaddata_r1
+    path_pattern: "result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: bowtie2_index
+    path_pattern: "db/gut_fungi_db/bwt.index.gut_fungi_geneset.1.bt2l"
+    required: true
+outputs:
+  - name: abundance_rc
+    path_pattern: "result/fungi/phf_profiler/{sample}/{sample}.rc"
+    description: "Relative abundance table (cluster x 1 sample, Singular+Escrow)"
+depends_on: ["02_qc_kneaddata", "74a_fun_gut_db_build"]
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 8
+  note: "UHGG index step is RAM-intensive (UHGG 3.3G); keep at least 8G free"
+known_issues:
+  - description: "Samples with very low fungal load may produce empty .rc after step1 filter"
+    workaround: "Script auto-handles: outputs empty matrix with header only"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_phf_profiler"

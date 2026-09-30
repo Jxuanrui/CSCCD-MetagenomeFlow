@@ -1,0 +1,45 @@
+id: "15b_bac_centrifuger_merge"
+script: "scripts/15b_bac_centrifuger_merge.sh"
+tool: "Python"
+tool_version: "3"
+conda_env: "envs/assembly"
+description: "Merge per-sample Centrifuger kreport tables into species, genus, and phylum abundance matrices."
+dimension: "bacteria"
+category: "taxonomy"
+rule_type: "aggregate"
+
+inputs:
+  - name: "kreport"
+    path_pattern: "{workdir}/result/centrifuger/{sample}/{sample}.kreport.tsv"
+    required: true
+
+outputs:
+  - name: "kreport_s"
+    path_pattern: "{workdir}/result/centrifuger/merged/kreport_S.tsv"
+    description: "Merged species-level Centrifuger abundance matrix."
+  - name: "kreport_g"
+    path_pattern: "{workdir}/result/centrifuger/merged/kreport_G.tsv"
+    description: "Merged genus-level Centrifuger abundance matrix."
+  - name: "kreport_p"
+    path_pattern: "{workdir}/result/centrifuger/merged/kreport_P.tsv"
+    description: "Merged phylum-level Centrifuger abundance matrix."
+
+depends_on:
+  - "15_bac_centrifuger"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::centrifuger_merge"

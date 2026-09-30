@@ -1,0 +1,27 @@
+# Skills 发现引擎 — Skill Hub 数据源
+sources:
+  - name: "skillsmp_search"
+    method: "web_api"
+    description: "SkillsMP 聚合市场技能搜索"
+    base_url: "https://skillsmp.com/api/v1/skills/search"
+    queries:
+      - "q=bioinformatics&sortBy=stars&limit=50"
+      - "q=metagenomics&sortBy=stars&limit=50"
+      - "q=microbiome&sortBy=stars&limit=50"
+      - "q=academic+writing&sortBy=stars&limit=50"
+      - "q=scientific+figure&sortBy=stars&limit=50"
+
+  - name: "skills_sh_search"
+    method: "web_api"
+    description: "skills.sh 官方市场技能搜索"
+    endpoints:
+      - "https://skills.sh/api/skills/top"
+      - "https://skills.sh/api/v1/skills/trending"
+
+  - name: "web_discovery"
+    method: "web_search"
+    description: "Web 搜索兜底（无 API 时的线索发现）"
+    queries:
+      - "new bioinformatics SKILL.md claude code 2026"
+      - "trending agent-skills biology research"
+      - "academic writing scientific figure claude skill"

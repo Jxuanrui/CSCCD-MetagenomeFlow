@@ -1,0 +1,38 @@
+id: "15d_bac_sylph_merge"
+script: "scripts/15d_bac_sylph_merge.sh"
+tool: "sylph-tax"
+tool_version: "1.9.1"
+conda_env: "envs/sylph"
+description: "Merge per-sample sylph .sylphmpa profiles into a species-level community relative-abundance matrix via sylph-tax merge."
+dimension: "bacteria"
+category: "taxonomy"
+rule_type: "aggregate"
+
+inputs:
+  - name: "sylphmpa"
+    path_pattern: "{workdir}/result/sylph/{sample}/{sample}.sylphmpa"
+    required: true
+
+outputs:
+  - name: "merged"
+    path_pattern: "{workdir}/result/sylph/merged/sylph_profile_merged.tsv"
+    description: "Merged species-level relative-abundance matrix across all samples."
+
+depends_on:
+  - "15c_bac_sylph"
+required_by: []
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-07-29"
+snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::sylph_merge"
