@@ -33,7 +33,8 @@ trap cleanup EXIT
 echo "[INFO] Building deterministic 12-sample fixture in ${FIXTURE}..."
 mkdir -p "${FIXTURE}/Project/result/metaphlan4/merged"
 
-# metadata: H1-H6 control / D1-D6 case
+# metadata: H1-H6 / D1-D6; SIAMCAT convention case=levels()[2] -> with these
+#          values the sorted factor levels are c(D,H), so H is the CASE class
 {
     echo "sample_id,group"
     for i in 1 2 3 4 5 6; do echo "H${i},control"; done
@@ -147,6 +148,14 @@ for (k in seq_len(nrow(tsv))) {
     fail(sprintf("model %s: TSV metrics do not match name-aligned recomputation (tsv auc_pr=%s sens=%s spec=%s n=%s vs aligned auc_pr=%s sens=%s spec=%s n=%d)",
                  nm, tsv$auc_pr[k], tsv$sensitivity[k], tsv$specificity[k], tsv$n_predictions[k],
                  aligned$auc_pr, aligned$sens, aligned$spec, length(ids)))
+  }
+  # Ground-truth assertion (supervisor P1-1): the aligned label vector must equal
+  # the fixture's true labels by name-prefix rule (H* -> control/0, D* -> case/1),
+  # independent of the production alignment code (breaks the self-confirming loop).
+  truth <- ifelse(startsWith(ids, "H"), 1L, 0L)  # case = levels()[2] = H
+  if (!identical(as.integer(y), truth)) {
+    fail(sprintf("model %s: aligned labels do not match ground truth by name prefix (got %s vs truth %s)",
+                 nm, paste(y, collapse = ""), paste(truth, collapse = "")))
   }
   if (!isTRUE(all.equal(old$sens, aligned$sens)) || !isTRUE(all.equal(old$spec, aligned$spec))) {
     n_discriminating <- n_discriminating + 1L

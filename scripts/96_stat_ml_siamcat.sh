@@ -171,13 +171,6 @@ esac
 
 echo "[INFO] Fungi input: METHOD=${FUNGI_METHOD} TABLE=${FUNGI_ABUND_TABLE:-${FUNGI_DIR}}"
 
-# W-C1(2): -d all requires the 98d fungi integration table (BAC|/VIR|/FUN| stack)
-if [ "${DIMENSION}" = "all" ] && [ ! -f "${FUN_TABLE}" ]; then
-    echo "[ERROR] -d all requires the fungi integration table: ${FUN_TABLE}"
-    echo "[ERROR] Run scripts/98d_fun_integration_tables.sh first"
-    exit 1
-fi
-
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] Sentinel exists, skipping: ${SENTINEL}"
     run_ml_visualization
@@ -187,6 +180,14 @@ if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
         exit ${EXIT_CODE}
     fi
     exit 0
+fi
+
+# W-C1(2): -d all requires the 98d fungi integration table (BAC|/VIR|/FUN| stack).
+# Checked AFTER the resume gate so an already-completed run skips cleanly (P2-2).
+if [ "${DIMENSION}" = "all" ] && [ ! -f "${FUN_TABLE}" ]; then
+    echo "[ERROR] -d all requires the fungi integration table: ${FUN_TABLE}"
+    echo "[ERROR] Run scripts/98d_fun_integration_tables.sh first"
+    exit 1
 fi
 
 echo "[INFO] Running SIAMCAT ML analysis"
