@@ -101,3 +101,23 @@ grep -q "eligible_records=0" "${SHORT_DIR}/antismash_FAILED.txt" || { rm -rf "${
 [ -f "${SHORT_DIR}/antismash_done.txt" ] && { rm -rf "${SHORT_W}"; fail "T-24: sentinel written on failure (T-11 breach)"; }
 rm -rf "${SHORT_W}"
 echo "[PASS] T-24: explicit failure, no bogus dir, no sentinel"
+
+# --- T-11 regression: tool failure must never masquerade as done ---
+# Injection: malformed FASTA (illegal ID with spaces + non-DNA X run) fails
+# antismash in seconds; the whole chain must fail loudly with NO sentinel.
+echo "[INFO] T-11 regression: malformed input must fail without sentinel"
+T11_W="$(mktemp -d)"
+T11_S="BADS"
+mkdir -p "${T11_W}/result/assembly/megahit/${T11_S}"
+python3 - "${T11_W}/result/assembly/megahit/${T11_S}/${T11_S}.contigs.fa" <<'PYBAD'
+import sys
+open(sys.argv[1], "w").write(">bad1 illegal,id with spaces\n" + "X" * 2000 + "\n")
+PYBAD
+T11_DIR="${T11_W}/result/annotation/antismash/${T11_S}"
+if bash "${REPO_ROOT}/scripts/28_bac_antismash.sh" -s "${T11_S}" -t 2 -w "${T11_W}" -r "${REPO_ROOT}" --force > /dev/null 2>&1; then
+    rm -rf "${T11_W}"; fail "T-11: malformed input unexpectedly succeeded"
+fi
+find "${T11_DIR}" -name "antismash_FAILED.txt" | grep -q . || { rm -rf "${T11_W}"; fail "T-11: no FAILED marker anywhere"; }
+[ -e "${T11_DIR}/antismash_done.txt" ] && { rm -rf "${T11_W}"; fail "T-11: sentinel written despite failure (masquerade!)"; }
+rm -rf "${T11_W}"
+echo "[PASS] T-11: tool failure -> FAILED marker, no sentinel, exit 1"
