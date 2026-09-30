@@ -285,4 +285,66 @@ grep -q "BAC| domain filter: kept 24 k__Bacteria s__ row(s); dropped 7 non-bacte
     || fail "domain filter counts missing from the run log"
 echo "[OK] C1: domain filter counts kept=24 dropped_domain=7 dropped_unranked=1 dropped_higher_rank=3 (matches constructed fixture)"
 
-echo "[PASS] 96 input governance sections A-C (#1 98c source, #2 per-block relab, #3 domain filter)"
+# ==============================================================================
+# Section D (#4): --combination block selection + shared sample intersection
+# ==============================================================================
+
+EXP12="H1,H2,H3,H4,H5,H6,D1,D2,D3,D4,D5,D6"
+
+echo "[INFO] D1: the -d all run (section B) derived combination=BVF in its manifest..."
+[ "$(sed -n 's/^combination=//p' "${ALL_ML}/split_manifest.txt")" = "BVF" ] \
+    || fail "-d all did not record combination=BVF in split_manifest.txt"
+[ "$(sed -n 's/^combo_n_samples=//p' "${ALL_ML}/split_manifest.txt")" = "12" ] \
+    || fail "-d all combo_n_samples != 12"
+
+echo "[INFO] D2: explicit --combination BVF run (same output dir as -d all)..."
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group --combination BVF --force --skip-shap
+BVF_MANIFEST="${ALL_ML}/split_manifest.txt"
+[ -s "${ALL_ML}/siamcat_done.txt" ] || fail "--combination BVF run sentinel missing"
+[ "$(sed -n 's/^combination=//p' "${BVF_MANIFEST}")" = "BVF" ] || fail "BVF manifest combination != BVF"
+[ "$(sed -n 's/^combo_samples=//p' "${BVF_MANIFEST}")" = "${EXP12}" ] \
+    || fail "BVF combo_samples != 12-sample intersection (EXTRA1 must be excluded)"
+[ "$(sed -n 's/^n_samples=//p' "${BVF_MANIFEST}")" = "12" ] || fail "BVF n_samples != 12"
+echo "[OK] D2: --combination BVF: sample set = 12-sample table intersection, EXTRA1 excluded"
+
+echo "[INFO] D3: --combination BV run (own output dir, FUN| block absent)..."
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group --combination BV --force --skip-shap
+BV_ML="${PROJ}/result/stat/ml_BV"
+[ -s "${BV_ML}/siamcat_done.txt" ] || fail "--combination BV sentinel missing under result/stat/ml_BV/"
+BV_MANIFEST="${BV_ML}/split_manifest.txt"
+[ "$(sed -n 's/^combination=//p' "${BV_MANIFEST}")" = "BV" ] || fail "BV manifest combination != BV"
+[ "$(sed -n 's/^combo_samples=//p' "${BV_MANIFEST}")" = "${EXP12}" ] \
+    || fail "BV combo_samples != same 12-sample intersection as BVF"
+[ "$(sed -n 's/^n_samples=//p' "${BV_MANIFEST}")" = "12" ] || fail "BV n_samples != 12"
+grep -q "^prefilter_BAC	" "${BV_ML}/siamcat_status.tsv" || fail "BV status lacks prefilter_BAC"
+grep -q "^prefilter_VIR	" "${BV_ML}/siamcat_status.tsv" || fail "BV status lacks prefilter_VIR"
+if grep -q "^prefilter_FUN	" "${BV_ML}/siamcat_status.tsv"; then
+    fail "BV status contains prefilter_FUN - the FUN block must NOT be loaded for --combination BV"
+fi
+echo "[OK] D3: --combination BV: same 12-sample intersection, FUN| block absent, own dir result/stat/ml_BV/"
+
+echo "[INFO] D4: invalid combination rejected; --combination takes precedence over -d..."
+set +e
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group --combination X --force --skip-shap \
+    > "${FIXTURE}/badcombo.out" 2>&1
+RC_BAD=$?
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${MISSING_DIR}" -r "${REPO_ROOT}" -t 2 \
+    -m "${MISSING_DIR}/metadata.csv" -g group -d bacteria --combination V --force --skip-shap \
+    > "${FIXTURE}/precedence.out" 2>&1
+RC_PREC=$?
+set -e
+[ "${RC_BAD}" -ne 0 ] || fail "--combination X was accepted (rc=0)"
+grep -q "Invalid --combination: X" "${FIXTURE}/badcombo.out" || fail "missing Invalid --combination error text"
+[ "${RC_PREC}" -ne 0 ] || fail "-d bacteria --combination V unexpectedly succeeded"
+grep -q "98c_vir_integration_tables.sh" "${FIXTURE}/precedence.out" \
+    || fail "--combination V did not take precedence over -d bacteria (virus gate never fired)"
+echo "[OK] D4: invalid combination rejected; --combination precedes -d (V gate fired with -d bacteria)"
+
+echo "[PASS] 96 input governance sections A-D (#1 98c source, #2 per-block relab, #3 domain filter, #4 combination)"

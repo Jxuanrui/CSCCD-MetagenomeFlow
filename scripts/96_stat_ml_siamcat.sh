@@ -13,7 +13,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon
 show_help() {
 cat <<'EOF'
 Usage: bash 96_stat_ml_siamcat.sh -w WORKDIR -r REPO -t THREADS -m METADATA_CSV
-                                  -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N] [--force] [--skip-shap]
+                                  -g GROUP_COL [-d DIMENSION] [-M FUNGI_METHOD] [--folds N]
+                                  [--combination BLOCKS] [--force] [--skip-shap]
 
 Required:
   -w  Project work directory
@@ -29,6 +30,14 @@ Optional:
       votu_annotation_matrix_relab.tsv, vOTU_RELAB_<sample> columns) and the
       FUN| arm requires the 98d fungi integration table
       (result/integration/fungi/normalized/funomic_species_relab.tsv)
+  --combination BLOCKS
+      Explicit feature-block selection: B|V|F|BV|BF|VF|BVF (or 'all' = BVF).
+      Takes precedence over -d; -d stays as the dimension shorthand
+      (bacteria=B, virus=V, fungi=F, all=BVF). The shared sample set is
+      the intersection of the selected blocks' input-table samples,
+      computed once and recorded in split_manifest.txt. Output dirs:
+      B/V/F reuse the single-dimension dirs; BV/BF/VF go to
+      result/stat/ml_<COMBINATION>/; BVF equals -d all (result/stat/ml/)
   -M  Fungi input method: auto|phf|funomic|metaphlan4 (default: auto)
   --folds  Cross-validation folds (default: 10)
   --repeats N  Outer repeat loop: N independent split+train+evaluate passes
@@ -47,11 +56,12 @@ DIMENSION="bacteria"
 FUNGI_METHOD="auto"
 FOLDS="10"
 REPEATS="1"
+COMBINATION=""
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
 export MGX_OPTS_STRING="w:WORKDIR r:REPO t:THREADS m:METADATA_CSV g:GROUP_COL d:DIMENSION M:FUNGI_METHOD"
 export MGX_OPTS_FLAG="force skip-shap"
-export MGX_OPTS_LONG="folds:FOLDS repeats:REPEATS"
+export MGX_OPTS_LONG="folds:FOLDS repeats:REPEATS combination:COMBINATION"
 mgx_parse "$@"
 mgx_require WORKDIR REPO THREADS METADATA_CSV GROUP_COL
 
@@ -77,13 +87,41 @@ FUNOMIC_FUNGI_TABLE="${WORKDIR}/result/integration/fungi/normalized/funomic_spec
 FUN_TABLE="${FUNOMIC_FUNGI_TABLE}"
 FUNGI_ABUND_TABLE=""
 case "${DIMENSION}" in
-    all) RESULT_DIR="${WORKDIR}/result/stat/ml" ;;
-    bacteria|virus|fungi) RESULT_DIR="${WORKDIR}/result/stat/${DIMENSION}/ml" ;;
+    all|bacteria|virus|fungi) ;;
     *)
         echo "[ERROR] Invalid dimension: ${DIMENSION}"
         show_help
         exit 1
         ;;
+esac
+# B3-PREQ①-R #4 (2026-09-30, user decision #4): --combination B|V|F|BV|BF|VF|BVF
+# explicitly selects the feature blocks; when absent it is derived from -d
+# (the retained dimension shorthand). --combination takes precedence.
+if [ -z "${COMBINATION}" ]; then
+    case "${DIMENSION}" in
+        all) COMBINATION="BVF" ;;
+        bacteria) COMBINATION="B" ;;
+        virus) COMBINATION="V" ;;
+        fungi) COMBINATION="F" ;;
+    esac
+fi
+case "${COMBINATION}" in
+    B|V|F|BV|BF|VF|BVF) ;;
+    all) COMBINATION="BVF" ;;
+    *)
+        echo "[ERROR] Invalid --combination: ${COMBINATION} (expected B|V|F|BV|BF|VF|BVF|all)"
+        show_help
+        exit 1
+        ;;
+esac
+COMBO_MULTI=0
+[ "${#COMBINATION}" -gt 1 ] && COMBO_MULTI=1
+case "${COMBINATION}" in
+    B) RESULT_DIR="${WORKDIR}/result/stat/bacteria/ml" ;;
+    V) RESULT_DIR="${WORKDIR}/result/stat/virus/ml" ;;
+    F) RESULT_DIR="${WORKDIR}/result/stat/fungi/ml" ;;
+    BV|BF|VF) RESULT_DIR="${WORKDIR}/result/stat/ml_${COMBINATION}" ;;
+    BVF) RESULT_DIR="${WORKDIR}/result/stat/ml" ;;
 esac
 VIZ_ML_DIR="${RESULT_DIR}"
 LOG_DIR="${WORKDIR}/logs/stat/ml"
@@ -187,19 +225,20 @@ if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     exit 0
 fi
 
-# W-C1(2): -d all requires the 98d fungi integration table (BAC|/VIR|/FUN| stack).
-# Checked AFTER the resume gate so an already-completed run skips cleanly (P2-2).
-if [ "${DIMENSION}" = "all" ] && [ ! -f "${FUN_TABLE}" ]; then
-    echo "[ERROR] -d all requires the fungi integration table: ${FUN_TABLE}"
+# W-C1(2)/B3-PREQ①-R #4: multi-block combinations containing F require the
+# 98d fungi integration table (stacked FUN| arm). Single F keeps the -M
+# fungi-method resolution. Checked AFTER the resume gate (P2-2).
+if [ ${COMBO_MULTI} -eq 1 ] && case "${COMBINATION}" in *F*) true ;; *) false ;; esac && [ ! -f "${FUN_TABLE}" ]; then
+    echo "[ERROR] --combination ${COMBINATION} requires the fungi integration table: ${FUN_TABLE}"
     echo "[ERROR] Run scripts/98d_fun_integration_tables.sh first"
     exit 1
 fi
 
-# B3-PREQ①-R #1: -d virus / -d all require the 98c virus relab integration
-# table. Fail fast and name the producer (98c) instead of silently degrading
-# to an older abundance table. Also checked after the resume gate (P2-2).
-if { [ "${DIMENSION}" = "virus" ] || [ "${DIMENSION}" = "all" ]; } && [ ! -f "${VIR_TABLE}" ]; then
-    echo "[ERROR] -d ${DIMENSION} requires the virus integration table: ${VIR_TABLE}"
+# B3-PREQ①-R #1/#4: any combination containing V requires the 98c virus relab
+# integration table. Fail fast and name the producer (98c) instead of silently
+# degrading to an older abundance table. Also checked after the resume gate (P2-2).
+if case "${COMBINATION}" in *V*) true ;; *) false ;; esac && [ ! -f "${VIR_TABLE}" ]; then
+    echo "[ERROR] --combination ${COMBINATION} (-d ${DIMENSION}) requires the virus integration table: ${VIR_TABLE}"
     echo "[ERROR] Run scripts/98c_vir_integration_tables.sh first (96 consumes the vOTU_RELAB_<sample> columns)"
     exit 1
 fi
@@ -211,7 +250,7 @@ if ! [[ "${REPEATS}" =~ ^[1-9][0-9]*$ ]]; then
     exit 1
 fi
 
-export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION FOLDS REPEATS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE FUN_TABLE RESULT_DIR
+export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION COMBINATION FOLDS REPEATS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE FUN_TABLE RESULT_DIR
 
 RUN_LOG="${LOG_DIR:-${RESULT_DIR}}/96_stat_ml_siamcat.run.log"
 mkdir -p "$(dirname "${RUN_LOG}")"
@@ -253,6 +292,9 @@ suppressPackageStartupMessages({
 metadata_csv <- Sys.getenv("METADATA_CSV")
 group_col <- Sys.getenv("GROUP_COL")
 dimension <- Sys.getenv("DIMENSION")
+# B3-PREQ①-R #4: block selection letters (B/V/F) from --combination
+combination <- Sys.getenv("COMBINATION", "BVF")
+combo_letters <- strsplit(combination, "")[[1]]
 folds <- as.integer(Sys.getenv("FOLDS", "10"))
 repeats <- max(1L, as.integer(Sys.getenv("REPEATS", "1")))
 bact_table <- Sys.getenv("BACT_TABLE")
@@ -435,52 +477,67 @@ filter_bac_domain <- function(m) {
   m[keep, , drop = FALSE]
 }
 
-load_matrix <- function(dimension) {
+load_matrix <- function() {
+  # B3-PREQ①-R #4 (2026-09-30, user decision #4): block selection driven by
+  # --combination (letters B/V/F, order preserved); -d is only the shorthand
+  # that fills COMBINATION. The shared sample set is the intersection of the
+  # selected blocks' input-table sample columns, computed ONCE here (A-2
+  # protocol section 4 paired-comparison premise) and recorded in
+  # split_manifest.txt.
   blocks <- list()
-  if (dimension %in% c("bacteria", "all")) {
-    # B3-PREQ①-R #3: species-level k__Bacteria rows only
-    blocks$BAC <- filter_bac_domain(read_abundance_table(bact_table))
-  }
-  if (dimension %in% c("virus", "all")) {
-    # B3-PREQ①-R #1: 98c relab matrix + metadata defensive assertion
-    blocks$VIR <- read_vir_relab_matrix(vir_table)
-    assert_block_samples("VIR", blocks$VIR, rownames(meta), vir_table)
-  }
-  if (dimension == "fungi") {
-    blocks$FUN <- if (nzchar(fungi_abund_table)) {
-      read_abundance_table(fungi_abund_table)
-    } else {
-      read_fungi_profiles(fungi_dir)
+  for (letter in combo_letters) {
+    if (letter == "B") {
+      # B3-PREQ①-R #3: species-level k__Bacteria rows only
+      blocks$BAC <- filter_bac_domain(read_abundance_table(bact_table))
+      assert_block_samples("BAC", blocks$BAC, rownames(meta), bact_table)
+    } else if (letter == "V") {
+      # B3-PREQ①-R #1: 98c relab matrix + metadata defensive assertion
+      blocks$VIR <- read_vir_relab_matrix(vir_table)
+      assert_block_samples("VIR", blocks$VIR, rownames(meta), vir_table)
+    } else if (letter == "F") {
+      # Multi-block combinations always use the 98d funomic integration
+      # table for the FUN| arm; a standalone F keeps the -M method
+      # resolution (W-C1(2) semantics).
+      if (length(combo_letters) > 1) {
+        blocks$FUN <- read_abundance_table(fun_table)
+        assert_block_samples("FUN", blocks$FUN, rownames(meta), fun_table)
+      } else if (nzchar(fungi_abund_table)) {
+        blocks$FUN <- read_abundance_table(fungi_abund_table)
+        assert_block_samples("FUN", blocks$FUN, rownames(meta), fungi_abund_table)
+      } else {
+        blocks$FUN <- read_fungi_profiles(fungi_dir)
+        assert_block_samples("FUN", blocks$FUN, rownames(meta), fungi_dir)
+      }
     }
   }
-  if (dimension == "all") {
-    blocks$FUN <- read_abundance_table(fun_table)
-  }
+  if (length(blocks) == 0) stop("Unsupported combination: ", combination)
   for (nm in names(blocks)) {
     blocks[[nm]] <- to_relab(blocks[[nm]])
     log_status(paste0("relab_convert_", nm), "OK",
                sprintf("n_features=%d n_samples=%d scale=0-1 (block column sums -> 1)",
                        nrow(blocks[[nm]]), ncol(blocks[[nm]])))
   }
-  if (dimension == "all") {
-    # W-C1(2): BAC| + VIR| + FUN| stack; the fungi arm is the 98d
-    # integration table (species x samples relab), the virus arm is the 98c
-    # relab matrix, same prefilter/label flow downstream as B (the prefilter
-    # and metadata intersect operate on the stacked matrix).
-    common <- Reduce(intersect, lapply(blocks, colnames))
-    if (length(common) < 4) stop("Insufficient common samples for all-dimension ML")
-    return(rbind(
-      `rownames<-`(blocks$BAC[, common, drop = FALSE], paste0("BAC|", rownames(blocks$BAC))),
-      `rownames<-`(blocks$VIR[, common, drop = FALSE], paste0("VIR|", rownames(blocks$VIR))),
-      `rownames<-`(blocks$FUN[, common, drop = FALSE], paste0("FUN|", rownames(blocks$FUN)))
-    ))
+  combo_samples <- Reduce(intersect, lapply(blocks, colnames))
+  if (length(blocks) > 1 && length(combo_samples) < 10L) {
+    stop(sprintf(
+      "[INPUT-GOVERNANCE] combination %s: input-table sample intersection = %d (<10 required for SIAMCAT). Per-block sample counts: %s",
+      combination, length(combo_samples),
+      paste(sprintf("%s=%d", names(blocks), vapply(blocks, ncol, integer(1))), collapse = ", ")))
   }
-  if (length(blocks) == 0) stop("Unsupported dimension: ", dimension)
-  blocks[[1]]
+  mat <- if (length(blocks) == 1) {
+    blocks[[1]]
+  } else {
+    do.call(rbind, Map(function(nm, m) {
+      `rownames<-`(m[, combo_samples, drop = FALSE], paste0(nm, "|", rownames(m)))
+    }, names(blocks), blocks))
+  }
+  list(mat = mat, combo_samples = combo_samples)
 }
 
 meta <- read_metadata(metadata_csv, group_col)
-mat <- load_matrix(dimension)
+loaded <- load_matrix()
+mat <- loaded$mat
+combo_samples <- loaded$combo_samples
 common <- intersect(colnames(mat), rownames(meta))
 if (length(common) < 10) {
   cat("[WARN] Only", length(common), "overlapping samples; SIAMCAT requires >=10.",
@@ -507,11 +564,12 @@ if (nrow(filtered) < 5) stop("Too few features after filtering")
 # Per-block surviving feature counts -> siamcat_status.tsv (spec #2:
 # "per-block 转换与各块存活特征数写 status.tsv")
 {
-  blk_names <- if (dimension == "all") c("BAC", "VIR", "FUN") else toupper(substr(dimension, 1, 3))
+  multi_block <- length(combo_letters) > 1
+  blk_names <- c(B = "BAC", V = "VIR", F = "FUN")[combo_letters]
   for (nm in blk_names) {
     pfx <- paste0(nm, "|")
-    n_before <- if (dimension == "all") sum(startsWith(rownames(mat), pfx)) else nrow(mat)
-    n_after <- if (dimension == "all") sum(startsWith(rownames(filtered), pfx)) else nrow(filtered)
+    n_before <- if (multi_block) sum(startsWith(rownames(mat), pfx)) else nrow(mat)
+    n_after <- if (multi_block) sum(startsWith(rownames(filtered), pfx)) else nrow(filtered)
     log_status(paste0("prefilter_", nm), "OK",
                sprintf("features_after=%d/%d (prevalence>=0.05 AND mean_relab>=1e-4, per-block relab scale)",
                        n_after, n_before))
@@ -712,6 +770,9 @@ for (rep_i in seq_len(repeats)) {
 # Split manifest: byte-identical to the historical single-run format when
 # --repeats 1; records every successful repeat seed when repeats > 1
 # (A-2 section 5: seeds land on disk with the results).
+# B3-PREQ①-R #4: the combination and its shared sample set (the
+# intersection of the selected blocks' input-table samples, computed once
+# before metadata subsetting) are recorded for A-2 protocol section 4.
 if (length(split_seeds_ok) > 0) {
   writeLines(c(paste0("seed=", split_seeds_ok[1]),
                paste0("folds=", folds_eff), paste0("folds_requested=", folds), paste0("resample=1"),
@@ -719,6 +780,9 @@ if (length(split_seeds_ok) > 0) {
                paste0("subject_column=", ifelse(is.na(subject_col), "NONE", subject_col)),
                paste0("multi_sample_subjects=", ifelse(!is.na(subject_col), sum(table(meta[[subject_col]]) > 1), 0)),
                paste0("n_samples=", ncol(mat)),
+               paste0("combination=", combination),
+               paste0("combo_n_samples=", length(combo_samples)),
+               paste0("combo_samples=", paste(combo_samples, collapse = ",")),
                if (repeats > 1L) paste0("repeats=", repeats),
                if (repeats > 1L) paste0("seed_rep", seq_along(split_seeds_ok), "=", split_seeds_ok)),
              file.path(result_dir, "split_manifest.txt"))
@@ -771,7 +835,7 @@ set -e
 if [ ${EXIT_CODE} -ne 0 ]; then
     if grep -q "not enough for SIAMCAT to proceed\|No model AUCs generated" "${RUN_LOG}"; then
         echo "[WARN] ${DIMENSION}: sample size too small for SIAMCAT cross-validation, writing skip sentinel"
-        echo "SKIPPED: insufficient samples per class for SIAMCAT model training (${DIMENSION})" > "${SENTINEL}"
+        echo "SKIPPED: insufficient samples per class for SIAMCAT model training (${DIMENSION}/combo=${COMBINATION})" > "${SENTINEL}"
         exit 0
     fi
     echo "[ERROR] 96_stat_ml_siamcat.sh failed with exit code ${EXIT_CODE}"
