@@ -431,8 +431,9 @@ def canonical_lookup_factory(id_map_path):
         # Fail loudly instead, aligned with T-16 semantics.
         sys.stderr.write(
             "[98c][FATAL] votu_id_map not found: %s\n"
-            "[98c][FATAL] canonical vOTU identity is unavailable — regenerate via "
-            "56_vir_votu_gen.sh then 60_vir_votu_table.sh -m before integration.\n"
+            "[98c][FATAL] canonical vOTU identity is unavailable — regenerate the map via "
+            "56_vir_votu_gen.sh (produces votu_id_map.tsv), then re-run 60_vir_votu_table.sh "
+            "before integration.\n"
             % id_map_path
         )
         sys.exit(1)

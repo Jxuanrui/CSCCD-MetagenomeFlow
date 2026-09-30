@@ -1077,6 +1077,17 @@ if (meta_analysis) {
 
         write_tsv(ma_summary, file.path(result_dir, "meta_analysis_results.tsv"))
 
+        # 质量审核 W2 P1-1: 剔除信息写入产物与哨兵（选择偏倚不得只存在于 stdout）
+        ma_summary <- ma_summary %>%
+          mutate(
+            n_external_input = nrow(ma_df),
+            n_dropped_unbounded = length(ma_dropped),
+            dropped_cohorts = if (length(ma_dropped) > 0) paste(ma_dropped, collapse = ";") else NA_character_
+          )
+        write_tsv(ma_summary, file.path(result_dir, "meta_analysis_results.tsv"))
+        cat("[INFO] Meta-analysis drop ledger written to meta_analysis_results.tsv",
+            "(n_dropped_unbounded =", length(ma_dropped), ")\n")
+
         cat("[INFO] Meta-analysis summary:\n")
         cat("  Pooled AUC:", round(ma_summary$pooled_auc, 3), "\n")
         cat("  I2:", round(ma_summary$I2, 1), "%\n")
