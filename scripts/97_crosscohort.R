@@ -112,6 +112,7 @@ PRIMARY_ARM <- "none"
 AUC_SUMMARY_HEADER <- c("cohort", "role", "batch_correction", "auc", "auc_ci_low",
                         "auc_ci_high", "n_case", "n_control", "n_samples")
 METRICS_HEADER <- c("cohort", "role", "batch_correction", "decision_threshold",
+                    "dom_filter_kept", "dom_filter_dropped",
                     "n_samples", "n_case", "n_control", "auroc", "auc_ci_low",
                     "auc_ci_high", "auprc", "sensitivity", "specificity", "ppv",
                     "n_features_zero_filled")
@@ -250,13 +251,17 @@ load_local_cohort <- function(cohort_name, parent_dir) {
   cs <- colSums(abund_mat)
   cs[!is.finite(cs) | cs <= 0] <- 1
   abund_mat <- sweep(abund_mat, 2, cs, "/")
-  # Audit line (per cohort): domain-filter counts + relab disclosure
+  # Audit line (per cohort): domain-filter counts + relab disclosure.
+  # P1-2 (supervisor): counts also stamped into the metrics table, not stdout-only.
+  dom_kept <- sum(keep); dom_drop <- sum(!keep)
+  dom_drop_domain <- sum(!is_bacteria & startsWith(feat, "k__"))
+  dom_drop_unranked <- sum(!startsWith(feat, "k__"))
+  dom_drop_higher <- sum(is_bacteria & !is_species)
   cat(sprintf(
     "[INFO] %s: domain filter kept %d dropped %d; relab converted (dropped: %d non-bacteria-domain, %d unranked, %d higher-rank bacteria; 0-100%% -> 0-1 per-sample column sums over the retained species universe)\n",
-    cohort_name, sum(keep), sum(!keep),
-    sum(!is_bacteria & startsWith(feat, "k__")),
-    sum(!startsWith(feat, "k__")),
-    sum(is_bacteria & !is_species)))
+    cohort_name, dom_kept, dom_drop, dom_drop_domain, dom_drop_unranked, dom_drop_higher))
+  .dom_filter <- c(kept = dom_kept, dropped = dom_drop, drop_domain = dom_drop_domain,
+                   drop_unranked = dom_drop_unranked, drop_higher = dom_drop_higher)
 
   # Load metadata
   meta_file <- file.path(cohort_path, basename(metadata_csv))
@@ -277,7 +282,8 @@ load_local_cohort <- function(cohort_name, parent_dir) {
   # Add cohort label
   meta$cohort <- cohort_name
 
-  list(abundance = abund_mat, metadata = meta, cohort = cohort_name)
+  list(abundance = abund_mat, metadata = meta, cohort = cohort_name,
+       dom_filter = .dom_filter)
 }
 
 load_curated_cohort <- function(dataset_name) {
@@ -512,6 +518,7 @@ cat("[INFO] Roles - train:", train_cohort, "| external:",
 # itself stays uncorrected (it feeds the primary arm and the descriptive
 # plots); the correction runs on a shallow copy - R copy-on-modify semantics
 # keep the raw matrices untouched.
+zero_fill_warn_cohorts <- character(0)
 arms <- list(none = cohort_list)
 if (mmuphin_sensitivity) {
   bc <- perform_batch_correction(lapply(cohort_list, function(x) x), train_cohort)
@@ -575,6 +582,24 @@ for (cohort_name in eval_cohorts) {
   # model, so the same value stamps every arm's rows.
   n_zero_filled <- length(setdiff(norm_retained,
                                   rownames(cohort_list[[cohort_name]]$abundance)))
+  n_model_feats <- length(norm_retained)
+  zero_fill_frac <- if (n_model_feats > 0) n_zero_filled / n_model_feats else 1
+  # M-97-DIM P1-1 gate: 100% zero-fill produces constant predictions
+  # (AUC=0.5) with zero errors — the same "silent invalid" class as the
+  # dimensional break this fix closed. Fail hard; >50% warn + sentinel note.
+  if (zero_fill_frac >= 1.0) {
+    fail_hard("zero_fill_gate",
+              paste0("cohort ", cohort_name, ": ALL ", n_model_feats,
+                     " model features absent (100% zero-filled) — predictions would be",
+                     " constants; this cohort cannot validate this model (feature-space",
+                     " mismatch, e.g. multi-dimension model vs bacteria-only loader)"))
+  }
+  if (zero_fill_frac > 0.5) {
+    cat("[WARN] ", cohort_name, ": ", n_zero_filled, "/", n_model_feats,
+        " (", round(100 * zero_fill_frac, 1), "%) model features zero-filled —",
+        " results for this cohort are unreliable\n", sep = "")
+    zero_fill_warn_cohorts <<- c(zero_fill_warn_cohorts, cohort_name)
+  }
   if (n_zero_filled > 0) {
     cat("[INFO] ", cohort_name, ": ", n_zero_filled,
         " model feature(s) absent from this cohort (zero-filled by frozen normalization)\n", sep = "")
@@ -653,8 +678,11 @@ for (cohort_name in eval_cohorts) {
         n_samples = length(common_ids)
       )
 
+      .df <- cohort_list[[cohort_name]]$dom_filter
       cohort_metrics[[arm_name]][[cohort_name]] <- tibble(
         cohort = cohort_name,
+        dom_filter_kept = if (is.null(.df)) NA_integer_ else as.integer(.df["kept"]),
+        dom_filter_dropped = if (is.null(.df)) NA_integer_ else as.integer(.df["dropped"]),
         role = cohort_roles[[cohort_name]],
         batch_correction = arm_name,
         decision_threshold = DECISION_THRESHOLD,
