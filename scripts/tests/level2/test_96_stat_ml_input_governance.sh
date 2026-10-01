@@ -21,6 +21,15 @@
 #          --combination containing F pins the 98d funomic table (-M only
 #          works when explicitly passed, then warns non-protocol).
 #
+#          WC1R2 P0-4 + P1: P01 domain-filter counts are a STATIC DERIVATION
+#          (kept 786 s__-terminal / higher_rank 1582 incl t__ 839 / domain
+#          23 - the superseded 1625/743 came from an unanchored "|s__"
+#          match counting t__ rows as species); fixture adds a t__ strain
+#          row asserting the terminal anchor; F/BF/VF run standalone (all
+#          seven groups); FUN| asserted at the exact constructed count 15;
+#          the degenerate disclosure also persists in
+#          siamcat_disclosure.txt (Q3), regenerated every ML run.
+#
 #          Supervisor P1-2: fixtures use REAL producer formats, not invented
 #          ones - B block = MetaPhlAn merged taxonomy layout (header,
 #          "#metaphlan4" comment line, UNCLASSIFIED, multi-rank k__Bacteria
@@ -81,11 +90,13 @@ build_metadata() {
 #   line 1 header (ID + 13 samples = 12 cohort + BONLY1), line 2 "#metaphlan4"
 #   comment, UNCLASSIFIED row, k__Bacteria kingdom + 2 phylum higher-rank
 #   rows, 24 full-chain species rows (i=1..8 class-shifted markers, 9..24
-#   noise), then non-bacteria domain lineages: 4 k__Eukaryota rows (1
-#   higher-rank + 3 species) and 3 k__Archaea rows (1 higher-rank + 2
-#   species).
+#   noise), 1 t__ strain row (k__Bacteria|...|s__species1|t__SGB00001 - s__
+#   mid-chain, NOT species-terminal; WC1R2 P0-4), then non-bacteria domain
+#   lineages: 4 k__Eukaryota rows (1 higher-rank + 3 species) and 3
+#   k__Archaea rows (1 higher-rank + 2 species).
 #   => domain filter expectation: kept_s_species=24, dropped_domain=7,
-#      dropped_unranked=1 (UNCLASSIFIED), dropped_higher_rank=3.
+#      dropped_unranked=1 (UNCLASSIFIED), dropped_higher_rank=4
+#      (kingdom + 2 phyla + 1 t__ strain row).
 # ------------------------------------------------------------------------------
 build_bac_taxonomy() {
     local dir="$1"
@@ -115,6 +126,19 @@ build_bac_taxonomy() {
             }
             print ""
         }
+        # WC1R2 P0-4: t__ strain row - carries s__ mid-chain, so the
+        # species-terminal regex \|s__[^|]*$ must NOT keep it (an unanchored
+        # "|s__" containment match would; that is exactly the miscount that
+        # produced the superseded "P01 kept 1625" figure: 786 s__-terminal
+        # + 839 t__-terminated rows). Class-shifted values so a leak would
+        # also survive the prefilter and shift the kept count.
+        printf "k__Bacteria|p__P|c__C|o__O|f__F|g__G1|s__species1|t__SGB00001"
+        for (j = 1; j <= ns; j++) {
+            if (j <= 6) v = 11 + (j * 3) % 7
+            else        v = 41 + (j * 3) % 11
+            printf "\t%.6f", v
+        }
+        print ""
         printf "k__Eukaryota"
         for (j = 1; j <= ns; j++) printf "\t%.6f", 0.5 + (j % 3) * 0.1; print ""
         euks[1] = "k__Eukaryota|p__Ascomycota|c__Saccharomycetes|o__Saccharomycetales|f__Saccharomycetaceae|g__Candida|s__Candida_albicans"
@@ -316,21 +340,29 @@ FUN_SURV="$(sed -n 's/^prefilter_FUN	OK	features_after=\([0-9]*\)\/\([0-9]*\).*/
 FUN_AFTER="$(echo "${FUN_SURV}" | cut -d' ' -f1)"
 FUN_TOTAL="$(echo "${FUN_SURV}" | cut -d' ' -f2)"
 [ -n "${FUN_AFTER}" ] || fail "status.tsv lacks prefilter_FUN row with features_after"
-[ "${FUN_AFTER}" -gt 0 ] \
-    || fail "FUN| block has 0 surviving features (scale regression: per-block relab must keep FUN| alive; got ${FUN_AFTER}/${FUN_TOTAL})"
+# P1: EXACT count - the fixture constructs 15 funomic species and per-block
+# relab must keep every one (0 pre-fix; anything != 15 is a scale regression)
+[ "${FUN_AFTER}" = "15" ] && [ "${FUN_TOTAL}" = "15" ] \
+    || fail "FUN| block survived ${FUN_AFTER}/${FUN_TOTAL} features, expected exactly 15/15 (fixture constructs 15; per-block relab must keep them all)"
 for blk in BAC VIR; do
     grep -q "^prefilter_${blk}	OK	features_after=" "${ALL_ML}/siamcat_status.tsv" \
         || fail "status.tsv lacks prefilter_${blk} surviving-count row"
 done
 grep -q "^relab_convert_BAC	OK	" "${ALL_ML}/siamcat_status.tsv" \
     || fail "BAC| block was not relab-converted (single-scale drift risk)"
-echo "[OK] B2: per-block relab rows present; FUN| survived ${FUN_AFTER}/${FUN_TOTAL} (was 0 pre-fix)"
+echo "[OK] B2: per-block relab rows present; FUN| survived exactly ${FUN_AFTER}/${FUN_TOTAL} (was 0 pre-fix)"
 
 # ==============================================================================
-# Section C (#3): BAC| domain filter drop counts (same -d all run as B)
+# Section C (#3 + P0-4): BAC| domain filter drop counts (same -d all run as B)
 #   Fixture constructs 7 non-bacteria domain rows (4 k__Eukaryota + 3
-#   k__Archaea), 1 UNCLASSIFIED row, 3 higher-rank bacteria rows and 24
-#   k__Bacteria s__ species rows.
+#   k__Archaea), 1 UNCLASSIFIED row, 3 higher-rank bacteria rows, 1
+#   t__-terminated strain row (s__ mid-chain; WC1R2 P0-4) and 24 k__Bacteria
+#   s__-terminal species rows. The t__ row verifies the TERMINAL anchor of
+#   the species regex: an unanchored "|s__" containment match would keep it
+#   (kept would read 25) - the miscount behind the superseded P01 figure
+#   "kept 1625" (= 786 s__-terminal + 839 t__ rows); corrected static
+#   derivation: kept 786 / higher_rank 1582 (incl t__ 839) / domain 23,
+#   all "static derivation" wording, never "measured".
 # ==============================================================================
 DD_ROW="$(sed -n 's/^bac_domain_filter	OK	kept_s_species=\([0-9]*\) dropped_domain=\([0-9]*\) dropped_unranked=\([0-9]*\) dropped_higher_rank=\([0-9]*\)$/\1 \2 \3 \4/p' "${ALL_ML}/siamcat_status.tsv")"
 [ -n "${DD_ROW}" ] || fail "status.tsv lacks bac_domain_filter counts row"
@@ -339,11 +371,11 @@ DD_KEPT="$1"; DD_DOM="$2"; DD_UNR="$3"; DD_RANK="$4"
 [ "${DD_KEPT}" = "24" ] || fail "domain filter kept ${DD_KEPT} s__ rows, expected 24"
 [ "${DD_DOM}" = "7" ] || fail "domain filter dropped_domain=${DD_DOM}, expected 7 (4 Eukaryota + 3 Archaea rows constructed)"
 [ "${DD_UNR}" = "1" ] || fail "domain filter dropped_unranked=${DD_UNR}, expected 1 (UNCLASSIFIED)"
-[ "${DD_RANK}" = "3" ] || fail "domain filter dropped_higher_rank=${DD_RANK}, expected 3 (k__Bacteria + 2 phyla)"
-grep -q "BAC| domain filter: kept 24 k__Bacteria s__ row(s); dropped 7 non-bacteria-domain" \
+[ "${DD_RANK}" = "4" ] || fail "domain filter dropped_higher_rank=${DD_RANK}, expected 4 (k__Bacteria + 2 phyla + the t__ strain row)"
+grep -q "BAC| domain filter: kept 24 k__Bacteria s__-terminal row(s) (t__-terminated strain rows count as higher rank); dropped 7 non-bacteria-domain" \
     "${PROJ}/logs/stat/ml/96_stat_ml_siamcat.log" \
-    || fail "domain filter counts missing from the run log"
-echo "[OK] C1: domain filter counts kept=24 dropped_domain=7 dropped_unranked=1 dropped_higher_rank=3 (matches constructed fixture)"
+    || fail "domain filter counts (s__-terminal wording) missing from the run log"
+echo "[OK] C1: domain filter counts kept=24 dropped_domain=7 dropped_unranked=1 dropped_higher_rank=4 (t__ strain row dropped via the terminal anchor; matches constructed fixture)"
 
 # ==============================================================================
 # Section D (#4 + P0-3): --combination block selection + shared sample
@@ -440,7 +472,15 @@ grep -q "^seed_rep1=" "${B_ML}/split_manifest.txt" || fail "split_manifest lacks
 grep -q "^seed_rep2=" "${B_ML}/split_manifest.txt" || fail "split_manifest lacks seed_rep2"
 grep -qE "INCLUDE degenerate repeats|n_degenerate=0 for every model" "${B_ML}/siamcat_done.txt" \
     || fail "siamcat_done.txt lacks the repeats>1 degenerate-disclosure note line"
-echo "[OK] E1: repeats>1 summary has n_degenerate + auc_stderr; detail rows=${N_DET_ROWS}; disclosure note present"
+# WC1R2 Q3: the disclosure also persists in its own file (regenerated every
+# ML run; independent of the sentinel that 96_ml_visualization.R overwrites)
+[ -s "${B_ML}/siamcat_disclosure.txt" ] \
+    || fail "--repeats 2 run did not write siamcat_disclosure.txt"
+grep -q "regenerated by every ML run" "${B_ML}/siamcat_disclosure.txt" \
+    || fail "siamcat_disclosure.txt lacks the persistence header"
+grep -qE "^NOTE: |^none: " "${B_ML}/siamcat_disclosure.txt" \
+    || fail "siamcat_disclosure.txt lacks a NOTE/none disclosure line"
+echo "[OK] E1: repeats>1 summary has n_degenerate + auc_stderr; detail rows=${N_DET_ROWS}; disclosure note present (sentinel + persistent siamcat_disclosure.txt)"
 
 echo "[INFO] E2: --repeats 1 stays compatible with the pre-change single-pass format..."
 # --force only bypasses the sentinel; clear the repeats=2 artifacts first so
@@ -464,7 +504,12 @@ grep -q "^combination=B$" "${B_ML}/split_manifest.txt" \
 N_AUTO="$(sed -n 's/^n_samples=//p' "${B_ML}/split_manifest.txt")"
 [ "${N_AUTO}" = "13" ] \
     || fail "sample_set=auto single-block B analyzed ${N_AUTO} samples, expected 13 (BONLY1 is in B and in metadata - auto keeps it)"
-echo "[OK] E2: --repeats 1 byte-compatible single-run summary, no repeats artifacts; auto single-block n_samples=13 (BONLY1 kept)"
+# WC1R2 Q3: the repeats=1 rerun regenerated the persistent disclosure file
+[ -s "${B_ML}/siamcat_disclosure.txt" ] \
+    || fail "--repeats 1 run did not regenerate siamcat_disclosure.txt"
+grep -qE "^NOTE: |^none: " "${B_ML}/siamcat_disclosure.txt" \
+    || fail "regenerated siamcat_disclosure.txt lacks a NOTE/none line"
+echo "[OK] E2: --repeats 1 byte-compatible single-run summary, no repeats artifacts; auto single-block n_samples=13 (BONLY1 kept); disclosure file regenerated"
 
 # ==============================================================================
 # Section F (P0-3): sample-set normalization (sort + BVF protocol pool +
@@ -567,4 +612,73 @@ grep -q "PHF fungi abundance table not found" "${FIXTURE}/mphf.out" \
     || fail "-M phf run lacks the PHF table-not-found error"
 echo "[OK] F2: --sample-set validated; BVF pool gates name 98c; <10 intersection errors with per-table counts; -M explicit warns non-protocol"
 
-echo "[PASS] 96 input governance sections A-F (#1 98c TPM source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure, P0-1 TPM precision, P0-3 sample-set)"
+# ==============================================================================
+# Section G (P1): the remaining protocol combinations run standalone - with
+#   F/BF/VF all seven groups are exercised end-to-end (B=E2/F1, V=A3,
+#   BV=D3, BVF=D2). Every explicit --combination run shares the same sorted
+#   12-sample BVF pool; FUN| is the pinned 98d arm everywhere (15/15).
+# ==============================================================================
+
+echo "[INFO] G1: --combination F (single-block protocol; pinned 98d source)..."
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group --combination F --force --skip-shap
+F_ML="${PROJ}/result/stat/fungi/ml"
+[ -s "${F_ML}/siamcat_done.txt" ] || fail "--combination F sentinel missing under result/stat/fungi/ml/"
+F_MANIFEST="${F_ML}/split_manifest.txt"
+[ "$(sed -n 's/^combination=//p' "${F_MANIFEST}")" = "F" ] || fail "F manifest combination != F"
+[ "$(sed -n 's/^sample_set=//p' "${F_MANIFEST}")" = "BVF" ] \
+    || fail "explicit --combination F did not default to sample_set=BVF"
+[ "$(sed -n 's/^combo_samples=//p' "${F_MANIFEST}")" = "${EXP12}" ] \
+    || fail "F combo_samples != the shared sorted 12-sample BVF pool"
+[ "$(sed -n 's/^n_samples=//p' "${F_MANIFEST}")" = "12" ] || fail "F n_samples != 12"
+F_PRE="$(sed -n 's/^prefilter_FUN	OK	features_after=\([0-9]*\)\/\([0-9]*\).*/\1 \2/p' "${F_ML}/siamcat_status.tsv")"
+[ "${F_PRE}" = "15 15" ] \
+    || fail "--combination F prefilter_FUN=${F_PRE}, expected '15 15' (pinned 98d funomic source)"
+if grep -q "^prefilter_BAC	\|^prefilter_VIR	" "${F_ML}/siamcat_status.tsv"; then
+    fail "--combination F status carries BAC/VIR prefilter rows"
+fi
+[ -s "${F_ML}/siamcat_disclosure.txt" ] || fail "--combination F did not write siamcat_disclosure.txt"
+echo "[OK] G1: --combination F: BVF pool 12 samples, FUN| 15/15 from the pinned 98d source, own dir result/stat/fungi/ml/"
+
+echo "[INFO] G2: --combination BF (own dir; BAC+FUN arms, VIR absent)..."
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group --combination BF --force --skip-shap
+BF_ML="${PROJ}/result/stat/ml_BF"
+[ -s "${BF_ML}/siamcat_done.txt" ] || fail "--combination BF sentinel missing under result/stat/ml_BF/"
+BF_MANIFEST="${BF_ML}/split_manifest.txt"
+[ "$(sed -n 's/^combination=//p' "${BF_MANIFEST}")" = "BF" ] || fail "BF manifest combination != BF"
+[ "$(sed -n 's/^sample_set=//p' "${BF_MANIFEST}")" = "BVF" ] \
+    || fail "explicit --combination BF did not default to sample_set=BVF"
+[ "$(sed -n 's/^combo_samples=//p' "${BF_MANIFEST}")" = "${EXP12}" ] \
+    || fail "BF combo_samples != the shared sorted 12-sample BVF pool"
+[ "$(sed -n 's/^n_samples=//p' "${BF_MANIFEST}")" = "12" ] || fail "BF n_samples != 12"
+grep -q "^prefilter_BAC	" "${BF_ML}/siamcat_status.tsv" || fail "BF status lacks prefilter_BAC"
+grep -q "^prefilter_FUN	" "${BF_ML}/siamcat_status.tsv" || fail "BF status lacks prefilter_FUN"
+if grep -q "^prefilter_VIR	" "${BF_ML}/siamcat_status.tsv"; then
+    fail "BF status contains prefilter_VIR - the VIR block must NOT be loaded for --combination BF"
+fi
+echo "[OK] G2: --combination BF: BVF pool 12 samples, BAC+FUN arms present, VIR| absent, own dir result/stat/ml_BF/"
+
+echo "[INFO] G3: --combination VF (own dir; VIR+FUN arms, BAC absent)..."
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group --combination VF --force --skip-shap
+VF_ML="${PROJ}/result/stat/ml_VF"
+[ -s "${VF_ML}/siamcat_done.txt" ] || fail "--combination VF sentinel missing under result/stat/ml_VF/"
+VF_MANIFEST="${VF_ML}/split_manifest.txt"
+[ "$(sed -n 's/^combination=//p' "${VF_MANIFEST}")" = "VF" ] || fail "VF manifest combination != VF"
+[ "$(sed -n 's/^sample_set=//p' "${VF_MANIFEST}")" = "BVF" ] \
+    || fail "explicit --combination VF did not default to sample_set=BVF"
+[ "$(sed -n 's/^combo_samples=//p' "${VF_MANIFEST}")" = "${EXP12}" ] \
+    || fail "VF combo_samples != the shared sorted 12-sample BVF pool"
+[ "$(sed -n 's/^n_samples=//p' "${VF_MANIFEST}")" = "12" ] || fail "VF n_samples != 12"
+grep -q "^prefilter_VIR	" "${VF_ML}/siamcat_status.tsv" || fail "VF status lacks prefilter_VIR"
+grep -q "^prefilter_FUN	" "${VF_ML}/siamcat_status.tsv" || fail "VF status lacks prefilter_FUN"
+if grep -q "^prefilter_BAC	" "${VF_ML}/siamcat_status.tsv"; then
+    fail "VF status contains prefilter_BAC - the BAC block must NOT be loaded for --combination VF"
+fi
+echo "[OK] G3: --combination VF: BVF pool 12 samples, VIR+FUN arms present, BAC| absent, own dir result/stat/ml_VF/"
+
+echo "[PASS] 96 input governance sections A-G (#1 98c TPM source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure, P0-1 TPM precision, P0-3 sample-set, P0-4 P01 static-derivation counts + Q3 persistent disclosure)"
