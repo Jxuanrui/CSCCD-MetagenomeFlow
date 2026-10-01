@@ -2521,6 +2521,21 @@ stat_cooccurrence 报错 "Input unavailable for target: bac"，其他维度报 "
 
 ---
 
+### A8b. 96 号机器学习的输入治理与组合选择（WC1R 系列，2026-09-30 起）
+
+**用途**：三维度（细菌/病毒/真菌）特征的选择性组合训练与 A-2 消融的七组配置。
+
+```bash
+# 七组组合之一（协议用法：显式 --combination 默认共用 B/V/F 三表交集样本集）
+bash scripts/96_stat_ml_siamcat.sh -w Project/<name> -r ~/Course/CSCCD-MetagenomeFlow \
+    -t 16 -m metadata.csv -g group --combination BVF --repeats 10
+
+# 单维度非协议便利用法（各自样本交集）
+bash scripts/96_stat_ml_siamcat.sh ... -d bacteria
+```
+
+**输入治理**（详见 docs/08_statistics/siamcat.md）：细菌块只取 `k__Bacteria` 物种（s__ 终端）行；病毒块读 98c 整合表 `votu_annotation_matrix_relab.tsv` 的 `vOTU_TPM_` 列；真菌块固定 98d `funomic_species_relab.tsv`。三块各自转 0-1 相对丰度后过滤。**注意**：不带 `--force` 重跑时，若已有结果的 combination/sample_set 与本次参数不一致，脚本会报错要求 `--force`（防止旧口径哨兵被静默复用）。
+
 ### A9. `96_stat_functional.sh`/`96_stat_ml_siamcat.sh` 缺少对"数据为空"或"样本量不足"的优雅跳过逻辑，导致整批次任务被单个子任务拖垂
 
 **背景（2026-07-27 发现并修复，Project01 批次2-6 `stat_functional`/`stat_ml_siamcat` 任务）**：两个独立问题同时暴露：

@@ -90,6 +90,7 @@ done
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
 export MGX_OPTS_STRING="w:WORKDIR r:REPO t:THREADS m:METADATA_CSV g:GROUP_COL d:DIMENSION M:FUNGI_METHOD"
+export MGX_FUNGI_METHOD
 export MGX_OPTS_FLAG="force skip-shap"
 export MGX_OPTS_LONG="folds:FOLDS repeats:REPEATS combination:COMBINATION sample-set:SAMPLE_SET"
 mgx_parse "$@"
@@ -291,7 +292,27 @@ else
 fi
 
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
-    echo "[INFO] Sentinel exists, skipping: ${SENTINEL}"
+    # WC1R2-C2 (supervisor): the sentinel alone must not authorize silent
+    # reuse across input-governance regimes. A completed result produced under
+    # a different combination/sample_set must error and demand --force — P01
+    # already carries pre-WC1R sentinels that protocol runs would otherwise
+    # silently reuse in the 7-cell comparison.
+    RESUME_MANIFEST="$(dirname "${SENTINEL}")/split_manifest.txt"
+    RESUME_COMBO="$(grep -oE '^combination=[^[:space:]]*' "${RESUME_MANIFEST}" 2>/dev/null | tail -1 | cut -d= -f2)"
+    RESUME_SET="$(grep -oE '^sample_set=[^[:space:]]*' "${RESUME_MANIFEST}" 2>/dev/null | tail -1 | cut -d= -f2)"
+    WANT_COMBO="${COMBINATION}"
+    WANT_SET="${SAMPLE_SET:-auto}"
+    if [ -z "${WANT_COMBO}" ]; then
+        case "${DIMENSION}" in bacteria) WANT_COMBO="B" ;; virus) WANT_COMBO="V" ;; fungi) WANT_COMBO="F" ;; *) WANT_COMBO="BVF" ;; esac
+    fi
+    if [ "${RESUME_COMBO}" != "${WANT_COMBO}" ] || [ "${RESUME_SET}" != "${WANT_SET}" ]; then
+        echo "[ERROR] Existing result was produced under a different input regime:"
+        echo "[ERROR]   manifest: combination=${RESUME_COMBO:-<absent>} sample_set=${RESUME_SET:-<absent>}"
+        echo "[ERROR]   requested: combination=${WANT_COMBO} sample_set=${WANT_SET}"
+        echo "[ERROR] Re-run with --force to rebuild under the requested regime."
+        exit 1
+    fi
+    echo "[INFO] Sentinel exists (regime match: combination=${WANT_COMBO} sample_set=${WANT_SET}), skipping: ${SENTINEL}"
     run_ml_visualization
     EXIT_CODE=$?
     if [ ${EXIT_CODE} -ne 0 ]; then
@@ -613,7 +634,7 @@ load_matrix <- function() {
                sprintf("n_features=%d n_samples=%d scale=0-1 (block column sums -> 1)",
                        nrow(blocks[[nm]]), ncol(blocks[[nm]])))
   }
-  combo_samples <- sort(Reduce(intersect, sample_pools))
+  combo_samples <- sort(Reduce(intersect, sample_pools), method = "radix")  # locale-independent (supervisor P1)
   pool_counts <- paste(sprintf("%s=%d", names(sample_pools),
                                vapply(sample_pools, length, integer(1))), collapse = ", ")
   # WC1R2 P0-3: the protocol pool (BVF) and multi-block stacks must hold >=10
@@ -648,7 +669,7 @@ combo_samples <- loaded$combo_samples
 sample_set <- loaded$sample_set
 # WC1R2 P0-3: sorted intersection -> the SIAMCAT split input order is
 # deterministic and independent of the input tables' column order.
-common <- sort(intersect(colnames(mat), rownames(meta)))
+common <- sort(intersect(colnames(mat), rownames(meta)), method = "radix")  # SIAMCAT input column order, locale-independent (supervisor P1)
 if (length(common) < 10) {
   cat("[WARN] Only", length(common), "overlapping samples; SIAMCAT requires >=10.",
       "Writing placeholder sentinel and skipping ML.\n")
@@ -894,6 +915,7 @@ if (length(split_seeds_ok) > 0) {
                paste0("n_samples=", ncol(mat)),
                paste0("combination=", combination),
                paste0("sample_set=", sample_set),
+               paste0("fungi_method=", Sys.getenv("MGX_FUNGI_METHOD", "auto")),
                paste0("combo_n_samples=", length(combo_samples)),
                paste0("combo_samples=", paste(combo_samples, collapse = ",")),
                if (repeats > 1L) paste0("repeats=", repeats),

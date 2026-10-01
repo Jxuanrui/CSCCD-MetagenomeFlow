@@ -681,4 +681,29 @@ if grep -q "^prefilter_BAC	" "${VF_ML}/siamcat_status.tsv"; then
 fi
 echo "[OK] G3: --combination VF: BVF pool 12 samples, VIR+FUN arms present, BAC| absent, own dir result/stat/ml_VF/"
 
-echo "[PASS] 96 input governance sections A-G (#1 98c TPM source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure, P0-1 TPM precision, P0-3 sample-set, P0-4 P01 static-derivation counts + Q3 persistent disclosure)"
+# WC1R2-C2 regression: sentinel from a different input regime must NOT be
+# silently reused. Premise: E2 left a completed bacteria/ml run with
+# combination=B / sample_set=auto; requesting the same dir under
+# --combination B (defaults sample_set=BVF) must error.
+C2_LOG="$(mktemp)"
+# Restore the auto regime first (F1 rebuilt the same dir under BVF, so the
+# current manifest matches --combination B; re-stamp it as auto to create
+# the mismatch this regression guards against).
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+        -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+        -m "${PROJ}/metadata.csv" -g group \
+        -d bacteria --repeats 1 --force --skip-shap > /dev/null 2>&1
+if bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+        -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+        -m "${PROJ}/metadata.csv" -g group \
+        --combination B > "${C2_LOG}" 2>&1; then
+    rm -f "${C2_LOG}"
+    fail "C2: regime-mismatched resume silently reused the sentinel"
+fi
+grep -q "different input regime" "${C2_LOG}" \
+    || { rm -f "${C2_LOG}"; fail "C2: expected regime-mismatch error naming both regimes"; }
+rm -f "${C2_LOG}"
+echo "[OK] C2: mismatched-regime resume errors out (regime names in log)"
+echo "[PASS] 96 input governance sections A-G + C2 (#1 98c TPM source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure, P0-1 TPM precision, P0-3 sample-set, P0-4 P01 static-derivation counts + Q3 persistent disclosure + C2 regime-guarded resume)"
+
+cleanup
