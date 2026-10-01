@@ -493,7 +493,7 @@ git commit -m "feat: integrate <script_id> into Snakemake pipeline + skill libra
 
 **核心功能**：
 - ✅ 本地多队列模式（推荐）：从多个项目目录读取数据
-- ✅ 模型迁移验证：训练队列(role=in_sample，不计入外部汇总) → 外部队列预测；AUC 方向显式固定（levels+direction），失败/跳过显式语义（FAILED/SKIPPED 文件）；**双臂报告（W2 起）：uncorrected 为主结果、MMUPHin 校正后为敏感性分析**（batch_correction 列并列，--no-mmuphin 可关）
+- ✅ 模型迁移验证：训练队列(role=in_sample，不计入外部汇总) → 外部队列预测；AUC 方向显式固定（levels+direction），失败/跳过显式语义（FAILED/SKIPPED 文件）；**双臂报告（W2 起）：uncorrected 为主结果、MMUPHin 校正后为敏感性分析**（batch_correction 列并列，--no-mmuphin 可关）；**M-97-DIM 起**：加载器对齐 96 细菌口径（s__ 终端行+0-1 relab+零填充门禁[curated 禁用、仅 B 组]）
 - ✅ 核心可视化（条件产出）：森林图(0–1 全量程)/瀑布图/ROC叠加/UpSet/特征稳定性热图/PCoA批次/校准曲线/效应相关——declared 契约为哨兵+auc_summary+crosscohort_metrics 三件（图件为副产物，单 cohort 时部分结构性跳过）
 - ✅ Meta-analysis：随机效应模型合并 AUC + I² 异质性评估
 
