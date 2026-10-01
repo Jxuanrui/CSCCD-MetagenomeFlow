@@ -13,10 +13,10 @@ bash scripts/96_stat_ml_siamcat.sh \
     -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
     -m metadata.csv -g group
 
-# 全维度交叉（细菌+病毒联合）
+# 全维度交叉（细菌+病毒+真菌联合（BVF））
 bash scripts/96_stat_ml_siamcat.sh \
     -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow -t 16 \
-    -m metadata.csv -g group -d all
+    -m metadata.csv -g group --combination BVF --repeats 10
 
 # 指定5折
 bash scripts/96_stat_ml_siamcat.sh \
@@ -31,9 +31,14 @@ bash scripts/96_stat_ml_siamcat.sh \
 | `-t` | 是 | — | 线程数 |
 | `-m` | 是 | — | 元数据 CSV |
 | `-g` | 是 | — | 分组列名 |
-| `-d` | 否 | `bacteria` | 维度：`bacteria` / `virus` / `fungi` / `all` |
+| `-d` | 否 | `bacteria` | 维度：`bacteria` / `virus` / `fungi` / `all`(=BVF) |
+| `--combination` | 否 | 从 `-d` 派生 | 特征块选择：`B`/`V`/`F`/`BV`/`BF`/`VF`/`BVF`/`all`；显式传参时默认 `--sample-set BVF`（协议：七组共用三表交集） |
+| `--sample-set` | 否 | `auto` | `auto`=各组合各自交集（非协议便利）；`BVF`=三表交集（A-2 配对前提） |
+| `--repeats` | 否 | `1` | 外层重复次数；>1 输出每重复明细与 mean±sd（含 `n_degenerate` 披露） |
+| `-M` | 否 | `auto` | 真菌输入源（仅显式传参生效并 WARN non-protocol；协议用途固定 98d funomic） |
 | `--folds` | 否 | `10` | 交叉验证折数 |
-| `--force` | 否 | — | 强制重新运行 |
+| `--force` | 否 | — | 强制重新运行（跳过 regime 守卫） |
+| `--skip-shap` | 否 | — | 跳过 SHAP 特征归因 |
 
 ## 四种 ML 算法
 
@@ -70,14 +75,14 @@ bash scripts/96_stat_ml_siamcat.sh \
 ## 分析流程
 
 ```
-特征表 → 过滤（丰度≥0.005% + 存在率≥5%）→ log.std 标准化
+特征表 → 过滤（平均相对丰度≥1e-4（0.01%） + 存在率≥5%）→ log.std 标准化
  → K 折 CV split → 训练 4 种模型 → AUC 评估 → 特征重要性排序
 ```
 
 ## 注意事项
 - 需要每组 ≥5 个样本，总样本 ≥10 才能得到可靠 AUC
 - 二分类标签取元数据分组列的前两个水平（字母序），第一个为阴性，第二个为阳性
-- `-d all` / `--combination` 模式下三块特征合并（`BAC|`/`VIR|`/`FUN|` 前缀）；七组 B/V/F/BV/BF/VF/BVF 可选
+- `-d all`（=BVF）/ `--combination` 模式下三块特征合并（`BAC|`/`VIR|`/`FUN|` 前缀）；七组 B/V/F/BV/BF/VF/BVF 可选
 - 真菌维度（`-d fungi`）为实验性功能，因真菌特征数通常较少
 - SIAMCAT 的 `model.interpretation.plot` 输出 Top 20 特征重要性，供进一步筛选
 

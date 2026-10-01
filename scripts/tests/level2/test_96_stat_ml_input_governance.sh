@@ -704,6 +704,43 @@ grep -q "different input regime" "${C2_LOG}" \
     || { rm -f "${C2_LOG}"; fail "C2: expected regime-mismatch error naming both regimes"; }
 rm -f "${C2_LOG}"
 echo "[OK] C2: mismatched-regime resume errors out (regime names in log)"
+
+# C2 positive path: regime-MATCHED resume must exit 0 with regime-match log
+C2OK_LOG="$(mktemp)"
+if ! bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+        -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+        -m "${PROJ}/metadata.csv" -g group \
+        -d bacteria --repeats 1 --skip-shap > "${C2OK_LOG}" 2>&1; then
+    rm -f "${C2OK_LOG}"; fail "C2: regime-matched resume unexpectedly failed"
+fi
+grep -q "regime match" "${C2OK_LOG}" \
+    || { rm -f "${C2OK_LOG}"; fail "C2: matched resume lacked regime-match log line"; }
+rm -f "${C2OK_LOG}"
+echo "[OK] C2: regime-matched resume exits 0 with regime-match log"
+
+# fungi_method audit value must be the REAL source (funomic), not the
+# env-default auto (supervisor re-review: the audit line wrote a fake value)
+grep -q "^fungi_method=funomic$" "${B_ML}/split_manifest.txt" \
+    || fail "manifest fungi_method is not the real source (expected funomic)"
+echo "[OK] manifest fungi_method=funomic (real value, not env default)"
+
+# -M (non-protocol) result must NOT be silently reused by a protocol resume
+C2M_LOG="$(mktemp)"
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+        -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+        -m "${PROJ}/metadata.csv" -g group \
+        -d bacteria --repeats 1 --force --skip-shap > /dev/null 2>&1
+sed -i 's/^fungi_method=funomic$/fungi_method=phf/' "${B_ML}/split_manifest.txt"
+if bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+        -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+        -m "${PROJ}/metadata.csv" -g group \
+        -d bacteria --repeats 1 --skip-shap > "${C2M_LOG}" 2>&1; then
+    rm -f "${C2M_LOG}"; fail "C2: fungi_method-mismatched resume silently reused"
+fi
+grep -q "fungi_method=phf" "${C2M_LOG}" \
+    || { rm -f "${C2M_LOG}"; fail "C2: expected fungi_method in mismatch error"; }
+rm -f "${C2M_LOG}"
+echo "[OK] C2: fungi_method mismatch (phf vs funomic) blocks resume"
 echo "[PASS] 96 input governance sections A-G + C2 (#1 98c TPM source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure, P0-1 TPM precision, P0-3 sample-set, P0-4 P01 static-derivation counts + Q3 persistent disclosure + C2 regime-guarded resume)"
 
 cleanup

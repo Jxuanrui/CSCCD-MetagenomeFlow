@@ -291,6 +291,11 @@ else
     echo "[INFO] Fungi input: METHOD=funomic TABLE=${FUNGI_ABUND_TABLE} (protocol-pinned 98d; -M overrides only when explicitly passed)"
 fi
 
+# P0-1 (supervisor re-review): export the REAL fungi source for the R-side
+# manifest audit line (previously the env var was exported empty, so every
+# manifest falsely recorded fungi_method=auto).
+export MGX_FUNGI_METHOD="${FUNGI_METHOD}"
+
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     # WC1R2-C2 (supervisor): the sentinel alone must not authorize silent
     # reuse across input-governance regimes. A completed result produced under
@@ -300,19 +305,18 @@ if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     RESUME_MANIFEST="$(dirname "${SENTINEL}")/split_manifest.txt"
     RESUME_COMBO="$(grep -oE '^combination=[^[:space:]]*' "${RESUME_MANIFEST}" 2>/dev/null | tail -1 | cut -d= -f2)"
     RESUME_SET="$(grep -oE '^sample_set=[^[:space:]]*' "${RESUME_MANIFEST}" 2>/dev/null | tail -1 | cut -d= -f2)"
+    RESUME_FUNGI="$(grep -oE '^fungi_method=[^[:space:]]*' "${RESUME_MANIFEST}" 2>/dev/null | tail -1 | cut -d= -f2)"
     WANT_COMBO="${COMBINATION}"
     WANT_SET="${SAMPLE_SET:-auto}"
-    if [ -z "${WANT_COMBO}" ]; then
-        case "${DIMENSION}" in bacteria) WANT_COMBO="B" ;; virus) WANT_COMBO="V" ;; fungi) WANT_COMBO="F" ;; *) WANT_COMBO="BVF" ;; esac
-    fi
-    if [ "${RESUME_COMBO}" != "${WANT_COMBO}" ] || [ "${RESUME_SET}" != "${WANT_SET}" ]; then
+    WANT_FUNGI="${FUNGI_METHOD}"
+    if [ "${RESUME_COMBO}" != "${WANT_COMBO}" ] || [ "${RESUME_SET}" != "${WANT_SET}" ] || [ "${RESUME_FUNGI}" != "${WANT_FUNGI}" ]; then
         echo "[ERROR] Existing result was produced under a different input regime:"
-        echo "[ERROR]   manifest: combination=${RESUME_COMBO:-<absent>} sample_set=${RESUME_SET:-<absent>}"
-        echo "[ERROR]   requested: combination=${WANT_COMBO} sample_set=${WANT_SET}"
+        echo "[ERROR]   manifest: combination=${RESUME_COMBO:-<absent>} sample_set=${RESUME_SET:-<absent>} fungi_method=${RESUME_FUNGI:-<absent>}"
+        echo "[ERROR]   requested: combination=${WANT_COMBO} sample_set=${WANT_SET} fungi_method=${WANT_FUNGI}"
         echo "[ERROR] Re-run with --force to rebuild under the requested regime."
         exit 1
     fi
-    echo "[INFO] Sentinel exists (regime match: combination=${WANT_COMBO} sample_set=${WANT_SET}), skipping: ${SENTINEL}"
+    echo "[INFO] Sentinel exists (regime match: combination=${WANT_COMBO} sample_set=${WANT_SET} fungi_method=${WANT_FUNGI}), skipping: ${SENTINEL}"
     run_ml_visualization
     EXIT_CODE=$?
     if [ ${EXIT_CODE} -ne 0 ]; then
@@ -345,7 +349,7 @@ if [ "${SAMPLE_SET}" = "BVF" ]; then
 fi
 if [ "${NEED_V_TABLE}" -eq 1 ] && [ ! -f "${VIR_TABLE}" ]; then
     echo "[ERROR] --combination ${COMBINATION} / --sample-set ${SAMPLE_SET} requires the virus integration table: ${VIR_TABLE}"
-    echo "[ERROR] Run scripts/98c_vir_integration_tables.sh first (96 consumes the vOTU_TPM_<sample> columns at full precision)"
+    echo "[ERROR] Run scripts/98c_vir_integration_tables.sh first (96 consumes the vOTU_TPM_<sample> columns at full TPM precision (1e-4, ~1e-10 relative))"
     exit 1
 fi
 if [ "${NEED_F_TABLE}" -eq 1 ] && [ ! -f "${FUN_TABLE}" ]; then
@@ -489,10 +493,10 @@ read_abundance_table <- function(path) {
 # P01 static derivation: 28,349/42,137 vOTUs have ALL RELAB cells zero - and
 # the 1e-4 prefilter threshold equals the RELAB rounding step, i.e. the
 # rounded columns quantize exactly at the decision boundary. The TPM cells
-# carry the same information at full precision; to_relab() below divides by
+# carry the same information at full TPM precision (1e-4, ~1e-10 relative); to_relab() below divides by
 # the in-block column sum, which is the SAME formula 98c uses for RELAB
 # (TPM / per-sample column total) computed without the 4-decimal loss
-# (mathematically equivalent, full precision). Column names are matched
+# (mathematically equivalent, full TPM precision (1e-4, ~1e-10 relative)). Column names are matched
 # EXPLICITLY by the vOTU_TPM_ prefix (never by the generic numeric-column
 # heuristic, which would swallow the annotation columns), the prefix is
 # stripped to recover sample names, and vOTU_name is the feature id.
@@ -610,7 +614,7 @@ load_matrix <- function() {
       src <- bact_table
       filter_bac_domain(read_abundance_table(bact_table))
     } else if (letter == "V") {
-      # WC1R2 P0-1: 98c TPM matrix (full precision; in-block relab conversion
+      # WC1R2 P0-1: 98c TPM matrix (full TPM precision (1e-4, ~1e-10 relative); in-block relab conversion
       # below) + metadata defensive assertion
       src <- vir_table
       read_vir_tpm_matrix(vir_table)
@@ -676,6 +680,12 @@ if (length(common) < 10) {
   writeLines(c(paste0("SKIPPED: only ", length(common), " samples (need >=10 for SIAMCAT)"),
                "Re-run with actual cohort data (>=10 samples per group)."),
              file.path(result_dir, "siamcat_done.txt"))
+  # P0-2 (supervisor re-review): SKIPPED runs must also stamp the regime so
+  # resume keeps exit-0 semantics (a manifest-less sentinel would now error).
+  writeLines(c(paste0("combination=", combination),
+               paste0("sample_set=", sample_set),
+               paste0("fungi_method=", Sys.getenv("MGX_FUNGI_METHOD", "auto"))),
+             file.path(result_dir, "split_manifest.txt"))
   quit(status = 0)
 }
 mat <- mat[, common, drop = FALSE]
@@ -999,6 +1009,11 @@ if [ ${EXIT_CODE} -ne 0 ]; then
     if grep -q "not enough for SIAMCAT to proceed\|No model AUCs generated" "${RUN_LOG}"; then
         echo "[WARN] ${DIMENSION}: sample size too small for SIAMCAT cross-validation, writing skip sentinel"
         echo "SKIPPED: insufficient samples per class for SIAMCAT model training (${DIMENSION}/combo=${COMBINATION})" > "${SENTINEL}"
+        # P0-2 (supervisor re-review): stamp the regime so a SKIPPED sentinel
+        # resumes with exit 0 (a manifest-less sentinel would now error).
+        printf 'combination=%s\nsample_set=%s\nfungi_method=%s\n' \
+            "${COMBINATION}" "${SAMPLE_SET:-auto}" "${FUNGI_METHOD}" \
+            > "$(dirname "${SENTINEL}")/split_manifest.txt"
         exit 0
     fi
     echo "[ERROR] 96_stat_ml_siamcat.sh failed with exit code ${EXIT_CODE}"
