@@ -41,6 +41,18 @@
 #       frozen normalization zero-fills because the cohort lacks them).
 #   W2-5 when the MMUPHin arm runs, mmuphin_colsums.tsv records per-sample
 #       colSums before/after correction (consistency evidence).
+#
+# M-97-DIM (2026-10-01, B-3 final blocker fix): the local cohort loader now
+#   applies 96's bacteria input regime (WC1R contract: k__Bacteria
+#   s__-terminal rows + 0-1 relative abundance) BEFORE the frozen holdout
+#   normalization - previously it read the raw MetaPhlAn merged table
+#   (0-100 percent, ALL ranks/domains) straight into a model trained on
+#   96's species-level relab, a systematic ~2-log10-unit offset under
+#   log.std with zero errors. Filter regex and relab conversion mirror 96's
+#   filter_bac_domain + to_relab (logic re-implemented: 96 is an inline
+#   heredoc and exports nothing); per-cohort kept/dropped counts are
+#   logged. Sample/feature ordering sorts switched to method="radix"
+#   (locale-independent, supervisor WC1R2 P1 leftover).
 # ==============================================================================
 
 options(stringsAsFactors = FALSE, warn = 1)
@@ -216,6 +228,35 @@ load_local_cohort <- function(cohort_name, parent_dir) {
     abund_mat <- rowsum(abund_mat, group = rownames(abund_mat))
   }
   abund_mat <- abund_mat[rowSums(abund_mat) > 0, , drop = FALSE]
+
+  # M-97-DIM (2026-10-01): align with 96's bacteria input regime. The raw
+  # merged table is 0-100 percent over ALL ranks and domains, while 96 (WC1R)
+  # trains on k__Bacteria s__-TERMINAL rows converted to 0-1 relative
+  # abundance - feeding the raw matrix into the frozen log.std normalization
+  # produced a systematic (~2 log10-unit) offset with zero errors. Same regex
+  # and conversion as 96's filter_bac_domain + to_relab (re-implemented, not
+  # imported). Order matches 96: domain filter FIRST, then divide by the
+  # retained species universe's column sums, both BEFORE any sample
+  # subsetting (96's denominator scope = full input-table column sums).
+  feat <- rownames(abund_mat)
+  is_bacteria <- startsWith(feat, "k__Bacteria")
+  is_species <- grepl("\\|s__[^|]*$", feat)  # terminal anchor: t__-terminated strain rows count as higher rank
+  keep <- is_bacteria & is_species
+  if (!any(keep)) {
+    fail_hard("load_cohort", paste0("cohort ", cohort_name,
+      ": no k__Bacteria s__-terminal row(s) in ", abund_file))
+  }
+  abund_mat <- abund_mat[keep, , drop = FALSE]
+  cs <- colSums(abund_mat)
+  cs[!is.finite(cs) | cs <= 0] <- 1
+  abund_mat <- sweep(abund_mat, 2, cs, "/")
+  # Audit line (per cohort): domain-filter counts + relab disclosure
+  cat(sprintf(
+    "[INFO] %s: domain filter kept %d dropped %d; relab converted (dropped: %d non-bacteria-domain, %d unranked, %d higher-rank bacteria; 0-100%% -> 0-1 per-sample column sums over the retained species universe)\n",
+    cohort_name, sum(keep), sum(!keep),
+    sum(!is_bacteria & startsWith(feat, "k__")),
+    sum(!startsWith(feat, "k__")),
+    sum(is_bacteria & !is_species)))
 
   # Load metadata
   meta_file <- file.path(cohort_path, basename(metadata_csv))
@@ -568,8 +609,9 @@ for (cohort_name in eval_cohorts) {
         fail_hard(paste0("predict_", cohort_name, "_", arm_name), "predictions are all NA")
       }
 
-      # Align predictions and labels BY SAMPLE NAME (never by position)
-      common_ids <- sort(intersect(names(pred_vector), names(true_labels)))
+      # Align predictions and labels BY SAMPLE NAME (never by position);
+      # radix = locale-independent ordering (M-97-DIM batch, supervisor P1)
+      common_ids <- sort(intersect(names(pred_vector), names(true_labels)), method = "radix")
       if (length(common_ids) == 0) {
         fail_hard(paste0("align_", cohort_name), "no overlapping sample names between predictions and labels")
       }
@@ -848,7 +890,8 @@ tryCatch({
 
   # Filter to top features
   feature_prevalence <- rowSums(stability_mat)
-  top_stable_features <- names(sort(feature_prevalence, decreasing = TRUE)[1:min(50, length(feature_prevalence))])
+  # radix = locale-independent row ordering (M-97-DIM batch, supervisor P1)
+  top_stable_features <- names(sort(feature_prevalence, decreasing = TRUE, method = "radix")[1:min(50, length(feature_prevalence))])
 
   heat_mat <- stability_mat[top_stable_features, , drop = FALSE]
 
