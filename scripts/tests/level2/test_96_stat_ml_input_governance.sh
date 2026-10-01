@@ -9,6 +9,11 @@
 #            #4 --combination B|V|F|BV|BF|VF|BVF shared-sample intersection
 #            #5 repeats>1 degenerate disclosure
 #
+#          WC1R2 P0-1: virus input switched to the vOTU_TPM_ columns (full
+#          precision; in-block relab conversion is mathematically the 98c
+#          RELAB formula without the %.4f loss); six-decimal precision probe
+#          in the V fixture proves the retired vOTU_RELAB_ path zeroed it.
+#
 #          Supervisor P1-2: fixtures use REAL producer formats, not invented
 #          ones - B block = MetaPhlAn merged taxonomy layout (header,
 #          "#metaphlan4" comment line, UNCLASSIFIED, multi-rank k__Bacteria
@@ -120,16 +125,24 @@ build_bac_taxonomy() {
 #   vOTU_RELAB_<sample> x13 + 10 annotation columns (vOTU_length,
 #   checkv_quality, checkv_completeness, PHROG_category, BACPHLIP_lifestyle,
 #   BACPHLIP_virulent_prob, host_genus, host_confidence, viral_family,
-#   VOG_IDs). RELAB = TPM / per-sample column sum, mirroring 98c fmt_float
-#   (4 digits). vOTUs 1..20 dense (all samples), 21..22 sparse (present in
-#   H1-H3 only, prevalence 3/12 = 0.25).
+#   VOG_IDs). RELAB = TPM / per-sample column sum, rendered like 98c fmt_float
+#   (%.4f). vOTUs 1..20 dense (all samples), 21..22 sparse (H1-H3 only,
+#   prevalence 3/12 = 0.25), vOTU 23 = six-decimal precision probe (TPM 0.15
+#   in every sample vs a ~25k column sum -> true relab ~6.0e-6, i.e. sixth
+#   decimal). WC1R2 P0-1 arithmetic: %.4f(6.0e-6) = "0.0000" in EVERY RELAB
+#   cell of vOTU 23 (rounding floor 0.00005), so the retired vOTU_RELAB_
+#   read path dropped the row at load (rowSums == 0) - the same static
+#   zeroing that hits 28,349/42,137 vOTUs in P01. The vOTU_TPM_ path keeps
+#   the nonzero row through load + relab conversion (n_features = 23); the
+#   1e-4 prefilter then judges it at FULL precision (dropped: mean relab
+#   ~6e-6 < 1e-4) instead of the 4-decimal formatter making the call.
 # ------------------------------------------------------------------------------
 build_vir_98c_relab() {
     local dir="$1"
     mkdir -p "${dir}/result/integration/virus"
     awk -v sv="${SV}" 'BEGIN{
         ns = split(sv, S, " ")
-        nv = 22
+        nv = 23
         for (i = 1; i <= nv; i++) {
             votu[i] = sprintf("vOTU_k127_%03d", i)
             for (j = 1; j <= ns; j++) {
@@ -138,6 +151,9 @@ build_vir_98c_relab() {
                 else              tpm[i, j] = 0
             }
         }
+        # six-decimal precision probe: sub-integer TPM survives %.4f, its
+        # relab (~6e-6) does not
+        for (j = 1; j <= ns; j++) tpm[23, j] = 0.15
         for (j = 1; j <= ns; j++) {
             sc[j] = 0
             for (i = 1; i <= nv; i++) sc[j] += tpm[i, j]
@@ -233,6 +249,32 @@ fi
 grep -q "VIR block: 1 sample column(s) not present in metadata" "${PROJ}/logs/stat/ml/96_stat_ml_siamcat.log" \
     || fail "expected WARN for EXTRA1 (V table sample not in metadata) in the run log"
 echo "[OK] A3: -d virus: 12/12 metadata samples analyzed, EXTRA1 WARNed, no annotation-column leak"
+
+echo "[INFO] A4: vOTU_RELAB_ read path retired from code..."
+if grep -q 'read_vir_relab_matrix' "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh"; then
+    fail "96_stat_ml_siamcat.sh still defines/calls read_vir_relab_matrix"
+fi
+if grep -q 'grep("^vOTU_RELAB_"' "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh"; then
+    fail "96_stat_ml_siamcat.sh still selects columns by the ^vOTU_RELAB_ regex"
+fi
+grep -q 'grep("^vOTU_TPM_", names(raw), value = TRUE)' "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    || fail "96_stat_ml_siamcat.sh no longer selects columns by the ^vOTU_TPM_ prefix"
+grep -q 'read_vir_tpm_matrix' "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    || fail "96_stat_ml_siamcat.sh lacks read_vir_tpm_matrix"
+echo "[OK] A4: column selection is ^vOTU_TPM_ (read_vir_tpm_matrix); ^vOTU_RELAB_ read path fully retired"
+
+echo "[INFO] A5: TPM-column precision probe - the six-decimal vOTU survives the load..."
+# vOTU_k127_023: TPM 0.15 per sample vs ~25k column sum -> true relab ~6.0e-6.
+# 98c-style %.4f renders every vOTU_RELAB_ cell "0.0000" (floor 0.00005), so
+# the retired RELAB path dropped the row at load (rowSums == 0); the TPM path
+# keeps it nonzero through load + in-block relab conversion -> n_features 23.
+VIR_NFEAT="$(sed -n 's/^relab_convert_VIR	OK	n_features=\([0-9]*\) .*/\1/p' "${VIR_ML}/siamcat_status.tsv")"
+[ "${VIR_NFEAT}" = "23" ] \
+    || fail "relab_convert_VIR n_features=${VIR_NFEAT}, expected 23 (the six-decimal vOTU must survive the TPM load; the old RELAB path read 22 - row all-zero at %.4f)"
+VIR_PRE="$(sed -n 's/^prefilter_VIR	OK	features_after=\([0-9]*\)\/\([0-9]*\).*/\1 \2/p' "${VIR_ML}/siamcat_status.tsv")"
+[ "${VIR_PRE}" = "22 23" ] \
+    || fail "prefilter_VIR features_after=${VIR_PRE}, expected '22 23' (probe loaded nonzero, then judged at full precision: mean relab ~6e-6 < 1e-4)"
+echo "[OK] A5: TPM load keeps the six-decimal vOTU (n_features=23); prefilter drops it at full precision (22/23), not at the %.4f rounding floor"
 
 # ==============================================================================
 # Section B (#2): per-block relative-abundance prefilter (FUN| must survive)

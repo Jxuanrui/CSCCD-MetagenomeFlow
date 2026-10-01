@@ -27,8 +27,9 @@ Optional:
   -d  Dimension: bacteria|virus|fungi|all (default: bacteria)
       'all' stacks BAC|/VIR|/FUN| features; the VIR| arm requires the 98c
       virus integration table (result/integration/virus/
-      votu_annotation_matrix_relab.tsv, vOTU_RELAB_<sample> columns) and the
-      FUN| arm requires the 98d fungi integration table
+      votu_annotation_matrix_relab.tsv, vOTU_TPM_<sample> columns - the
+      full-precision TPM block, NOT the %.4f-rounded vOTU_RELAB_ render)
+      and the FUN| arm requires the 98d fungi integration table
       (result/integration/fungi/normalized/funomic_species_relab.tsv)
   --combination BLOCKS
       Explicit feature-block selection: B|V|F|BV|BF|VF|BVF (or 'all' = BVF).
@@ -73,9 +74,11 @@ REPO="$(cd "${REPO}" && pwd)"
 mgx_begin
 
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
-# B3-PREQ①-R #1 (2026-09-30): the virus input is the 98c integration product
-# votu_annotation_matrix_relab.tsv (vOTU x vOTU_RELAB_<sample> columns), not
-# the raw script-60 votu_table.tsv. The old 60-path is fully retired.
+# WC1R2 P0-1 (2026-10-01, user decision #1): the virus input is the 98c
+# integration product votu_annotation_matrix_relab.tsv, consumed through its
+# vOTU_TPM_<sample> columns (not the raw script-60 votu_table.tsv, which is
+# fully retired, and not the table's vOTU_RELAB_ columns - see
+# read_vir_tpm_matrix for the precision rationale).
 VIR_TABLE="${WORKDIR}/result/integration/virus/votu_annotation_matrix_relab.tsv"
 FUNGI_DIR="${WORKDIR}/result/fungi/metaphlan4"
 PHF_FUNGI_TABLE="${WORKDIR}/result/fungi/phf_profiler/merged_abundance_with_taxonomy.tsv"
@@ -234,12 +237,13 @@ if [ ${COMBO_MULTI} -eq 1 ] && case "${COMBINATION}" in *F*) true ;; *) false ;;
     exit 1
 fi
 
-# B3-PREQ①-R #1/#4: any combination containing V requires the 98c virus relab
-# integration table. Fail fast and name the producer (98c) instead of silently
-# degrading to an older abundance table. Also checked after the resume gate (P2-2).
+# WC1R2 P0-1/B3-PREQ①-R #1/#4: any combination containing V requires the 98c
+# virus integration table. Fail fast and name the producer (98c) instead of
+# silently degrading to an older abundance table. Also checked after the
+# resume gate (P2-2).
 if case "${COMBINATION}" in *V*) true ;; *) false ;; esac && [ ! -f "${VIR_TABLE}" ]; then
     echo "[ERROR] --combination ${COMBINATION} (-d ${DIMENSION}) requires the virus integration table: ${VIR_TABLE}"
-    echo "[ERROR] Run scripts/98c_vir_integration_tables.sh first (96 consumes the vOTU_RELAB_<sample> columns)"
+    echo "[ERROR] Run scripts/98c_vir_integration_tables.sh first (96 consumes the vOTU_TPM_<sample> columns at full precision)"
     exit 1
 fi
 
@@ -365,24 +369,34 @@ read_abundance_table <- function(path) {
   mat[rowSums(mat) > 0, , drop = FALSE]
 }
 
-# B3-PREQ①-R #1 (2026-09-30): virus input = 98c votu_annotation_matrix_relab.tsv.
-# The 98c table interleaves vOTU_TPM_<sample>, vOTU_RELAB_<sample> and ~20
-# annotation columns (vOTU_length, checkv_completeness, ...); only the
-# vOTU_RELAB_ block is abundance data. Column names are matched EXPLICITLY by
-# the vOTU_RELAB_ prefix (never by the generic numeric-column heuristic), the
-# prefix is stripped to recover sample names, and vOTU_name is the feature id.
-read_vir_relab_matrix <- function(path) {
+# WC1R2 P0-1 (2026-10-01, user decision #1): virus input = 98c
+# votu_annotation_matrix_relab.tsv TPM columns. The 98c table interleaves
+# vOTU_TPM_<sample>, vOTU_RELAB_<sample> and ~20 annotation columns
+# (vOTU_length, checkv_completeness, ...); the vOTU_TPM_ block is the
+# abundance source. Precision rationale: 98c writes BOTH blocks through
+# fmt_float (%.4f), so every RELAB cell below 0.00005 renders as "0.0000" -
+# P01 static derivation: 28,349/42,137 vOTUs have ALL RELAB cells zero - and
+# the 1e-4 prefilter threshold equals the RELAB rounding step, i.e. the
+# rounded columns quantize exactly at the decision boundary. The TPM cells
+# carry the same information at full precision; to_relab() below divides by
+# the in-block column sum, which is the SAME formula 98c uses for RELAB
+# (TPM / per-sample column total) computed without the 4-decimal loss
+# (mathematically equivalent, full precision). Column names are matched
+# EXPLICITLY by the vOTU_TPM_ prefix (never by the generic numeric-column
+# heuristic, which would swallow the annotation columns), the prefix is
+# stripped to recover sample names, and vOTU_name is the feature id.
+read_vir_tpm_matrix <- function(path) {
   raw <- readr::read_tsv(path, show_col_types = FALSE, comment = "#")
   if (!"vOTU_name" %in% names(raw)) {
     stop("98c virus table lacks the vOTU_name feature column: ", path)
   }
-  relab_cols <- grep("^vOTU_RELAB_", names(raw), value = TRUE)
-  if (length(relab_cols) == 0) {
-    stop("98c virus table has no vOTU_RELAB_<sample> columns: ", path)
+  tpm_cols <- grep("^vOTU_TPM_", names(raw), value = TRUE)
+  if (length(tpm_cols) == 0) {
+    stop("98c virus table has no vOTU_TPM_<sample> columns: ", path)
   }
-  samples <- sub("^vOTU_RELAB_", "", relab_cols)
+  samples <- sub("^vOTU_TPM_", "", tpm_cols)
   tab <- raw %>%
-    dplyr::select(feature = vOTU_name, dplyr::all_of(relab_cols))
+    dplyr::select(feature = vOTU_name, dplyr::all_of(tpm_cols))
   names(tab) <- c("feature", samples)
   tab[samples] <- coerce_numeric_df(tab[samples])
   tab <- tab %>%
@@ -491,8 +505,9 @@ load_matrix <- function() {
       blocks$BAC <- filter_bac_domain(read_abundance_table(bact_table))
       assert_block_samples("BAC", blocks$BAC, rownames(meta), bact_table)
     } else if (letter == "V") {
-      # B3-PREQ①-R #1: 98c relab matrix + metadata defensive assertion
-      blocks$VIR <- read_vir_relab_matrix(vir_table)
+      # WC1R2 P0-1: 98c TPM matrix (full precision; in-block relab conversion
+      # below) + metadata defensive assertion
+      blocks$VIR <- read_vir_tpm_matrix(vir_table)
       assert_block_samples("VIR", blocks$VIR, rownames(meta), vir_table)
     } else if (letter == "F") {
       # Multi-block combinations always use the 98d funomic integration
