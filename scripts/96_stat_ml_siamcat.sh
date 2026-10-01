@@ -90,7 +90,6 @@ done
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
 export MGX_OPTS_STRING="w:WORKDIR r:REPO t:THREADS m:METADATA_CSV g:GROUP_COL d:DIMENSION M:FUNGI_METHOD"
-export MGX_FUNGI_METHOD
 export MGX_OPTS_FLAG="force skip-shap"
 export MGX_OPTS_LONG="folds:FOLDS repeats:REPEATS combination:COMBINATION sample-set:SAMPLE_SET"
 mgx_parse "$@"

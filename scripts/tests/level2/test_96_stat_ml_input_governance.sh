@@ -315,8 +315,8 @@ VIR_NFEAT="$(sed -n 's/^relab_convert_VIR	OK	n_features=\([0-9]*\) .*/\1/p' "${V
     || fail "relab_convert_VIR n_features=${VIR_NFEAT}, expected 23 (the six-decimal vOTU must survive the TPM load; the old RELAB path read 22 - row all-zero at %.4f)"
 VIR_PRE="$(sed -n 's/^prefilter_VIR	OK	features_after=\([0-9]*\)\/\([0-9]*\).*/\1 \2/p' "${VIR_ML}/siamcat_status.tsv")"
 [ "${VIR_PRE}" = "22 23" ] \
-    || fail "prefilter_VIR features_after=${VIR_PRE}, expected '22 23' (probe loaded nonzero, then judged at full precision: mean relab ~6e-6 < 1e-4)"
-echo "[OK] A5: TPM load keeps the six-decimal vOTU (n_features=23); prefilter drops it at full precision (22/23), not at the %.4f rounding floor"
+    || fail "prefilter_VIR features_after=${VIR_PRE}, expected '22 23' (probe loaded nonzero, then judged at full TPM precision: mean relab ~6e-6 < 1e-4)"
+echo "[OK] A5: TPM load keeps the six-decimal vOTU (n_features=23); prefilter drops it at full TPM precision (22/23), not at the %.4f rounding floor"
 
 # ==============================================================================
 # Section B (#2): per-block relative-abundance prefilter (FUN| must survive)
@@ -741,6 +741,40 @@ grep -q "fungi_method=phf" "${C2M_LOG}" \
     || { rm -f "${C2M_LOG}"; fail "C2: expected fungi_method in mismatch error"; }
 rm -f "${C2M_LOG}"
 echo "[OK] C2: fungi_method mismatch (phf vs funomic) blocks resume"
+
+# SKIPPED-path contract: <10 samples => SKIPPED sentinel + minimal manifest,
+# and resuming that sentinel (no --force) exits 0 (supervisor P1).
+SK_DIR="$(mktemp -d)"
+mkdir -p "${SK_DIR}/result/metaphlan4/merged"
+python3 - "${SK_DIR}" <<'PYSKIP'
+import sys
+d = sys.argv[1]
+ss = ["H1","H2","H3","H4","H5","D1","D2","D3","D4","D5"]  # 10 total, 5/class -> SIAMCAT refuses
+with open(f"{d}/result/metaphlan4/merged/taxonomy.tsv","w") as f:
+    f.write("ID\t" + "\t".join(ss) + "\n#metaphlan4\n")
+    for i in range(6):
+        f.write(f"k__Bacteria|p__P{i}|c__C|o__O|f__F|g__G|s__S{i}\t" + "\t".join(str(1.0+(j%3)) for j in range(10)) + "\n")
+with open(f"{d}/metadata.csv","w") as f:
+    f.write("sample_id,group\n")
+    for s in ss: f.write(f"{s},{'Healthy' if s.startswith('H') else 'Tumor'}\n")
+PYSKIP
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+        -w "${SK_DIR}" -r "${REPO_ROOT}" -t 2 \
+        -m "${SK_DIR}/metadata.csv" -g group -d bacteria --skip-shap \
+        > /dev/null 2>&1
+SK_ML="${SK_DIR}/result/stat/bacteria/ml"
+grep -q "^SKIPPED" "${SK_ML}/siamcat_done.txt" \
+    || { rm -rf "${SK_DIR}"; fail "SKIPPED: sentinel not written for insufficient-per-class"; }
+grep -q "^combination=B$" "${SK_ML}/split_manifest.txt" \
+    || { rm -rf "${SK_DIR}"; fail "SKIPPED: minimal manifest missing combination=B"; }
+if ! bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+        -w "${SK_DIR}" -r "${REPO_ROOT}" -t 2 \
+        -m "${SK_DIR}/metadata.csv" -g group -d bacteria --skip-shap \
+        > /dev/null 2>&1; then
+    rm -rf "${SK_DIR}"; fail "SKIPPED: regime-matched SKIPPED resume did not exit 0"
+fi
+rm -rf "${SK_DIR}"
+echo "[OK] SKIPPED: sentinel + minimal manifest; matched resume exits 0"
 echo "[PASS] 96 input governance sections A-G + C2 (#1 98c TPM source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure, P0-1 TPM precision, P0-3 sample-set, P0-4 P01 static-derivation counts + Q3 persistent disclosure + C2 regime-guarded resume)"
 
 cleanup
