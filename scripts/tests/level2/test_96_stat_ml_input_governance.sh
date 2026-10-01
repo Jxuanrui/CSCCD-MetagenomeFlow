@@ -14,6 +14,13 @@
 #          RELAB formula without the %.4f loss); six-decimal precision probe
 #          in the V fixture proves the retired vOTU_RELAB_ path zeroed it.
 #
+#          WC1R2 P0-3: sample-set normalization - sample names sorted before
+#          use (split order independent of table column order); explicit
+#          --combination defaults to --sample-set BVF (the seven protocol
+#          runs share the B-V-F three-table intersection); -d fungi / any
+#          --combination containing F pins the 98d funomic table (-M only
+#          works when explicitly passed, then warns non-protocol).
+#
 #          Supervisor P1-2: fixtures use REAL producer formats, not invented
 #          ones - B block = MetaPhlAn merged taxonomy layout (header,
 #          "#metaphlan4" comment line, UNCLASSIFIED, multi-rank k__Bacteria
@@ -24,7 +31,11 @@
 #          (species + sample relab columns). 12 shared cohort samples across
 #          all three blocks; EXTRA1 exists only in the V/F tables (not in
 #          metadata, not in B) to exercise the unmatched-column WARN and the
-#          combination sample intersection.
+#          combination sample intersection; BONLY1 exists only in B (and in
+#          metadata, control) - the BVF protocol pool must exclude it while
+#          single-block auto mode keeps it; the V table columns are written
+#          in a deliberately scrambled order (different from B's order and
+#          from the sorted sequence) to prove the sort() normalization.
 # Usage:   bash scripts/tests/level2/test_96_stat_ml_input_governance.sh
 # ==============================================================================
 
@@ -39,8 +50,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-S12="H1 H2 H3 H4 H5 H6 D1 D2 D3 D4 D5 D6"
-SV="H1 H2 H3 H4 H5 H6 D1 D2 D3 D4 D5 D6 EXTRA1"
+# B table carries the 12 cohort samples + BONLY1 (P0-3: the B-only sample)
+SB="H1 H2 H3 H4 H5 H6 D1 D2 D3 D4 D5 D6 BONLY1"
+# V/F tables carry the 12 cohort samples + EXTRA1 (no metadata row). The V
+# column order is scrambled on purpose (P0-3: sort() must normalize it).
+SV="H3 D6 H1 D4 H5 D2 H6 D1 H2 D5 D3 H4 EXTRA1"
+# canonical sorted 12-sample intersection (B-V-F pool and B/V pool alike)
+EXP12="D1,D2,D3,D4,D5,D6,H1,H2,H3,H4,H5,H6"
 
 fail() {
     echo "[FAIL] $1"
@@ -48,7 +64,7 @@ fail() {
 }
 
 # ------------------------------------------------------------------------------
-# Fixture block 1: metadata (12 samples, 6 control / 6 case)
+# Fixture block 1: metadata (13 samples: 6 control H + BONLY1 control, 6 case D)
 # ------------------------------------------------------------------------------
 build_metadata() {
     local dir="$1"
@@ -56,23 +72,25 @@ build_metadata() {
         echo "sample_id,group"
         for i in 1 2 3 4 5 6; do echo "H${i},control"; done
         for i in 1 2 3 4 5 6; do echo "D${i},case"; done
+        echo "BONLY1,control"
     } > "${dir}/metadata.csv"
 }
 
 # ------------------------------------------------------------------------------
 # Fixture block 2 (B): MetaPhlAn merged taxonomy REAL format.
-#   line 1 header (ID + samples), line 2 "#metaphlan4" comment, UNCLASSIFIED
-#   row, k__Bacteria kingdom + 2 phylum higher-rank rows, 24 full-chain
-#   species rows (i=1..8 class-shifted markers, 9..24 noise), then
-#   non-bacteria domain lineages: 4 k__Eukaryota rows (1 higher-rank + 3
-#   species) and 3 k__Archaea rows (1 higher-rank + 2 species).
+#   line 1 header (ID + 13 samples = 12 cohort + BONLY1), line 2 "#metaphlan4"
+#   comment, UNCLASSIFIED row, k__Bacteria kingdom + 2 phylum higher-rank
+#   rows, 24 full-chain species rows (i=1..8 class-shifted markers, 9..24
+#   noise), then non-bacteria domain lineages: 4 k__Eukaryota rows (1
+#   higher-rank + 3 species) and 3 k__Archaea rows (1 higher-rank + 2
+#   species).
 #   => domain filter expectation: kept_s_species=24, dropped_domain=7,
 #      dropped_unranked=1 (UNCLASSIFIED), dropped_higher_rank=3.
 # ------------------------------------------------------------------------------
 build_bac_taxonomy() {
     local dir="$1"
     mkdir -p "${dir}/result/metaphlan4/merged"
-    awk -v s12="${S12}" 'BEGIN{
+    awk -v s12="${SB}" 'BEGIN{
         ns = split(s12, S, " ")
         printf "ID"; for (j = 1; j <= ns; j++) printf "\t%s", S[j]; print ""
         print "#metaphlan4"
@@ -328,28 +346,34 @@ grep -q "BAC| domain filter: kept 24 k__Bacteria s__ row(s); dropped 7 non-bacte
 echo "[OK] C1: domain filter counts kept=24 dropped_domain=7 dropped_unranked=1 dropped_higher_rank=3 (matches constructed fixture)"
 
 # ==============================================================================
-# Section D (#4): --combination block selection + shared sample intersection
+# Section D (#4 + P0-3): --combination block selection + shared sample
+#   intersection. EXP12 is the canonical SORTED sequence: the B table column
+#   order is H1..H6,D1..D6,BONLY1 and the V table order is scrambled, so a
+#   byte-identical combo_samples line across the BVF and BV runs proves the
+#   sort() normalization (neither table's order leaks into the manifest).
 # ==============================================================================
-
-EXP12="H1,H2,H3,H4,H5,H6,D1,D2,D3,D4,D5,D6"
 
 echo "[INFO] D1: the -d all run (section B) derived combination=BVF in its manifest..."
 [ "$(sed -n 's/^combination=//p' "${ALL_ML}/split_manifest.txt")" = "BVF" ] \
     || fail "-d all did not record combination=BVF in split_manifest.txt"
+[ "$(sed -n 's/^sample_set=//p' "${ALL_ML}/split_manifest.txt")" = "auto" ] \
+    || fail "-d all (no explicit --combination) did not default to sample_set=auto"
 [ "$(sed -n 's/^combo_n_samples=//p' "${ALL_ML}/split_manifest.txt")" = "12" ] \
     || fail "-d all combo_n_samples != 12"
 
-echo "[INFO] D2: explicit --combination BVF run (same output dir as -d all)..."
+echo "[INFO] D2: explicit --combination BVF run (defaults to sample_set=BVF; same output dir as -d all)..."
 bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
     -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
     -m "${PROJ}/metadata.csv" -g group --combination BVF --force --skip-shap
 BVF_MANIFEST="${ALL_ML}/split_manifest.txt"
 [ -s "${ALL_ML}/siamcat_done.txt" ] || fail "--combination BVF run sentinel missing"
 [ "$(sed -n 's/^combination=//p' "${BVF_MANIFEST}")" = "BVF" ] || fail "BVF manifest combination != BVF"
+[ "$(sed -n 's/^sample_set=//p' "${BVF_MANIFEST}")" = "BVF" ] \
+    || fail "explicit --combination BVF did not default to sample_set=BVF"
 [ "$(sed -n 's/^combo_samples=//p' "${BVF_MANIFEST}")" = "${EXP12}" ] \
-    || fail "BVF combo_samples != 12-sample intersection (EXTRA1 must be excluded)"
+    || fail "BVF combo_samples != sorted 12-sample intersection (EXTRA1 and BONLY1 must be excluded)"
 [ "$(sed -n 's/^n_samples=//p' "${BVF_MANIFEST}")" = "12" ] || fail "BVF n_samples != 12"
-echo "[OK] D2: --combination BVF: sample set = 12-sample table intersection, EXTRA1 excluded"
+echo "[OK] D2: --combination BVF: sample_set=BVF default, sorted 12-sample intersection, EXTRA1+BONLY1 excluded"
 
 echo "[INFO] D3: --combination BV run (own output dir, FUN| block absent)..."
 bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
@@ -359,15 +383,17 @@ BV_ML="${PROJ}/result/stat/ml_BV"
 [ -s "${BV_ML}/siamcat_done.txt" ] || fail "--combination BV sentinel missing under result/stat/ml_BV/"
 BV_MANIFEST="${BV_ML}/split_manifest.txt"
 [ "$(sed -n 's/^combination=//p' "${BV_MANIFEST}")" = "BV" ] || fail "BV manifest combination != BV"
+[ "$(sed -n 's/^sample_set=//p' "${BV_MANIFEST}")" = "BVF" ] \
+    || fail "explicit --combination BV did not default to sample_set=BVF (protocol: same pool as BVF)"
 [ "$(sed -n 's/^combo_samples=//p' "${BV_MANIFEST}")" = "${EXP12}" ] \
-    || fail "BV combo_samples != same 12-sample intersection as BVF"
+    || fail "BV combo_samples != the same sorted intersection as the BVF run (B/V column orders differ; sort must normalize)"
 [ "$(sed -n 's/^n_samples=//p' "${BV_MANIFEST}")" = "12" ] || fail "BV n_samples != 12"
 grep -q "^prefilter_BAC	" "${BV_ML}/siamcat_status.tsv" || fail "BV status lacks prefilter_BAC"
 grep -q "^prefilter_VIR	" "${BV_ML}/siamcat_status.tsv" || fail "BV status lacks prefilter_VIR"
 if grep -q "^prefilter_FUN	" "${BV_ML}/siamcat_status.tsv"; then
     fail "BV status contains prefilter_FUN - the FUN block must NOT be loaded for --combination BV"
 fi
-echo "[OK] D3: --combination BV: same 12-sample intersection, FUN| block absent, own dir result/stat/ml_BV/"
+echo "[OK] D3: --combination BV: sample_set=BVF, byte-identical sorted combo_samples to the BVF run, FUN| block absent, own dir result/stat/ml_BV/"
 
 echo "[INFO] D4: invalid combination rejected; --combination takes precedence over -d..."
 set +e
@@ -433,6 +459,112 @@ if grep -q "^repeats=" "${B_ML}/split_manifest.txt"; then
 fi
 grep -q "^combination=B$" "${B_ML}/split_manifest.txt" \
     || fail "-d bacteria manifest lacks combination=B"
-echo "[OK] E2: --repeats 1 byte-compatible single-run summary, no repeats artifacts"
+# P0-3 assertion (a), auto half: single-block auto mode keeps the B-only
+# sample (13 = 12 cohort + BONLY1); the BVF protocol pool excludes it (F1)
+N_AUTO="$(sed -n 's/^n_samples=//p' "${B_ML}/split_manifest.txt")"
+[ "${N_AUTO}" = "13" ] \
+    || fail "sample_set=auto single-block B analyzed ${N_AUTO} samples, expected 13 (BONLY1 is in B and in metadata - auto keeps it)"
+echo "[OK] E2: --repeats 1 byte-compatible single-run summary, no repeats artifacts; auto single-block n_samples=13 (BONLY1 kept)"
 
-echo "[PASS] 96 input governance sections A-E (#1 98c source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure)"
+# ==============================================================================
+# Section F (P0-3): sample-set normalization (sort + BVF protocol pool +
+# pinned 98d fungi source). Fixture premises: BONLY1 sits in B+metadata only
+# (assertion (a)); B column order = H1..H6,D1..D6,BONLY1, V column order
+# scrambled (assertion (b) via byte-identical sorted combo_samples).
+# ==============================================================================
+
+echo "[INFO] F1: --combination B (explicit) defaults to sample_set=BVF, excludes the B-only sample..."
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group --combination B --force --skip-shap
+B_MANIFEST="${B_ML}/split_manifest.txt"
+[ -s "${B_ML}/siamcat_done.txt" ] || fail "--combination B sentinel missing"
+[ "$(sed -n 's/^combination=//p' "${B_MANIFEST}")" = "B" ] || fail "--combination B manifest combination != B"
+[ "$(sed -n 's/^sample_set=//p' "${B_MANIFEST}")" = "BVF" ] \
+    || fail "explicit --combination B did not default to sample_set=BVF"
+[ "$(sed -n 's/^combo_n_samples=//p' "${B_MANIFEST}")" = "12" ] \
+    || fail "--combination B (BVF pool) combo_n_samples != 12"
+[ "$(sed -n 's/^combo_samples=//p' "${B_MANIFEST}")" = "${EXP12}" ] \
+    || fail "--combination B (BVF pool) combo_samples != sorted 12-sample B-V-F intersection (BONLY1 must be excluded: absent from V/F)"
+[ "$(sed -n 's/^n_samples=//p' "${B_MANIFEST}")" = "12" ] \
+    || fail "--combination B (BVF pool) n_samples != 12 (BONLY1 excluded; contrast with auto=13 in E2)"
+grep -q "sample_set=BVF" "${PROJ}/logs/stat/ml/96_stat_ml_siamcat.log" \
+    || fail "run log lacks the sample_set=BVF contract line"
+grep -q "shared sample pool n=12" "${PROJ}/logs/stat/ml/96_stat_ml_siamcat.log" \
+    || fail "run log lacks the BVF pool intersection size"
+grep -q "protocol-pinned 98d" "${PROJ}/logs/stat/ml/96_stat_ml_siamcat.log" \
+    || fail "run log lacks the protocol-pinned 98d fungi input line"
+if grep -q "^prefilter_VIR	\|^prefilter_FUN	" "${B_ML}/siamcat_status.tsv"; then
+    fail "--combination B status carries VIR/FUN prefilter rows (pool reads must not load feature blocks)"
+fi
+echo "[OK] F1: --combination B: sample_set=BVF default, 12-sample pool (BONLY1 excluded vs auto's 13), VIR/FUN not feature-loaded"
+
+echo "[INFO] F2: cheap negatives - invalid --sample-set, BVF pool gates, <10 intersection, -M override..."
+NEG_BVF="${FIXTURE}/NegBVF"
+mkdir -p "${NEG_BVF}"
+{
+    echo "sample_id,group"
+    for i in 1 2 3 4 5 6; do echo "H${i},control"; done
+    for i in 1 2 3 4 5 6; do echo "D${i},case"; done
+    for i in 1 2 3 4; do echo "M${i},case"; done
+} > "${NEG_BVF}/metadata.csv"
+build_bac_taxonomy "${NEG_BVF}"
+build_fun_98d_funomic "${NEG_BVF}"
+# V table: only 9 canonical samples overlap B/F; M1-M4 pad the metadata
+# overlap past the defensive >=10 assertion so the failure is the BVF
+# INTERSECTION check itself (pools: B=13, V=13, F=13 -> intersection 9)
+mkdir -p "${NEG_BVF}/result/integration/virus"
+awk 'BEGIN{
+    ns = split("H1 H2 H3 H4 H5 H6 D1 D2 D3 M1 M2 M3 M4", S, " ")
+    nv = 22
+    printf "vOTU_name"
+    for (j = 1; j <= ns; j++) printf "\tvOTU_TPM_%s", S[j]
+    for (j = 1; j <= ns; j++) printf "\tvOTU_RELAB_%s", S[j]
+    print "\tvOTU_length\tcheckv_quality\tcheckv_completeness\tPHROG_category\tBACPHLIP_lifestyle\tBACPHLIP_virulent_prob\thost_genus\thost_confidence\tviral_family\tVOG_IDs"
+    for (i = 1; i <= nv; i++) {
+        printf "vOTU_k127_%03d", i
+        for (j = 1; j <= ns; j++) printf "\t%.4f", 500 + (i * 137 + j * 89) % 1500
+        for (j = 1; j <= ns; j++) printf "\t%.4f", 0.001
+        printf "\t%d\tComplete\t%.2f\tconnector\tTemperate\t%.4f\tStreptococcus\t%.2f\tSiphoviridae\tVOG%06di\n", 42000 + i * 13, 82.5, 0.27, 0.78, i
+    }
+}' > "${NEG_BVF}/result/integration/virus/votu_annotation_matrix_relab.tsv"
+set +e
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group --sample-set X --force --skip-shap \
+    > "${FIXTURE}/badset.out" 2>&1
+RC_SET=$?
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${MISSING_DIR}" -r "${REPO_ROOT}" -t 2 \
+    -m "${MISSING_DIR}/metadata.csv" -g group -d bacteria --sample-set BVF --force --skip-shap \
+    > "${FIXTURE}/bvf98c.out" 2>&1
+RC_BVF98C=$?
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${NEG_BVF}" -r "${REPO_ROOT}" -t 2 \
+    -m "${NEG_BVF}/metadata.csv" -g group --combination B --sample-set BVF --force --skip-shap \
+    > "${FIXTURE}/negbvf.out" 2>&1
+RC_NEG=$?
+bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
+    -w "${PROJ}" -r "${REPO_ROOT}" -t 2 \
+    -m "${PROJ}/metadata.csv" -g group -d fungi -M phf --force --skip-shap \
+    > "${FIXTURE}/mphf.out" 2>&1
+RC_MPHF=$?
+set -e
+[ "${RC_SET}" -ne 0 ] || fail "invalid --sample-set X was accepted (rc=0)"
+grep -q "Invalid --sample-set: X" "${FIXTURE}/badset.out" || fail "missing Invalid --sample-set error text"
+[ "${RC_BVF98C}" -ne 0 ] || fail "--sample-set BVF without 98c table unexpectedly succeeded"
+grep -q "98c_vir_integration_tables.sh" "${FIXTURE}/bvf98c.out" \
+    || fail "BVF pool gate did not name 98c (V table required for the pool even with -d bacteria)"
+[ "${RC_NEG}" -ne 0 ] || fail "BVF intersection <10 unexpectedly succeeded"
+grep -q "sample_set=BVF combination B: input-table sample intersection = 9" "${FIXTURE}/negbvf.out" \
+    || fail "negative BVF run lacks the intersection=9 error"
+grep -q "Per-table sample counts: B=13, V=13, F=13" "${FIXTURE}/negbvf.out" \
+    || fail "negative BVF run lacks the per-table sample counts"
+[ "${RC_MPHF}" -ne 0 ] || fail "-d fungi -M phf (no PHF table) unexpectedly succeeded"
+grep -q "non-protocol fungi source" "${FIXTURE}/mphf.out" \
+    || fail "-M phf run lacks the non-protocol WARN"
+grep -q "PHF fungi abundance table not found" "${FIXTURE}/mphf.out" \
+    || fail "-M phf run lacks the PHF table-not-found error"
+echo "[OK] F2: --sample-set validated; BVF pool gates name 98c; <10 intersection errors with per-table counts; -M explicit warns non-protocol"
+
+echo "[PASS] 96 input governance sections A-F (#1 98c TPM source, #2 per-block relab, #3 domain filter, #4 combination, #5 degenerate disclosure, P0-1 TPM precision, P0-3 sample-set)"

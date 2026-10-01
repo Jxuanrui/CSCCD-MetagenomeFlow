@@ -34,12 +34,25 @@ Optional:
   --combination BLOCKS
       Explicit feature-block selection: B|V|F|BV|BF|VF|BVF (or 'all' = BVF).
       Takes precedence over -d; -d stays as the dimension shorthand
-      (bacteria=B, virus=V, fungi=F, all=BVF). The shared sample set is
-      the intersection of the selected blocks' input-table samples,
-      computed once and recorded in split_manifest.txt. Output dirs:
-      B/V/F reuse the single-dimension dirs; BV/BF/VF go to
+      (bacteria=B, virus=V, fungi=F, all=BVF). Passing --combination
+      explicitly switches the default sample set to 'BVF' (protocol: the
+      seven runs share ONE sample set, single blocks included). Output
+      dirs: B/V/F reuse the single-dimension dirs; BV/BF/VF go to
       result/stat/ml_<COMBINATION>/; BVF equals -d all (result/stat/ml/)
-  -M  Fungi input method: auto|phf|funomic|metaphlan4 (default: auto)
+  --sample-set SET
+      Shared sample set: auto (default) = intersection of the SELECTED
+      blocks' input-table samples (non-protocol convenience); BVF = the
+      B-V-F three-table intersection regardless of the selected blocks
+      (A-2 protocol section 4 premise; default whenever --combination is
+      passed explicitly). Sample names are sorted before use, so the
+      split input order is deterministic and independent of the input
+      tables' column order; the set and its size are logged and written
+      to split_manifest.txt (sample_set=, combo_n_samples=)
+  -M  Fungi input method: phf|funomic|metaphlan4 - NON-PROTOCOL override.
+      Protocol runs (-d fungi, or any --combination containing F) pin the
+      98d funomic integration table as the FUN| source; -M only takes
+      effect when explicitly passed and then warns that the run leaves
+      the protocol source contract
   --folds  Cross-validation folds (default: 10)
   --repeats N  Outer repeat loop: N independent split+train+evaluate passes
                (default: 1 = current single-pass behavior). Repeat i uses
@@ -58,11 +71,27 @@ FUNGI_METHOD="auto"
 FOLDS="10"
 REPEATS="1"
 COMBINATION=""
+SAMPLE_SET=""
+
+# WC1R2 P0-3 (2026-10-01, user decisions #2/#3): --combination / --sample-set
+# / -M change DEFAULTS when explicitly passed, and value equality cannot
+# distinguish "explicitly given" from "left at default" (mgx_parse fills the
+# same variables either way). Scan the raw args once, before parsing.
+COMBINATION_EXPLICIT=0
+SAMPLE_SET_EXPLICIT=0
+FUNGI_METHOD_EXPLICIT=0
+for _arg in "$@"; do
+    case "${_arg}" in
+        --combination|--combination=*) COMBINATION_EXPLICIT=1 ;;
+        --sample-set|--sample-set=*) SAMPLE_SET_EXPLICIT=1 ;;
+        -M|-M=*) FUNGI_METHOD_EXPLICIT=1 ;;
+    esac
+done
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
 export MGX_OPTS_STRING="w:WORKDIR r:REPO t:THREADS m:METADATA_CSV g:GROUP_COL d:DIMENSION M:FUNGI_METHOD"
 export MGX_OPTS_FLAG="force skip-shap"
-export MGX_OPTS_LONG="folds:FOLDS repeats:REPEATS combination:COMBINATION"
+export MGX_OPTS_LONG="folds:FOLDS repeats:REPEATS combination:COMBINATION sample-set:SAMPLE_SET"
 mgx_parse "$@"
 mgx_require WORKDIR REPO THREADS METADATA_CSV GROUP_COL
 
@@ -119,6 +148,30 @@ case "${COMBINATION}" in
 esac
 COMBO_MULTI=0
 [ "${#COMBINATION}" -gt 1 ] && COMBO_MULTI=1
+
+# WC1R2 P0-3 (user decision #2): sample-set normalization. auto keeps the
+# per-combination intersection of the selected blocks' input tables (current
+# behavior, non-protocol convenience); an explicitly passed --combination
+# flips the default to BVF, so the seven protocol runs (B/V/F/BV/BF/VF/BVF)
+# share ONE sample set = the B-V-F three-table intersection - single-block
+# protocol runs included - and paired comparisons never compare different
+# cohorts. An explicit --sample-set always wins over both defaults.
+if [ -z "${SAMPLE_SET}" ]; then
+    if [ "${COMBINATION_EXPLICIT}" -eq 1 ]; then
+        SAMPLE_SET="BVF"
+    else
+        SAMPLE_SET="auto"
+    fi
+fi
+case "${SAMPLE_SET}" in
+    auto|BVF) ;;
+    *)
+        echo "[ERROR] Invalid --sample-set: ${SAMPLE_SET} (expected auto|BVF)"
+        show_help
+        exit 1
+        ;;
+esac
+
 case "${COMBINATION}" in
     B) RESULT_DIR="${WORKDIR}/result/stat/bacteria/ml" ;;
     V) RESULT_DIR="${WORKDIR}/result/stat/virus/ml" ;;
@@ -133,6 +186,14 @@ SENTINEL="${RESULT_DIR}/siamcat_done.txt"
 mkdir -p "${RESULT_DIR}" "${VIZ_ML_DIR}" "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/96_stat_ml_siamcat.log"
 exec > >(tee -a "${LOG_FILE}") 2>&1
+
+# WC1R2 P0-3: sample-set contract line (into the run log; the intersection
+# size follows from the R stage once the tables are read)
+if [ "${SAMPLE_SET}" = "BVF" ]; then
+    echo "[INFO] sample_set=BVF: shared sample pool = B-V-F input-table intersection (protocol: explicit --combination defaults to BVF; --sample-set explicitly passed=${SAMPLE_SET_EXPLICIT})"
+else
+    echo "[INFO] sample_set=auto: per-combination input-table intersection (non-protocol default)"
+fi
 
 run_ml_visualization() {
     export RESULT_DIR VIZ_ML_DIR
@@ -174,48 +235,60 @@ if [ ! -f "${METADATA_CSV}" ]; then
     exit 1
 fi
 
-case "${FUNGI_METHOD}" in
-    auto)
-        if [ -f "${PHF_FUNGI_TABLE}" ]; then
-            FUNGI_METHOD="phf"
+# WC1R2 P0-3 (user decision #3): the FUN| arm is PINNED to the 98d funomic
+# integration table for protocol use (-d fungi, or any --combination
+# containing F). The old -M auto source switching no longer applies by
+# default; -M takes effect ONLY when explicitly passed, and such a run is
+# warned as leaving the protocol source contract (table existence for the
+# pinned source is gated after the resume gate below).
+if [ "${FUNGI_METHOD_EXPLICIT}" -eq 1 ]; then
+    echo "[WARN] -M ${FUNGI_METHOD}: non-protocol fungi source (explicit -M overrides the pinned 98d funomic table)"
+    case "${FUNGI_METHOD}" in
+        auto)
+            if [ -f "${PHF_FUNGI_TABLE}" ]; then
+                FUNGI_METHOD="phf"
+                FUNGI_ABUND_TABLE="${PHF_FUNGI_TABLE}"
+            elif [ -f "${FUNOMIC_FUNGI_TABLE}" ]; then
+                FUNGI_METHOD="funomic"
+                FUNGI_ABUND_TABLE="${FUNOMIC_FUNGI_TABLE}"
+            else
+                FUNGI_METHOD="metaphlan4"
+                FUNGI_ABUND_TABLE="${WORKDIR}/result/fungi/metaphlan4/merged_abundance_table.txt"
+            fi
+            ;;
+        phf)
             FUNGI_ABUND_TABLE="${PHF_FUNGI_TABLE}"
-        elif [ -f "${FUNOMIC_FUNGI_TABLE}" ]; then
-            FUNGI_METHOD="funomic"
+            if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
+                echo "[ERROR] PHF fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
+                exit 1
+            fi
+            ;;
+        funomic)
             FUNGI_ABUND_TABLE="${FUNOMIC_FUNGI_TABLE}"
-        else
-            FUNGI_METHOD="metaphlan4"
+            if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
+                echo "[ERROR] FunOMIC fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
+                exit 1
+            fi
+            ;;
+        metaphlan4)
             FUNGI_ABUND_TABLE="${WORKDIR}/result/fungi/metaphlan4/merged_abundance_table.txt"
-        fi
-        ;;
-    phf)
-        FUNGI_ABUND_TABLE="${PHF_FUNGI_TABLE}"
-        if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
-            echo "[ERROR] PHF fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
+            if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
+                echo "[ERROR] MetaPhlAn4 fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
+                exit 1
+            fi
+            ;;
+        *)
+            echo "[ERROR] Invalid fungi method: ${FUNGI_METHOD}"
+            show_help
             exit 1
-        fi
-        ;;
-    funomic)
-        FUNGI_ABUND_TABLE="${FUNOMIC_FUNGI_TABLE}"
-        if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
-            echo "[ERROR] FunOMIC fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
-            exit 1
-        fi
-        ;;
-    metaphlan4)
-        FUNGI_ABUND_TABLE="${WORKDIR}/result/fungi/metaphlan4/merged_abundance_table.txt"
-        if [ ! -f "${FUNGI_ABUND_TABLE}" ]; then
-            echo "[ERROR] MetaPhlAn4 fungi abundance table not found: ${FUNGI_ABUND_TABLE}"
-            exit 1
-        fi
-        ;;
-    *)
-        echo "[ERROR] Invalid fungi method: ${FUNGI_METHOD}"
-        show_help
-        exit 1
-        ;;
-esac
-
-echo "[INFO] Fungi input: METHOD=${FUNGI_METHOD} TABLE=${FUNGI_ABUND_TABLE:-${FUNGI_DIR}}"
+            ;;
+    esac
+    echo "[INFO] Fungi input: METHOD=${FUNGI_METHOD} TABLE=${FUNGI_ABUND_TABLE:-${FUNGI_DIR}} (non-protocol: explicit -M)"
+else
+    FUNGI_METHOD="funomic"
+    FUNGI_ABUND_TABLE="${FUNOMIC_FUNGI_TABLE}"
+    echo "[INFO] Fungi input: METHOD=funomic TABLE=${FUNGI_ABUND_TABLE} (protocol-pinned 98d; -M overrides only when explicitly passed)"
+fi
 
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     echo "[INFO] Sentinel exists, skipping: ${SENTINEL}"
@@ -228,22 +301,39 @@ if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     exit 0
 fi
 
-# W-C1(2)/B3-PREQ①-R #4: multi-block combinations containing F require the
-# 98d fungi integration table (stacked FUN| arm). Single F keeps the -M
-# fungi-method resolution. Checked AFTER the resume gate (P2-2).
-if [ ${COMBO_MULTI} -eq 1 ] && case "${COMBINATION}" in *F*) true ;; *) false ;; esac && [ ! -f "${FUN_TABLE}" ]; then
-    echo "[ERROR] --combination ${COMBINATION} requires the fungi integration table: ${FUN_TABLE}"
-    echo "[ERROR] Run scripts/98d_fun_integration_tables.sh first"
+# WC1R2 P0-3 + B3-PREQ①-R #1/#4: input-table gates, all AFTER the resume
+# gate (P2-2). Feature blocks: any combination containing V needs the 98c
+# virus table; any PROTOCOL F arm needs the 98d fungi table (multi-block F
+# is always the pinned 98d arm; single F is pinned unless -M was explicitly
+# passed and warned non-protocol above). Sample pool: --sample-set BVF reads
+# ALL THREE input tables for the shared pool regardless of the selected
+# feature blocks.
+NEED_V_TABLE=0
+NEED_F_TABLE=0
+if case "${COMBINATION}" in *V*) true ;; *) false ;; esac; then
+    NEED_V_TABLE=1
+fi
+if case "${COMBINATION}" in *F*) true ;; *) false ;; esac; then
+    if [ "${COMBO_MULTI}" -eq 1 ] || [ "${FUNGI_METHOD_EXPLICIT}" -eq 0 ]; then
+        NEED_F_TABLE=1
+    fi
+fi
+if [ "${SAMPLE_SET}" = "BVF" ]; then
+    NEED_V_TABLE=1
+    NEED_F_TABLE=1
+fi
+if [ "${NEED_V_TABLE}" -eq 1 ] && [ ! -f "${VIR_TABLE}" ]; then
+    echo "[ERROR] --combination ${COMBINATION} / --sample-set ${SAMPLE_SET} requires the virus integration table: ${VIR_TABLE}"
+    echo "[ERROR] Run scripts/98c_vir_integration_tables.sh first (96 consumes the vOTU_TPM_<sample> columns at full precision)"
     exit 1
 fi
-
-# WC1R2 P0-1/B3-PREQ①-R #1/#4: any combination containing V requires the 98c
-# virus integration table. Fail fast and name the producer (98c) instead of
-# silently degrading to an older abundance table. Also checked after the
-# resume gate (P2-2).
-if case "${COMBINATION}" in *V*) true ;; *) false ;; esac && [ ! -f "${VIR_TABLE}" ]; then
-    echo "[ERROR] --combination ${COMBINATION} (-d ${DIMENSION}) requires the virus integration table: ${VIR_TABLE}"
-    echo "[ERROR] Run scripts/98c_vir_integration_tables.sh first (96 consumes the vOTU_TPM_<sample> columns at full precision)"
+if [ "${NEED_F_TABLE}" -eq 1 ] && [ ! -f "${FUN_TABLE}" ]; then
+    echo "[ERROR] --combination ${COMBINATION} / --sample-set ${SAMPLE_SET} requires the fungi integration table: ${FUN_TABLE}"
+    echo "[ERROR] Run scripts/98d_fun_integration_tables.sh first (or pass -M explicitly for a non-protocol source)"
+    exit 1
+fi
+if [ "${SAMPLE_SET}" = "BVF" ] && [ ! -f "${BACT_TABLE}" ]; then
+    echo "[ERROR] --sample-set BVF requires the MetaPhlAn merged taxonomy table: ${BACT_TABLE}"
     exit 1
 fi
 
@@ -254,7 +344,7 @@ if ! [[ "${REPEATS}" =~ ^[1-9][0-9]*$ ]]; then
     exit 1
 fi
 
-export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION COMBINATION FOLDS REPEATS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE FUN_TABLE RESULT_DIR
+export WORKDIR REPO THREADS METADATA_CSV GROUP_COL DIMENSION COMBINATION SAMPLE_SET FOLDS REPEATS BACT_TABLE VIR_TABLE FUNGI_DIR FUNGI_ABUND_TABLE FUN_TABLE RESULT_DIR
 
 RUN_LOG="${LOG_DIR:-${RESULT_DIR}}/96_stat_ml_siamcat.run.log"
 mkdir -p "$(dirname "${RUN_LOG}")"
@@ -431,26 +521,6 @@ assert_block_samples <- function(block_label, mat, meta_ids, src, min_n = 10L) {
   invisible(matched)
 }
 
-read_fungi_profiles <- function(dir_path) {
-  files <- Sys.glob(file.path(dir_path, "*", "*_profile.txt"))
-  if (length(files) == 0) stop("No fungi profile files found")
-  prof <- lapply(files, function(fp) {
-    tab <- readr::read_tsv(fp, show_col_types = FALSE, comment = "#")
-    feature_col <- c("clade_name", "taxonomy", names(tab)[1])[c("clade_name", "taxonomy", names(tab)[1]) %in% names(tab)][1]
-    abundance_col <- c("relative_abundance", "abundance", "fraction_total_reads", names(tab)[ncol(tab)])[c("relative_abundance", "abundance", "fraction_total_reads", names(tab)[ncol(tab)]) %in% names(tab)][1]
-    tibble(feature = tab[[feature_col]], sample_id = basename(dirname(fp)), abundance = suppressWarnings(as.numeric(tab[[abundance_col]])))
-  })
-  merged <- bind_rows(prof) %>%
-    dplyr::filter(!is.na(feature), !is.na(abundance)) %>%
-    dplyr::group_by(feature, sample_id) %>%
-    dplyr::summarise(abundance = sum(abundance, na.rm = TRUE), .groups = "drop") %>%
-    tidyr::pivot_wider(names_from = sample_id, values_from = abundance, values_fill = 0)
-  rn <- merged$feature
-  merged <- as.matrix(merged[, -1, drop = FALSE])
-  rownames(merged) <- rn
-  merged[rowSums(merged) > 0, , drop = FALSE]
-}
-
 # B3-PREQ①-R #2 (2026-09-30, user decision #3 / M-96-Q1): per-block relative
 # abundance conversion. Each feature block (BAC|/VIR|/FUN|) is divided by its
 # OWN column sums so every block lives on a 0-1 relative-abundance scale
@@ -491,39 +561,44 @@ filter_bac_domain <- function(m) {
   m[keep, , drop = FALSE]
 }
 
+# B3-PREQ①-R #4 (2026-09-30, user decision #4) + WC1R2 P0-3 (2026-10-01,
+# user decision #2): block selection is driven by --combination (letters
+# B/V/F); the SAMPLE POOL is driven by --sample-set. auto = intersection of
+# the selected blocks' input-table columns (recorded in split_manifest.txt);
+# BVF = the B-V-F three-table intersection shared by all seven protocol runs
+# (single-block runs included), so paired comparisons never compare
+# different cohorts. Sample names are SORTED before any use, so the split
+# input order is deterministic and independent of the input tables' column
+# order.
 load_matrix <- function() {
-  # B3-PREQ①-R #4 (2026-09-30, user decision #4): block selection driven by
-  # --combination (letters B/V/F, order preserved); -d is only the shorthand
-  # that fills COMBINATION. The shared sample set is the intersection of the
-  # selected blocks' input-table sample columns, computed ONCE here (A-2
-  # protocol section 4 paired-comparison premise) and recorded in
-  # split_manifest.txt.
+  sample_set <- Sys.getenv("SAMPLE_SET", "auto")
+  block_of <- c(B = "BAC", V = "VIR", F = "FUN")
+  pool_letters <- if (sample_set == "BVF") c("B", "V", "F") else combo_letters
   blocks <- list()
-  for (letter in combo_letters) {
-    if (letter == "B") {
+  sample_pools <- list()
+  for (letter in pool_letters) {
+    src <- ""
+    m <- if (letter == "B") {
       # B3-PREQ①-R #3: species-level k__Bacteria rows only
-      blocks$BAC <- filter_bac_domain(read_abundance_table(bact_table))
-      assert_block_samples("BAC", blocks$BAC, rownames(meta), bact_table)
+      src <- bact_table
+      filter_bac_domain(read_abundance_table(bact_table))
     } else if (letter == "V") {
       # WC1R2 P0-1: 98c TPM matrix (full precision; in-block relab conversion
       # below) + metadata defensive assertion
-      blocks$VIR <- read_vir_tpm_matrix(vir_table)
-      assert_block_samples("VIR", blocks$VIR, rownames(meta), vir_table)
-    } else if (letter == "F") {
-      # Multi-block combinations always use the 98d funomic integration
-      # table for the FUN| arm; a standalone F keeps the -M method
-      # resolution (W-C1(2) semantics).
-      if (length(combo_letters) > 1) {
-        blocks$FUN <- read_abundance_table(fun_table)
-        assert_block_samples("FUN", blocks$FUN, rownames(meta), fun_table)
-      } else if (nzchar(fungi_abund_table)) {
-        blocks$FUN <- read_abundance_table(fungi_abund_table)
-        assert_block_samples("FUN", blocks$FUN, rownames(meta), fungi_abund_table)
-      } else {
-        blocks$FUN <- read_fungi_profiles(fungi_dir)
-        assert_block_samples("FUN", blocks$FUN, rownames(meta), fungi_dir)
-      }
+      src <- vir_table
+      read_vir_tpm_matrix(vir_table)
+    } else {
+      # WC1R2 P0-3 (user decision #3): the FUN| arm is pinned to the 98d
+      # funomic integration table for every protocol run; an explicit -M
+      # redirects only a STANDALONE F feature arm (the bash stage already
+      # warned non-protocol). Multi-block stacks and BVF pool reads always
+      # use the pinned 98d table.
+      src <- if (length(combo_letters) == 1L && letter %in% combo_letters) fungi_abund_table else fun_table
+      read_abundance_table(src)
     }
+    assert_block_samples(block_of[[letter]], m, rownames(meta), src)
+    sample_pools[[letter]] <- colnames(m)
+    if (letter %in% combo_letters) blocks[[block_of[[letter]]]] <- m
   }
   if (length(blocks) == 0) stop("Unsupported combination: ", combination)
   for (nm in names(blocks)) {
@@ -532,28 +607,42 @@ load_matrix <- function() {
                sprintf("n_features=%d n_samples=%d scale=0-1 (block column sums -> 1)",
                        nrow(blocks[[nm]]), ncol(blocks[[nm]])))
   }
-  combo_samples <- Reduce(intersect, lapply(blocks, colnames))
-  if (length(blocks) > 1 && length(combo_samples) < 10L) {
+  combo_samples <- sort(Reduce(intersect, sample_pools))
+  pool_counts <- paste(sprintf("%s=%d", names(sample_pools),
+                               vapply(sample_pools, length, integer(1))), collapse = ", ")
+  # WC1R2 P0-3: the protocol pool (BVF) and multi-block stacks must hold >=10
+  # samples, and every pool's size is listed so the offending table is
+  # identifiable. Single-block auto runs keep the historical >=10 metadata
+  # overlap check further below.
+  if ((sample_set == "BVF" || length(blocks) > 1) && length(combo_samples) < 10L) {
     stop(sprintf(
-      "[INPUT-GOVERNANCE] combination %s: input-table sample intersection = %d (<10 required for SIAMCAT). Per-block sample counts: %s",
-      combination, length(combo_samples),
-      paste(sprintf("%s=%d", names(blocks), vapply(blocks, ncol, integer(1))), collapse = ", ")))
+      "[INPUT-GOVERNANCE] sample_set=%s combination %s: input-table sample intersection = %d (<10 required for SIAMCAT). Per-table sample counts: %s",
+      sample_set, combination, length(combo_samples), pool_counts))
   }
-  mat <- if (length(blocks) == 1) {
-    blocks[[1]]
-  } else {
+  cat(sprintf("[INFO] sample_set=%s: shared sample pool n=%d (per-table sample counts: %s)\n",
+              sample_set, length(combo_samples), pool_counts))
+  mat <- if (length(blocks) > 1) {
     do.call(rbind, Map(function(nm, m) {
       `rownames<-`(m[, combo_samples, drop = FALSE], paste0(nm, "|", rownames(m)))
     }, names(blocks), blocks))
+  } else if (sample_set == "BVF") {
+    # protocol single-block run: restrict to the shared BVF pool but keep the
+    # historical unprefixed single-dimension feature names
+    blocks[[1]][, combo_samples, drop = FALSE]
+  } else {
+    blocks[[1]]
   }
-  list(mat = mat, combo_samples = combo_samples)
+  list(mat = mat, combo_samples = combo_samples, sample_set = sample_set)
 }
 
 meta <- read_metadata(metadata_csv, group_col)
 loaded <- load_matrix()
 mat <- loaded$mat
 combo_samples <- loaded$combo_samples
-common <- intersect(colnames(mat), rownames(meta))
+sample_set <- loaded$sample_set
+# WC1R2 P0-3: sorted intersection -> the SIAMCAT split input order is
+# deterministic and independent of the input tables' column order.
+common <- sort(intersect(colnames(mat), rownames(meta)))
 if (length(common) < 10) {
   cat("[WARN] Only", length(common), "overlapping samples; SIAMCAT requires >=10.",
       "Writing placeholder sentinel and skipping ML.\n")
@@ -796,6 +885,7 @@ if (length(split_seeds_ok) > 0) {
                paste0("multi_sample_subjects=", ifelse(!is.na(subject_col), sum(table(meta[[subject_col]]) > 1), 0)),
                paste0("n_samples=", ncol(mat)),
                paste0("combination=", combination),
+               paste0("sample_set=", sample_set),
                paste0("combo_n_samples=", length(combo_samples)),
                paste0("combo_samples=", paste(combo_samples, collapse = ",")),
                if (repeats > 1L) paste0("repeats=", repeats),
