@@ -742,7 +742,7 @@ grep -q "fungi_method=phf" "${C2M_LOG}" \
 rm -f "${C2M_LOG}"
 echo "[OK] C2: fungi_method mismatch (phf vs funomic) blocks resume"
 
-# SKIPPED-path contract: <10 samples => SKIPPED sentinel + minimal manifest,
+# SKIPPED-path contract: 10 samples 5/class => SIAMCAT per-class refusal,
 # and resuming that sentinel (no --force) exits 0 (supervisor P1).
 SK_DIR="$(mktemp -d)"
 mkdir -p "${SK_DIR}/result/metaphlan4/merged"
@@ -767,6 +767,10 @@ grep -q "^SKIPPED" "${SK_ML}/siamcat_done.txt" \
     || { rm -rf "${SK_DIR}"; fail "SKIPPED: sentinel not written for insufficient-per-class"; }
 grep -q "^combination=B$" "${SK_ML}/split_manifest.txt" \
     || { rm -rf "${SK_DIR}"; fail "SKIPPED: minimal manifest missing combination=B"; }
+grep -q "^sample_set=auto$" "${SK_ML}/split_manifest.txt" \
+    || { rm -rf "${SK_DIR}"; fail "SKIPPED: manifest missing sample_set=auto"; }
+grep -q "^fungi_method=funomic$" "${SK_ML}/split_manifest.txt" \
+    || { rm -rf "${SK_DIR}"; fail "SKIPPED: manifest missing fungi_method=funomic"; }
 if ! bash "${REPO_ROOT}/scripts/96_stat_ml_siamcat.sh" \
         -w "${SK_DIR}" -r "${REPO_ROOT}" -t 2 \
         -m "${SK_DIR}/metadata.csv" -g group -d bacteria --skip-shap \

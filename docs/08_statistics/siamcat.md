@@ -56,7 +56,7 @@ bash scripts/96_stat_ml_siamcat.sh \
 | bacteria | `result/metaphlan4/merged/taxonomy.tsv`（WC1R 输入治理：仅保留 k__Bacteria 物种 s__ 终端行；层级/真核/古菌行剔除并计数） |
 | virus | `result/integration/virus/votu_annotation_matrix_relab.tsv` 的 `vOTU_TPM_` 列（98c 产物；块内自行换算相对丰度——RELAB 列 %.4f 会抹掉低丰度信号，不采用） |
 | fungi | `result/integration/fungi/normalized/funomic_species_relab.tsv`（98d 产物；协议用途固定此源，`-M` 仅显式传参时生效并 WARN non-protocol） |
-| all | 细菌+病毒特征合并（前缀 BAC| / VIR|） |
+| all | 细菌+病毒+真菌三块合并（BAC|/VIR|/FUN|，= `--combination BVF`） |
 
 ## 输出
 

@@ -2534,7 +2534,7 @@ bash scripts/96_stat_ml_siamcat.sh -w Project/<name> -r ~/Course/CSCCD-Metagenom
 bash scripts/96_stat_ml_siamcat.sh ... -d bacteria
 ```
 
-**输入治理**（详见 docs/08_statistics/siamcat.md）：细菌块只取 `k__Bacteria` 物种（s__ 终端）行；病毒块读 98c 整合表 `votu_annotation_matrix_relab.tsv` 的 `vOTU_TPM_` 列；真菌块固定 98d `funomic_species_relab.tsv`。三块各自转 0-1 相对丰度后过滤。**注意**：不带 `--force` 重跑时，脚本核对已有结果的 **combination / sample_set / fungi_method** 三字段与本次参数，任一不一致即报错要求 `--force`（防止旧口径哨兵被静默复用）；WC1R 之前的旧结果没有 manifest，重跑同样会报错，需 `--force` 重建。
+**输入治理**（详见 docs/08_statistics/siamcat.md）：细菌块只取 `k__Bacteria` 物种（s__ 终端）行；病毒块读 98c 整合表 `votu_annotation_matrix_relab.tsv` 的 `vOTU_TPM_` 列；真菌块固定 98d `funomic_species_relab.tsv`。三块各自转 0-1 相对丰度后过滤。**注意**：不带 `--force` 重跑时，脚本核对已有结果的 **combination / sample_set / fungi_method** 三字段与本次参数，任一不一致即报错要求 `--force`（防止旧口径哨兵被静默复用）；WC1R 之前的旧结果没有 manifest，重跑同样会报错，需 `--force` 重建；显式 `-M` 的非协议结果被协议参数 resume 时也会被拦下，同样用 `--force`。
 
 ### A9. `96_stat_functional.sh`/`96_stat_ml_siamcat.sh` 缺少对"数据为空"或"样本量不足"的优雅跳过逻辑，导致整批次任务被单个子任务拖垂
 
