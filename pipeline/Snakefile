@@ -63,6 +63,12 @@ REPO     = config["repo"]
 # Align with Mode 2 Bash pipeline -t parameter
 CPUS     = config.get("threads_per_job", config.get("cpus", 8))
 
+# ENG-6 phase-2 monitor switch (default off; supervisor C1: byte-equivalent when off).
+# Exported into the process env so every rule's shell subprocess (scripts/*.sh
+# mgx_begin hook) inherits it; equivalent to running `MGX_MONITOR=1 snakemake ...`.
+if config.get("monitor"):
+    os.environ["MGX_MONITOR"] = "1"
+
 include: "rules/preprocessing.smk"
 include: "rules/bacteria_taxonomy.smk"
 include: "rules/bacteria_assembly.smk"
@@ -244,3 +250,81 @@ def _all_targets():
 rule all:
     input:
         _all_targets()
+
+
+# ==============================================================================
+# ENG-6 phase-2: pipeline-level run events for mode 3 (default OFF).
+#
+# Emits the same frozen 8-field JSON lines as libcommon.sh mgx_begin, with
+# step_id="__pipeline__": onstart writes a start event (exit_code 2 marker),
+# onsuccess/onerror write end events (exit_code 0/1). The dashboard
+# (scripts/utils/run_monitor.py) shows the last pipeline event as a header
+# badge and excludes these events from step statistics.
+#
+# Documented boundaries (supervisor-approved):
+#   - Load-time failures (e.g. the samplesheet validation above) raise while
+#     the DAG is parsed and do NOT trigger onerror; they remain visible only
+#     in the snakemake log.
+#   - A fully cached run ("nothing to be done") fires no hooks at all in
+#     Snakemake 9.22, so it appends no pipeline events.
+#   - With --ri/--restart semantics each started run appends its own
+#     start/end pair; the badge follows the LAST pipeline event in the file.
+# ==============================================================================
+import sys, time
+
+
+def _mgx_pipeline_event(kind, exit_code):
+    """Append one __pipeline__ event to {workdir}/logs/run_events.jsonl.
+
+    kind: "start" (rotates a >10MB jsonl to .1 first) or "end". Never raises,
+    never writes anything unless MGX_MONITOR=1 (C1), never on a dry-run (C4;
+    Snakemake 9.22 also skips the hooks itself on --dry-run), and mirrors the
+    libcommon Project01 write guard (C5).
+    """
+    try:
+        if os.environ.get("MGX_MONITOR") != "1":
+            return
+        if getattr(workflow, "dryrun", False):
+            return
+        wd = str(config["workdir"])
+        wd_real = os.path.realpath(wd)
+        # Project01 guard: same semantics as libcommon.sh _mgx_emit
+        if wd_real.endswith("/Project/Project01") or "/Project/Project01/" in wd_real:
+            if os.environ.get("PRODUCTION_WRITE_ALLOWED", "false") != "true":
+                return
+        jsonl = os.path.join(wd, "logs", "run_events.jsonl")
+        if kind == "start" and os.path.exists(jsonl) \
+                and os.path.getsize(jsonl) > 10 * 1024 * 1024:
+            os.replace(jsonl, jsonl + ".1")  # keep one generation
+        ts = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        wd_esc = wd.replace("\\", "\\\\").replace('"', '\\"')
+        params = "snakemake " + " ".join(sys.argv)
+        params = "".join(ch for ch in params if ord(ch) >= 0x20
+                         ).replace("\\", "\\\\").replace('"', '\\"')
+        line = ('{"ts":"%s","started_at":"%s","step_id":"__pipeline__",'
+                '"sample_id":"","params":"%s","exit_code":%d,'
+                '"duration_sec":0,"workdir":"%s"}\n'
+                % (ts, ts, params, exit_code, wd_esc))
+        # 4096-byte line budget: truncate params at a valid escape boundary
+        # (mirror libcommon.sh), marked with a trailing "...".
+        while len(line.encode("utf-8")) > 4096 and params:
+            params = params[:max(len(params) - 4, 0)].rstrip("\\") + "..."
+            line = ('{"ts":"%s","started_at":"%s","step_id":"__pipeline__",'
+                    '"sample_id":"","params":"%s","exit_code":%d,'
+                    '"duration_sec":0,"workdir":"%s"}\n'
+                    % (ts, ts, params, exit_code, wd_esc))
+        os.makedirs(os.path.dirname(jsonl), exist_ok=True)
+        with open(jsonl, "a", encoding="utf-8", errors="replace") as fh:
+            fh.write(line)
+    except Exception:
+        pass  # monitor must never affect snakemake's own exit path
+
+
+onstart:
+    _mgx_pipeline_event("start", 2)
+
+onsuccess:
+    _mgx_pipeline_event("end", 0)
+
+onerror:
+    _mgx_pipeline_event("end", 1)

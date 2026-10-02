@@ -45,6 +45,9 @@ properties:
     description: Column in metadata holding the biological group
   force:
     type: boolean
+  monitor:
+    type: boolean
+    description: ENG-6 run-event monitor switch (mode 3); true exports MGX_MONITOR=1 for the whole DAG
   kingdoms:
     type: array
     items:

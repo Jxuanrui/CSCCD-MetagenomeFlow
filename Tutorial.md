@@ -32,7 +32,11 @@
 
 > **步骤事件监控（可选，默认关闭）**：模式一/二执行时给 pipeline 脚本加 `--monitor`（或运行步骤前 `export MGX_MONITOR=1`），
 > 每个已接入钩子的步骤会向 `{workdir}/logs/run_events.jsonl` 追加一条事件（不改退出码、无额外输出）。
+> **模式三**（Snakemake）：在 `pipeline/config/config.yaml` 设 `monitor: true`（或 `MGX_MONITOR=1 snakemake ...`），
+> 已接钩步骤与管线级起止事件写入同一 jsonl，看板表头显示本轮运行终态徽标。
 > 查看看板：`python3 scripts/utils/run_monitor.py <workdir> --watch`，生成自包含 HTML `logs/run_monitor.html`（含每步目的/命令行/输出文件统计，浏览器自动刷新）。
+> **盲区**（无 bash 层可挂 `mgx_begin`，不在看板中）：纯 R/Python 脚本 `01_metadata_qc`、`96` 系列
+> （96/96b/96c）、`99a_core_microbiome`、`99b_lefse`；Snakefile 加载期失败（如 samplesheet 校验）也不触发管线级事件。
 
 ---
 

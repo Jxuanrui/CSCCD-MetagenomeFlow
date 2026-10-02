@@ -14,6 +14,10 @@ CSS only, no external references) to {workdir}/logs/run_monitor.html.
 In one-shot mode the HTML still carries <meta http-equiv="refresh"> so a
 browser tab stays fresh while an outer loop regenerates the file.
 
+Mode-3 pipeline-level events (step_id "__pipeline__", written by the
+Snakefile onstart/onsuccess/onerror handlers) are shown as a header status
+pill driven by the last such event and are excluded from step statistics.
+
 Python 3.8+, stdlib only. PyYAML is the sole guarded optional import: it
 enriches step cards (purpose description + output path patterns) from
 {repo}/agents/skills/{step_id}.yaml; when absent or the card is missing the
@@ -36,7 +40,9 @@ except ImportError:  # pragma: no cover - depends on host env
     yaml = None
 
 GLOB_CAP = 10000  # max glob entries per output pattern (antiSMASH-tree safety)
-BANNER_TEXT = "仅显示已接入钩子的步骤（未调用 mgx_begin 的脚本与 Snakemake 脚本前失败不在此列）"
+PIPELINE_STEP_ID = "__pipeline__"  # mode-3 pipeline-level events (Snakefile handlers)
+BANNER_TEXT = ("仅显示已接入钩子的步骤与管线级终态；Snakefile 加载期失败、"
+               "未接钩的纯 R/Python 脚本（01_metadata_qc、96 系列、99a/99b）不在其中")
 DEFAULT_INTERVAL = 5
 
 
@@ -239,6 +245,11 @@ h1 { font-size: 22px; margin: 0 0 8px 0; }
          border-radius: 10px; color: #fff; }
 .badge.pass { background: #2e9e5b; }
 .badge.fail { background: #d64545; }
+.pill { font-size: 13px; font-weight: 700; padding: 3px 12px;
+        border-radius: 12px; color: #fff; vertical-align: middle; margin-left: 10px; }
+.pill.running { background: #1a66b3; }
+.pill.ok { background: #2e9e5b; }
+.pill.bad { background: #d64545; }
 .meta { color: #777; font-size: 12px; }
 .row { margin-top: 8px; font-size: 13px; }
 .k { color: #555; font-weight: 600; }
@@ -253,15 +264,40 @@ ul.outs li { margin-bottom: 4px; }
 """
 
 
+def pipeline_pill(events: list) -> str:
+    """Header status pill from the LAST pipeline event in file order.
+
+    exit_code 2 = start marker (运行中), 0 = ended successfully, anything
+    else = ended with failure. No pipeline events -> no pill (mode-1/2 usage
+    is unaffected)."""
+    pipeline = [ev for ev in events
+                if str(ev.get("step_id") or "") == PIPELINE_STEP_ID]
+    if not pipeline:
+        return ""
+    try:
+        code = int(pipeline[-1].get("exit_code"))
+    except (TypeError, ValueError):
+        code = -1
+    if code == 2:
+        return '<span class="pill running">运行中</span>'
+    if code == 0:
+        return '<span class="pill ok">已结束（成功）</span>'
+    return '<span class="pill bad">已结束（失败）</span>'
+
+
 def render_html(events: list, repo: Path, refresh_sec: int, workdir: str) -> str:
-    total = len(events)
-    ok = sum(1 for ev in events if str(ev.get("exit_code")) == "0")
+    # ENG-6 phase-2 (supervisor C3): pipeline-level events are not step cards
+    # and are excluded from step statistics / recorded-seconds totals.
+    step_events = [ev for ev in events
+                   if str(ev.get("step_id") or "") != PIPELINE_STEP_ID]
+    total = len(step_events)
+    ok = sum(1 for ev in step_events if str(ev.get("exit_code")) == "0")
     fail = total - ok
     last_ts = str(events[-1].get("ts") or "—") if events else "—"
     # 口径（supervisor P2-9）: jsonl 只追加不轮转，首尾时间相减会跨越多次
     # 运行；改按已记录事件的 duration_sec 求和，标注为"已记录步骤耗时合计"。
     try:
-        recorded_seconds = sum(int(ev.get("duration_sec") or 0) for ev in events)
+        recorded_seconds = sum(int(ev.get("duration_sec") or 0) for ev in step_events)
     except (TypeError, ValueError):
         recorded_seconds = 0
     elapsed = fmt_elapsed(recorded_seconds)
@@ -269,7 +305,7 @@ def render_html(events: list, repo: Path, refresh_sec: int, workdir: str) -> str
     fallback_workdir = workdir
     skill_cache: dict = {}
     cards = []
-    for idx, ev in enumerate(events, 1):
+    for idx, ev in enumerate(step_events, 1):
         step_id = str(ev.get("step_id") or "")
         if step_id not in skill_cache:
             skill_cache[step_id] = load_skill_card(repo, step_id)
@@ -288,7 +324,7 @@ def render_html(events: list, repo: Path, refresh_sec: int, workdir: str) -> str
 </head>
 <body>
 <div class="wrap">
-<h1>MGX 运行监控看板</h1>
+<h1>MGX 运行监控看板{pipeline_pill(events)}</h1>
 <div class="sub">事件来源：logs/run_events.jsonl（MGX_MONITOR=1 时由各步骤 EXIT 钩子追加）</div>
 <div class="banner">{BANNER_TEXT}</div>
 <div class="stats">

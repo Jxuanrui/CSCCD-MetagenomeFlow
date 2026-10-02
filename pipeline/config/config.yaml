@@ -23,6 +23,9 @@ group_col: "group"
 # Set to true to regenerate all results (123/125 scripts support --force)
 force: false
 
+# 步骤事件监控（模式三）：true 时向 {workdir}/logs/run_events.jsonl 写步骤与管线级事件
+monitor: false
+
 # Dimension groups to run. Omit or list all three for the full pipeline.
 # A partial list runs only the selected dimension analyses (plus shared
 # preprocessing); the statistics / cross-domain / integration layers assume

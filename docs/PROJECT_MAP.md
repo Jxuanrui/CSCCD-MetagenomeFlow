@@ -87,6 +87,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 > **注意**：
 > - Snakemake 已安装在项目内 miniforge3 base 环境，激活 `activate.sh` 后即可直接调用。
 > - 迁移到新服务器后运行 `/mgx-tune` 重新生成 `profiles/auto/`。
+> - 开启步骤事件监控（同模式一/二的事件流与看板）：`pipeline/config/config.yaml` 设 `monitor: true`（或 `MGX_MONITOR=1 snakemake ...`）。
 > - `--cores` 控制总线程预算，Snakemake 根据每个 rule 的 `threads:` 声明自动分配并发数；merge 等聚合 rule 的 DAG 依赖保证所有 per-sample job 完成后才触发，无需人工分步。
 
 ## 1.2 分析流程索引

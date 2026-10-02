@@ -25,6 +25,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
 show_help() { cat << EOF
 用法: bash 43c_bac_gem_cobrapy_fba.sh -m MAG_NAME -t CPUS -w WORKDIR -r REPO
 
@@ -68,11 +70,13 @@ for v in CPUS WORKDIR REPO; do
     if [ -z "${!v}" ]; then echo "[ERROR] 缺少必需参数"; show_help; exit 1; fi
 done
 
-SECONDS=0
-
 # 转换为绝对路径
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 REPO="$(cd "${REPO}" && pwd)"
+
+# ENG-6/run-monitor: per-step event hook (default OFF; MGX_MONITOR=1 enables);
+# mgx_begin also resets SECONDS=0 (replaces the previous standalone line)
+mgx_begin
 
 OUTDIR="${WORKDIR}/result/gem/fba"
 

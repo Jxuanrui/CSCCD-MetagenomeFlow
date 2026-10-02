@@ -37,6 +37,9 @@ mgx_require MAG_NAME WORKDIR REPO
 WORKDIR=$(cd "$WORKDIR" && pwd)
 REPO=$(cd "$REPO" && pwd)
 
+# ENG-6/run-monitor: per-step event hook (default OFF; MGX_MONITOR=1 enables)
+mgx_begin
+
 # ==================== Setup ====================
 DREP_DIR="${WORKDIR}/result/binning/drep/dereplicated_genomes"
 OUTBASE="${WORKDIR}/result/gem/carveme"

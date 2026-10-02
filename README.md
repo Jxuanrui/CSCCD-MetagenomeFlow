@@ -116,7 +116,7 @@ snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml --dry-r
 snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 4 --rerun-incomplete
 ```
 
-**Optional step monitor** — append `--monitor` to a bash pipeline (or `export MGX_MONITOR=1` before any step script) and every hooked step appends a JSON event to `{workdir}/logs/run_events.jsonl`. Default off; never alters exit codes or stdout. Render a self-contained HTML dashboard with `python3 scripts/utils/run_monitor.py <workdir> --watch`.
+**Optional step monitor** — append `--monitor` to a bash pipeline (or `export MGX_MONITOR=1` before any step script) and every hooked step appends a JSON event to `{workdir}/logs/run_events.jsonl`. Default off; never alters exit codes or stdout. Render a self-contained HTML dashboard with `python3 scripts/utils/run_monitor.py <workdir> --watch`. Mode 3 (Snakemake): set `monitor: true` in `pipeline/config/config.yaml` (or run `MGX_MONITOR=1 snakemake ...`); the Snakefile then appends pipeline-level start/end events alongside every hooked step event in the same jsonl, and the dashboard header shows the run's final status. Snakefile load-time failures (e.g. samplesheet validation) are not covered — see the snakemake log for those.
 
 ---
 
