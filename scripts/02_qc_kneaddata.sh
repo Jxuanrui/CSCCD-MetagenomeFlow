@@ -40,6 +40,11 @@ export MGX_OPTS_FLAG="force"
 mgx_parse "$@"
 mgx_require SAMPLE THREADS WORKDIR REPO
 
+# P2-HYGIENE-01 guard coverage + ENG-6/run-monitor: align with sibling scripts
+# (01_qc_fastp.sh) — mgx_begin applies the Project01 write guard (FORCE=1)
+# and registers the opt-in event hook (MGX_MONITOR=1).
+mgx_begin
+
 # ===== 路径和环境 =====
 FASTP_OUT="${WORKDIR}/result/fastp/${SAMPLE}"
 INPUT_R1="${FASTP_OUT}/${SAMPLE}_1.fastq.gz"
