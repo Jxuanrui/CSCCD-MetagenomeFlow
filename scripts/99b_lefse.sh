@@ -50,6 +50,16 @@ R_ENV="${REPO}/envs/r_stat"
 [[ -f "${R_SCRIPT}" ]] || { echo "[ERROR] R script not found: ${R_SCRIPT}" >&2; exit 1; }
 mkdir -p "${OUTPUT_DIR}"
 
+# ENG-6/run-monitor: per-step event hook (default OFF; MGX_MONITOR=1 enables).
+# This script takes no -w; rules call it with -o under {workdir}/result only,
+# so WORKDIR is derived from the frozen path convention. Runs outside the
+# convention leave WORKDIR unset and the hook is a no-op.
+if [[ "${OUTPUT_DIR}" == */result/* ]]; then
+    # shellcheck disable=SC2034  # consumed by _mgx_emit (libcommon.sh) at EXIT
+    WORKDIR="${OUTPUT_DIR%%/result/*}"
+fi
+mgx_begin
+
 OUTPUT_BIOMARKERS="${OUTPUT_DIR}/lefse_biomarkers.tsv"
 if [ ${FORCE} -eq 0 ] && [ -f "${OUTPUT_BIOMARKERS}" ] && [ -s "${OUTPUT_BIOMARKERS}" ]; then
     echo "[INFO] 结果已存在，跳过: ${OUTPUT_BIOMARKERS}"; exit 0

@@ -269,6 +269,10 @@ rule all:
 #     Snakemake 9.22, so it appends no pipeline events.
 #   - With --ri/--restart semantics each started run appends its own
 #     start/end pair; the badge follows the LAST pipeline event in the file.
+#   - scheduler.schedule() exceptions (workflow.py:1502-1507 in 9.22) raise
+#     past the onerror hook, as do SIGKILL/OOM/host restarts of the snakemake
+#     process: no end event is written and the dashboard badge stays at
+#     "运行中" until the next run's onstart resets it.
 # ==============================================================================
 import sys, time
 

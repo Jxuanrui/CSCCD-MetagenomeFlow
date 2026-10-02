@@ -48,6 +48,9 @@ fi
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 REPO="$(cd "${REPO}" && pwd)"
 
+# ENG-6/run-monitor: per-step event hook (default OFF; MGX_MONITOR=1 enables)
+mgx_begin
+
 R_SCRIPT="${REPO}/scripts/96_functional_network.R"
 if [ ! -f "${R_SCRIPT}" ]; then
     echo "[ERROR] R script not found: ${R_SCRIPT}"

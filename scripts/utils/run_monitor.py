@@ -41,8 +41,9 @@ except ImportError:  # pragma: no cover - depends on host env
 
 GLOB_CAP = 10000  # max glob entries per output pattern (antiSMASH-tree safety)
 PIPELINE_STEP_ID = "__pipeline__"  # mode-3 pipeline-level events (Snakefile handlers)
-BANNER_TEXT = ("仅显示已接入钩子的步骤与管线级终态；Snakefile 加载期失败、"
-               "未接钩的纯 R/Python 脚本（01_metadata_qc、96 系列、99a/99b）不在其中")
+BANNER_TEXT = ("仅显示已接入钩子的步骤与管线级终态；Snakefile 加载期失败、未接钩脚本"
+               "（01_metadata_qc，bash 壳但未 source libcommon）与进程被杀/调度器"
+               "异常的运行不在其中")
 DEFAULT_INTERVAL = 5
 
 

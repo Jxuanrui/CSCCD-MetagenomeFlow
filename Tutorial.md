@@ -35,8 +35,10 @@
 > **模式三**（Snakemake）：在 `pipeline/config/config.yaml` 设 `monitor: true`（或 `MGX_MONITOR=1 snakemake ...`），
 > 已接钩步骤与管线级起止事件写入同一 jsonl，看板表头显示本轮运行终态徽标。
 > 查看看板：`python3 scripts/utils/run_monitor.py <workdir> --watch`，生成自包含 HTML `logs/run_monitor.html`（含每步目的/命令行/输出文件统计，浏览器自动刷新）。
-> **盲区**（无 bash 层可挂 `mgx_begin`，不在看板中）：纯 R/Python 脚本 `01_metadata_qc`、`96` 系列
-> （96/96b/96c）、`99a_core_microbiome`、`99b_lefse`；Snakefile 加载期失败（如 samplesheet 校验）也不触发管线级事件。
+> **盲区**（不在看板中）：`01_metadata_qc`（bash 壳但未 source libcommon，无钩子可挂）；
+> Snakefile 加载期失败（如 samplesheet 校验）不触发管线级事件；snakemake 进程被
+> SIGKILL/OOM 或调度器异常终止时无结束事件，徽标会停留在"运行中"（下一次运行的
+> start 事件会重置）。96/96b/96c、99a、99b、43b/43c 等 bash 脚本均已接钩。
 
 ---
 

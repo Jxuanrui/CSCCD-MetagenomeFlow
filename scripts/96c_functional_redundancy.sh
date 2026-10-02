@@ -48,6 +48,16 @@ R_SCRIPT="${SCRIPT_DIR}/96c_functional_redundancy.R"
 if [[ ! -f "${R_SCRIPT}" ]]; then echo "[ERROR] R script not found: ${R_SCRIPT}" >&2; exit 1; fi
 mkdir -p "${OUTPUT_DIR}"
 
+# ENG-6/run-monitor: per-step event hook (default OFF; MGX_MONITOR=1 enables).
+# This script takes no -w; rules call it with -o under {workdir}/result only,
+# so WORKDIR is derived from the frozen path convention. Runs outside the
+# convention leave WORKDIR unset and the hook is a no-op.
+if [[ "${OUTPUT_DIR}" == */result/* ]]; then
+    # shellcheck disable=SC2034  # consumed by _mgx_emit (libcommon.sh) at EXIT
+    WORKDIR="${OUTPUT_DIR%%/result/*}"
+fi
+mgx_begin
+
 if [[ -n "${R_SCRIPT_BIN:-}" ]]; then
     RSCRIPT="${R_SCRIPT_BIN}"
 elif [[ -x "${SCRIPT_DIR}/../envs/r_stat/bin/Rscript" ]]; then

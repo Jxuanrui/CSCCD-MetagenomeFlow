@@ -59,6 +59,10 @@ WORKDIR="$(cd "${WORKDIR}" && pwd)"
 METADATA_FILE="$(cd "$(dirname "${METADATA_FILE}")" && pwd)/$(basename "${METADATA_FILE}")"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# ENG-6/run-monitor: per-step event hook (default OFF; MGX_MONITOR=1 enables)
+mgx_begin
+
 R_SCRIPT="${SCRIPT_DIR}/96b_pathway_activity.R"
 R_ENV="${REPO}/envs/r_stat"
 

@@ -58,6 +58,9 @@ fi
 WORKDIR="$(cd "${WORKDIR}" && pwd)"
 REPO="$(cd "${REPO}" && pwd)"
 
+# ENG-6/run-monitor: per-step event hook (default OFF; MGX_MONITOR=1 enables)
+mgx_begin
+
 if [ -n "${METADATA_CSV}" ]; then
     if [ ! -f "${METADATA_CSV}" ]; then
         echo "[ERROR] Metadata file not found: ${METADATA_CSV}"
