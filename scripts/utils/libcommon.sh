@@ -135,7 +135,11 @@ mgx_require() {
 # (supervisor C1, 2026-10-02).
 # Hard constraints (supervisor-approved):
 #   - Default OFF: with MGX_MONITOR != 1 the observable behavior of every
-#     sourcing script is byte-identical (no output, no files, same exit codes).
+#     sourcing script is byte-identical (no output, no files, same exit
+#     codes) — EXCEPT the pre-existing P2-HYGIENE-01 production guard below,
+#     which scripts acquire by calling mgx_begin at all: newly-hooked scripts
+#     (02_qc_kneaddata ce6495b; six stat scripts 2efc6c7) now exit 60 on
+#     Project01 + --force regardless of MGX_MONITOR (supervisor C1, 2026-10-02).
 #   - The hook must never alter the caller's exit code and never write to the
 #     caller's stdout: every internal failure is swallowed (2>/dev/null || true).
 #   - The append is a single printf >> redirection, but NFS does not guarantee
