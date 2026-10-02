@@ -127,9 +127,9 @@ mgx_require() {
 # ==============================================================================
 # ENG-6/run-monitor: opt-in per-step run-event hook (default OFF; MGX_MONITOR=1
 # enables). mgx_begin registers an EXIT trap that appends one JSON line per
-# script run to ${WORKDIR}/logs/run_events.jsonl; field names reuse
-# scripts/write_provenance.py as a minimal subset (ts/step_id/sample/argv/
-# exit_code/duration_sec/workdir).
+# script run to ${WORKDIR}/logs/run_events.jsonl; field names align with
+# scripts/write_provenance.py (ts[end time]/started_at/step_id/sample_id/
+# params/exit_code/duration_sec/workdir; supervisor rectification P0-1a).
 # Hard constraints (supervisor-approved):
 #   - Default OFF: with MGX_MONITOR != 1 the observable behavior of every
 #     sourcing script is byte-identical (no output, no files, same exit codes).
@@ -140,9 +140,9 @@ mgx_require() {
 #     parallelism).
 #   - Scripts that register their own EXIT trap after mgx_begin override this
 #     hook (last trap wins) and become monitor blind spots.
-#   - Scripts not calling mgx_begin are coverage blind spots (known:
-#     02_qc_kneaddata.sh -- being fixed separately).
-#   - argv is snapshotted in the trap's fire-time scope ("$*"), i.e. the
+#   - Scripts not calling mgx_begin are coverage blind spots (02_qc_kneaddata.sh
+#     fixed in ce6495b; any future script that skips mgx_begin reopens the gap).
+#   - params is snapshotted in the trap's fire-time scope ("$*"), i.e. the
 #     script's arguments for top-level exits (function-local arguments if the
 #     exit happens inside a function).
 #   - Project01 write guard: events are skipped when the realpath of WORKDIR
@@ -168,7 +168,7 @@ _mgx_emit() {
     [ "${MGX_MONITOR:-0}" = "1" ] || return 0
     {
         local LC_ALL=C
-        local _rc _ts _step _sample _dur _wd_esc _argv _line _budget _wd_real
+        local _rc _ts _started _step _sample _dur _wd_esc _params _line _budget _wd_real
         [ -n "${WORKDIR:-}" ] || return 0
         _wd_real="$(realpath -m "${WORKDIR}" 2>/dev/null || printf '%s' "${WORKDIR}")"
         case "${_wd_real}" in
@@ -182,24 +182,30 @@ _mgx_emit() {
         _dur="$(printf '%s' "${SECONDS:-0}" | tr -cd '0-9' 2>/dev/null || true)"
         [ -n "${_dur}" ] || _dur=0
         _ts="$(_mgx_json_escape "$(date +%FT%T%z 2>/dev/null || true)")"
+        _started="$(_mgx_json_escape "${_MGX_STARTED_AT:-}")"
         _step="$(_mgx_json_escape "$(basename "$0" 2>/dev/null || true)")"
         _sample="$(_mgx_json_escape "${SAMPLE:-${SAMPLE_ID:-}}")"
         _wd_esc="$(_mgx_json_escape "${WORKDIR}")"
-        _argv="$(_mgx_json_escape "${_MGX_ARGV:-}")"
-        # 整行预算 4096 字节: 先测出 argv 为空时的行长，再截断转义后的 argv
-        # （截断以尾部 "..." 标记），保证整行不超过 4096 字节。
-        _line="$(printf '{"ts":"%s","step_id":"%s","sample":"%s","argv":"","exit_code":%s,"duration_sec":%s,"workdir":"%s"}' \
-            "${_ts}" "${_step}" "${_sample}" "${_rc}" "${_dur}" "${_wd_esc}")"
+        _params="$(_mgx_json_escape "${_MGX_ARGV:-}")"
+        # 整行预算 4096 字节: 先测出 params 为空时的行长，再截断转义后的
+        # params（截断回退到合法转义边界——剥离尾部悬空反斜杠，避免切在
+        # \\ 或 \" 转义序列中间产生非法 JSON；以尾部 "..." 标记）。
+        _line="$(printf '{"ts":"%s","started_at":"%s","step_id":"%s","sample_id":"%s","params":"","exit_code":%s,"duration_sec":%s,"workdir":"%s"}' \
+            "${_ts}" "${_started}" "${_step}" "${_sample}" "${_rc}" "${_dur}" "${_wd_esc}")"
         _budget=$(( 4096 - ${#_line} - 8 ))
-        if [ "${#_argv}" -gt "${_budget}" ]; then
+        if [ "${#_params}" -gt "${_budget}" ]; then
             if [ "${_budget}" -gt 3 ]; then
-                _argv="${_argv:0:$(( _budget - 3 ))}..."
+                _params="${_params:0:$(( _budget - 3 ))}"
+                while [ "${#_params}" -gt 0 ] && [ "${_params: -1}" = '\' ]; do
+                    _params="${_params%?}"
+                done
+                _params="${_params}..."
             else
-                _argv=""
+                _params=""
             fi
         fi
-        printf '{"ts":"%s","step_id":"%s","sample":"%s","argv":"%s","exit_code":%s,"duration_sec":%s,"workdir":"%s"}\n' \
-            "${_ts}" "${_step}" "${_sample}" "${_argv}" "${_rc}" "${_dur}" "${_wd_esc}" \
+        printf '{"ts":"%s","started_at":"%s","step_id":"%s","sample_id":"%s","params":"%s","exit_code":%s,"duration_sec":%s,"workdir":"%s"}\n' \
+            "${_ts}" "${_started}" "${_step}" "${_sample}" "${_params}" "${_rc}" "${_dur}" "${_wd_esc}" \
             >> "${WORKDIR}/logs/run_events.jsonl" 2>/dev/null || true
     } 2>/dev/null || true
     return 0
@@ -222,6 +228,7 @@ mgx_begin() {
     SECONDS=0
     # ENG-6/run-monitor: opt-in per-step event emission (supervisor-approved, default OFF)
     if [ "${MGX_MONITOR:-0}" = "1" ]; then
+        _MGX_STARTED_AT="$(date +%FT%T%z 2>/dev/null || printf '')"
         trap '_MGX_RC=$?; _MGX_ARGV="$*"; _mgx_emit "${_MGX_RC}"' EXIT
     fi
 }

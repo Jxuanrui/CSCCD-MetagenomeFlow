@@ -28,7 +28,6 @@ import json
 import os
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
 
 try:  # optional; sole third-party import, guarded
@@ -101,6 +100,10 @@ def summarize_output(pattern: str, workdir: str, sample: str):
     resolved = pattern.replace("{workdir}", workdir or "").replace(
         "{sample}", sample or ""
     )
+    if "{" in resolved or "}" in resolved or "$" in resolved:
+        # Unresolved placeholder (e.g. {mag}, ${WORKDIR}) — globbing it would
+        # misleadingly report "0 个文件". Skip counting instead (supervisor P1-4).
+        return resolved, "路径含未解析占位符（不统计）", "—"
     count = 0
     total = 0
     capped = False
@@ -121,23 +124,6 @@ def summarize_output(pattern: str, workdir: str, sample: str):
     return resolved, count_label, size_label
 
 
-def parse_ts(raw) -> datetime | None:
-    """Parse the hook's date +%FT%T%z output (e.g. 2026-10-02T15:04:05+0800)."""
-    if not isinstance(raw, str) or not raw.strip():
-        return None
-    text = raw.strip()
-    try:
-        return datetime.fromisoformat(text)
-    except ValueError:
-        pass
-    if len(text) >= 5 and text[-5] in "+-" and ":" not in text[-5:]:
-        try:
-            return datetime.fromisoformat(text[:-2] + ":" + text[-2:])
-        except ValueError:
-            return None
-    return None
-
-
 def fmt_elapsed(seconds: float) -> str:
     sec = int(seconds)
     hours, rem = divmod(sec, 3600)
@@ -155,8 +141,8 @@ def h(value) -> str:
 
 def event_card(index: int, event: dict, card, fallback_workdir: str) -> str:
     step_id = str(event.get("step_id") or "—")
-    sample = str(event.get("sample") or "")
-    argv = str(event.get("argv") or "")
+    sample = str(event.get("sample_id") or "")
+    params = str(event.get("params") or "")
     workdir = str(event.get("workdir") or fallback_workdir)
     try:
         exit_code = int(event.get("exit_code"))
@@ -164,6 +150,7 @@ def event_card(index: int, event: dict, card, fallback_workdir: str) -> str:
         exit_code = -1
     duration = event.get("duration_sec")
     ts = str(event.get("ts") or "—")
+    started_at = str(event.get("started_at") or "")
 
     passed = exit_code == 0
     cls = "pass" if passed else "fail"
@@ -206,17 +193,19 @@ def event_card(index: int, event: dict, card, fallback_workdir: str) -> str:
             )
 
     argv_html = (
-        f'<details><summary>展开命令行</summary><pre>{h(argv)}</pre></details>'
-        if argv
+        f'<details><summary>展开命令行</summary><pre>{h(params)}</pre></details>'
+        if params
         else '<span class="empty">—</span>'
     )
+
+    time_meta = f"开始 {h(started_at)} · 结束 {h(ts)}" if started_at else h(ts)
 
     return (
         f'<div class="card {cls}">'
         f'<div class="head"><span class="step">#{index} {h(step_id)}</span>'
         f'<span class="badge {cls}">{badge}</span>'
         f'<span class="meta">耗时 {h(duration)} 秒</span>'
-        f'<span class="meta">{h(ts)}</span></div>'
+        f'<span class="meta">{time_meta}</span></div>'
         f'<div class="row"><span class="k">目的：</span>{h(purpose)}</div>'
         f'<div class="row"><span class="k">样本：</span>{h(sample) if sample else "—"}</div>'
         f'<div class="row"><span class="k">命令行：</span>{argv_html}</div>'
@@ -269,12 +258,13 @@ def render_html(events: list, repo: Path, refresh_sec: int, workdir: str) -> str
     ok = sum(1 for ev in events if str(ev.get("exit_code")) == "0")
     fail = total - ok
     last_ts = str(events[-1].get("ts") or "—") if events else "—"
-    first_dt = parse_ts(events[0].get("ts")) if events else None
-    last_dt = parse_ts(events[-1].get("ts")) if events else None
-    if first_dt is not None and last_dt is not None and last_dt >= first_dt:
-        elapsed = fmt_elapsed((last_dt - first_dt).total_seconds())
-    else:
-        elapsed = "—"
+    # 口径（supervisor P2-9）: jsonl 只追加不轮转，首尾时间相减会跨越多次
+    # 运行；改按已记录事件的 duration_sec 求和，标注为"已记录步骤耗时合计"。
+    try:
+        recorded_seconds = sum(int(ev.get("duration_sec") or 0) for ev in events)
+    except (TypeError, ValueError):
+        recorded_seconds = 0
+    elapsed = fmt_elapsed(recorded_seconds)
 
     fallback_workdir = workdir
     skill_cache: dict = {}
@@ -306,7 +296,7 @@ def render_html(events: list, repo: Path, refresh_sec: int, workdir: str) -> str
   <div class="stat ok"><div class="num">{ok}</div><div class="lbl">通过</div></div>
   <div class="stat bad"><div class="num">{fail}</div><div class="lbl">失败</div></div>
   <div class="stat"><div class="num">{h(last_ts)}</div><div class="lbl">最近事件时间</div></div>
-  <div class="stat"><div class="num">{h(elapsed)}</div><div class="lbl">累计耗时</div></div>
+  <div class="stat"><div class="num">{h(elapsed)}</div><div class="lbl">已记录步骤耗时合计</div></div>
 </div>
 {cards_html}
 </div>

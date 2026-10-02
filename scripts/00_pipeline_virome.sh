@@ -55,6 +55,8 @@ cat << 'EOF'
   --from  从某步骤续跑:
           kneaddata, assembly, viral_id, quantify, cluster, annotate
   --only  只运行某步骤（同 --skip 可选值）
+  --force  忽略已有输出强制重跑（生产目录受写守卫保护，见 libcommon.sh）
+  --monitor  启用步骤事件监控（MGX_MONITOR=1，事件写入 {workdir}/logs/run_events.jsonl）
 
 samplesheet.csv 格式（第一行为表头）:
   sample_id,r1,r2,host_type,project_dir
@@ -106,8 +108,8 @@ mapfile -t SAMPLES < <(tail -n+2 "${SAMPLESHEET}" | grep -v "^$\|^#")
 
 # ENG-6/run-monitor: one-time hint (per-sample events land under {workdir}/logs)
 if [ "${MONITOR:-0}" = "1" ]; then
-    _MONITOR_WD="$(printf '%s' "${SAMPLES[0]:-}" | cut -d',' -f5 | tr -d ' "')"
-    echo "[monitor] 已启用步骤事件记录 → ${_MONITOR_WD}/logs/run_events.jsonl；看板: python3 ${REPO}/scripts/utils/run_monitor.py ${_MONITOR_WD} --watch" >&2
+    _MONITOR_WDS="$(printf '%s\n' "${SAMPLES[@]:-}" | cut -d',' -f5 | tr -d ' "' | sort -u | paste -sd' ' -)"
+    echo "[monitor] 已启用步骤事件记录 → 各 workdir 的 logs/run_events.jsonl（${_MONITOR_WDS}）；看板: python3 ${REPO}/scripts/utils/run_monitor.py <workdir> --watch" >&2
 fi
 
 # --- 单样本的 per-sample 步骤（01-02 + 51-55 + 59 + 63）---
