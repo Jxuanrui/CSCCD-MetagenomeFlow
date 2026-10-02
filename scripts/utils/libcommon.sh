@@ -124,6 +124,87 @@ mgx_require() {
     done
 }
 
+# ==============================================================================
+# ENG-6/run-monitor: opt-in per-step run-event hook (default OFF; MGX_MONITOR=1
+# enables). mgx_begin registers an EXIT trap that appends one JSON line per
+# script run to ${WORKDIR}/logs/run_events.jsonl; field names reuse
+# scripts/write_provenance.py as a minimal subset (ts/step_id/sample/argv/
+# exit_code/duration_sec/workdir).
+# Hard constraints (supervisor-approved):
+#   - Default OFF: with MGX_MONITOR != 1 the observable behavior of every
+#     sourcing script is byte-identical (no output, no files, same exit codes).
+#   - The hook must never alter the caller's exit code and never write to the
+#     caller's stdout: every internal failure is swallowed (2>/dev/null || true).
+#   - The append is a single printf >> redirection, but NFS does not guarantee
+#     atomic append across nodes (interleaving is possible under multi-node
+#     parallelism).
+#   - Scripts that register their own EXIT trap after mgx_begin override this
+#     hook (last trap wins) and become monitor blind spots.
+#   - Scripts not calling mgx_begin are coverage blind spots (known:
+#     02_qc_kneaddata.sh -- being fixed separately).
+#   - argv is snapshotted in the trap's fire-time scope ("$*"), i.e. the
+#     script's arguments for top-level exits (function-local arguments if the
+#     exit happens inside a function).
+#   - Project01 write guard: events are skipped when the realpath of WORKDIR
+#     is */Project/Project01 or below, unless PRODUCTION_WRITE_ALLOWED=true.
+# ==============================================================================
+
+# JSON 字符串转义: 转义反斜杠与双引号，剔除控制字符（0x00-0x1F）。
+# 输入: 优先 $1，无参数时读 stdin。任何内部失败都不影响调用方。
+_mgx_json_escape() {
+    local _raw=""
+    if [ "$#" -gt 0 ]; then
+        _raw="$1"
+    else
+        _raw="$(cat 2>/dev/null || true)"
+    fi
+    { printf '%s' "${_raw}" | tr -d '\000-\037' 2>/dev/null \
+        | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' 2>/dev/null; } || true
+    return 0
+}
+
+# 追加一条当前脚本运行的 JSON 事件（见上方头注释）。Usage: _mgx_emit <exit_code>
+_mgx_emit() {
+    [ "${MGX_MONITOR:-0}" = "1" ] || return 0
+    {
+        local LC_ALL=C
+        local _rc _ts _step _sample _dur _wd_esc _argv _line _budget _wd_real
+        [ -n "${WORKDIR:-}" ] || return 0
+        _wd_real="$(realpath -m "${WORKDIR}" 2>/dev/null || printf '%s' "${WORKDIR}")"
+        case "${_wd_real}" in
+            */Project/Project01|*/Project/Project01/*)
+                [ "${PRODUCTION_WRITE_ALLOWED:-false}" = "true" ] || return 0
+                ;;
+        esac
+        mkdir -p "${WORKDIR}/logs" 2>/dev/null || true
+        _rc="$(printf '%s' "${1:-0}" | tr -cd '0-9' 2>/dev/null || true)"
+        [ -n "${_rc}" ] || _rc=0
+        _dur="$(printf '%s' "${SECONDS:-0}" | tr -cd '0-9' 2>/dev/null || true)"
+        [ -n "${_dur}" ] || _dur=0
+        _ts="$(_mgx_json_escape "$(date +%FT%T%z 2>/dev/null || true)")"
+        _step="$(_mgx_json_escape "$(basename "$0" 2>/dev/null || true)")"
+        _sample="$(_mgx_json_escape "${SAMPLE:-${SAMPLE_ID:-}}")"
+        _wd_esc="$(_mgx_json_escape "${WORKDIR}")"
+        _argv="$(_mgx_json_escape "${_MGX_ARGV:-}")"
+        # 整行预算 4096 字节: 先测出 argv 为空时的行长，再截断转义后的 argv
+        # （截断以尾部 "..." 标记），保证整行不超过 4096 字节。
+        _line="$(printf '{"ts":"%s","step_id":"%s","sample":"%s","argv":"","exit_code":%s,"duration_sec":%s,"workdir":"%s"}' \
+            "${_ts}" "${_step}" "${_sample}" "${_rc}" "${_dur}" "${_wd_esc}")"
+        _budget=$(( 4096 - ${#_line} - 8 ))
+        if [ "${#_argv}" -gt "${_budget}" ]; then
+            if [ "${_budget}" -gt 3 ]; then
+                _argv="${_argv:0:$(( _budget - 3 ))}..."
+            else
+                _argv=""
+            fi
+        fi
+        printf '{"ts":"%s","step_id":"%s","sample":"%s","argv":"%s","exit_code":%s,"duration_sec":%s,"workdir":"%s"}\n' \
+            "${_ts}" "${_step}" "${_sample}" "${_argv}" "${_rc}" "${_dur}" "${_wd_esc}" \
+            >> "${WORKDIR}/logs/run_events.jsonl" 2>/dev/null || true
+    } 2>/dev/null || true
+    return 0
+}
+
 # 计时开始
 mgx_begin() {
     # P2-HYGIENE-01 production write guard: refuse Project01 + --force
@@ -139,6 +220,10 @@ mgx_begin() {
         esac
     fi
     SECONDS=0
+    # ENG-6/run-monitor: opt-in per-step event emission (supervisor-approved, default OFF)
+    if [ "${MGX_MONITOR:-0}" = "1" ]; then
+        trap '_MGX_RC=$?; _MGX_ARGV="$*"; _mgx_emit "${_MGX_RC}"' EXIT
+    fi
 }
 
 # 计时结束: 输出 [label] 耗时 ${SECONDS}s（label 可省略，默认 done）

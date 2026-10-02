@@ -93,9 +93,12 @@ EOF
 # --- 参数解析（--skip/--from/--only 等由 libcommon.sh 的 mgx_parse 表驱动）---
 export MGX_OPTS_STRING="i:SAMPLESHEET r:REPO t:CPUS j:PARALLEL_JOBS"
 export MGX_OPTS_LONG="skip:SKIP_STEPS from:FROM_STEP only:ONLY_STEP humann-speed:HUMANN_SPEED"
-export MGX_OPTS_FLAG="force"
+export MGX_OPTS_FLAG="force monitor"
 mgx_parse "$@"
 mgx_require SAMPLESHEET REPO
+
+# ENG-6/run-monitor: propagate opt-in flag to child step scripts (default OFF)
+if [ "${MONITOR:-0}" = "1" ]; then export MGX_MONITOR=1; fi
 mgx_validate_samplesheet "${SAMPLESHEET}"   # T-14: fail-fast on bad input before any compute
 
 if [ ! -f "${SAMPLESHEET}" ]; then
@@ -141,6 +144,12 @@ echo "[pipeline] 共 ${TOTAL} 个样本"
 
 # 读取所有样本信息到数组
 mapfile -t SAMPLES < <(tail -n+2 "${SAMPLESHEET}" | grep -v "^$\|^#")
+
+# ENG-6/run-monitor: one-time hint (per-sample events land under {workdir}/logs)
+if [ "${MONITOR:-0}" = "1" ]; then
+    _MONITOR_WD="$(printf '%s' "${SAMPLES[0]:-}" | cut -d',' -f5 | tr -d ' "')"
+    echo "[monitor] 已启用步骤事件记录 → ${_MONITOR_WD}/logs/run_events.jsonl；看板: python3 ${REPO}/scripts/utils/run_monitor.py ${_MONITOR_WD} --watch" >&2
+fi
 
 # --- 运行函数：对单个样本运行所有步骤 ---
 run_sample() {

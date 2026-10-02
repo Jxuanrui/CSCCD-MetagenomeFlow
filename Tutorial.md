@@ -30,6 +30,10 @@
 - **模式二**：Bash Pipeline + rush，轻量批量，适合无 Snakemake 的场景
 - **模式三**：Snakemake，生产级，所有步骤审核通过后切换至此
 
+> **步骤事件监控（可选，默认关闭）**：模式一/二执行时给 pipeline 脚本加 `--monitor`（或运行步骤前 `export MGX_MONITOR=1`），
+> 每个已接入钩子的步骤会向 `{workdir}/logs/run_events.jsonl` 追加一条事件（不改退出码、无额外输出）。
+> 查看看板：`python3 scripts/utils/run_monitor.py <workdir> --watch`，生成自包含 HTML `logs/run_monitor.html`（含每步目的/命令行/输出文件统计，浏览器自动刷新）。
+
 ---
 
 ## 本机服务器参数（固定参考）
