@@ -1,0 +1,39 @@
+id: "74_fun_blast_gutdb"
+script: "scripts/74_fun_blast_gutdb.sh"
+tool: "DIAMOND blastx"
+tool_version: "2.x"
+conda_env: "envs/assembly"
+description: "Translate clean reads and align against a gut fungal reference database."
+dimension: "mycobiome"
+category: "classification"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "blast_hits"
+    path_pattern: "{workdir}/result/fungi/blast_gutdb/{sample}/{sample}_blast.tsv"
+    description: "Best-hit DIAMOND blastx matches against gut fungal database."
+
+depends_on:
+  - "02_qc_kneaddata"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_blast_gutdb"
+

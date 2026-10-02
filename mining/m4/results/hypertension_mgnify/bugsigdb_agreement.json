@@ -1,0 +1,45 @@
+{
+ "disease_term": "Hypertension",
+ "matched_conditions": [
+  "Hypertension",
+  "Hypertension, pregnancy-induced"
+ ],
+ "n_matched_signatures": 29,
+ "n_signatures_dropped_non_gut_site": 0,
+ "bugsigdb_taxa_union": 137,
+ "our_sig_taxa": 393,
+ "overlap": 50,
+ "sign_consistent": 25,
+ "sign_discordant": 25,
+ "novel_taxa": 343,
+ "jaccard": 0.1042,
+ "p_hypergeometric_overlap": 0.924631,
+ "enrichment_universe": {
+  "tested_taxa": 406,
+  "tested_in_bugsigdb": 53
+ },
+ "taxa_match_rate": 0.1305,
+ "sig_taxa_match_rate": 0.1272,
+ "verdict": "novel candidates",
+ "verdict_rule": "replicates known iff matched signatures exist AND sign_consistent>=3 AND overlap>=5 AND hypergeometric p<0.05; else novel candidates",
+ "top_novel_taxa": [
+  "5-7n15",
+  "cf231",
+  "smb53",
+  "prevotella melaninogenica",
+  "blautia producta",
+  "shuttleworthia satelles",
+  "gw-34",
+  "bacteroides eggerthii",
+  "veillonella parvula",
+  "yrc22"
+ ],
+ "example_pmids": [
+  "31339887",
+  "36475759",
+  "37391847",
+  "37813882",
+  "40340772",
+  "41654729"
+ ]
+}

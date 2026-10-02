@@ -1,0 +1,68 @@
+id: "79_fun_eukfinder"
+script: "scripts/79_fun_eukfinder.sh"
+tool: "Eukfinder"
+tool_version: "1.2.4"
+conda_env: "envs/assembly"
+description: "Classify assembled fungal contigs into eukaryote / bacteria / unknown using Centrifuge + optional PLAST (long_seqs mode)"
+dimension: "fungi"
+category: "binning"
+rule_type: "per_sample"
+
+inputs:
+  - name: "assembly_contigs"
+    path_pattern: "{workdir}/result/fungi/assembly/{sample}/{sample}.contigs.fa"
+    required: true
+
+outputs:
+  - name: "results_sentinel"
+    path_pattern: "{workdir}/result/fungi/eukfinder/{sample}/results.txt"
+    description: "Run summary listing all output files"
+  - name: "eukaryote_fasta"
+    path_pattern: "{workdir}/result/fungi/eukfinder/{sample}/Eukfinder_results/{sample}.Euk.fasta"
+    description: "Eukaryotic contigs (absent when 0 euk contigs found — expected for low-depth samples)"
+  - name: "bacteria_fasta"
+    path_pattern: "{workdir}/result/fungi/eukfinder/{sample}/Eukfinder_results/{sample}.Bact.fasta"
+    description: "Bacterial contigs"
+  - name: "summary_table"
+    path_pattern: "{workdir}/result/fungi/eukfinder/{sample}/Eukfinder_results/summary_table.txt"
+    description: "Contig counts by category (Euk / Bact / Unk / EUnk)"
+
+depends_on:
+  - "78_fun_megahit"
+required_by:
+  - "80_fun_prodigal"
+  - "80b_fun_metaeuk"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo:    "{repo}"
+  cdb:     "{repo}/db/eukfinder_db/centrifuge_db/EukDB"
+
+prerequisites:
+  - description: "ETE3 NCBI taxonomy DB (~700 MB) must be initialized once before first run"
+    command: "conda run --prefix {repo}/envs/assembly python -c \"import ete3; ete3.NCBITaxa()\""
+    one_time: true
+  - description: "Centrifuge EukDB (4 .cf files, ~12.8 GB) at {repo}/db/eukfinder_db/centrifuge_db/EukDB"
+    status: "ready_2026-06-17"
+
+benchmarks:
+  typical_runtime_min: 3
+  typical_input_size_gb: 0.01
+  peak_memory_gb: 8
+  notes: "~148s on Project_example (low depth). High-depth samples 20-30 min."
+
+known_issues:
+  - description: "ETE3 NCBI taxonomy DB must be pre-initialized; fails with HTTP 503 during NCBI outages"
+    workaround: "conda run --prefix envs/assembly python -c \"import ete3; ete3.NCBITaxa()\""
+  - description: "Long_seqs_*.log written to OUTDIR by Eukfinder internals; script moves it to logs/fungi/ post-run"
+    workaround: "Handled automatically in script since 2026-06-17"
+  - description: "0 eukaryotic contigs expected for low-depth samples; .Euk.fasta will not be created"
+    workaround: "Normal behavior; 80/80b should use assembly contigs directly in this case"
+  - description: "EukDB built from 628/667 genomes; 39 NCBI FTP paths with spaces are unavailable"
+    workaround: "Coverage sufficient for gut fungal identification"
+
+integration_status: "integrated"
+integrated_date: "2026-06-17"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_eukfinder"
+

@@ -1,0 +1,36 @@
+id: "26_bac_vfdb"
+name: "VFDB Virulence Factor Annotation (DIAMOND)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::vfdb"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: hits
+    path_pattern: "{workdir}/result/annotation/vfdb/vfdb_hits.tsv"
+    description: "DIAMOND blastp hits against VFDB (BLAST m6 format)"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/assembly"
+db_path: "db/vfdb"
+
+parameters:
+  evalue: "1e-5"
+  max_target_seqs: 1
+  mode: "sensitive"
+
+benchmarks:
+  typical_runtime_min: 20
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "VFDB has two sets: core (experimentally validated) and full (including putative)"
+    workaround: "Ensure db/vfdb/*.dmnd was built from VFDB_setB_pro.fas for comprehensive results"

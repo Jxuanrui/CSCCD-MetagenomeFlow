@@ -1,0 +1,41 @@
+id: "41d_bac_snippy"
+name: "SNP/InDel Detection with Snippy"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::bac_snippy"
+
+inputs:
+  - name: drep_genomes
+    path_pattern: "{workdir}/result/binning/drep/dereplicated_genomes/*.fa"
+    required: true
+    description: "Dereplicated MAGs from dRep"
+
+outputs:
+  - name: core_tsv
+    path_pattern: "{workdir}/result/wgs/snippy/core.tsv"
+    description: "Core SNP table from snippy-core"
+  - name: clean_aln
+    path_pattern: "{workdir}/result/wgs/snippy/core.clean.aln"
+    description: "Cleaned core genome alignment (for phylogeny)"
+
+depends_on:
+  - "38_bac_drep"
+
+conda_env: "envs/snippy"
+
+parameters:
+  reference: "auto (largest MAG)"
+
+benchmarks:
+  typical_runtime_min: 20
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "snippy=4.6.0 not installable due to samtools/libdeflate conflict; installed version is 4.0.2"
+    workaround: "Use as-is; 4.0.2 is functionally equivalent for core SNP analysis"
+  - description: "envs/snippy ships perl-list-util 1.41, which does not export `uniq`; snippy-core fails with 'uniq is not exported by the List::Util module' (verified 2026-07-15)"
+    workaround: "Patched envs/snippy/bin/snippy-core to import uniq from List::MoreUtils (already installed) instead of List::Util. Original backed up as snippy-core.bak. Do not upgrade perl-list-moreutils in this env — it downgrades snippy 4.0.2->3.1 and samtools 1.9->1.6."
+  - description: "Script picks a single reference genome (largest MAG by default) and runs snippy-core across ALL dereplicated MAGs project-wide. For multi-species MAG collections (verified on Project01: 213 MAGs spanning many genera), this produces 'No SNPs were detected' because snippy/snippy-core is designed for same-species/same-strain comparison, not cross-species genome alignment."
+    workaround: "For biologically meaningful core-SNP results, group MAGs by species/genus (e.g. via GTDB-Tk classification) before running snippy-core, or pass -R with a same-species reference and a matching MAG subset. Running 41d project-wide as-is is only useful as a smoke test that the pipeline mechanics work, not as a real SNP analysis."
+

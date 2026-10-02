@@ -1,0 +1,47 @@
+id: "73_fun_humann4_fungi"
+script: "scripts/73_fun_humann4_fungi.sh"
+tool: "HUMAnN4 post-processing"
+tool_version: "~"
+conda_env: "envs/humann4"
+description: "Filter HUMAnN stratified pathway abundance output to retain fungal clades plus unstratified rows."
+dimension: "mycobiome"
+category: "functional"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+  - name: "metaphlan_profile"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/{sample}/{sample}_profile.txt"
+    required: true
+  - name: "humann3_pathabundance"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_pathabundance_relab.tsv"
+    required: true
+
+outputs:
+  - name: "fungi_pathabundance"
+    path_pattern: "{workdir}/result/fungi/humann4/{sample}/{sample}_fungi_pathabundance.tsv"
+    description: "Fungal-only pathway abundance table with unstratified rows retained."
+
+depends_on:
+  - "02_qc_kneaddata"
+  - "13_bac_humann3"
+  - "72_fun_metaphlan4_euk"
+
+params:
+  threads: "1"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_humann4"
+

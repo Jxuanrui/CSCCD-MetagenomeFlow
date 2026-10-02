@@ -1,0 +1,33 @@
+# Skills 发现引擎 — GitHub 数据源
+sources:
+  - name: "github_topic_repos"
+    method: "gh"
+    description: "按 GitHub topic 搜索仓库"
+    queries:
+      - "repos --topic claude-skills,bioinformatics --sort stars --json fullName,stars,updatedAt,url,description --limit 50"
+      - "repos --topic claude-skills,genomics --sort stars --json fullName,stars,updatedAt,url,description --limit 50"
+      - "repos --topic claude-code-skills,bioinformatics --sort stars --json fullName,stars,updatedAt,url,description --limit 50"
+      - "repos --topic agent-skills,bioinformatics --sort stars --json fullName,stars,updatedAt,url,description --limit 50"
+
+  - name: "github_code_search"
+    method: "gh_api"
+    description: "按 SKILL.md 内容搜索仓库"
+    queries:
+      - "search/code?q=filename:SKILL.md+path:skills+microbiome&per_page=50"
+      - "search/code?q=filename:SKILL.md+path:skills+metagenom&per_page=50"
+      - "search/code?q=filename:SKILL.md+path:skills+bioinformatics&per_page=50&sort=indexed"
+
+  - name: "github_trending"
+    method: "gh_trending"
+    description: "GitHub 每周趋势仓库（不限语言）"
+    since: "weekly"
+    max_repos: 30
+
+  - name: "aggregation_repos"
+    method: "git_clone_scan"
+    description: "克隆已知聚合仓库并遍历 SKILL.md"
+    repos:
+      - "GPTomics/bioSkills"
+      - "FridrichMethod/awesome-skills"
+      - "jaechang-hits/SciAgent-Skills"
+      - "crazymsn/academic-skills"

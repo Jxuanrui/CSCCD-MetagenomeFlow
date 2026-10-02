@@ -1,0 +1,35 @@
+{
+ "disease_term": "Ulcerative Colitis",
+ "matched_conditions": [
+  "Ulcerative colitis"
+ ],
+ "n_matched_signatures": 52,
+ "n_signatures_dropped_non_gut_site": 0,
+ "bugsigdb_taxa_union": 199,
+ "our_sig_taxa": 0,
+ "overlap": 0,
+ "sign_consistent": 0,
+ "sign_discordant": 0,
+ "novel_taxa": 0,
+ "jaccard": 0.0,
+ "p_hypergeometric_overlap": null,
+ "enrichment_universe": {
+  "tested_taxa": 157,
+  "tested_in_bugsigdb": 65
+ },
+ "taxa_match_rate": 0.414,
+ "sig_taxa_match_rate": null,
+ "verdict": "novel candidates",
+ "verdict_rule": "replicates known iff matched signatures exist AND sign_consistent>=3 AND overlap>=5 AND hypergeometric p<0.05; else novel candidates",
+ "top_novel_taxa": [],
+ "example_pmids": [
+  "22170749",
+  "26937623",
+  "28494241",
+  "28852861",
+  "29632427",
+  "30545401",
+  "33718417",
+  "33748490"
+ ]
+}

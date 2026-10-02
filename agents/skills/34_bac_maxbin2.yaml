@@ -1,0 +1,39 @@
+id: "34_bac_maxbin2"
+name: "MaxBin2 Binning"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::maxbin2"
+
+inputs:
+  - name: contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+  - name: depth
+    path_pattern: "{workdir}/result/binning/coverm/{sample}/depth.txt"
+    required: true
+    description: "CoverM depth table (extracted to 2-col abundance for MaxBin2)"
+
+outputs:
+  - name: tsv
+    path_pattern: "{workdir}/result/binning/maxbin2/{sample}/{sample}.maxbin2.tsv"
+    description: "Contig2bin table for DAS_Tool"
+  - name: bins
+    path_pattern: "{workdir}/result/binning/maxbin2/{sample}/bin.{n}.fasta"
+    description: "Individual bin FASTA files"
+
+depends_on:
+  - "32_bac_coverm_depth"
+
+conda_env: "envs/metawrap"
+
+parameters:
+  max_iteration: 50
+
+benchmarks:
+  typical_runtime_min: 45
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "MaxBin2 requires 2-column abundance file (contig, depth), not the full metabat table"
+    workaround: "Script auto-extracts with: tail -n +2 depth.txt | cut -f1,4 > abundance.txt"

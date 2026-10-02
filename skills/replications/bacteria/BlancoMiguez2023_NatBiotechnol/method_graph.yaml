@@ -1,0 +1,84 @@
+# method_graph.yaml — BlancoMiguez2023_NatBiotechnol
+# MetaPhlAn 4 taxonomic profiling pipeline DAG
+
+nodes:
+  - id: cleaned_reads
+    type: method_node
+    description: "Quality-controlled and host-decontaminated reads"
+    script: scripts/02_qc_kneaddata.sh
+
+  - id: marker_extraction
+    type: method_node
+    tool: "MetaPhlAn4 (Bowtie2 backend)"
+    description: "Map reads to 1.01M clade-specific marker genes from >1.6M reference genomes"
+    paper_section: "Methods > Marker gene database construction"
+    config:
+      type: config_node
+      db: "mpa_vJan21_CHOCOPhlAnSGB_202103"
+      bowtie2_params: "--no-unal --sam-no-hd"
+      min_mapq: 5
+      min_alignment_len: 0
+
+  - id: sgb_assignment
+    type: method_node
+    tool: MetaPhlAn4
+    description: "Assign reads to Species-Genome Bins (SGBs); covers both characterized and uncharacterized species (kSGBs and uSGBs)"
+    paper_section: "Methods > SGB-based taxonomic assignment"
+    config:
+      type: config_node
+      sgb_identity_threshold: 0.95
+      min_coverage: 10  # minimum marker coverage
+
+  - id: abundance_estimation
+    type: method_node
+    tool: MetaPhlAn4
+    description: "Estimate relative abundance per SGB from marker read counts with MAPQ and length normalization"
+    paper_section: "Methods > Abundance estimation"
+
+  - id: metaphlan4_profile
+    type: method_node
+    tool: MetaPhlAn4
+    version: "4.x"
+    script: scripts/11_bac_metaphlan4.sh
+    paper_section: "Methods > Per-sample profiling"
+    config:
+      type: config_node
+      output_format: "tsv"
+      analysis_type: "rel_ab_w_read_stats"
+
+  - id: merge_profiles
+    type: method_node
+    tool: "merge_metaphlan_tables.py"
+    script: scripts/11b_bac_metaphlan4_merge.sh
+    description: "Merge per-sample profiles into project-level abundance matrix"
+    paper_section: "Methods > Multi-sample table generation"
+
+  - id: eukaryote_profiling
+    type: method_node
+    tool: "MetaPhlAn4 --kingdom Eukaryota"
+    script: scripts/72_fun_metaphlan4_euk.sh
+    description: "Fungi and protozoa profiling using eukaryotic SGBs"
+    paper_section: "Methods > Eukaryote profiling extension"
+    note: "All Project_example samples returned UNCLASSIFIED; gut mycobiome signal below detection threshold"
+
+edges:
+  - from: cleaned_reads
+    to: marker_extraction
+  - from: marker_extraction
+    to: sgb_assignment
+  - from: sgb_assignment
+    to: abundance_estimation
+  - from: abundance_estimation
+    to: metaphlan4_profile
+  - from: metaphlan4_profile
+    to: merge_profiles
+  - from: metaphlan4_profile
+    to: eukaryote_profiling
+
+key_improvements_over_v3:
+  - "SGB framework integrates >5M previously uncharacterized genome sequences"
+  - "Explains ~20% more reads in human gut metagenomes"
+  - "Explains >40% more reads in undercharacterized environments (rumen, soil)"
+  - "New uSGB (unknown SGB) category for uncharacterized species"
+  - "Improved eukaryote and archaeal marker databases"
+  - "Note: NOT backward compatible with MetaPhlAn 3 profiles"

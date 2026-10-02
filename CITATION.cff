@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: CSCCD-MetagenomeFlow
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - alias: Jxuanrui
+    website: "https://github.com/Jxuanrui"
+identifier:
+  type: url
+  value: "https://github.com/Jxuanrui/CSCCD-MetagenomeFlow"
+repository-code: "https://github.com/Jxuanrui/CSCCD-MetagenomeFlow"
+abstract: >-
+  Gut-metagenome multi-kingdom analysis platform: bacteria, virome and
+  mycobiome chains (183 scripts + Snakemake pipeline), an agent-driven
+  metagenome mining loop with ontology curation, and MCP-based
+  publication-figure visualization — VibeCoding-ready.
+keywords:
+  - metagenomics
+  - gut-microbiome
+  - bioinformatics-pipeline
+  - snakemake
+  - mcp
+  - ai-agents
+  - visualization
+license: MIT
+version: 1.3.0
+date-released: "2026-09-24"

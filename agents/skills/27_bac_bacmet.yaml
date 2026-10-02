@@ -1,0 +1,36 @@
+id: "27_bac_bacmet"
+name: "BacMet Metal Resistance Gene Annotation (DIAMOND)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::bacmet"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: hits
+    path_pattern: "{workdir}/result/annotation/bacmet/bacmet_hits.tsv"
+    description: "DIAMOND blastp hits against BacMet (BLAST m6 format)"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/assembly"
+db_path: "db/bacmet"
+
+parameters:
+  evalue: "1e-5"
+  max_target_seqs: 1
+  mode: "sensitive"
+
+benchmarks:
+  typical_runtime_min: 15
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "BacMet2 covers both experimentally confirmed (BacMet-EXP) and predicted (BacMet-PRED)"
+    workaround: "Use BacMet-EXP sequences for diamond DB to minimize false positives"

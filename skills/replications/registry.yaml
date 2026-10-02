@@ -1,0 +1,85 @@
+# CSCCD-MetagenomeFlow Literature Replication Registry
+# 格式规范见 SCHEMA.md
+# 新增技能包后在此追加一行
+
+replications:
+  - id: "Yan2024_Cell187"
+    dimension: fungi
+    journal: "Cell"
+    year: 2024
+    if: 45.5
+    method_fidelity: high
+    implemented: [74a, 74e, 74f]
+    path: "skills/replications/fungi/Yan2024_Cell187/"
+    status: "complete"
+    notes: "PHF database + Singular/Escrow; paper's exact pipeline"
+  - id: "Wacker2026_NatCommun"
+    dimension: statistics
+    journal: "Nature Communications"
+    year: 2026
+    if: null
+    method_fidelity: medium
+    implemented: []
+    path: "skills/replications/statistics/Wacker2026_NatCommun/"
+    status: "reference_only"
+    notes: "TOFU-MAaPO large-scale SRA reanalysis reference; Nextflow workflow documented for Snakemake-oriented CSCCD-MetagenomeFlow"
+  - id: "Jie2026_NatGenet"
+    dimension: bacteria
+    journal: "Nature Genetics"
+    year: 2026
+    if: 31.7
+    method_fidelity: high
+    implemented: [16, 17, 18, 32, 33, 34, 36, 37, 38, 40, 52, 53, 54]
+    path: "skills/replications/bacteria/Jie2026_NatGenet/"
+    status: "complete"
+    notes: "GVMG vaginal MAG catalog; MAG pipeline params validated at 13632-metagenome scale; M-GWAS 7 loci"
+  - id: "BlancoMiguez2023_NatBiotechnol"
+    dimension: bacteria
+    journal: "Nature Biotechnology"
+    year: 2023
+    if: 36.6
+    method_fidelity: high
+    implemented: [11, "11b", 72]
+    path: "skills/replications/bacteria/BlancoMiguez2023_NatBiotechnol/"
+    status: "complete"
+    notes: "MetaPhlAn4 tool paper; SGB framework; 1.6M genomes; +20% gut read assignment; citation for scripts 11/11b/72"
+  - id: "Camargo2023_NatBiotechnol"
+    dimension: virome
+    journal: "Nature Biotechnology"
+    year: 2023
+    if: 36.6
+    method_fidelity: high
+    implemented: [52, 57]
+    path: "skills/replications/virome/Camargo2023_NatBiotechnol/"
+    status: "complete"
+    notes: "geNomad tool paper; deep learning+CRF; virus MCC 0.953; primary virus ID tool; citation for scripts 52/57"
+  - id: "Nayfach2021_NatBiotechnol"
+    dimension: virome
+    journal: "Nature Biotechnology"
+    year: 2021
+    if: 36.6
+    method_fidelity: high
+    implemented: [54, 62]
+    path: "skills/replications/virome/Nayfach2021_NatBiotechnol/"
+    status: "complete"
+    notes: "CheckV tool paper; AAI-based viral completeness and contamination QC; provirus trimming; citation for scripts 54/62"
+  - id: "Guo2021_Microbiome"
+    dimension: virome
+    journal: "Microbiome"
+    year: 2021
+    if: 13.8
+    method_fidelity: high
+    implemented: [53]
+    path: "skills/replications/virome/Guo2021_Microbiome/"
+    status: "complete"
+    notes: "VirSorter2 tool paper; five-classifier virus detection across dsDNA/ssDNA/RNA/NCLDV/lavidaviridae; citation for script 53"
+  - id: "Beghini2021_eLife"
+    dimension: bacteria
+    journal: "eLife"
+    year: 2021
+    if: 7.7
+    method_fidelity: medium
+    implemented: [13, 73]
+    path: "skills/replications/bacteria/Beghini2021_eLife/"
+    status: "complete"
+    notes: "HUMAnN3 bioBakery 3 tool paper; taxonomy-guided functional profiling with ChocoPhlAn/UniRef90 and MinPath; citation for scripts 13/73"

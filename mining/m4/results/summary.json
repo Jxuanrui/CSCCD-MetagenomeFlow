@@ -1,0 +1,351 @@
+{
+ "generated_at": "2026-09-23T08:40:16Z",
+ "fdr_cutoff": 0.05,
+ "prevalence_cutoff": 0.2,
+ "diseases": {
+  "crohn_disease_imsms": {
+   "cohort": "crohn_disease_imsms",
+   "source": "imsms",
+   "display": "Crohn Disease (iMSMS)",
+   "n_case_species": 65,
+   "n_control_species": 27,
+   "n_tested_species": 101,
+   "n_case_genus": 65,
+   "n_control_genus": 27,
+   "n_tested_genus": 60,
+   "n_sig": 8,
+   "agreement": {
+    "disease_term": "Crohn Disease",
+    "matched_conditions": [
+     "Crohn ileitis",
+     "Crohn's colitis",
+     "Crohn's disease"
+    ],
+    "n_matched_signatures": 64,
+    "n_signatures_dropped_non_gut_site": 0,
+    "bugsigdb_taxa_union": 259,
+    "our_sig_taxa": 8,
+    "overlap": 4,
+    "sign_consistent": 4,
+    "sign_discordant": 0,
+    "novel_taxa": 4,
+    "jaccard": 0.0152,
+    "p_hypergeometric_overlap": 0.605088,
+    "enrichment_universe": {
+     "tested_taxa": 161,
+     "tested_in_bugsigdb": 78
+    },
+    "taxa_match_rate": 0.4845,
+    "sig_taxa_match_rate": 0.5,
+    "verdict": "novel candidates",
+    "verdict_rule": "replicates known iff matched signatures exist AND sign_consistent>=3 AND overlap>=5 AND hypergeometric p<0.05; else novel candidates",
+    "top_novel_taxa": [
+     "asaccharobacter celatus",
+     "ruminococcus bicirculans",
+     "sellimonas",
+     "gemmiger formicilis"
+    ],
+    "example_pmids": [
+     "24629344",
+     "26789999",
+     "26937623",
+     "28494241",
+     "28852861",
+     "29632427",
+     "30545401",
+     "32807798"
+    ]
+   },
+   "top_novel": [
+    "asaccharobacter celatus",
+    "ruminococcus bicirculans",
+    "sellimonas",
+    "gemmiger formicilis"
+   ],
+   "top_sig": [
+    {
+     "taxon": "asaccharobacter celatus",
+     "dir": "decreased",
+     "q": 0.030274
+    },
+    {
+     "taxon": "ruminococcus bicirculans",
+     "dir": "decreased",
+     "q": 0.030274
+    },
+    {
+     "taxon": "adlercreutzia",
+     "dir": "decreased",
+     "q": 0.033716
+    },
+    {
+     "taxon": "asaccharobacter",
+     "dir": "decreased",
+     "q": 0.033716
+    },
+    {
+     "taxon": "gemmiger",
+     "dir": "decreased",
+     "q": 0.033716
+    }
+   ]
+  },
+  "ulcerative_colitis_imsms": {
+   "cohort": "ulcerative_colitis_imsms",
+   "source": "imsms",
+   "display": "Ulcerative Colitis (iMSMS)",
+   "n_case_species": 38,
+   "n_control_species": 27,
+   "n_tested_species": 98,
+   "n_case_genus": 38,
+   "n_control_genus": 27,
+   "n_tested_genus": 59,
+   "n_sig": 0,
+   "agreement": {
+    "disease_term": "Ulcerative Colitis",
+    "matched_conditions": [
+     "Ulcerative colitis"
+    ],
+    "n_matched_signatures": 52,
+    "n_signatures_dropped_non_gut_site": 0,
+    "bugsigdb_taxa_union": 199,
+    "our_sig_taxa": 0,
+    "overlap": 0,
+    "sign_consistent": 0,
+    "sign_discordant": 0,
+    "novel_taxa": 0,
+    "jaccard": 0.0,
+    "p_hypergeometric_overlap": null,
+    "enrichment_universe": {
+     "tested_taxa": 157,
+     "tested_in_bugsigdb": 65
+    },
+    "taxa_match_rate": 0.414,
+    "sig_taxa_match_rate": null,
+    "verdict": "novel candidates",
+    "verdict_rule": "replicates known iff matched signatures exist AND sign_consistent>=3 AND overlap>=5 AND hypergeometric p<0.05; else novel candidates",
+    "top_novel_taxa": [],
+    "example_pmids": [
+     "22170749",
+     "26937623",
+     "28494241",
+     "28852861",
+     "29632427",
+     "30545401",
+     "33718417",
+     "33748490"
+    ]
+   },
+   "top_novel": [],
+   "top_sig": []
+  },
+  "hypertension_mgnify": {
+   "cohort": "hypertension_mgnify",
+   "source": "mgnify",
+   "display": "Hypertension",
+   "n_case_species": 98,
+   "n_control_species": 250,
+   "n_tested_species": 140,
+   "n_case_genus": 98,
+   "n_control_genus": 250,
+   "n_tested_genus": 274,
+   "n_sig": 401,
+   "agreement": {
+    "disease_term": "Hypertension",
+    "matched_conditions": [
+     "Hypertension",
+     "Hypertension, pregnancy-induced"
+    ],
+    "n_matched_signatures": 29,
+    "n_signatures_dropped_non_gut_site": 0,
+    "bugsigdb_taxa_union": 137,
+    "our_sig_taxa": 393,
+    "overlap": 50,
+    "sign_consistent": 25,
+    "sign_discordant": 25,
+    "novel_taxa": 343,
+    "jaccard": 0.1042,
+    "p_hypergeometric_overlap": 0.924631,
+    "enrichment_universe": {
+     "tested_taxa": 406,
+     "tested_in_bugsigdb": 53
+    },
+    "taxa_match_rate": 0.1305,
+    "sig_taxa_match_rate": 0.1272,
+    "verdict": "novel candidates",
+    "verdict_rule": "replicates known iff matched signatures exist AND sign_consistent>=3 AND overlap>=5 AND hypergeometric p<0.05; else novel candidates",
+    "top_novel_taxa": [
+     "5-7n15",
+     "cf231",
+     "smb53",
+     "prevotella melaninogenica",
+     "blautia producta",
+     "shuttleworthia satelles",
+     "gw-34",
+     "bacteroides eggerthii",
+     "veillonella parvula",
+     "yrc22"
+    ],
+    "example_pmids": [
+     "31339887",
+     "36475759",
+     "37391847",
+     "37813882",
+     "40340772",
+     "41654729"
+    ]
+   },
+   "top_novel": [
+    "5-7n15",
+    "cf231",
+    "smb53",
+    "prevotella melaninogenica",
+    "blautia producta"
+   ],
+   "top_sig": [
+    {
+     "taxon": "5-7n15",
+     "dir": "increased",
+     "q": 0.0
+    },
+    {
+     "taxon": "cf231",
+     "dir": "increased",
+     "q": 0.0
+    },
+    {
+     "taxon": "smb53",
+     "dir": "increased",
+     "q": 0.0
+    },
+    {
+     "taxon": "prevotella melaninogenica",
+     "dir": "increased",
+     "q": 0.0
+    },
+    {
+     "taxon": "blautia producta",
+     "dir": "increased",
+     "q": 0.0
+    }
+   ]
+  },
+  "hiv_infection_mgnify": {
+   "cohort": "hiv_infection_mgnify",
+   "source": "mgnify",
+   "display": "HIV infection",
+   "n_case_species": 152,
+   "n_control_species": 250,
+   "n_tested_species": 26,
+   "n_case_genus": 152,
+   "n_control_genus": 250,
+   "n_tested_genus": 136,
+   "n_sig": 162,
+   "agreement": {
+    "disease_term": "HIV infection",
+    "matched_conditions": [
+     "HIV infection",
+     "HIV infection,Antimicrobial agent",
+     "HIV infection,Diabetes mellitus",
+     "HIV infection,Methamphetamine dependence",
+     "HIV-1 infection"
+    ],
+    "n_matched_signatures": 96,
+    "n_signatures_dropped_non_gut_site": 0,
+    "bugsigdb_taxa_union": 277,
+    "our_sig_taxa": 154,
+    "overlap": 70,
+    "sign_consistent": 31,
+    "sign_discordant": 39,
+    "novel_taxa": 84,
+    "jaccard": 0.1939,
+    "p_hypergeometric_overlap": 1.0,
+    "enrichment_universe": {
+     "tested_taxa": 154,
+     "tested_in_bugsigdb": 70
+    },
+    "taxa_match_rate": 0.4545,
+    "sig_taxa_match_rate": 0.4545,
+    "verdict": "novel candidates",
+    "verdict_rule": "replicates known iff matched signatures exist AND sign_consistent>=3 AND overlap>=5 AND hypergeometric p<0.05; else novel candidates",
+    "top_novel_taxa": [
+     "agathobacter",
+     "marvinbryantia",
+     "shuttleworthia",
+     "soleaferrea",
+     "acetitomaculum",
+     "intestinimonas",
+     "negativibacillus",
+     "fibrobacter",
+     "tyzzerella",
+     "erysipelatoclostridium"
+    ],
+    "example_pmids": [
+     "24399150",
+     "24451087",
+     "26258571",
+     "27477587",
+     "28118207",
+     "28362071",
+     "28388647",
+     "29411528"
+    ]
+   },
+   "top_novel": [
+    "agathobacter",
+    "marvinbryantia",
+    "shuttleworthia",
+    "soleaferrea",
+    "acetitomaculum"
+   ],
+   "top_sig": [
+    {
+     "taxon": "blautia",
+     "dir": "decreased",
+     "q": 0.0
+    },
+    {
+     "taxon": "faecalibacterium",
+     "dir": "decreased",
+     "q": 0.0
+    },
+    {
+     "taxon": "subdoligranulum",
+     "dir": "decreased",
+     "q": 0.0
+    },
+    {
+     "taxon": "bacteroides",
+     "dir": "decreased",
+     "q": 0.0
+    },
+    {
+     "taxon": "lachnoclostridium",
+     "dir": "decreased",
+     "q": 0.0
+    }
+   ]
+  }
+ },
+ "download": {
+  "profiles_required": 631,
+  "profiles_cached": 630,
+  "missing": [
+   "mgnify:SAMEA3951725"
+  ],
+  "last_pass": {
+   "ok": 0,
+   "skip": 630,
+   "fail": [
+    "mgnify:SAMEA3951725: HTTP Error 404: Not Found"
+   ]
+  }
+ },
+ "caveats": [
+  "MGnify arm: cross-study cases vs controls (LiJ_2017/Guillen vs MehtaRS_2018) and cross-pipeline (V3 Greengenes vs V4.1/V5 SILVA) genus-level rRNA-OTU profiles; batch effects expected.",
+  "Legacy MGnify profiles are SSU/OTU tables, not WGS mOTUs; species rank only where tables resolve it.",
+  "iMSMS arm: single study, MetaPhlAn3 species level; one earliest sample per participant.",
+  "BugSigDB matching is name-based (token-subset, diff<=2); MONDO/EFO crosswalks not used.",
+  "Cohorts below the >=10/10 same-study feasibility bar were run as a demonstration per task instructions."
+ ]
+}
