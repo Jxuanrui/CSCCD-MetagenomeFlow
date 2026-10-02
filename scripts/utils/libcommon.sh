@@ -127,9 +127,12 @@ mgx_require() {
 # ==============================================================================
 # ENG-6/run-monitor: opt-in per-step run-event hook (default OFF; MGX_MONITOR=1
 # enables). mgx_begin registers an EXIT trap that appends one JSON line per
-# script run to ${WORKDIR}/logs/run_events.jsonl; field names align with
-# scripts/write_provenance.py (ts[end time]/started_at/step_id/sample_id/
-# params/exit_code/duration_sec/workdir; supervisor rectification P0-1a).
+# script run to ${WORKDIR}/logs/run_events.jsonl; 7 field names align with
+# scripts/write_provenance.py (started_at/step_id/sample_id/params/exit_code/
+# duration/workdir->duration_sec) plus one extension field ts (end time).
+# Type note: params here is the raw argv string, NOT write_provenance.py's
+# key-value object — merging the two record families requires conversion
+# (supervisor C1, 2026-10-02).
 # Hard constraints (supervisor-approved):
 #   - Default OFF: with MGX_MONITOR != 1 the observable behavior of every
 #     sourcing script is byte-identical (no output, no files, same exit codes).
