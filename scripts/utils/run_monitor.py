@@ -328,17 +328,11 @@ def split_params(params: str) -> list:
         return params.split()
 
 
-def param_chips(params: str, repo: Path, step_id: str) -> str:
-    """Render argv tokens as labeled chips (all HTML-escaped).
-
-    Flags resolve their label through the 3-tier per-script legend; the next
-    token is shown as the flag's value when present and not itself a flag.
-    Non-flag stray tokens render raw."""
+def iter_flag_tokens(params: str):
+    """Shared argv tokenizer for BOTH the HTML chips and text mode: yields
+    (token, value_or_None); a flag consumes the next non-flag token as its
+    value per FLAG_TOKEN_RE — one classification, no divergence."""
     tokens = split_params(params)
-    if not tokens:
-        return '<span class="empty">—</span>'
-    help_map, opts_map = script_legend(repo, step_id)
-    chips = []
     i = 0
     while i < len(tokens):
         tok = tokens[i]
@@ -347,6 +341,25 @@ def param_chips(params: str, repo: Path, step_id: str) -> str:
             if i + 1 < len(tokens) and not FLAG_TOKEN_RE.match(tokens[i + 1]):
                 value = tokens[i + 1]
                 i += 1
+            yield tok, value
+        else:
+            yield tok, None
+        i += 1
+
+
+def param_chips(params: str, repo: Path, step_id: str) -> str:
+    """Render argv tokens as labeled chips (all HTML-escaped).
+
+    Flags resolve their label through the 3-tier per-script legend; the next
+    token is shown as the flag's value when present and not itself a flag.
+    Non-flag stray tokens render raw."""
+    pairs = list(iter_flag_tokens(params))
+    if not pairs:
+        return '<span class="empty">—</span>'
+    help_map, opts_map = script_legend(repo, step_id)
+    chips = []
+    for tok, value in pairs:
+        if FLAG_TOKEN_RE.match(tok):
             if tok in help_map:
                 cls, label = "chip", help_map[tok]
             elif tok in opts_map:
@@ -362,7 +375,6 @@ def param_chips(params: str, repo: Path, step_id: str) -> str:
             chips.append(f'<span class="{cls}">{text}</span>')
         else:
             chips.append(f'<span class="chip raw">{h(tok)}</span>')
-        i += 1
     return "".join(chips)
 
 
@@ -963,26 +975,18 @@ TEXT_MAX_OUTPUTS = 3   # output patterns summarized per finished step
 
 
 def _txt_params(params: str, repo: Path, step_id: str) -> str:
+    """Text twin of param_chips — same iter_flag_tokens classification and
+    the same 3-tier legend, plain-text rendering."""
     help_map, opts_map = script_legend(repo, step_id)
-    toks, out, i = split_params(params), [], 0
-    while i < len(toks):
-        tok = toks[i]
-        val = ""
-        if len(tok) > 1 and tok.startswith("-") \
-                and i + 1 < len(toks) and not toks[i + 1].startswith("-"):
-            i += 1
-            val = toks[i]
-        if len(tok) > 1 and tok.startswith("-"):
-            label = help_map.get(tok) or opts_map.get(tok)
-            if label:
-                out.append(f"{tok}→{label}" + (f"({val})" if val else ""))
-            elif val:
-                out.append(f"{tok} {val}")
-            else:
-                out.append(tok)
+    out = []
+    for tok, value in iter_flag_tokens(params):
+        label = help_map.get(tok) or opts_map.get(tok)
+        if label:
+            out.append(f"{tok}→{label}" + (f"({value})" if value is not None else ""))
+        elif value is not None:
+            out.append(f"{tok} {value}")
         else:
             out.append(tok)
-        i += 1
     return " ".join(out)
 
 
@@ -1035,6 +1039,20 @@ def format_text_event(event: dict, repo: Path, now_ms: int, color: bool) -> str:
     return " | ".join(parts)
 
 
+def _pipeline_state_text(events: list) -> str:
+    """Pipeline state from the last __pipeline__ event (text twin of
+    pipeline_pill; supervisor C3: pipeline events never count as steps)."""
+    pipe = [ev for ev in events
+            if str(ev.get("step_id") or "") == PIPELINE_STEP_ID]
+    if not pipe:
+        return ""
+    try:
+        code = int(pipe[-1].get("exit_code"))
+    except (TypeError, ValueError):
+        code = -1
+    return {2: "运行中", 0: "已结束（成功）"}.get(code, "已结束（失败）")
+
+
 def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
     color = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
     if not events_path.is_file():
@@ -1045,38 +1063,67 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
         while not events_path.is_file():
             time.sleep(0.5)
     events = read_events(events_path)
-    paired = pair_step_starts(events)
-    running = [ev for i, ev in enumerate(events)
+    # Capture the follow start offset AFTER the snapshot read so events are
+    # neither skipped nor double-printed (residual gap: only appends landing
+    # between read_events' internal EOF and this stat — sub-millisecond).
+    follow_from = events_path.stat().st_size if follow else 0
+    # Supervisor C3 (phase 2): pipeline-level events are excluded from step
+    # statistics and shown as a header state instead (their exit_code=2 start
+    # marker must never render as a failed step).
+    steps = [ev for ev in events
+             if str(ev.get("step_id") or "") != PIPELINE_STEP_ID]
+    paired = pair_step_starts(steps)
+    running = [ev for i, ev in enumerate(steps)
                if is_step_start(ev) and i not in paired]
-    ends = [ev for ev in events if not is_step_start(ev)]
+    ends = [ev for ev in steps if not is_step_start(ev)]
     ok = sum(1 for e in ends if exit_code_of(e) == 0)
-    print(f"== {workdir} == 终态 {len(ends)}（✓{ok} ✗{len(ends) - ok}）"
-          f" 运行中 {len(running)}")
-    now_ms = int(time.time() * 1000)
-    for ev in running:
-        print(format_text_event(ev, repo, now_ms, color))
-    if not follow:
-        if ends:
-            print(f"-- 最近 {min(TEXT_TAIL_N, len(ends))} 条终态 --")
-            for ev in ends[-TEXT_TAIL_N:]:
-                print(format_text_event(ev, repo, now_ms, color))
+    header = (f"== {workdir} == 终态 {len(ends)}（✓{ok} ✗{len(ends) - ok}）"
+              f" 运行中 {len(running)}")
+    pipe_state = _pipeline_state_text(events)
+    if pipe_state:
+        header += f" | 管线: {pipe_state}"
+    try:
+        print(header)
+        now_ms = int(time.time() * 1000)
+        for ev in running:
+            print(format_text_event(ev, repo, now_ms, color))
+        if not follow:
+            if ends:
+                print(f"-- 最近 {min(TEXT_TAIL_N, len(ends))} 条终态 --")
+                for ev in ends[-TEXT_TAIL_N:]:
+                    print(format_text_event(ev, repo, now_ms, color))
+            return 0
+        print("-- 跟踪中（Ctrl-C 退出；请在 tmux/交互终端运行，勿交给代理的 Bash 工具）--")
+    except BrokenPipeError:
         return 0
-    print("-- 跟踪中（Ctrl-C 退出；请在 tmux/交互终端运行，勿交给代理的 Bash 工具）--")
     fh = None
     try:
-        fh, partial = open_tail(events_path)
-        last_size = events_path.stat().st_size
+        fh = events_path.open("rb")
+        fh.seek(follow_from)
+        partial = b""
         while True:
             line = fh.readline()
             if not line:
-                if events_path.stat().st_size < last_size:  # truncated/rotated
+                try:
+                    size = events_path.stat().st_size
+                except FileNotFoundError:
+                    # tracked file deleted mid-follow: wait for recreation
+                    # and restart from the top (with a visible marker).
+                    time.sleep(0.5)
+                    try:
+                        fh.close()
+                        fh = events_path.open("rb")
+                        partial = b""
+                        print("-- 事件文件被重建，从头跟踪 --", flush=True)
+                    except FileNotFoundError:
+                        continue
+                    continue
+                if size < fh.tell():  # truncated/rotated: re-tail from EOF
                     fh.close()
                     fh, partial = open_tail(events_path)
-                    last_size = events_path.stat().st_size
                 else:
                     time.sleep(0.2)
                 continue
-            last_size = events_path.stat().st_size
             if not line.endswith(b"\n"):
                 partial += line
                 continue
