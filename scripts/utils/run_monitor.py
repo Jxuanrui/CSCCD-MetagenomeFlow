@@ -1053,23 +1053,60 @@ def _pipeline_state_text(events: list) -> str:
     return {2: "运行中", 0: "已结束（成功）"}.get(code, "已结束（失败）")
 
 
+def _flush_stdout() -> None:
+    """Force buffered stdout out NOW so a closed pipe raises here (inside a
+    guarded scope) instead of at interpreter-shutdown flush (supervisor P2)."""
+    try:
+        sys.stdout.flush()
+    except BrokenPipeError:
+        pass
+
+
+def _pipeline_state_line(event: dict, color: bool) -> str:
+    """Text line for a NEW pipeline-level event in --follow (the snapshot
+    shows it in the header; follow prints state transitions, never a step
+    line — an exit_code=2 start marker must not render as a failure)."""
+    code = exit_code_of(event)
+
+    def c(cc, s):
+        return f"\033[{cc}m{s}\033[0m" if color else s
+
+    state, cc = {2: ("运行中", "34"), 0: ("已结束（成功）", "32")}.get(
+        code, ("已结束（失败）", "31"))
+    ts = str(event.get("ts") or "")
+    hhmmss = ts[11:19] if len(ts) >= 19 else ts
+    return f"{hhmmss} {c(cc, '◆')} 管线: {state}"
+
+
 def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
     color = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
     if not events_path.is_file():
         print("等待中: 尚无事件文件（先以 --monitor / MGX_MONITOR=1 运行步骤；"
               "Project01 受写守卫不产生事件）")
+        _flush_stdout()
         if not follow:
             return 0
         while not events_path.is_file():
             time.sleep(0.5)
     events = read_events(events_path)
-    # Capture the follow start offset AFTER the snapshot read so events are
-    # neither skipped nor double-printed (residual gap: only appends landing
-    # between read_events' internal EOF and this stat — sub-millisecond).
-    follow_from = events_path.stat().st_size if follow else 0
+    # Follow start offset = end of the LAST COMPLETE line at snapshot time:
+    # never mid-line (a trailing partial line is skipped by read_events and
+    # would otherwise be silently lost — supervisor stage-4-r2 P1), and
+    # taken after the snapshot read so events are neither skipped nor
+    # double-printed (residual window: sub-millisecond, documented).
+    follow_from = 0
+    if follow:
+        with events_path.open("rb") as ftmp:
+            ftmp.seek(0, 2)
+            end = ftmp.tell()
+            window_start = max(0, end - 65536)
+            ftmp.seek(window_start)
+            window = ftmp.read(end - window_start)
+        idx = window.rfind(b"\n")
+        follow_from = window_start + idx + 1 if idx != -1 else 0
     # Supervisor C3 (phase 2): pipeline-level events are excluded from step
     # statistics and shown as a header state instead (their exit_code=2 start
-    # marker must never render as a failed step).
+    # marker must never render as a failed step) — snapshot AND follow.
     steps = [ev for ev in events
              if str(ev.get("step_id") or "") != PIPELINE_STEP_ID]
     paired = pair_step_starts(steps)
@@ -1092,6 +1129,7 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
                 print(f"-- 最近 {min(TEXT_TAIL_N, len(ends))} 条终态 --")
                 for ev in ends[-TEXT_TAIL_N:]:
                     print(format_text_event(ev, repo, now_ms, color))
+            _flush_stdout()
             return 0
         print("-- 跟踪中（Ctrl-C 退出；请在 tmux/交互终端运行，勿交给代理的 Bash 工具）--")
     except BrokenPipeError:
@@ -1102,25 +1140,31 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
         fh.seek(follow_from)
         partial = b""
         while True:
+            if fh is None:
+                # File was deleted mid-follow: wait for (re)creation and
+                # restart from the top with a visible marker. Never call
+                # readline() on the closed handle (supervisor stage-4-r2 P0).
+                try:
+                    fh = events_path.open("rb")
+                    partial = b""
+                    print("-- 事件文件已（重）建，从头跟踪 --", flush=True)
+                except FileNotFoundError:
+                    time.sleep(0.5)
+                continue
             line = fh.readline()
             if not line:
                 try:
                     size = events_path.stat().st_size
                 except FileNotFoundError:
-                    # tracked file deleted mid-follow: wait for recreation
-                    # and restart from the top (with a visible marker).
-                    time.sleep(0.5)
-                    try:
-                        fh.close()
-                        fh = events_path.open("rb")
-                        partial = b""
-                        print("-- 事件文件被重建，从头跟踪 --", flush=True)
-                    except FileNotFoundError:
-                        continue
+                    fh.close()
+                    fh = None  # loop-top wait/reopen handles recreation
                     continue
                 if size < fh.tell():  # truncated/rotated: re-tail from EOF
-                    fh.close()
-                    fh, partial = open_tail(events_path)
+                    try:
+                        fh.close()
+                        fh, partial = open_tail(events_path)
+                    except FileNotFoundError:
+                        fh = None
                 else:
                     time.sleep(0.2)
                 continue
@@ -1132,8 +1176,11 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
                 ev = json.loads(raw.decode("utf-8", errors="replace"))
             except ValueError:
                 continue
-            print(format_text_event(ev, repo, int(time.time() * 1000), color),
-                  flush=True)
+            if str(ev.get("step_id") or "") == PIPELINE_STEP_ID:
+                print(_pipeline_state_line(ev, color), flush=True)
+            else:
+                print(format_text_event(ev, repo, int(time.time() * 1000),
+                                        color), flush=True)
     except (KeyboardInterrupt, BrokenPipeError):
         return 0
     finally:
@@ -1142,6 +1189,7 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
                 fh.close()
             except OSError:
                 pass
+        _flush_stdout()
     return 0
 
 
