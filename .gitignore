@@ -26,8 +26,6 @@ Project/**/localDB/
 # 多层验证产物目录（Project/<program>/<sample>/result/ 结构，二进制产物，不入库；
 # 注意：整目录忽略后 git 无法以 ! 反选其中文件——新增 manifest/报告需 git add -f 显式强制入库）
 # ——2026-09-29 E-4-3 提前处置，质量审核建议
-archive/cleanup_20261003/phase1_repro/
-archive/cleanup_20261003/phase2_5_validation/
 # A-4 一次性隔离物化产物（sidecar 证据存档，不入库；报告在 .claude/reviews/）
 Project/A4_sidecar_isolated/
 /Project/_archive_*/
