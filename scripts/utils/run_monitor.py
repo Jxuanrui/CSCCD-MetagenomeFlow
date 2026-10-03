@@ -5,6 +5,7 @@ Usage:
     python3 scripts/utils/run_monitor.py <workdir> [--repo <repo>]
         [--out <html>] [--interval <sec>] [--watch]
     python3 scripts/utils/run_monitor.py <workdir> --serve [--port <port>]
+    python3 scripts/utils/run_monitor.py <workdir> --text | --follow
 
 File mode (one-shot / --watch) reads {workdir}/logs/run_events.jsonl (one JSON
 object per line, appended by the libcommon.sh MGX_MONITOR=1 hook; unparsable/
@@ -948,6 +949,158 @@ def run_serve(workdir: Path, repo: Path, port: int) -> int:
 # ==============================================================================
 # CLI
 # ==============================================================================
+# Text mode: --text (one-shot snapshot) / --follow (append-only) — phase 4.
+# Cloud-topology delivery: the ZCode agent (or any terminal) runs --text and
+# relays the result; --follow is for interactive terminals/tmux ONLY (a
+# follow loop would hang an agent's Bash tool). Reuses read_events /
+# pair_step_starts / script_display / script_legend / load_skill_card /
+# summarize_output / open_tail — no parallel parsing or pairing logic.
+# ==============================================================================
+
+TEXT_TAIL_N = 8        # finished steps in the one-shot snapshot
+TEXT_MAX_PURPOSE = 70  # chars of the skill-card description kept per line
+TEXT_MAX_OUTPUTS = 3   # output patterns summarized per finished step
+
+
+def _txt_params(params: str, repo: Path, step_id: str) -> str:
+    help_map, opts_map = script_legend(repo, step_id)
+    toks, out, i = split_params(params), [], 0
+    while i < len(toks):
+        tok = toks[i]
+        val = ""
+        if len(tok) > 1 and tok.startswith("-") \
+                and i + 1 < len(toks) and not toks[i + 1].startswith("-"):
+            i += 1
+            val = toks[i]
+        if len(tok) > 1 and tok.startswith("-"):
+            label = help_map.get(tok) or opts_map.get(tok)
+            if label:
+                out.append(f"{tok}→{label}" + (f"({val})" if val else ""))
+            elif val:
+                out.append(f"{tok} {val}")
+            else:
+                out.append(tok)
+        else:
+            out.append(tok)
+        i += 1
+    return " ".join(out)
+
+
+def format_text_event(event: dict, repo: Path, now_ms: int, color: bool) -> str:
+    """One human-readable line: time, glyph (✓/✗/▶), canonical script path,
+    sample, purpose (skill card), params legend, outputs (end events only)."""
+    step_id = str(event.get("step_id") or "?")
+    disp, _abs = script_display(repo, step_id)
+    ts = str(event.get("ts") or "")
+    hhmmss = ts[11:19] if len(ts) >= 19 else ts
+    sample = str(event.get("sample_id") or "—")
+    code = exit_code_of(event)
+
+    def c(cc, s):
+        return f"\033[{cc}m{s}\033[0m" if color else s
+
+    if is_step_start(event):
+        started = parse_epoch_ms(str(event.get("started_at") or ts))
+        run_s = max(0, (now_ms - started) // 1000) if started is not None else 0
+        head = f"{hhmmss} {c('34', '▶')} {disp} [{sample}] 已运行 {run_s} 秒(至打印时刻)"
+    else:
+        ok = code == 0
+        head = (f"{hhmmss} {c('32', '✓') if ok else c('31', '✗')} {disp} "
+                f"[{sample}] {event.get('duration_sec')} 秒"
+                + ("" if ok else f" 退出码={code}"))
+    parts = [head]
+    card = load_skill_card(repo, step_id)
+    purpose = card.get("description") if isinstance(card, dict) else None
+    if isinstance(purpose, str) and purpose.strip():
+        purpose = purpose.strip()
+        parts.append("目的: " + (purpose[:TEXT_MAX_PURPOSE - 1] + "…"
+                                 if len(purpose) > TEXT_MAX_PURPOSE else purpose))
+    params_txt = _txt_params(str(event.get("params") or ""), repo, step_id)
+    if params_txt:
+        parts.append("参数: " + params_txt)
+    if not is_step_start(event) and isinstance(card, dict):
+        outs = []
+        for entry in card.get("outputs") or []:
+            if len(outs) >= TEXT_MAX_OUTPUTS:
+                outs.append("…")
+                break
+            pat = entry.get("path_pattern") if isinstance(entry, dict) else None
+            if isinstance(pat, str) and pat:
+                _res, cnt, size = summarize_output(
+                    pat, str(event.get("workdir") or ""),
+                    "" if sample == "—" else sample)
+                outs.append(f"{cnt}/{size}")
+        if outs:
+            parts.append("产出: " + "; ".join(outs))
+    return " | ".join(parts)
+
+
+def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
+    color = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
+    if not events_path.is_file():
+        print("等待中: 尚无事件文件（先以 --monitor / MGX_MONITOR=1 运行步骤；"
+              "Project01 受写守卫不产生事件）")
+        if not follow:
+            return 0
+        while not events_path.is_file():
+            time.sleep(0.5)
+    events = read_events(events_path)
+    paired = pair_step_starts(events)
+    running = [ev for i, ev in enumerate(events)
+               if is_step_start(ev) and i not in paired]
+    ends = [ev for ev in events if not is_step_start(ev)]
+    ok = sum(1 for e in ends if exit_code_of(e) == 0)
+    print(f"== {workdir} == 终态 {len(ends)}（✓{ok} ✗{len(ends) - ok}）"
+          f" 运行中 {len(running)}")
+    now_ms = int(time.time() * 1000)
+    for ev in running:
+        print(format_text_event(ev, repo, now_ms, color))
+    if not follow:
+        if ends:
+            print(f"-- 最近 {min(TEXT_TAIL_N, len(ends))} 条终态 --")
+            for ev in ends[-TEXT_TAIL_N:]:
+                print(format_text_event(ev, repo, now_ms, color))
+        return 0
+    print("-- 跟踪中（Ctrl-C 退出；请在 tmux/交互终端运行，勿交给代理的 Bash 工具）--")
+    fh = None
+    try:
+        fh, partial = open_tail(events_path)
+        last_size = events_path.stat().st_size
+        while True:
+            line = fh.readline()
+            if not line:
+                if events_path.stat().st_size < last_size:  # truncated/rotated
+                    fh.close()
+                    fh, partial = open_tail(events_path)
+                    last_size = events_path.stat().st_size
+                else:
+                    time.sleep(0.2)
+                continue
+            last_size = events_path.stat().st_size
+            if not line.endswith(b"\n"):
+                partial += line
+                continue
+            raw, partial = partial + line, b""
+            try:
+                ev = json.loads(raw.decode("utf-8", errors="replace"))
+            except ValueError:
+                continue
+            print(format_text_event(ev, repo, int(time.time() * 1000), color),
+                  flush=True)
+    except (KeyboardInterrupt, BrokenPipeError):
+        return 0
+    finally:
+        if fh is not None:
+            try:
+                fh.close()
+            except OSError:
+                pass
+    return 0
+
+
+# ==============================================================================
+# CLI
+# ==============================================================================
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -964,6 +1117,13 @@ def parse_args(argv=None) -> argparse.Namespace:
     mode.add_argument("--serve", action="store_true",
                       help="serve a real-time SSE dashboard on 127.0.0.1 "
                            "(loopback only; writes no files)")
+    mode.add_argument("--text", action="store_true",
+                      help="print a one-shot TEXT snapshot and exit "
+                           "(agent/terminal friendly; writes no files)")
+    mode.add_argument("--follow", action="store_true",
+                      help="text mode that keeps appending new event lines "
+                           "(no clear-screen; run it in a real terminal/tmux, "
+                           "never hand it to an agent's Bash tool)")
     parser.add_argument("--port", type=int, default=SERVE_DEFAULT_PORT,
                         help="port for --serve (default: 8790; 0 = OS-assigned)")
     return parser.parse_args(argv)
@@ -984,6 +1144,10 @@ def main(argv=None) -> int:
         workdir / "logs" / "run_monitor.html"
     )
     repo = Path(args.repo).expanduser().resolve() if args.repo else default_repo()
+
+    if args.text or args.follow:
+        # Text mode tolerates a missing events file (等待中 state).
+        return run_text(events_path, repo, str(workdir), follow=args.follow)
 
     if args.serve:
         # Serve mode tolerates a missing events file (等待中 state).

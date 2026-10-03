@@ -34,8 +34,10 @@
 > 每个已接入钩子的步骤会向 `{workdir}/logs/run_events.jsonl` 追加开始/结束事件对（开始事件 exit_code=-1 为"运行中"标记，负值永不与真实退出码 0-255 碰撞；不改退出码、无额外输出）。
 > **模式三**（Snakemake）：在 `pipeline/config/config.yaml` 设 `monitor: true`（或 `MGX_MONITOR=1 snakemake ...`），
 > 已接钩步骤与管线级起止事件写入同一 jsonl，看板表头显示本轮运行终态徽标。
-> 查看看板：`python3 scripts/utils/run_monitor.py <workdir> --watch [--interval 3]`，生成自包含 HTML `logs/run_monitor.html`（含每步目的/完整命令/参数说明/输出文件统计；页面带 meta refresh，是否自动刷新取决于打开方式，重新打开/手动刷新一定看到最新状态；此模式无脚本计时，"已运行"时长为渲染时刻值，不跳秒）。
-> **实时模式（推荐）**：`python3 scripts/utils/run_monitor.py <workdir> --serve [--port 8790]`，仅绑定 127.0.0.1，浏览器打开 `http://127.0.0.1:8790/`。
+> 查看看板（**云服务器拓扑首选：文字模式**）：`python3 scripts/utils/run_monitor.py <workdir> --text`——打印一次快照即退出（正在运行的步骤 + 最近 8 条终态），终端/代理通用、零文件写入。
+> 在 ZCode 里可直接让代理执行该命令并转述结果（例如"帮我看看跑到哪一步了"）；`--follow` 持续追加新事件行，**请在 tmux 或交互终端运行，勿交给代理的 Bash 工具**（会挂住）。管道/非终端自动降级纯文本无色。
+> 图形看板：`--watch [--interval 3]` 生成自包含 HTML `logs/run_monitor.html`（重新打开/手动刷新即最新；无脚本计时，不跳秒）。
+> **实时图形模式**：`python3 scripts/utils/run_monitor.py <workdir> --serve [--port 8790]`，仅绑定 127.0.0.1，浏览器打开 `http://127.0.0.1:8790/`。
 > **远程/云服务器使用**：若你在自己的电脑上、流水线跑在云服务器（本项目的实际拓扑），服务器本机地址你无法直连——两种办法：
 > ① SSH 隧道（实时）：在自己电脑执行 `ssh -N -L 8790:127.0.0.1:8790 user@服务器`，保持连接，再开 `http://127.0.0.1:8790/`。**本地端口必须与服务端口一致**（如 `-L 9000:...:8790` 会被 Host 白名单拒绝并显示 403，看起来像服务故障，实为端口不一致）。
 > ② 文件通道（零配置兜底）：服务器上跑 `--watch --interval 3`，用能转读服务器文件的入口（如 ZCode 桌面端文件链接）打开 `logs/run_monitor.html`，重新打开/刷新即最新——准实时（3-5 秒级），不跳秒。
