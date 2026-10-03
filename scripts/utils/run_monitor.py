@@ -15,11 +15,14 @@ one-shot HTML carries <meta http-equiv="refresh"> so a browser tab stays fresh
 while an outer loop regenerates the file.
 
 Step events come in start/end pairs since ENG-6 phase 3: mgx_begin writes a
-start event (exit_code=2, the "running" marker shared with pipeline-level
-events, user-approved 2026-10-02; field set unchanged) and the EXIT trap
-writes the end event. Each start pairs with the NEXT end event of the same
-(step_id, sample_id); unpaired starts render as 运行中 cards whose elapsed
-span carries data-started="<epoch-ms>" for client-side ticking.
+start event (exit_code=-1, a negative-only "running" marker — real exit codes
+are 0-255 so no genuine failure can collide with it; user-approved 2026-10-02,
+marker corrected same day per supervisor stage-3 P0-1) and the EXIT trap
+writes the end event. Each start pairs with the LATEST unmatched end of the
+same (step_id, sample_id) (LIFO: a rerun's end closes its own start);
+unpaired starts render as 运行中 cards whose elapsed
+span carries data-started="<epoch-ms>" for client-side ticking. A step
+killed by SIGKILL/OOM stays 运行中 forever in that jsonl (honest display).
 
 --serve starts a real-time SSE dashboard (stdlib only, supervisor P0
 constraints): ThreadingHTTPServer bound to 127.0.0.1 ONLY (no --host), route
@@ -200,17 +203,23 @@ def exit_code_of(event: dict):
 
 
 def is_step_start(event: dict) -> bool:
-    """Step-level start marker: exit_code==2 ("running" convention shared
-    with pipeline-level events; user-approved 2026-10-02)."""
+    """Step-level start marker: exit_code < 0 (written as -1 by mgx_begin).
+    Negative-only by design: a real $? is always 0-255, so a genuine failure
+    exit code (e.g. argparse's 2) can never be misread as "running"
+    (supervisor stage-3 P0-1). Pipeline-level events are excluded — their
+    start marker stays 2 (Snakefile-controlled, collision-free)."""
     if str(event.get("step_id") or "") == PIPELINE_STEP_ID:
         return False
-    return exit_code_of(event) == 2
+    code = exit_code_of(event)
+    return code is not None and code < 0
 
 
 def pair_step_starts(step_events: list) -> set:
     """Indices of start events paired with a LATER end event of the same
-    (step_id, sample_id). FIFO per key so concurrent interleavings pair
-    correctly; unpaired starts are still-running steps."""
+    (step_id, sample_id). LIFO per key: a rerun's end event closes its OWN
+    start (the most recent one), so a SIGKILL'd earlier run stays visible as
+    运行中 instead of stealing the rerun's pairing (supervisor stage-3 P0-3);
+    unpaired starts are still-running (or killed) steps."""
     paired: set = set()
     pending: dict = {}
     for i, ev in enumerate(step_events):
@@ -218,9 +227,9 @@ def pair_step_starts(step_events: list) -> set:
         if is_step_start(ev):
             pending.setdefault(key, []).append(i)
         else:
-            queue = pending.get(key)
-            if queue:
-                paired.add(queue.pop(0))
+            stack = pending.get(key)
+            if stack:
+                paired.add(stack.pop())
     return paired
 
 

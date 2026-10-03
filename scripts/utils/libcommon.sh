@@ -126,12 +126,12 @@ mgx_require() {
 
 # ==============================================================================
 # ENG-6/run-monitor: opt-in per-step run-event hook (default OFF; MGX_MONITOR=1
-# enables). mgx_begin writes ONE start event immediately (exit_code=2 marker)
-# and registers an EXIT trap that appends ONE end event per script run to
-# ${WORKDIR}/logs/run_events.jsonl — a start/end pair per execution
-# (start: exit_code=2 = "running" marker, same convention as pipeline-level
-# events; schema semantics extension user-approved 2026-10-02, field set
-# unchanged). 7 field names align with
+# enables). mgx_begin writes ONE start event immediately (exit_code=-1 marker,
+# negative-only: a real $? is 0-255 so genuine failure codes can never collide
+# with the marker — supervisor stage-3 P0-1) and registers an EXIT trap that
+# appends ONE end event per script run to ${WORKDIR}/logs/run_events.jsonl —
+# a start/end pair per execution (field set unchanged; user-approved
+# semantics extension 2026-10-02, marker value corrected same day). 7 field names align with
 # scripts/write_provenance.py (started_at/step_id/sample_id/params/exit_code/
 # duration/workdir->duration_sec) plus one extension field ts (end time).
 # Type note: params here is the raw argv string, NOT write_provenance.py's
@@ -188,7 +188,14 @@ _mgx_emit() {
                 ;;
         esac
         mkdir -p "${WORKDIR}/logs" 2>/dev/null || true
-        _rc="$(printf '%s' "${1:-0}" | tr -cd '0-9' 2>/dev/null || true)"
+        _rc_raw="${1:-0}"
+        case "${_rc_raw}" in
+            # Negative marker (step-start = -1): real $? is always 0-255, so a
+            # negative value can never collide with a genuine exit code
+            # (supervisor stage-3 P0-1: a real exit 2 was misread as "running").
+            -[0-9]*) _rc="-${_rc_raw#-}" ;;
+            *) _rc="$(printf '%s' "${_rc_raw}" | tr -cd '0-9' 2>/dev/null || true)" ;;
+        esac
         [ -n "${_rc}" ] || _rc=0
         _dur="$(printf '%s' "${SECONDS:-0}" | tr -cd '0-9' 2>/dev/null || true)"
         [ -n "${_dur}" ] || _dur=0
@@ -240,11 +247,13 @@ mgx_begin() {
     # ENG-6/run-monitor: opt-in per-step event emission (supervisor-approved, default OFF)
     if [ "${MGX_MONITOR:-0}" = "1" ]; then
         _MGX_STARTED_AT="$(date +%FT%T%z 2>/dev/null || printf '')"
-        # Start event (exit_code=2 running marker, SECONDS=0 → duration_sec=0).
+        # Start event (exit_code=-1 running marker — negative can never be a
+        # real $? (0-255), so genuine failures with exit 2 are not misread as
+        # "running" (supervisor stage-3 P0-1); SECONDS=0 → duration_sec=0).
         # _MGX_ARGV was snapshotted at source time (caller's argv — inside this
         # function $* would be mgx_begin's own empty argument list); the trap
         # below re-snapshots it at EXIT fire-time scope (unchanged).
-        _mgx_emit 2
+        _mgx_emit -1
         trap '_MGX_RC=$?; _MGX_ARGV="$*"; _mgx_emit "${_MGX_RC}"' EXIT
     fi
 }
