@@ -893,17 +893,16 @@ class MonitorHandler(BaseHTTPRequestHandler):
 
 
 def open_tail(path: Path):
-    """Open for tailing in binary mode, positioned after the LAST complete
-    line. Returns (handle, partial) where partial is the trailing bytes
-    without a newline (buffered until the line completes)."""
+    """Open for tailing in binary mode. Returns (handle, partial) where
+    partial is the trailing bytes after the last newline. The handle is
+    positioned at END OF FILE (supervisor stage-4-r3 C1: an earlier version
+    seeked to the partial's start AND returned the same bytes, so the next
+    readline re-read them and the duplicated prefix failed JSON parsing)."""
     handle = path.open("rb")
     data = handle.read()
+    handle.seek(0, 2)
     idx = data.rfind(b"\n")
-    if idx == -1:
-        handle.seek(0)
-        return handle, data
-    handle.seek(idx + 1)
-    return handle, data[idx + 1:]
+    return handle, (data if idx == -1 else data[idx + 1:])
 
 
 def build_snapshot(events_path: Path, repo: Path, workdir: str) -> dict:
@@ -1154,15 +1153,28 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
             line = fh.readline()
             if not line:
                 try:
-                    size = events_path.stat().st_size
+                    st = events_path.stat()
                 except FileNotFoundError:
                     fh.close()
                     fh = None  # loop-top wait/reopen handles recreation
                     continue
-                if size < fh.tell():  # truncated/rotated: re-tail from EOF
+                try:
+                    same_file = os.fstat(fh.fileno()).st_ino == st.st_ino
+                except OSError:
+                    same_file = False
+                if not same_file:
+                    # atomic replace (rotation os.replace / mv): the handle
+                    # points at a dead inode — restart from the top instead
+                    # of silently tailing a deleted file.
+                    fh.close()
+                    fh = None
+                    continue
+                if st.st_size < fh.tell():  # truncated: re-tail from EOF
                     try:
                         fh.close()
                         fh, partial = open_tail(events_path)
+                        print("-- 事件文件被截断/轮转，从末尾继续跟踪 --",
+                              flush=True)
                     except FileNotFoundError:
                         fh = None
                 else:
