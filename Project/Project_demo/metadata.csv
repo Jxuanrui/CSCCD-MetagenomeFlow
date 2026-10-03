@@ -1,0 +1,7 @@
+sample_id,group,subject_id,age,BMI
+Sample1,treat,D1,NA,NA
+Sample2,treat,D2,NA,NA
+Sample10,treat,D3,NA,NA
+Sample3,control,D4,NA,NA
+Sample4,control,D5,NA,NA
+Sample11,control,D6,NA,NA

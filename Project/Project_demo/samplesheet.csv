@@ -1,0 +1,7 @@
+sample_id,r1,r2,host_type,project_dir
+Sample1,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample1_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample1_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_demo
+Sample2,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample2_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample2_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_demo
+Sample10,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample10_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample10_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_demo
+Sample3,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample3_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample3_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_demo
+Sample4,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample4_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample4_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_demo
+Sample11,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample11_1.fastq.gz,/home/labuser/Course/Maxmetagenome/Project/Project_demo/data/Sample11_2.fastq.gz,human,/home/labuser/Course/Maxmetagenome/Project/Project_demo
