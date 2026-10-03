@@ -632,7 +632,7 @@ skills/replications/
 |---|---|
 | 工具本体 | `tools/ScientificFigureLibrary/`（Release ZIP 还原，已 gitignore） |
 | 图件库 | `FigureLibrary/`（用户数据，已 gitignore） |
-| MCP 注册 | 项目根 `.mcp.json`（**不动 `~/.claude.json`**），server 名 `figure-library` |
+| MCP 注册 | 工作区级 `.zcode/config.json`（ZCode 读取，不入 git；历史 `.mcp.json` 仅存档），server 名 `figure-library` |
 | Library 绑定 | 环境变量 `FIGURE_LIBRARY_DIR=<PROJ_DIR>/FigureLibrary` 与 `FIGURE_WORKSPACE_DIR=<PROJ_DIR>/FigureLibrary/workspace`（均项目内；不写 `~/.config` locator） |
 | 依赖 | Node.js 22+（本机 v24.16.0） |
 
@@ -646,4 +646,4 @@ unzip -q sfl.zip -d tools/ScientificFigureLibrary
 
 **主要工具**：`figure_library_search` / `figure_library_open` / `figure_library_plan_materialize`+`apply_materialize`（复用模板）/ `figure_library_plan_working_revision`+`apply_working_revision`（导入）/ `figure_library_plan_publish_working_revision`+`apply_publish_working_revision`（发布）。
 
-**回退**：删除 `.mcp.json` 中的 `figure-library` 段（或整个 `.mcp.json`）即可。
+**回退**：删除 `.zcode/config.json` 中 `mcp.servers` 的 `figure-library` 段即可。

@@ -255,7 +255,7 @@ An agent-driven gut-metagenome mining loop in the spirit of scBaseCount (Arc Ins
 
 ```
 CSCCD-MetagenomeFlow/
-├── scripts/                  183 scripts + scripts/utils/ helpers
+├── scripts/                  180 scripts (157 sh + 7 py + 16 R) + scripts/utils/ helpers
 ├── pipeline/                 Snakefile, config, hardware profiles, 11 rule files
 ├── agents/                   registry.yaml, skill cards, optional run provenance records
 ├── docs/                     experience docs (RAG source), tool references
