@@ -1,0 +1,9 @@
+# P1: kraken2 env locked with pixi (mirror of envs/kraken2).
+# Source: docs/manifests/envs/kraken2.txt (@EXPLICIT, 59 conda packages).
+[project]
+name = "kraken2"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+kraken2 = "==2.1.3"

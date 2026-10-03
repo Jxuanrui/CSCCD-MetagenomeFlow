@@ -1,0 +1,9 @@
+# P1: coverm env locked with pixi.
+# Source: docs/manifests/envs/coverm.txt (@EXPLICIT).
+[project]
+name = "coverm"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+coverm = "==0.7.0"
