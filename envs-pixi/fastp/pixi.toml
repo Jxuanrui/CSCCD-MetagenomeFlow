@@ -1,6 +1,6 @@
 # ENG pixi P0a pilot: fastp env locked with pixi (mirror of envs/fastp).
 # Source of truth: docs/manifests/envs/fastp.txt (@EXPLICIT, 9 packages).
-# Toolchain libs pinned to the exact explicit builds for 9/9 parity.
+# Versions pinned; 4/9 exact build parity, 5/9 same-version rebuild (_19 -> _20).
 [project]
 name = "fastp"
 channels = ["conda-forge", "bioconda"]

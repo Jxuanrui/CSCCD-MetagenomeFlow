@@ -2629,7 +2629,7 @@ Snakemake 的 stat_functional 规则内部用 shell 循环依次跑 20 个 (dime
 > **环境获取（pixi 交付层，新使用者必读）**：CSCCD-MetagenomeFlow 的分析环境
 > 正在逐步提供 pixi 锁文件交付（`envs-pixi/`）。新使用者两种方式获取环境：
 > ① 在线：安装 pixi 单文件工具（`curl -fsSL https://pixi.sh/install.sh | bash`），
-> 进入对应 `envs-pixi/<环境>/` 目录执行 `pixi install`，环境按 `pixi.lock`
+> 进入对应 `envs-pixi/<环境>/` 目录执行 `pixi install --frozen`（强制按 lock 文件安装，不静默重解析），环境按 `pixi.lock`
 > 原样重建（版本哈希级一致），二进制位于 `.pixi/envs/default/bin/`；
 > ② 离线：向维护者索取 pixi-pack 自解压包（单文件 .sh），在目标机执行
 > `bash <包名>.sh --output-directory <目录>` 即解出完整环境，免网络免 conda。
