@@ -140,3 +140,4 @@ mining/snapshots/api_cache/
 mining/m4/profiles/
 mining/m4/annotations_cache.jsonl
 .mcp.json
+.pixi/
