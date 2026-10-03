@@ -1,0 +1,10 @@
+# P1: kneaddata env locked with pixi (mirror of envs/kneaddata).
+# Source: docs/manifests/envs/kneaddata.txt (@EXPLICIT, 57 conda packages).
+# Versions pinned from the explicit manifest; toolchain libs follow conda-forge resolution.
+[project]
+name = "kneaddata"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+kneaddata = "==0.12.4"
