@@ -138,8 +138,8 @@
 | 98c_bac_mge_summary | bacteria | 运行 |  |
 | 98d_bac_mag_integration | bacteria | 运行 |  |
 | downstream_summary | stats | 运行 |  |
-| rag_build_experience | shared | 运行 |  |
-| rag_refresh_literature | shared | 运行 |  |
+| rag_build_experience | shared | 待approve/暂不跑 | 写入 mcp/chromadb_data（§10.1 禁改）；须 C1 approve且 B 线 RAG 重跑冻结后 |
+| rag_refresh_literature | shared | 待approve/暂不跑 | 同 rag_build_experience（质量审核 C1） |
 | 97_stat_crosscohort | stats | 待核/预期空 | 不适用：跨队列复现需第二队列，单项目演示不适用 |
 | 98e_cross_domain_ani_cluster | stats | 运行 |  |
 | 98f_cross_domain_orthogroup | stats | 运行 |  |
