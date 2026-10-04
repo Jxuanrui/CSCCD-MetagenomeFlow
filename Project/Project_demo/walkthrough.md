@@ -57,6 +57,46 @@ fastp \
 - **加速空间**：有——①多样本并行（模式二 `-j 2` 或双终端，磁盘允许时可近线性）；②threads 提至 32（48 核机器、并行期不建议）；瓶颈主要在磁盘读写而非 CPU。
 - **内存/硬盘**：内存占用温和（fastp 16 线程典型 <2G，本步未计量——maxRSS 记录为 ENG-6 遗留项）；磁盘净增约 30G（原始 62G 保留，总计 +30G 中间产物）。
 
+
+---
+
+## 02 · kneaddata 去宿主（人源 reads 去除）
+
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 全部 6 个样本执行 02 去宿主步骤（kneaddata，threads 16），完成后汇报各样本的人源污染比例与产出。」
+
+**核心执行命令**（摘自 `scripts/02_qc_kneaddata.sh`）：
+
+```bash
+kneaddata \
+  --input1 result/fastp/{sample}/{sample}_1.fastq.gz \
+  --input2 result/fastp/{sample}/{sample}_2.fastq.gz \
+  --output result/kneaddata/{sample} \
+  --reference-db $REPO/db/kneaddata/human/hg37dec_v0.1 \
+  --threads 16 \
+  --trimmomatic
+```
+
+**执行结果**（2026-10-03/04 实测，6/6 成功）：
+
+| 样本 | 组 | 清洁 reads(双端) | 保留率 | 人源污染比 |
+|---|---|---|---|---|
+| Sample1 | treat | 41,962,400 | 99.2% | 0.8% |
+| Sample10 | treat | 46,906,471 | 98.5% | 1.5% |
+| Sample11 | control | 51,631,260 | 98.7% | 1.3% |
+| Sample2 | treat | 41,751,756 | 99.2% | 0.8% |
+| Sample3 | control | 55,411,039 | 99.2% | 0.8% |
+| Sample4 | control | 38,900,065 | 99.0% | 1.0% |
+
+计时：Sample1 131min、Sample10 143min、Sample11 159min、Sample2 129min、Sample3 171min、Sample4 121min（合计 14.3 小时）。产出：`result/kneaddata/<样本>/`（清洁 reads 双端 + orphan + 污染 reads + log/stats）。
+
+**质量审核点评**：（主代理按五维度起草，预处理段关口由质量审核复核）：
+- **运算时间**：121–171 分钟/样本（16 线程，bowtie2 --very-sensitive-local 比对 ~42M reads vs 人基因组）；串行合计 14.3 小时。
+- **输出文件**：每样本 4 个主要文件（clean paired ×2 + orphan + stats），~8–12G/样本。
+- **后续使用**：清洁 reads 供 02b 配对修复 → 三界分析链；stats 是 MultiQC 输入。
+- **加速空间**：大——多样本并行（模式二 `-j 3` 总时长 14.3h → ~5h）；threads >16 收益递减（IO 密集）。
+- **内存/硬盘**：内存高峰 ~24G（bowtie2 人基因组索引常驻）；磁盘净增 ~58G 清洁 reads（temp/ 下的 bowtie2 中间文件 ~60G 可安全清除）。
+
 ---
 
 （后续步骤章节随执行增量添加，格式同上：启动提示词 → 核心命令 → 执行结果 → 质量审核点评）
