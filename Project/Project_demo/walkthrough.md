@@ -71,26 +71,28 @@ fastp \
 kneaddata \
   --input1 result/fastp/{sample}/{sample}_1.fastq.gz \
   --input2 result/fastp/{sample}/{sample}_2.fastq.gz \
-  --output result/kneaddata/{sample} \
-  --reference-db $REPO/db/kneaddata/human/hg37dec_v0.1 \
-  --threads 16 \
-  --trimmomatic
+  --output temp/kneaddata/{sample} \
+  --reference-db $REPO/db/kneaddata/human \
+  --bypass-trim \
+  --remove-intermediate-output \
+  --threads 16
+# 完成后将 temp 内的 _kneaddata_raw.fastq.gz 移至 result/kneaddata/{sample}/
 ```
 
 **执行结果**（2026-10-03/04 实测，6/6 成功）：
 
-| 样本 | 组 | 清洁 reads(双端) | 保留率 | 人源污染比 |
+| 样本 | 组 | 原始 pairs | 人源 contam reads | 真实人源比 |
 |---|---|---|---|---|
-| Sample1 | treat | 41,962,400 | 99.2% | 0.8% |
-| Sample10 | treat | 46,906,471 | 98.5% | 1.5% |
-| Sample11 | control | 51,631,260 | 98.7% | 1.3% |
-| Sample2 | treat | 41,751,756 | 99.2% | 0.8% |
-| Sample3 | control | 55,411,039 | 99.2% | 0.8% |
-| Sample4 | control | 38,900,065 | 99.0% | 1.0% |
+| Sample1 | treat | 42,280,490 | 13,233 | 0.031% |
+| Sample2 | treat | 42,077,736 | 12,832 | 0.030% |
+| Sample10 | treat | 47,614,612 | 12,525 | 0.026% |
+| Sample3 | control | 55,885,067 | 15,935 | 0.029% |
+| Sample4 | control | 39,280,985 | 75,854 | 0.193% |
+| Sample11 | control | 52,301,183 | 22,831 | 0.044% |
 
 计时：Sample1 131min、Sample10 143min、Sample11 159min、Sample2 129min、Sample3 171min、Sample4 121min（合计 14.3 小时）。产出：`result/kneaddata/<样本>/`（清洁 reads 双端 + orphan + 污染 reads + log/stats）。
 
-**质量审核点评**：（主代理按五维度起草，预处理段关口由质量审核复核）：
+**质量审核点评**：（主代理按五维度起草，预处理段关口由质量审核复核；HEAD: 050f1c6）:
 - **运算时间**：121–171 分钟/样本（16 线程，bowtie2 --very-sensitive-local 比对 ~42M reads vs 人基因组）；串行合计 14.3 小时。
 - **输出文件**：每样本 4 个主要文件（clean paired ×2 + orphan + stats），~8–12G/样本。
 - **后续使用**：清洁 reads 供 02b 配对修复 → 三界分析链；stats 是 MultiQC 输入。
@@ -111,9 +113,9 @@ kneaddata \
 seqkit pair \
   -1 result/kneaddata/{sample}/{sample}_1.kneaddata_raw.fastq.gz \
   -2 result/kneaddata/{sample}/{sample}_2.kneaddata_raw.fastq.gz \
-  -o temp/pair_repair/{sample}/ \
-  --force
-# 完成后将 temp 内文件移回原路径（原地覆盖，保持下游路径不变）
+  -O temp/pair_repair/{sample} \
+  --id-regexp '^(\S+)\/[12]'
+# 完成后将配对输出 mv 为 _kneaddata.fastq.gz（新文件，raw 保留作哨兵）
 ```
 
 **执行结果**（2026-10-04 实测，6/6 成功）：
@@ -127,11 +129,11 @@ seqkit pair \
 | Sample4 | 38,900,065 | 38,900,065 | 0 | 338s |
 | Sample11 | 51,631,260 | 51,631,260 | 0 | 438s |
 
-产出：原地覆盖 `_1.kneaddata.fastq.gz` / `_2.kneaddata.fastq.gz`（严格配对），哨兵 `.pair_repair_done.txt` ✓。
+产出：新增 `_1.kneaddata.fastq.gz` / `_2.kneaddata.fastq.gz`（严格配对新文件）；`_kneaddata_raw` 原件保留（是 02 的哨兵，不可删）；哨兵 `.pair_repair_done.txt` ✓。磁盘额外增 ~58G。
 
-**质量审核点评**：（主代理按五维度起草，预处理段关口由质量审核复核）：
+**质量审核点评**：（主代理按五维度起草，预处理段关口由质量审核复核；HEAD: 050f1c6）:
 - **运算时间**：338–471 秒/样本（IO 密集：读写 4–5G 压缩 fastq），合计 ~39 分钟。
-- **输出文件**：原地覆盖（无新增文件）；哨兵 6/6 落位。配对前后 reads 数完全一致（零丢失）。
+- **输出文件**：新增配对文件（raw 保留作哨兵，磁盘额外 ~58G）；哨兵 6/6 落位。配对前后 reads 数完全一致（零丢失）。
 - **后续使用**：严格配对的清洁 reads 供三界分析链首步（11 metaphlan4 / 14 kraken2 等）；不配对修复则下游 bwa/metaphlan 会因 R1/R2 顺序错位而崩溃（v1.1.4 教训）。
 - **加速空间**：有限——瓶颈在磁盘 IO（gzip 解压/重压）；多样本并行可按比例缩减。
 - **内存/硬盘**：内存温和（seqkit 流式处理）；temp/ 临时空间需 ~10G/样本（完成后可清除）。
