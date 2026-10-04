@@ -7,8 +7,8 @@
 | 02b_qc_pair_repair | shared | 运行 |  |
 | 11_bac_metaphlan4 | bacteria | 运行 |  |
 | 11b_bac_metaphlan4_merge | bacteria | 运行 |  |
-| 12_bac_strainphlan4 | bacteria | 运行 |  |
-| 13_bac_humann3 | bacteria | 运行 |  |
+| 12_bac_strainphlan4 | bacteria | 运行（aggregate：须等 11 全部完成） | 依赖 11 ×6 样本 |
+| 13_bac_humann3 ¹ | bacteria | 运行 |  |
 | 13b_bac_humann3_merge | bacteria | 运行 |  |
 | 14_bac_kraken2 | bacteria | 运行 |  |
 | 14b_bac_kraken2_merge | bacteria | 运行 |  |
@@ -144,3 +144,5 @@
 | 98e_cross_domain_ani_cluster | stats | 运行 |  |
 | 98f_cross_domain_orthogroup | stats | 运行 |  |
 | 98g_cross_domain_correlation | stats | 运行 |  |
+
+> ¹ 13_bac_humann3 依赖同一样本的 11 metaphlan4 profile（质量审核 E1 2026-10-04），不可先跑。
