@@ -9,6 +9,9 @@ name = "fegenie"
 channels = ["conda-forge", "bioconda"]
 platforms = ["linux-64"]
 
+[system-requirements]
+libc = "2.34"
+
 [dependencies]
 _r-mutex = { version = "==1.0.1", build = "anacondar_1" }
 ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }

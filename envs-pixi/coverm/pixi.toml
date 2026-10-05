@@ -9,6 +9,9 @@ name = "coverm"
 channels = ["conda-forge", "bioconda"]
 platforms = ["linux-64"]
 
+[system-requirements]
+libc = "2.34"
+
 [dependencies]
 ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
 kernel-headers_linux-64 = { version = "==5.14.0", build = "he073ed8_3" }
