@@ -50,7 +50,7 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 
 ### Recent Updates
 
-- **pixi delivery layer (2026-10)** — `envs-pixi/` provides lockfile-based environment delivery (user-approved): the fastp pilot is fully reconciled and an offline self-extracting pack was verified; the r_stat hard specimen (180 hidden non-conda R packages) will follow the frozen-supplement-script + whole-env-tar scheme. See `docs/plans/2026-10-03_pixi_adoption_techspec.md`.
+- **pixi delivery layer (2026-10)** — `envs-pixi/` provides lockfile-based environment delivery (user-approved): 28/57 environments are now locked at build-level (name+version+build exact match). 7 A-layer failures queued for specialized handling (4 glibc virtual-pkg, 1 AVX-512, 2 samtools solve). Delivery: dual-track — pixi lockfiles + symlink wiring (recommended) or conda-pack per-env archives (fallback). See `docs/plans/2026-10-03_pixi_adoption_techspec.md`.
 
 > Details: `git log v1.1.4-baseline..HEAD` (private dev history)
 
