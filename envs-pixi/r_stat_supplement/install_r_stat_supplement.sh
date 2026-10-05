@@ -30,15 +30,14 @@ PREFIX="${1:?usage: install_r_stat_supplement.sh <r_stat-env-prefix>}"; shift ||
 echo "[supplement] target prefix: ${PREFIX}"
 if [ ! -x "${PREFIX}/bin/Rscript" ]; then echo "[supplement] ERROR: ${PREFIX}/bin/Rscript not found (run pixi install first)" >&2; exit 1; fi
 # R_LIBS_USER must stay unset: Rlib/ is an unrelated R-4.5 layer (P0-2 lesson)
-env -u R_LIBS_USER conda run --prefix "${PREFIX}" --no-capture-output \
-  Rscript --vanilla - <<'RSCRIPT'
+env -u R_LIBS_USER "${PREFIX}/bin/Rscript" --vanilla - <<'RSCRIPT'
 
 ## ---- guards & helpers -------------------------------------------------------
 if (!requireNamespace("BiocManager", quietly = TRUE))
   stop("BiocManager missing: conda layer / install_r_stat.sh not run yet")
 if (getRversion() < "4.4.0" || getRversion() >= "4.5.0")
   stop(sprintf("R %s found; this env was built on R 4.4.x", getRversion()))
-if (!requireNamespace("remotes", quietly = TRUE))
+if (!requireNamespace("remotes", quietly = TRUE) || packageVersion("remotes") != "2.5.0")
   install.packages("remotes", repos = c(CRAN = "https://cloud.r-project.org"))
 .norm <- function(v) gsub("-", ".", as.character(v))
 .have <- function(pkg, ver)
@@ -441,7 +440,7 @@ expected <- c(
   "vwline"="0.2-4",
   "waldo"="0.6.2",
   "webshot"="0.5.5",
-  "xgboost"="3.2.1.1",
+  "xgboost"="3.2.1.1"
 )
 bad <- character(0); missing <- character(0)
 for (p in names(expected)) {
