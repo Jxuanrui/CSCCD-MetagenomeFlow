@@ -229,8 +229,18 @@ _mgx_emit() {
     return 0
 }
 
-# 计时开始
+# 计时开始（先统一转绝对路径：cd 后相对路径嵌套 + Project01 守卫绕过都源于此）
 mgx_begin() {
+    # Normalize WORKDIR/REPO to absolute paths (supervisor incident review E1+E6)
+    # Fixes: (a) scripts that cd into TEMP_DIR break relative --output paths;
+    # (b) Project01 write guard pattern */Project/Project01 fails to match
+    # relative paths (security bypass). realpath -m handles nonexistent dirs.
+    if [ -n "${WORKDIR:-}" ]; then
+        WORKDIR="$(realpath -m "${WORKDIR}" 2>/dev/null || echo "${WORKDIR}")"
+    fi
+    if [ -n "${REPO:-}" ]; then
+        REPO="$(realpath -m "${REPO}" 2>/dev/null || echo "${REPO}")"
+    fi
     # P2-HYGIENE-01 production write guard: refuse Project01 + --force
     # unless PRODUCTION_WRITE_ALLOWED=true is explicitly exported.
     # Read-only use (no --force) is unaffected; scientific output unchanged.
