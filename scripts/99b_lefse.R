@@ -1,5 +1,17 @@
 #!/usr/bin/env Rscript
 
+# Rlib bypass (supervisor α-track fix, 2026-10-05): same 8-line pattern as
+# 91_diversity.R:5-12 / 92_differential.R:7-9 — resolve packages from the
+# conda env's own library, not the legacy Rlib/ (R 4.5.3 ABI layer).
+conda_lib <- file.path(R.home("home"), "library")
+if (dir.exists(conda_lib)) {
+  .libPaths(unique(c(
+    conda_lib,
+    .libPaths()[normalizePath(.libPaths(), mustWork = FALSE) !=
+      normalizePath(conda_lib, mustWork = FALSE)]
+  )))
+}
+
 suppressPackageStartupMessages({
   library(optparse)
   library(ggplot2)
