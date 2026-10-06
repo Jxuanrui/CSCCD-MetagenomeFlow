@@ -50,7 +50,7 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 
 ### Recent Updates
 
-- **pixi delivery layer (2026-10)** — `envs-pixi/` provides lockfile-based environment delivery (user-approved): 28/57 environments are now locked at build-level (name+version+build exact match). 7 A-layer failures queued for specialized handling (4 glibc virtual-pkg, 1 AVX-512, 2 samtools solve). Delivery: dual-track — pixi lockfiles + symlink wiring (recommended) or conda-pack per-env archives (fallback). See `docs/plans/2026-10-03_pixi_adoption_techspec.md`.
+- **pixi delivery layer (2026-10)** — `envs-pixi/` provides lockfile-based environment delivery (user-approved): 53/57 environments locked (50 build-level exact, 1 busco version-compromised, 2 Track-2 only). glibc and AVX-512 issues resolved via system-requirements and build relaxation. Delivery: dual-track — pixi lockfiles + symlink wiring (recommended) or conda-pack per-env archives (fallback). See `docs/plans/2026-10-03_pixi_adoption_techspec.md`.
 
 > Details: `git log v1.1.4-baseline..HEAD` (private dev history)
 
