@@ -148,14 +148,21 @@ seqkit pair \
 
 **核心执行命令**（摘自 `scripts/11_bac_metaphlan4.sh`）：
 ```bash
-metaphlan {sample}_1.kneaddata.fastq.gz,{sample}_2.kneaddata.fastq.gz \
+# MetaPhlAn4 v4.2.4 双端输入需先合并为单文件
+zcat result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz \
+      result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz \
+  | gzip -c > temp/metaphlan4/{sample}/{sample}_merged.fastq.gz
+
+metaphlan temp/metaphlan4/{sample}/{sample}_merged.fastq.gz \
   --input_type fastq \
-  --bowtie2out {sample}.bowtie2.bz2 \
-  --index mpa_vOct22_CHOCOPhlAnSGB_202212 \
-  -t rel_ab_w_readmap \
+  --db_dir $REPO/db/metaphlan4 \
+  -x mpa_vOct22_CHOCOPhlAnSGB_202212 \
   --nproc 16 \
-  -o {sample}_profile.txt \
-  --samout {sample}.sam.bz2
+  --mapout temp/metaphlan4/{sample}/{sample}.mapout.bz2 \
+  --samout result/metaphlan4/{sample}/{sample}.sam \
+  -o result/metaphlan4/{sample}/{sample}_profile.txt \
+  --offline
+# 完成后 bzip2 压缩 SAM 文件（StrainPhlAn4 需要 .sam.bz2）
 ```
 
 **执行结果**：6/6 成功，7380–10299 秒/样本（2.0–2.9h）。
@@ -171,7 +178,12 @@ metaphlan {sample}_1.kneaddata.fastq.gz,{sample}_2.kneaddata.fastq.gz \
 
 **核心执行命令**（摘自 `scripts/11b_bac_metaphlan4_merge.sh`）：
 ```bash
-merge_metaphlan_tables.py ${PROFILE_LIST} > merged_abundance_table.txt
+merge_metaphlan_tables.py ${PROFILE_LIST} \
+  | tail -n+2 \
+  | sed '1 s/clade_name/ID/' \
+  | sed '2i #metaphlan4' \
+  > result/metaphlan4/merged/taxonomy.tsv
+# 再由 grep 提取菌种级/菌属级 TSV，python3 生成 taxonomy_species.csv
 ```
 
 **执行结果**：4 秒完成。产出：属级 TSV + 种级 CSV。
@@ -187,9 +199,25 @@ merge_metaphlan_tables.py ${PROFILE_LIST} > merged_abundance_table.txt
 
 **核心执行命令**（摘自 `scripts/12_bac_strainphlan4.sh`，默认 --print_clades_only 模式）：
 ```bash
-strainphlan --ifn_samples samples.txt \
+# 预处理：SAM header @SQ 去重（vOct22 库含重复 @SQ，pysam 解析报错的已知 bug）
+bzip2 -dk {sample}.sam.bz2 -c | \
+  awk '/^@SQ/{sn=$2; if(!seen[sn]++) print; next} {print}' | bzip2 -c \
+  > temp/strainphlan4/dedup_sam/{sample}.sam.bz2
+
+# Step1: sample2markers — 提取每样本 consensus markers（.json.bz2）
+sample2markers.py -i ${DEDUP_SAM_LIST} \
+  -d $REPO/db/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202212.pkl \
+  -o result/strainphlan4/consensus_markers \
+  -f bz2 -n 16
+
+# Step2: strainphlan — 列出可分析 clades（检测模式）
+strainphlan \
+  -s result/strainphlan4/consensus_markers/*.json.bz2 \
+  -d $REPO/db/metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202212.pkl \
+  -o result/strainphlan4/trees \
   --print_clades_only \
-  --db_vref mpa_vOct22_CHOCOPhlAnSGB_202212
+  --non_interactive \
+  -n 16
 ```
 
 **执行结果**：3857 秒（64 分钟）。检测到 50 个可分析 clades，其中 7 个在全部 6 个样本中出现。
@@ -205,17 +233,19 @@ strainphlan --ifn_samples samples.txt \
 
 **核心执行命令**（摘自 `scripts/13_bac_humann3.sh`）：
 ```bash
+# 输入为 zcat 合并 R1+R2 的单文件（standard 模式，物种阈值 0.01%）
 humann \
-  --input {sample}_input.fq.gz \
+  --input temp/humann3/{sample}/{sample}_input.fq.gz \
   --output $TEMP_DIR \
   --output-basename {sample} \
+  --threads 16 \
   --nucleotide-database $REPO/db/humann4/chocophlan \
   --protein-database $REPO/db/humann4/uniref \
-  --taxonomic-profile {sample}_profile.txt \
+  --o-log $TEMP_DIR/{sample}.log \
   --prescreen-threshold 0.01 \
   --memory-use minimum \
-  --threads 16 \
-  --o-log {sample}.log
+  --metaphlan-options "-t rel_ab --tmp_dir $TEMP_DIR" \
+  --taxonomic-profile result/metaphlan4/{sample}/{sample}_profile.txt
 ```
 
 **执行结果**：6/6 成功（重跑后），23851–31675 秒/样本（6.6–8.8h）。
@@ -225,7 +255,7 @@ humann \
 - **必须用绝对路径 -w**——相对路径 + cd 嵌套导致首次运行全失败（详见 `.claude/reviews/incident_20261005_humann_relpath.md`）。
 - HUMAnN 双泳道加速 = 48.2h ÷ 25.4h ≈ 1.9×（仅 HUMAnN 步骤；全段墙钟 63.5h 含三线并行间隔）。
 
-**质量审核点评**：运算时间是最长步骤（DIAMOND 比对 UniRef 全库为瓶颈）；`--speed-mode balanced` 可压缩 30–50%。
+**质量审核点评**：运算时间是最长步骤（DIAMOND 比对 UniRef 全库为瓶颈）；按脚本注释 `--speed-mode balanced` 可提速约 5–10×（standard 8–15h → balanced 1–2h/样本，代价：unstratified 社区通路精度损失 <5%，<1% 丰度物种的 stratified 通路丢失）。
 
 ---
 
@@ -238,10 +268,13 @@ humann \
 ```bash
 humann_join_tables --input $STAGE_DIR \
   --file_name pathabundance_relab.tsv \
-  --output pathabundance_relab.tsv
+  --output result/humann3/merged/pathabundance_relab.tsv
+sed -i 's/_Abundance//g' result/humann3/merged/pathabundance_relab.tsv
+
 humann_join_tables --input $STAGE_DIR \
   --file_name genefamilies_relab.tsv \
-  --output genefamilies_relab.tsv
+  --output result/humann3/merged/genefamilies_relab.tsv
+sed -i 's/_Abundance-RPKs//g' result/humann3/merged/genefamilies_relab.tsv
 ```
 
 **执行结果**：15 秒完成。pathabundance 524 行、genefamilies 995,738 行。
@@ -260,9 +293,21 @@ humann_join_tables --input $STAGE_DIR \
 kraken2 \
   --db $REPO/db/kraken2/pluspf \
   --threads 16 \
-  --paired {sample}_1.kneaddata.fastq.gz {sample}_2.kneaddata.fastq.gz \
+  --paired result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz \
+           result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz \
   --use-names \
-  --report-zero-counts
+  --report-zero-counts \
+  --confidence 0.1 \
+  --report result/kraken2/{sample}/{sample}.report \
+  --output - | gzip -c > result/kraken2/{sample}/{sample}.output.gz
+
+# Bracken 丰度重估（S/G/P 三个层级各跑一次，此处以种级 S 为例）
+bracken \
+  -d $REPO/db/kraken2/pluspf \
+  -i result/kraken2/{sample}/{sample}.report \
+  -r 150 -l S -t 10 \
+  -o result/kraken2/{sample}/bracken/{sample}_S.bracken \
+  -w result/kraken2/{sample}/bracken/{sample}_S.report
 ```
 
 **执行结果**：6/6 成功，380–585 秒/样本。
@@ -276,10 +321,14 @@ kraken2 \
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 执行 14b Kraken2/Bracken 合并，生成三个分类层级的多样本矩阵。」
 
-**核心执行命令**（摘自 `scripts/14b_bac_kraken2_merge.sh`，R 脚本合并）：
+**核心执行命令**（摘自 `scripts/14b_bac_kraken2_merge.sh`，combine_bracken_outputs.py 合并）：
 ```bash
-# R 脚本逐样本读取 bracken/{sample}_{S,G,P}.bracken 并合并为矩阵
-# 产出：bracken_S.tsv（种级）、bracken_G.tsv（属级）、bracken_P.tsv（门级）
+# 对 S/G/P 三个层级分别运行（kraken2 环境自带工具 combine_bracken_outputs.py）
+combine_bracken_outputs.py \
+  --files ${BRACKEN_FILE_LIST} \
+  --names ${SAMPLE_NAME_LIST} \
+  -o result/kraken2/merged/bracken_S.tsv
+# G/P 层级同参数再各跑一次，输出 bracken_G.tsv（属级）、bracken_P.tsv（门级）
 ```
 
 **执行结果**：9 秒完成。门级 26 行、属级 414 行、种级 1055 行（含表头）。
@@ -297,9 +346,18 @@ kraken2 \
 ```bash
 sylph profile \
   $REPO/db/sylph/gtdb-r220-c200-dbv1.syldb \
-  -1 {sample}_1.kneaddata.fastq.gz \
-  -2 {sample}_2.kneaddata.fastq.gz \
-  -t 16
+  -1 result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz \
+  -2 result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz \
+  -t 16 \
+  -m 95 \
+  -o result/sylph/{sample}/{sample}.sylph_profile.tsv
+
+# sylph-tax 物种名标注（genome ID → MetaPhlAn 风格物种 profile）
+sylph-tax taxprof result/sylph/{sample}/{sample}.sylph_profile.tsv \
+  -t $REPO/db/sylph/gtdb_r220_metadata.tsv.gz \
+  -o result/sylph/{sample}/{sample}_ \
+  --overwrite
+# taxprof 输出按 fastq 文件名命名，脚本随后统一 mv 为 {sample}.sylphmpa
 ```
 
 **执行结果**：6/6 成功，228–338 秒/样本。
@@ -313,9 +371,12 @@ sylph profile \
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 执行 15d sylph 合并，生成项目级物种矩阵。」
 
-**核心执行命令**（摘自 `scripts/15d_bac_sylph_merge.sh`，R 脚本合并）：
+**核心执行命令**（摘自 `scripts/15d_bac_sylph_merge.sh`，sylph-tax merge 合并）：
 ```bash
-# R 脚本逐样本读取 {sample}.sylphmpa 并合并为矩阵
+# sylph 环境自带 sylph-tax merge 合并全部样本的 .sylphmpa
+sylph-tax merge ${SYLPHMPA_FILE_LIST} \
+  --column relative_abundance \
+  -o result/sylph/merged/sylph_profile_merged.tsv
 # 产出：sylph_profile_merged.tsv（物种级多样本相对丰度表）
 ```
 
