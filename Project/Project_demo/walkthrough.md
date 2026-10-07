@@ -138,6 +138,97 @@ seqkit pair \
 - **加速空间**：有限——瓶颈在磁盘 IO（gzip 解压/重压）；多样本并行可按比例缩减。
 - **内存/硬盘**：内存温和（seqkit 流式处理）；temp/ 临时空间需 ~10G/样本（完成后可清除）。
 
+
 ---
+
+## 11 · MetaPhlAn4 物种分类（读式比对）
+
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 全部 6 个样本执行 11 MetaPhlAn4 物种分类（threads 16），完成后汇报各样本检出的物种数。」
+
+**核心命令**（摘自 `scripts/11_bac_metaphlan4.sh`）：
+```bash
+metaphlan {sample}_1.kneaddata.fastq.gz,{sample}_2.kneaddata.fastq.gz \
+  --input_type fastq --bowtie2out {sample}.bowtie2.bz2 \
+  --index mpa_vOct22_CHOCOPhlAnSGB_202212 -t rel_ab \
+  --nproc 16 -o {sample}_profile.txt --samout {sample}.sam.bz2
+```
+
+**执行结果**：6/6 成功，耗时 7380–10299 秒/样本（2.0–2.9h）。产出：物种 profile + SAM（供 12 菌株追踪）。
+
+**质量审核点评**：运算时间合理（bowtie2 比对全库索引为瓶颈）；产出标准 MetaPhlAn4 格式；merge 秒级完成。
+
+---
+
+## 12 · StrainPhlAn4 菌株追踪
+
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 执行 12 StrainPhlAn4 菌株检测（threads 16），完成后汇报检出的 clades 数量。」
+
+**核心命令**：`strainphlan --ifn_samples samples.txt --print_clades_only --db_vref MetaPhlAn4`
+
+**执行结果**：1 次全样本汇总，3857 秒。检测到 50 个可分析 clades（7 个在 6/6 样本中出现）。
+
+**质量审核点评**：默认只做检测（--print_clades_only），要得到系统发育树需带 `-c <clade>` 再跑；产出为 clades 列表。
+
+---
+
+## 13 · HUMAnN3 功能通路定量（注意：环境名 humann4，实际 HUMAnN v3.9）
+
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 全部 6 个样本执行 13 功能通路定量（HUMAnN3，threads 16），**必须用绝对路径 -w**。」
+
+**核心命令**（摘自 `scripts/13_bac_humann3.sh`）：
+```bash
+humann --input {sample}_input.fq.gz \
+  --output $TEMP_DIR --output-basename {sample} \
+  --nucleotide-database $REPO/db/humann4/chocophlan \
+  --protein-database $REPO/db/humann4/uniref \
+  --taxonomic-profile {sample}_profile.txt \
+  --prescreen-threshold 0.01 --memory-use minimum \
+  --threads 16 --o-log {sample}.log
+```
+
+**执行结果**：6/6 成功（重跑后），23851–31675 秒/样本（6.6–8.8h）。
+
+**⚠️ 注意事项**：
+- 本环境使用 **HUMAnN v3.9**（非 HUMAnN4），数据库为 **vOct22 CHOCOPhlAnSGB_202212**；config.py 打过补丁（vJun23→vOct22）使其兼容项目数据库版本（0Install.sh:798-800）。
+- 合并表（13b）只包含**非分层数据**（无物种分层行）。
+- **必须用绝对路径 -w**——相对路径 + cd 嵌套导致首次运行全失败（详见 .claude/reviews/incident_20261005_humann_relpath.md）。
+
+**质量审核点评**：运算时间是最长步骤（DIAMOND 比对 UniRef 全库为瓶颈）；建议 `--speed-mode balanced` 可压缩 30–50%。
+
+---
+
+## 14 · Kraken2 + Bracken k-mer 分类
+
+**核心命令**：
+```bash
+kraken2 --db $REPO/db/kraken2/k2_pluspf_20251015 \
+  --paired --threads 16 --report {sample}.report \
+  {sample}_1.kneaddata.fastq.gz {sample}_2.kneaddata.fastq.gz
+bracken -d $REPO/db/kraken2/k2_pluspf_20251015 \
+  -i {sample}.report -o {sample}.bracken
+```
+
+**执行结果**：6/6 成功，380–585 秒/样本。merge 后：属级 414 行、种级 1055 行、门级 26 行。
+
+---
+
+## 15c · sylph 超快物种分类
+
+**核心命令**：
+```bash
+sylph sketch -1 {sample}_1.kneaddata.fastq.gz -2 {sample}_2.kneaddata.fastq.gz
+sylph profile $REPO/db/sylph/GTDB-RS226 -t 16
+```
+
+**执行结果**：6/6 成功，228–338 秒/样本。merge 后 1859 行 × 7 列。
+
+---
+
+**⚠️ 冻结清单标注说明**：15（centrifuger）、15b、15e（metax）标注为"运行"但本段未执行——作为 opt-in 步骤留待后续按需运行。
+
+**⚠️ 2×3 设计说明**：6 样本（treat ×3 / control ×3）仅作流程演示用途，统计功效有限，差异分析结果不作科学结论。
 
 （后续步骤章节随执行增量添加，格式同上：启动提示词 → 核心命令 → 执行结果 → 质量审核点评）
