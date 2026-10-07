@@ -141,93 +141,191 @@ seqkit pair \
 
 ---
 
-## 11 · MetaPhlAn4 物种分类（读式比对）
+## 11 · MetaPhlAn4 物种分类
 
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 全部 6 个样本执行 11 MetaPhlAn4 物种分类（threads 16），完成后汇报各样本检出的物种数。」
 
-**核心命令**（摘自 `scripts/11_bac_metaphlan4.sh`）：
+**核心执行命令**（摘自 `scripts/11_bac_metaphlan4.sh`）：
 ```bash
 metaphlan {sample}_1.kneaddata.fastq.gz,{sample}_2.kneaddata.fastq.gz \
-  --input_type fastq --bowtie2out {sample}.bowtie2.bz2 \
-  --index mpa_vOct22_CHOCOPhlAnSGB_202212 -t rel_ab \
-  --nproc 16 -o {sample}_profile.txt --samout {sample}.sam.bz2
+  --input_type fastq \
+  --bowtie2out {sample}.bowtie2.bz2 \
+  --index mpa_vOct22_CHOCOPhlAnSGB_202212 \
+  -t rel_ab_w_readmap \
+  --nproc 16 \
+  -o {sample}_profile.txt \
+  --samout {sample}.sam.bz2
 ```
 
-**执行结果**：6/6 成功，耗时 7380–10299 秒/样本（2.0–2.9h）。产出：物种 profile + SAM（供 12 菌株追踪）。
+**执行结果**：6/6 成功，7380–10299 秒/样本（2.0–2.9h）。
 
-**质量审核点评**：运算时间合理（bowtie2 比对全库索引为瓶颈）；产出标准 MetaPhlAn4 格式；merge 秒级完成。
+**质量审核点评**：运算时间合理（bowtie2 比对全库索引为瓶颈）；产出标准 MetaPhlAn4 格式。
 
 ---
 
-## 12 · StrainPhlAn4 菌株追踪
+## 11b · MetaPhlAn4 多样本合并
+
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 执行 11b MetaPhlAn4 合并，生成项目级丰度矩阵。」
+
+**核心执行命令**（摘自 `scripts/11b_bac_metaphlan4_merge.sh`）：
+```bash
+merge_metaphlan_tables.py ${PROFILE_LIST} > merged_abundance_table.txt
+```
+
+**执行结果**：4 秒完成。产出：属级 TSV + 种级 CSV。
+
+**质量审核点评**：秒级完成，无性能问题。
+
+---
+
+## 12 · StrainPhlAn4 菌株追踪（clades 检测模式）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 执行 12 StrainPhlAn4 菌株检测（threads 16），完成后汇报检出的 clades 数量。」
 
-**核心命令**：`strainphlan --ifn_samples samples.txt --print_clades_only --db_vref MetaPhlAn4`
+**核心执行命令**（摘自 `scripts/12_bac_strainphlan4.sh`，默认 --print_clades_only 模式）：
+```bash
+strainphlan --ifn_samples samples.txt \
+  --print_clades_only \
+  --db_vref mpa_vOct22_CHOCOPhlAnSGB_202212
+```
 
-**执行结果**：1 次全样本汇总，3857 秒。检测到 50 个可分析 clades（7 个在 6/6 样本中出现）。
+**执行结果**：3857 秒（64 分钟）。检测到 50 个可分析 clades，其中 7 个在全部 6 个样本中出现。
 
-**质量审核点评**：默认只做检测（--print_clades_only），要得到系统发育树需带 `-c <clade>` 再跑；产出为 clades 列表。
+**质量审核点评**：默认只做检测（--print_clades_only），要得到菌株系统发育树需带 `-c <clade_id>` 再跑一次。本段演示到此为止。
 
 ---
 
-## 13 · HUMAnN3 功能通路定量（注意：环境名 humann4，实际 HUMAnN v3.9）
+## 13 · HUMAnN v3.9 功能通路定量（环境名 humann4，实际版本 3.9）
 
 **启动本步骤（复制给 AI 助手）**：
-> 「请为 Project_demo 全部 6 个样本执行 13 功能通路定量（HUMAnN3，threads 16），**必须用绝对路径 -w**。」
+> 「请为 Project_demo 全部 6 个样本执行 13 功能通路定量（HUMAnN v3.9，threads 16），**必须用绝对路径 -w**。」
 
-**核心命令**（摘自 `scripts/13_bac_humann3.sh`）：
+**核心执行命令**（摘自 `scripts/13_bac_humann3.sh`）：
 ```bash
-humann --input {sample}_input.fq.gz \
-  --output $TEMP_DIR --output-basename {sample} \
+humann \
+  --input {sample}_input.fq.gz \
+  --output $TEMP_DIR \
+  --output-basename {sample} \
   --nucleotide-database $REPO/db/humann4/chocophlan \
   --protein-database $REPO/db/humann4/uniref \
   --taxonomic-profile {sample}_profile.txt \
-  --prescreen-threshold 0.01 --memory-use minimum \
-  --threads 16 --o-log {sample}.log
+  --prescreen-threshold 0.01 \
+  --memory-use minimum \
+  --threads 16 \
+  --o-log {sample}.log
 ```
 
 **执行结果**：6/6 成功（重跑后），23851–31675 秒/样本（6.6–8.8h）。
 
 **⚠️ 注意事项**：
-- 本环境使用 **HUMAnN v3.9**（非 HUMAnN4），数据库为 **vOct22 CHOCOPhlAnSGB_202212**；config.py 打过补丁（vJun23→vOct22）使其兼容项目数据库版本（0Install.sh:798-800）。
-- 合并表（13b）只包含**非分层数据**（无物种分层行）。
-- **必须用绝对路径 -w**——相对路径 + cd 嵌套导致首次运行全失败（详见 .claude/reviews/incident_20261005_humann_relpath.md）。
+- 本环境使用 **HUMAnN v3.9**（非 HUMAnN4），数据库为 **vOct22 CHOCOPhlAnSGB_202212**；config.py 打过补丁（vJun23→vOct22，0Install.sh:798-800）。
+- **必须用绝对路径 -w**——相对路径 + cd 嵌套导致首次运行全失败（详见 `.claude/reviews/incident_20261005_humann_relpath.md`）。
+- HUMAnN 双泳道加速 = 48.2h ÷ 25.4h ≈ 1.9×（仅 HUMAnN 步骤；全段墙钟 63.5h 含三线并行间隔）。
 
-**质量审核点评**：运算时间是最长步骤（DIAMOND 比对 UniRef 全库为瓶颈）；建议 `--speed-mode balanced` 可压缩 30–50%。
+**质量审核点评**：运算时间是最长步骤（DIAMOND 比对 UniRef 全库为瓶颈）；`--speed-mode balanced` 可压缩 30–50%。
 
 ---
 
-## 14 · Kraken2 + Bracken k-mer 分类
+## 13b · HUMAnN 多样本合并
 
-**核心命令**：
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 执行 13b HUMAnN 合并，生成项目级功能矩阵。」
+
+**核心执行命令**（摘自 `scripts/13b_bac_humann3_merge.sh`）：
 ```bash
-kraken2 --db $REPO/db/kraken2/k2_pluspf_20251015 \
-  --paired --threads 16 --report {sample}.report \
-  {sample}_1.kneaddata.fastq.gz {sample}_2.kneaddata.fastq.gz
-bracken -d $REPO/db/kraken2/k2_pluspf_20251015 \
-  -i {sample}.report -o {sample}.bracken
+humann_join_tables --input $STAGE_DIR \
+  --file_name pathabundance_relab.tsv \
+  --output pathabundance_relab.tsv
+humann_join_tables --input $STAGE_DIR \
+  --file_name genefamilies_relab.tsv \
+  --output genefamilies_relab.tsv
 ```
 
-**执行结果**：6/6 成功，380–585 秒/样本。merge 后：属级 414 行、种级 1055 行、门级 26 行。
+**执行结果**：15 秒完成。pathabundance 524 行、genefamilies 995,738 行。
+
+**质量审核点评**：合并表只包含**非分层数据**（无 `|` 分层行）。
+
+---
+
+## 14 · Kraken2 k-mer 分类
+
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 全部 6 个样本执行 14 Kraken2 分类（threads 16），完成后汇报各样本的分类检出率。」
+
+**核心执行命令**（摘自 `scripts/14_bac_kraken2.sh`）：
+```bash
+kraken2 \
+  --db $REPO/db/kraken2/pluspf \
+  --threads 16 \
+  --paired {sample}_1.kneaddata.fastq.gz {sample}_2.kneaddata.fastq.gz \
+  --use-names \
+  --report-zero-counts
+```
+
+**执行结果**：6/6 成功，380–585 秒/样本。
+
+**质量审核点评**：速度极快（k-mer 直接匹配，无比对）；数据库 77GB 常驻内存是 IO 瓶颈。
+
+---
+
+## 14b · Bracken 多样本合并
+
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 执行 14b Kraken2/Bracken 合并，生成三个分类层级的多样本矩阵。」
+
+**核心执行命令**（摘自 `scripts/14b_bac_kraken2_merge.sh`，R 脚本合并）：
+```bash
+# R 脚本逐样本读取 bracken/{sample}_{S,G,P}.bracken 并合并为矩阵
+# 产出：bracken_S.tsv（种级）、bracken_G.tsv（属级）、bracken_P.tsv（门级）
+```
+
+**执行结果**：9 秒完成。门级 26 行、属级 414 行、种级 1055 行（含表头）。
+
+**质量审核点评**：三个层级均产出标准 TSV 矩阵（行=物种，列=样本）。
 
 ---
 
 ## 15c · sylph 超快物种分类
 
-**核心命令**：
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 全部 6 个样本执行 15c sylph 物种分类（threads 16），完成后汇报各样本检出的物种数。」
+
+**核心执行命令**（摘自 `scripts/15c_bac_sylph.sh`）：
 ```bash
-sylph sketch -1 {sample}_1.kneaddata.fastq.gz -2 {sample}_2.kneaddata.fastq.gz
-sylph profile $REPO/db/sylph/GTDB-RS226 -t 16
+sylph profile \
+  $REPO/db/sylph/gtdb-r220-c200-dbv1.syldb \
+  -1 {sample}_1.kneaddata.fastq.gz \
+  -2 {sample}_2.kneaddata.fastq.gz \
+  -t 16
 ```
 
-**执行结果**：6/6 成功，228–338 秒/样本。merge 后 1859 行 × 7 列。
+**执行结果**：6/6 成功，228–338 秒/样本。
+
+**质量审核点评**：速度最快（MinHash sketch 比对，GTDB-R220 全库 110k+ 基因组）；内存仅需 ~15GB。
 
 ---
 
-**⚠️ 冻结清单标注说明**：15（centrifuger）、15b、15e（metax）标注为"运行"但本段未执行——作为 opt-in 步骤留待后续按需运行。
+## 15d · sylph 多样本合并
+
+**启动本步骤（复制给 AI 助手）**：
+> 「请为 Project_demo 执行 15d sylph 合并，生成项目级物种矩阵。」
+
+**核心执行命令**（摘自 `scripts/15d_bac_sylph_merge.sh`，R 脚本合并）：
+```bash
+# R 脚本逐样本读取 {sample}.sylphmpa 并合并为矩阵
+# 产出：sylph_profile_merged.tsv（物种级多样本相对丰度表）
+```
+
+**执行结果**：5 秒完成。1859 行 × 7 列。
+
+**质量审核点评**：秒级完成，无性能问题。
+
+---
+
+**⚠️ 冻结清单标注说明**：15（centrifuger）、15b（centrifuger merge）、15e（metax）标注为"opt-in 未运行"——本段演示未执行，留待后续按需运行。
 
 **⚠️ 2×3 设计说明**：6 样本（treat ×3 / control ×3）仅作流程演示用途，统计功效有限，差异分析结果不作科学结论。
 
