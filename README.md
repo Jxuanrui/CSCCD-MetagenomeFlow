@@ -51,6 +51,7 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 ### Recent Updates
 
 - **pixi delivery layer (2026-10)** — `envs-pixi/` provides lockfile-based environment delivery (user-approved): 53/57 environments locked (50 build-level exact, 1 busco version-compromised, 2 Track-2 only). glibc and AVX-512 issues resolved via system-requirements and build relaxation. Delivery: dual-track — pixi lockfiles + symlink wiring (recommended) or conda-pack per-env archives (fallback). See `docs/plans/2026-10-03_pixi_adoption_techspec.md`.
+- **Path normalization fix (2026-10-05)** — `libcommon.sh` `mgx_begin` now converts WORKDIR/REPO to absolute paths via `realpath -m`, fixing a critical bug where relative paths caused nested outputs (HUMAnN 6-sample failure) and could bypass the Project01 production write guard.
 
 > Details: `git log v1.1.4-baseline..HEAD` (private dev history)
 

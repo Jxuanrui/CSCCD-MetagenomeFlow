@@ -12,8 +12,8 @@
 | 13b_bac_humann3_merge | bacteria | 运行 |  |
 | 14_bac_kraken2 | bacteria | 运行 |  |
 | 14b_bac_kraken2_merge | bacteria | 运行 |  |
-| 15_bac_centrifuger | bacteria | 运行 |  |
-| 15b_bac_centrifuger_merge | bacteria | 运行 |  |
+| 15_bac_centrifuger | bacteria | opt-in 未运行 | 本段留待后续按需运行（未执行） |
+| 15b_bac_centrifuger_merge | bacteria | opt-in 未运行 | 本段留待后续按需运行（未执行） |
 | 15c_bac_sylph | bacteria | 运行 |  |
 | 15d_bac_sylph_merge | bacteria | 运行 |  |
 | 15e_bac_metax | cross-domain | 运行 |  |
