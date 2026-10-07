@@ -16,7 +16,7 @@
 | 15b_bac_centrifuger_merge | bacteria | opt-in 未运行 | 本段留待后续按需运行（未执行） |
 | 15c_bac_sylph | bacteria | 运行 |  |
 | 15d_bac_sylph_merge | bacteria | 运行 |  |
-| 15e_bac_metax | cross-domain | 运行 |  |
+| 15e_bac_metax | cross-domain | opt-in 未运行 | 本段留待后续按需运行 |
 | 16_bac_megahit | bacteria | 运行 |  |
 | 16b_bac_metaspades | bacteria | 运行 |  |
 | 17_bac_prodigal | bacteria | 运行 |  |
