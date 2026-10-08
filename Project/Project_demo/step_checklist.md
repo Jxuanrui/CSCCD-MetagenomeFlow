@@ -86,7 +86,7 @@
 | 68_vir_iphop | virome | 运行 |  |
 | 69_vir_vcontact3 | virome | 运行 |  |
 | 70_vir_phabox2 | virome | 运行 |  |
-| 71_vir_dram | virome | 运行 |  |
+| 71_vir_dram | virome | 待核/预期空（依赖 vMAG，见 62/63） |  |
 | 72_vir_phagcn3 | virome | 运行 |  |
 | 71_fun_kraken2_fungi | fungi | 运行 |  |
 | 72_fun_metaphlan4_euk | fungi | 运行 |  |
@@ -98,7 +98,7 @@
 | 74f_fun_phf_aggregate |  | 运行 |  |
 | 75_fun_funomics | fungi | 运行 |  |
 | 75b_fun_funomics_aggregate | fungi | 运行 |  |
-| 76_fun_ccmetagen | fungi | 运行 |  |
+| 76_fun_ccmetagen | fungi | 不适用（registry removed，脚本已删除） |  |
 | 77_fun_microfisher | fungi | 运行 |  |
 | 78_fun_megahit | fungi | 运行 |  |
 | 79_fun_eukfinder | fungi | 运行 |  |
@@ -146,3 +146,5 @@
 | 98g_cross_domain_correlation | stats | 运行 |  |
 
 > ¹ 13_bac_humann3 依赖同一样本的 11 metaphlan4 profile（质量审核 E1 2026-10-04），不可先跑。
+
+> ⚠️ 病毒 71/72（vir_dram/vir_phagcn3）与真菌 71/72（fun_kraken2/metaphlan4_euk）编号重复——分属不同维度。
