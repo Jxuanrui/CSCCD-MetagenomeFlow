@@ -2,20 +2,20 @@
 
 | 脚本 | 维度 | 计划 | 标注 |
 |---|---|---|---|
-| 01_qc_fastp | shared | 运行 |  |
-| 02_qc_kneaddata | shared | 运行 |  |
-| 02b_qc_pair_repair | shared | 运行 |  |
-| 11_bac_metaphlan4 | bacteria | 运行 |  |
-| 11b_bac_metaphlan4_merge | bacteria | 运行 |  |
-| 12_bac_strainphlan4 | bacteria | 运行（aggregate：须等 11 全部完成） | 依赖 11 ×6 样本 |
+| 01_qc_fastp | shared | ✓ 已完成 |  |
+| 02_qc_kneaddata | shared | ✓ 已完成 |  |
+| 02b_qc_pair_repair | shared | ✓ 已完成 |  |
+| 11_bac_metaphlan4 | bacteria | ✓ 已完成 |  |
+| 11b_bac_metaphlan4_merge | bacteria | ✓ 已完成 |  |
+| 12_bac_strainphlan4 | bacteria | ✓ 已完成（aggregate：须等 11 全部完成） | 依赖 11 ×6 样本 |
 | 13_bac_humann3 ¹ | bacteria | 运行 |  |
-| 13b_bac_humann3_merge | bacteria | 运行 |  |
-| 14_bac_kraken2 | bacteria | 运行 |  |
-| 14b_bac_kraken2_merge | bacteria | 运行 |  |
+| 13b_bac_humann3_merge | bacteria | ✓ 已完成 |  |
+| 14_bac_kraken2 | bacteria | ✓ 已完成 |  |
+| 14b_bac_kraken2_merge | bacteria | ✓ 已完成 |  |
 | 15_bac_centrifuger | bacteria | opt-in 未运行 | 本段留待后续按需运行（未执行） |
 | 15b_bac_centrifuger_merge | bacteria | opt-in 未运行 | 本段留待后续按需运行（未执行） |
-| 15c_bac_sylph | bacteria | 运行 |  |
-| 15d_bac_sylph_merge | bacteria | 运行 |  |
+| 15c_bac_sylph | bacteria | ✓ 已完成 |  |
+| 15d_bac_sylph_merge | bacteria | ✓ 已完成 |  |
 | 15e_bac_metax | cross-domain | opt-in 未运行 | 本段留待后续按需运行 |
 | 16_bac_megahit | bacteria | 运行 |  |
 | 16b_bac_metaspades | bacteria | 运行 |  |
@@ -64,7 +64,7 @@
 | 43_bac_gem_gapseq | bacteria | 运行 |  |
 | 43b_bac_gem_carveme | bacteria | 运行 |  |
 | 43c_bac_gem_cobrapy_fba | bacteria | 运行 |  |
-| 51_vir_megahit | virome | 运行 |  |
+| 51_vir_megahit | virome | ✓ 已完成 |  |
 | 52_vir_genomad | virome | 运行 |  |
 | 53_vir_virsorter2 | virome | 运行 |  |
 | 54_vir_checkv_contig | virome | 运行 |  |
@@ -88,8 +88,8 @@
 | 70_vir_phabox2 | virome | 运行 |  |
 | 71_vir_dram | virome | 待核/预期空（依赖 vMAG，见 62/63） |  |
 | 72_vir_phagcn3 | virome | 运行 |  |
-| 71_fun_kraken2_fungi | fungi | 运行 |  |
-| 72_fun_metaphlan4_euk | fungi | 运行 |  |
+| 71_fun_kraken2_fungi | fungi | ✓ 已完成 |  |
+| 72_fun_metaphlan4_euk | fungi | ✓ 已完成 |  |
 | 72b_fun_metaphlan4_merge | fungi | 运行 |  |
 | 73_fun_humann4_fungi | fungi | 运行 |  |
 | 74_fun_blast_gutdb | fungi | 运行 |  |
