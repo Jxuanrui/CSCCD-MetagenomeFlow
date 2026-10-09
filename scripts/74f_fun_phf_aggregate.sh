@@ -81,10 +81,11 @@ for f in rc_files:
         lines = [l.rstrip('\n') for l in fh if l.strip()]
     if not lines:
         continue
-    header = lines[0].split('\t')
-    # .rc format: cluster<TAB>value
+    # .rc format: cluster<TAB>value — NO header line (supervisor P0 2026-10-09:
+    # the old code skipped lines[0] as a "header", dropping the most abundant
+    # cluster from every sample; e.g. Sample4 c86 S.cerevisiae 92.57% -> 0)
     d = {}
-    for line in lines[1:]:
+    for line in lines:
         parts = line.split('\t')
         if len(parts) >= 2:
             d[parts[0]] = parts[1]

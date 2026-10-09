@@ -65,7 +65,7 @@
 | 43b_bac_gem_carveme | bacteria | 运行 |  |
 | 43c_bac_gem_cobrapy_fba | bacteria | 运行 |  |
 | 51_vir_megahit | virome | ✓ 已完成 |  |
-| 52_vir_genomad | virome | 运行 |  |
+| 52_vir_genomad | virome | ✓ 已完成 |  |
 | 53_vir_virsorter2 | virome | 运行 |  |
 | 54_vir_checkv_contig | virome | 运行 |  |
 | 54b_vir_checkv_filter | virome | 运行 |  |
@@ -90,9 +90,9 @@
 | 72_vir_phagcn3 | virome | 运行 |  |
 | 71_fun_kraken2_fungi | fungi | ✓ 已完成 |  |
 | 72_fun_metaphlan4_euk | fungi | ✓ 已完成 |  |
-| 72b_fun_metaphlan4_merge | fungi | 运行 |  |
-| 73_fun_humann4_fungi | fungi | 运行 |  |
-| 74_fun_blast_gutdb | fungi | 运行 |  |
+| 72b_fun_metaphlan4_merge | fungi | ✓ 已完成 |  |
+| 73_fun_humann4_fungi | fungi | ✓ 已完成 |  |
+| 74_fun_blast_gutdb | fungi | ✓ 已完成 |  |
 | 74a_fun_gut_db_build | fungi | 运行 |  |
 | 74e_fun_phf_profiler |  | 运行 |  |
 | 74f_fun_phf_aggregate |  | 运行 |  |
