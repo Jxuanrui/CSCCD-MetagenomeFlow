@@ -48,21 +48,24 @@ if [ ${FORCE} -eq 0 ] && [ -f "${COMBINED}" ] && [ ! -f "${SENTINEL}" ]; then
     rm -rf "${OUTDIR}"
 fi
 
-# --- 运行 VirSorter2（保留原始 set +e 形式：命令带 CONDA_EXE 环境前缀与 2>&1，不套 mgx_conda/mgx_try）---
+# --- 运行 VirSorter2（SIF 容器，需隔离宿主机 Python 环境） ---
+# activate.sh 把 miniforge3/bin 加入 PATH，SIF 容器继承后会拾取宿主机的
+# pkg_resources（Python 版本不匹配），导致 DistributionNotFound。
+# 解决：用 env -i 清空环境后只传必要变量，在子 shell 中运行。
 set +e
 echo "[virsorter2] ${SAMPLE} | VirSorter2 病毒预测 ..."
-# virsorter2 内部会调用 conda info --json 检测 conda 环境
-# 需显式传入 CONDA_EXE 确保找到 conda 可执行文件
-CONDA_EXE="${REPO}/miniforge3/bin/conda" \
-conda run --prefix "${REPO}/envs/virsorter2" --no-capture-output \
-    virsorter run --use-conda-off \
-        -w "${OUTDIR}" \
-        -i "${CONTIGS}" \
-        --db-dir "${VS2_DB}" \
-        --min-length 1000 \
-        --include-groups "dsDNAphage,ssDNA,RNA,NCLDV,lavidaviridae" \
-        -j "${CPUS}" \
-        --verbose 2>&1
+(env -i \
+    HOME="${HOME}" \
+    PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin" \
+    APPTAINER_CACHEDIR="${APPTAINER_CACHEDIR:-${HOME}/.apptainer}" \
+    "${REPO}/envs/virsorter2/bin/virsorter" run --use-conda-off \
+    -w "${OUTDIR}" \
+    -i "${CONTIGS}" \
+    --db-dir "${VS2_DB}" \
+    --min-length 1000 \
+    --include-groups "dsDNAphage,ssDNA,RNA,NCLDV,lavidaviridae" \
+    -j "${CPUS}" \
+    --verbose) 2>&1
 
 EXIT_CODE=$?
 set -e
