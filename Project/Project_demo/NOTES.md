@@ -30,3 +30,9 @@
 ### 真菌功能注释科学口径披露
 78 号组装用全部清洁 reads（非仅真菌 reads）；80 号用 Prodigal（原核基因预测）。
 81-86 号实际是以细菌为主的全群落注释，放在 fungi/ 目录下。文档此前未说明。
+
+## 防重复启动规程（质量审核 P0-3，2026-10-09）
+1. 每次启动泳道前：`pgrep -af "<脚本名>"` 确认无同步骤残留进程
+2. 启动后 60 秒：`grep "<step>.*<sample>.*-1" logs/run_events.jsonl | wc -l` 确认只有 1 条启动记录
+3. 如发现重复：立即 kill 较新的进程（保留先启动的），清除后重启
+4. 教训来源：megahit Sample1 SIGSEGV（incident_20261007_megahit_dup_launch.md）

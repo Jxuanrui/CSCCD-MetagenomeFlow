@@ -90,17 +90,17 @@
 | 72_vir_phagcn3 | virome | 运行 |  |
 | 71_fun_kraken2_fungi | fungi | ✓ 已完成 |  |
 | 72_fun_metaphlan4_euk | fungi | ✓ 已完成 |  |
-| 72b_fun_metaphlan4_merge | fungi | ✓ 已完成 |  |
+| 72b_fun_metaphlan4_merge | fungi | ⬜ 未运行 |  |
 | 73_fun_humann4_fungi | fungi | ✓ 已完成 |  |
-| 74_fun_blast_gutdb | fungi | ✓ 已完成 |  |
+| 74_fun_blast_gutdb | fungi | ⬜ 未运行 |  |
 | 74a_fun_gut_db_build | fungi | 运行 |  |
-| 74e_fun_phf_profiler |  | 运行 |  |
+| 74e_fun_phf_profiler | fungi | 运行 |  |
 | 74f_fun_phf_aggregate |  | 运行 |  |
 | 75_fun_funomics | fungi | 运行 |  |
 | 75b_fun_funomics_aggregate | fungi | 运行 |  |
 | 76_fun_ccmetagen | fungi | 不适用（registry removed，脚本已删除） |  |
 | 77_fun_microfisher | fungi | 运行 |  |
-| 78_fun_megahit | fungi | 运行 |  |
+| 78_fun_megahit | fungi | ✓ 已完成 |  |
 | 79_fun_eukfinder | fungi | 运行 |  |
 | 79b_fun_veba_qc | fungi | 运行 |  |
 | 79c_fun_coverm_depth | fungi | 运行 |  |
