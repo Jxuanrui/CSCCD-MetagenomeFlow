@@ -36,3 +36,8 @@
 2. 启动后 60 秒：`grep "<step>.*<sample>.*-1" logs/run_events.jsonl | wc -l` 确认只有 1 条启动记录
 3. 如发现重复：立即 kill 较新的进程（保留先启动的），清除后重启
 4. 教训来源：megahit Sample1 SIGSEGV（incident_20261007_megahit_dup_launch.md）
+
+## 失败事件构成更正（质量审核 C1，2026-10-10）
+✗8 的实际构成：megahit 重复启动 ×2（exit 245）+ virsorter2 conda 失败 ×6（exit 1，全部 3-4 秒即退）。
+此前误报为"virsorter2 ×2 + 其他早期 ×4"。
+成功事件 119 条按步骤+样本去重后 = 114 个（重复 5 条：71/Sample1 ×2、53/Sample1 测试 ×3、74f --force ×1）。

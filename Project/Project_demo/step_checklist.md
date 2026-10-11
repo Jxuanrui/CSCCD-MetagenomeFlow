@@ -17,7 +17,7 @@
 | 15c_bac_sylph | bacteria | ✓ 已完成 |  |
 | 15d_bac_sylph_merge | bacteria | ✓ 已完成 |  |
 | 15e_bac_metax | cross-domain | opt-in 未运行 | 本段留待后续按需运行 |
-| 16_bac_megahit | bacteria | 运行 |  |
+| 16_bac_megahit | bacteria | ✓ 已完成 |  |
 | 16b_bac_metaspades | bacteria | 运行 |  |
 | 17_bac_prodigal | bacteria | 运行 |  |
 | 18_bac_cdhit | bacteria | 运行 |  |
@@ -66,7 +66,7 @@
 | 43c_bac_gem_cobrapy_fba | bacteria | 运行 |  |
 | 51_vir_megahit | virome | ✓ 已完成 |  |
 | 52_vir_genomad | virome | ✓ 已完成 |  |
-| 53_vir_virsorter2 | virome | 运行 |  |
+| 53_vir_virsorter2 | virome | ✓ 已完成 |  |
 | 54_vir_checkv_contig | virome | 运行 |  |
 | 54b_vir_checkv_filter | virome | 运行 |  |
 | 55_vir_prodigal_gv | virome | 运行 |  |
@@ -92,22 +92,22 @@
 | 72_fun_metaphlan4_euk | fungi | ✓ 已完成 |  |
 | 72b_fun_metaphlan4_merge | fungi | ⬜ 未运行 |  |
 | 73_fun_humann4_fungi | fungi | ✓ 已完成 |  |
-| 74_fun_blast_gutdb | fungi | ⬜ 未运行 |  |
+| 74_fun_blast_gutdb | fungi | ⬜ 未运行（可启动） |  |
 | 74a_fun_gut_db_build | fungi | 运行 |  |
-| 74e_fun_phf_profiler | fungi | 运行 |  |
+| 74e_fun_phf_profiler | fungi | ✓ 已完成 |  |
 | 74f_fun_phf_aggregate |  | 运行 |  |
 | 75_fun_funomics | fungi | 运行 |  |
 | 75b_fun_funomics_aggregate | fungi | 运行 |  |
 | 76_fun_ccmetagen | fungi | 不适用（registry removed，脚本已删除） |  |
 | 77_fun_microfisher | fungi | 运行 |  |
 | 78_fun_megahit | fungi | ✓ 已完成 |  |
-| 79_fun_eukfinder | fungi | 运行 |  |
-| 79b_fun_veba_qc | fungi | 运行 |  |
+| 79_fun_eukfinder | fungi | ✓ 已完成 |  |
+| 79b_fun_veba_qc | fungi | ✓ 已完成 |  |
 | 79c_fun_coverm_depth | fungi | 运行 |  |
 | 79d_fun_metabat2 | fungi | 运行 |  |
 | 79e_fun_euk_qc_per_bin | fungi | 运行 |  |
 | 79f_fun_metaeuk_per_bin | fungi | 运行 |  |
-| 80_fun_prodigal | fungi | 运行 |  |
+| 80_fun_prodigal | fungi | ⬜ 未运行（只依赖 78，不依赖 79b） |
 | 80b_fun_metaeuk | fungi | 运行 |  |
 | 81_fun_eggnog | fungi | 运行 |  |
 | 82_fun_kegg | fungi | 运行 |  |
