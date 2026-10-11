@@ -60,14 +60,34 @@ HAS_GENOMAD=false; HAS_VS2=false
 [ -f "${GENOMAD_VIRUS}" ] && [ -s "${GENOMAD_VIRUS}" ] && HAS_GENOMAD=true
 [ -f "${VS2_VIRUS}" ] && [ -s "${VS2_VIRUS}" ] && HAS_VS2=true
 
-if $HAS_GENOMAD || $HAS_VS2; then
+if $HAS_GENOMAD && $HAS_VS2; then
+    # 用户approve 2026-10-11：交集做主结果（严格，减少假阳性），并集作为敏感性分析
     mkdir -p "${CONTIGS_DIR}"
-    : > "${CONTIGS_DIR}/_merged.fasta"
-    $HAS_GENOMAD && cat "${GENOMAD_VIRUS}" >> "${CONTIGS_DIR}/_merged.fasta"
-    $HAS_VS2 && cat "${VS2_VIRUS}" >> "${CONTIGS_DIR}/_merged.fasta"
-    mgx_conda assembly \
-        seqkit rmdup -s -o "${VIRAL_CONTIGS}" "${CONTIGS_DIR}/_merged.fasta"
-    rm -f "${CONTIGS_DIR}/_merged.fasta"
+    # 提取两个工具共同判定的 contig ID（交集）
+    comm -12 \
+        <(grep '^>' "${GENOMAD_VIRUS}" | sed 's/^>//' | cut -d' ' -f1 | cut -d'|' -f1 | sort -u) \
+        <(grep '^>' "${VS2_VIRUS}" | sed 's/^>//' | cut -d'||/' -f1 | cut -d' ' -f1 | sort -u) \
+        > "${CONTIGS_DIR}/common_ids.txt"
+    COMMON_COUNT=$(wc -l < "${CONTIGS_DIR}/common_ids.txt")
+    echo "[checkv] 交集 contigs: ${COMMON_COUNT} (geNomad: $(grep -c '^>' "${GENOMAD_VIRUS}"), VirSorter2: $(grep -c '^>' "${VS2_VIRUS}"))"
+    if [ "${COMMON_COUNT}" -gt 0 ]; then
+        # 从 geNomad 输出中提取交集序列（保留原始序列，不截断）
+        mgx_conda assembly \
+            seqkit grep -f "${CONTIGS_DIR}/common_ids.txt" \
+            -o "${VIRAL_CONTIGS}" "${GENOMAD_VIRUS}"
+    else
+        echo "[WARN] 交集为空，回退到仅 geNomad 结果"
+        cp "${GENOMAD_VIRUS}" "${VIRAL_CONTIGS}"
+    fi
+    rm -f "${CONTIGS_DIR}/common_ids.txt" "${CONTIGS_DIR}/_merged.fasta"
+elif $HAS_GENOMAD || $HAS_VS2; then
+    # 只有一个工具有结果时，直接使用该结果
+    mkdir -p "${CONTIGS_DIR}"
+    if $HAS_GENOMAD; then
+        cp "${GENOMAD_VIRUS}" "${VIRAL_CONTIGS}"
+    else
+        cp "${VS2_VIRUS}" "${VIRAL_CONTIGS}"
+    fi
 else
     echo "[WARN] S01 中未检测到病毒序列: geNomad 和 VirSorter2 均无有效输出"
     mkdir -p "${OUTDIR}"
