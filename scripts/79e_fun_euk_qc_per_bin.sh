@@ -83,7 +83,7 @@ for BIN_FA in "${BIN_FILES[@]}"; do
         cd "${OUTDIR}"
         mgx_conda busco \
             busco -i "${LOCAL_FA}" -o "${BUSCO_OUT}" \
-                  -m genome --auto-lineage-euk -c "${CPUS}" -f \
+                  -m genome --auto-lineage-euk --offline -c "${CPUS}" -f \
                   --download_path "${BUSCO_DOWNLOAD_PATH}"
     ) || BUSCO_EXIT=$?
 

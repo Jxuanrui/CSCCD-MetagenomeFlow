@@ -39,6 +39,9 @@ fastp \
 
 **执行结果**（2026-10-03 实测，6/6 成功；耗时含三线并行负载）：
 
+> ⚠️ 通行率 99.8-100% 表明输入可能是测序公司已处理过的 clean data，非原始 raw reads。
+
+
 | 样本 | 组 | 原始 reads | 清洁 reads | 通行率 | Q30 | GC |
 |---|---|---|---|---|---|---|
 | Sample1 | treat | 84,563,768 | 84,560,980 | 100.0% | 97.9% | 45.8% |
@@ -92,7 +95,7 @@ kneaddata \
 
 计时：Sample1 131min、Sample10 143min、Sample11 159min、Sample2 129min、Sample3 171min、Sample4 121min（合计 14.3 小时）。产出：`result/kneaddata/<样本>/`（清洁 reads 双端 + orphan + 污染 reads + log/stats）。
 
-**质量审核点评**：（主代理按五维度起草，预处理段关口由质量审核复核；HEAD: 050f1c6）:
+**执行点评**（主代理起草）：（主代理按五维度起草，预处理段关口由质量审核复核；HEAD: 050f1c6）:
 - **运算时间**：121–171 分钟/样本（16 线程，bowtie2 --very-sensitive-local 比对 ~42M reads vs 人基因组）；串行合计 14.3 小时。
 - **输出文件**：每样本 4 个主要文件（clean paired ×2 + orphan + stats），~8–12G/样本。
 - **后续使用**：清洁 reads 供 02b 配对修复 → 三界分析链；stats 是 MultiQC 输入。
@@ -131,7 +134,7 @@ seqkit pair \
 
 产出：新增 `_1.kneaddata.fastq.gz` / `_2.kneaddata.fastq.gz`（严格配对新文件）；`_kneaddata_raw` 原件保留（是 02 的哨兵，不可删）；哨兵 `.pair_repair_done.txt` ✓。磁盘额外增 ~58G。
 
-**质量审核点评**：（主代理按五维度起草，预处理段关口由质量审核复核；HEAD: 050f1c6）:
+**执行点评**（主代理起草）：（主代理按五维度起草，预处理段关口由质量审核复核；HEAD: 050f1c6）:
 - **运算时间**：338–471 秒/样本（IO 密集：读写 4–5G 压缩 fastq），合计 ~39 分钟。
 - **输出文件**：新增配对文件（raw 保留作哨兵，磁盘额外 ~58G）；哨兵 6/6 落位。配对前后 reads 数完全一致（零丢失）。
 - **后续使用**：严格配对的清洁 reads 供三界分析链首步（11 metaphlan4 / 14 kraken2 等）；不配对修复则下游 bwa/metaphlan 会因 R1/R2 顺序错位而崩溃（v1.1.4 教训）。
@@ -167,7 +170,7 @@ metaphlan temp/metaphlan4/{sample}/{sample}_merged.fastq.gz \
 
 **执行结果**：6/6 成功，7380–10299 秒/样本（2.0–2.9h）。
 
-**质量审核点评**：运算时间合理（bowtie2 比对全库索引为瓶颈）；产出标准 MetaPhlAn4 格式。
+**执行点评**（主代理起草）：运算时间合理（bowtie2 比对全库索引为瓶颈）；产出标准 MetaPhlAn4 格式。
 
 ---
 
@@ -188,7 +191,7 @@ merge_metaphlan_tables.py ${PROFILE_LIST} \
 
 **执行结果**：4 秒完成。产出：属级 TSV + 种级 CSV。
 
-**质量审核点评**：秒级完成，无性能问题。
+**执行点评**（主代理起草）：秒级完成，无性能问题。
 
 ---
 
@@ -222,7 +225,7 @@ strainphlan \
 
 **执行结果**：3857 秒（64 分钟）。检测到 50 个可分析 clades，其中 7 个在全部 6 个样本中出现。
 
-**质量审核点评**：默认只做检测（--print_clades_only），要得到菌株系统发育树需带 `-c <clade_id>` 再跑一次。本段演示到此为止。
+**执行点评**（主代理起草）：默认只做检测（--print_clades_only），要得到菌株系统发育树需带 `-c <clade_id>` 再跑一次。本段演示到此为止。
 
 ---
 
@@ -255,7 +258,7 @@ humann \
 - **必须用绝对路径 -w**——相对路径 + cd 嵌套导致首次运行全失败（详见 `.claude/reviews/incident_20261005_humann_relpath.md`）。
 - HUMAnN 双泳道加速 = 48.2h ÷ 25.4h ≈ 1.9×（仅 HUMAnN 步骤；全段墙钟 63.5h 含三线并行间隔）。
 
-**质量审核点评**：运算时间是最长步骤（瓶颈待 HUMAnN log 分阶段计时确认；脚本注释认为最大性能收益点是 bowtie2-build custom ChocoPhlAn DB，非 DIAMOND）；按脚本注释 `--speed-mode balanced` 可提速约 5–10×（standard 8–15h → balanced 1–2h/样本，代价：unstratified 社区通路精度损失 <5%，<1% 丰度物种的 stratified 通路丢失）。
+**执行点评**（主代理起草）：运算时间是最长步骤（瓶颈待 HUMAnN log 分阶段计时确认；脚本注释认为最大性能收益点是 bowtie2-build custom ChocoPhlAn DB，非 DIAMOND）；按脚本注释 `--speed-mode balanced` 可提速约 5–10×（standard 8–15h → balanced 1–2h/样本，代价：unstratified 社区通路精度损失 <5%，<1% 丰度物种的 stratified 通路丢失）。
 
 ---
 
@@ -279,7 +282,7 @@ sed -i 's/_Abundance-RPKs//g' result/humann3/merged/genefamilies_relab.tsv
 
 **执行结果**：15 秒完成。pathabundance 524 行、genefamilies 995,738 行。
 
-**质量审核点评**：合并表只包含**非分层数据**（无 `|` 分层行）。
+**执行点评**（主代理起草）：合并表只包含**非分层数据**（无 `|` 分层行）。
 
 ---
 
@@ -312,7 +315,7 @@ bracken \
 
 **执行结果**：6/6 成功，380–585 秒/样本。
 
-**质量审核点评**：速度极快（k-mer 直接匹配，无比对）；数据库 77GB 常驻内存是 IO 瓶颈。
+**执行点评**（主代理起草）：速度极快（k-mer 直接匹配，无比对）；数据库 77GB 常驻内存是 IO 瓶颈。
 
 ---
 
@@ -333,7 +336,7 @@ combine_bracken_outputs.py \
 
 **执行结果**：9 秒完成。门级 26 行、属级 414 行、种级 1055 行（含表头）。
 
-**质量审核点评**：三个层级均产出标准 TSV 矩阵（行=物种，列=样本）。
+**执行点评**（主代理起草）：三个层级均产出标准 TSV 矩阵（行=物种，列=样本）。
 
 ---
 
@@ -362,7 +365,7 @@ sylph-tax taxprof result/sylph/{sample}/{sample}.sylph_profile.tsv \
 
 **执行结果**：6/6 成功，228–338 秒/样本。
 
-**质量审核点评**：速度最快（MinHash sketch 比对，GTDB-R220 全库 110k+ 基因组）；内存仅需 ~15GB。
+**执行点评**（主代理起草）：速度最快（MinHash sketch 比对，GTDB-R220 全库 110k+ 基因组）；内存仅需 ~15GB。
 
 ---
 
@@ -382,7 +385,7 @@ sylph-tax merge ${SYLPHMPA_FILE_LIST} \
 
 **执行结果**：5 秒完成。1859 行 × 7 列。
 
-**质量审核点评**：秒级完成，无性能问题。
+**执行点评**（主代理起草）：秒级完成，无性能问题。
 
 ---
 
@@ -451,7 +454,7 @@ megahit -1 result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz \
 - **重复启动事故（2026-10-07）**：LANE-V 与 LANE-F 的启动脚本各被执行一遍，Sample1 的 megahit 被同时启动两次（run_events.jsonl 03:24:07 / 03:24:31 两条启动记录）；两进程共用同一输出目录且 51 号传了 `--force`，中间文件互相覆盖导致 SIGSEGV（exit 245，信号 -11），浪费约 12 分钟；10-08 以完全相同参数干净重跑成功。详见 `.claude/reviews/incident_20261007_megahit_dup_launch.md`，并由此建立防重复启动规程（NOTES.md 质量审核 P0-3）与组装器互斥纪律（P0-6：全局同一时刻只允许一个 megahit/metaSPAdes 运行）。
 - **必须用绝对路径 -w**（13 步 HUMAnN 相对路径事故的教训延续；51 起病毒/真菌泳道监控事件中 `-w` 全部为绝对路径）。
 
-**质量审核点评**：
+**执行点评**（主代理起草）：
 - **运算时间**：4905–7304 秒/样本（16 线程 meta-large），串行合计约 10.2 小时。
 - **输出文件**：每样本 1 个 contigs.fa（153–239M，2.3–3.8 万条 ≥1.5kb contigs），路径规范；_megahit_tmp 中间文件已删。
 - **后续使用**：contigs 供 52 geNomad 与 53 VirSorter2 病毒鉴定（双工具交叉验证）。
@@ -491,7 +494,7 @@ genomad end-to-end \
 
 产出：`result/virus/genomad/<样本>/<样本>.contigs_summary/`（virus/plasmid summary + 分类注释）。
 
-**质量审核点评**：`--sensitivity 7.5` 为推荐区间（4.2–7.5）上限，灵敏度最高也最耗时；`--splits 4` 分块降内存，`--cleanup` 删中间文件。检出病毒 contigs 占组装总量约 2–4%，量级合理。与 53 VirSorter2 结果取交集可提高病毒判定置信度；下游供 54 checkv 质检与 vOTU 聚类使用。
+**执行点评**（主代理起草）：`--sensitivity 7.5` 为推荐区间（4.2–7.5）上限，灵敏度最高也最耗时；`--splits 4` 分块降内存，`--cleanup` 删中间文件。检出病毒 contigs 占组装总量约 2–4%，量级合理。与 53 VirSorter2 结果取并集（cat + rmdup，非交集）可提高病毒判定置信度；下游供 54 checkv 质检与 vOTU 聚类使用。
 
 ---
 
@@ -534,7 +537,7 @@ env -i \
 **⚠️ 注意事项**：
 - **首轮 6 连败**（2026-10-09 06:37）：全部 exit 1、3–4 秒即退——宿主机 miniforge3 的 PATH 泄入 SIF 容器触发 pkg_resources 报错。修复（commit 2270c3b）：`env -i` 清空环境仅传 HOME/PATH/APPTAINER_CACHEDIR。修复验证含 3 次 Sample1 短测试（0–3 秒），正式重跑当日全部成功。质量审核 C1 已更正失败事件构成（virsorter2 ×6 非 ×2）。
 
-**质量审核点评**：病毒链最耗时步骤（比 51 组装本身更慢），瓶颈在跨 5 个病毒组（dsDNAphage/ssDNA/RNA/NCLDV/lavidaviridae）的 hallmark 搜索与评分；单样本内 16 线程已并行，样本级再并行需考虑 CPU 配额。产出 final-viral-boundary/score/combined.fa，与 52 geNomad 交叉验证。
+**执行点评**（主代理起草）：病毒链最耗时步骤（比 51 组装本身更慢），瓶颈在跨 5 个病毒组（dsDNAphage/ssDNA/RNA/NCLDV/lavidaviridae）的 hallmark 搜索与评分；单样本内 16 线程已并行，样本级再并行需考虑 CPU 配额。产出 final-viral-boundary/score/combined.fa，与 52 geNomad 交叉验证。
 
 ---
 
@@ -582,7 +585,7 @@ bracken \
 - Sample1 在 10-07 重复启动事故中被同时启动两次（两条记录均 exit 0），`output.gz` 经 `gzip -t` 核实完整。
 - 真菌信号仅 Sample4 显著（Fungi clade 0.67%，bracken 种级 S. cerevisiae fraction 0.98%），其余 5 样本接近零——与上文"三界段空产出披露"的四方法交叉验证一致。
 
-**质量审核点评**：k-mer 直接匹配速度极快（77G 库常驻内存为 IO 瓶颈）；产出 report + output.gz + bracken×3 层级；后续可用于提取真菌 reads（78 号实际用了全量 reads，见 78 章披露）；多样本可并行；内存需容纳 77G 数据库。
+**执行点评**（主代理起草）：k-mer 直接匹配速度极快（77G 库常驻内存为 IO 瓶颈）；产出 report + output.gz + bracken×3 层级；后续可用于提取真菌 reads（78 号实际用了全量 reads，见 78 章披露）；多样本可并行；内存需容纳 77G 数据库。
 
 ---
 
@@ -611,7 +614,7 @@ metaphlan temp/fungi/metaphlan4/{sample}/{sample}.mapout \
 
 **执行结果**（2026-10-07 实测，6/6 成功，78–99 秒/样本——mapout 复用免比对所以秒级）：5/6 样本仅 `UNCLASSIFIED 100.0%`（真核分类群 = 0，肠道宏基因组真菌载量低于检出阈值的**预期空产出**，非错误）；仅 Sample4 检出 8 个真核分类群（k__Eukaryota → s__Saccharomyces_cerevisiae → t__EUK4932，0.7096%）。详见上文"三界段空产出披露"。
 
-**质量审核点评**：`--ignore_bacteria --ignore_archaea` 只保留真核；复用 11 步 mapout 是本步快的关键（否则需 2h+/样本 重新比对）。空产出样本的 profile 文件仍正常落盘（UNCLASSIFIED 行），供 72b 合并。
+**执行点评**（主代理起草）：`--ignore_bacteria --ignore_archaea` 只保留真核；复用 11 步 mapout 是本步快的关键（否则需 2h+/样本 重新比对）。空产出样本的 profile 文件仍正常落盘（UNCLASSIFIED 行），供 72b 合并。
 
 ---
 
@@ -633,7 +636,7 @@ merge_metaphlan_tables.py ${PROFILE_LIST} \
 
 **执行结果**（2026-10-11 实测，3 秒完成）：taxonomy.tsv 9 个数据行（UNCLASSIFIED + Sample4 的 8 个真核层级，其余 5 样本全 0）× 6 样本；taxonomy_species.tsv / taxonomy_genus.tsv 各 1 个数据行；taxonomy_species.csv 仅 1 行数据（Saccharomyces cerevisiae，仅 Sample4 非零）。
 
-**质量审核点评**：秒级完成；矩阵绝大部分为 0（5/6 样本无真核信号），统计分析需按披露口径注明真菌维度功效受限。
+**执行点评**（主代理起草）：秒级完成；矩阵绝大部分为 0（5/6 样本无真核信号），统计分析需按披露口径注明真菌维度功效受限。
 
 ---
 
@@ -657,7 +660,7 @@ FUNGI_PATTERN="g__(Candida|Aspergillus|Saccharomyces|Malassezia|Cryptococcus|Pic
 
 **执行结果**（2026-10-09 实测，6/6 成功，每样本 0–1 秒）：5/6 样本 0 数据行（仅表头，预期空产出）；Sample4 提取到 **184 条**真菌分层通路（全部 S. cerevisiae，文件 185 行含表头），与上文披露一致。
 
-**质量审核点评**：过滤键是 `g__<属名>.`（ChocoPhlAn stratified 行的命名格式）而非 `|k__Eukaryota`——原始过滤条件曾写错，脚本注释已记录修正。ChocoPhlAn 仅覆盖约 70+ 种临床常见肠道真菌；全谱真菌定量需 75 FunOMIC（本演示未运行，classification 文件缺失时自动跳过）。
+**执行点评**（主代理起草）：过滤键是 `g__<属名>.`（ChocoPhlAn stratified 行的命名格式）而非 `|k__Eukaryota`——原始过滤条件曾写错，脚本注释已记录修正。ChocoPhlAn 仅覆盖约 70+ 种临床常见肠道真菌；全谱真菌定量需 75 FunOMIC（本演示未运行，classification 文件缺失时自动跳过）。
 
 ---
 
@@ -699,7 +702,7 @@ python $REPO/db/gut_fungi_db/GPA.py -i step5_fungi.sam -o {sample}.rc -s 0.95
 
 产出：`result/fungi/phf_profiler/<样本>/<样本>.rc`（cluster<TAB>value，**无表头行**）+ `.rc.cmd.log`。
 
-**质量审核点评**：五次 bowtie2 `--fast` 过滤链设计合理（真菌基因集 → 去人 → 去细菌 → 去 rRNA → -k 1000 重比对），Singular（唯一比对）直接计数 + Escrow（多重比对）按比例分配是 Cell 187 原方法；tmp 目录用后即删；`.rc` 无表头这一格式约定后来在 74f 踩坑（见下章）。Sample4 簇数（72）与其 S. cerevisiae 信号一致。
+**执行点评**（主代理起草）：五次 bowtie2 `--fast` 过滤链设计合理（真菌基因集 → 去人 → 去细菌 → 去 rRNA → -k 1000 重比对），Singular（唯一比对）直接计数 + Escrow（多重比对）按比例分配是 Cell 187 原方法；tmp 目录用后即删；`.rc` 无表头这一格式约定后来在 74f 踩坑（见下章）。Sample4 簇数（72）与其 S. cerevisiae 信号一致。
 
 ---
 
@@ -727,7 +730,7 @@ PY
 **⚠️ 注意事项**：
 - **表头误判 bug（质量审核 P0 抓出，commit 351952d 修复）**：旧代码把 `.rc` 第一行**数据**当表头跳过，导致每个样本的最高丰度簇被丢掉（例：Sample4 c86 S. cerevisiae 92.57% → 0）。修复：`.rc` 按无表头格式解析全部行；修复后 `--force` 重跑，矩阵恢复。内联修复无独立事故档案（NOTES.md 事故索引有录）。
 
-**质量审核点评**：秒级完成；教训——自定义文本格式必须显式定义并文档化表头约定，读取端/写入端应有一对一致性测试覆盖。
+**执行点评**（主代理起草）：秒级完成；教训——自定义文本格式必须显式定义并文档化表头约定，读取端/写入端应有一对一致性测试覆盖。
 
 ---
 
@@ -765,7 +768,7 @@ megahit \
 **⚠️ 注意事项**：
 - **输入口径披露**：本步用**全部清洁 reads（全群落）**组装，非仅真菌 reads——脚本内提示可先用 71/72 提取真菌 reads 提高纯度，但本次演示未提取。所谓"真菌组装"实为全群落 meta-sensitive 组装（contigs 4.6–6.2 万条，多于 51 号的 meta-large + 1.5kb 组合）。科学口径见 NOTES.md"真菌功能注释科学口径披露"。
 
-**质量审核点评**：meta-sensitive + 1kb 下限是为低丰度真菌覆盖付出的代价（更慢、更多短 contig）；下游 79 Eukfinder 从中筛真核 contig；受组装器互斥纪律约束不可与其他 megahit 并行；`-m 0.9` 为内存比例上限，实际峰值远低于此。
+**执行点评**（主代理起草）：meta-sensitive + 1kb 下限是为低丰度真菌覆盖付出的代价（更慢、更多短 contig）；下游 79 Eukfinder 从中筛真核 contig；受组装器互斥纪律约束不可与其他 megahit 并行；`-m 0.9` 为内存比例上限，实际峰值远低于此。
 
 ---
 
@@ -802,7 +805,7 @@ eukfinder long_seqs \
 
 产出：`Eukfinder_results/<样本>.{Euk,Bact,Arch,EUnk,Unk}.fasta` 五分组（细菌占绝对多数，如 Sample1 Bact 40,911 / Sample4 Bact 31,857）。Centrifuge DB 为自建 EukDB（4 个 .cf，`db/eukfinder_db/centrifuge_db/`），PLAST 蛋白级分类已启用。
 
-**质量审核点评**：真菌链最耗时步骤（Centrifuge 全库 k-mer 分类每条 contig）；Sample4 的 3,270 条真核 contig 与其 S. cerevisiae 强信号一致，其余样本 11–50 条为噪声水平；下游 79b 只消费 `.Euk.fasta`；多样本并行可线性提速（非组装器）。
+**执行点评**（主代理起草）：真菌链最耗时步骤（Centrifuge 全库 k-mer 分类每条 contig）；Sample4 的 3,270 条真核 contig 与其 S. cerevisiae 强信号一致，其余样本 11–50 条为噪声水平；下游 79b 只消费 `.Euk.fasta`；多样本并行可线性提速（非组装器）。
 
 ---
 
@@ -838,7 +841,7 @@ sample    lineage                    complete_pct  duplicated_pct  missing_pct
 Sample4   saccharomycetaceae_odb12.2  75.2          0.5             14.7
 ```
 
-**质量审核点评**：空结果与上游信号一致（5 样本真核 contig 本就只有 11–50 条）；Sample4 完整度 75.2% / 重复 0.5%，佐证其 S. cerevisiae contig 集已接近基因组级组装质量。empty.flag（跑了没货）与 summary.tsv（有货）双标志设计正确区分了"未运行"与"预期空产出"，是低深度样本处理的正确姿势。
+**执行点评**（主代理起草）：空结果与上游信号一致（5 样本真核 contig 本就只有 11–50 条）；Sample4 完整度 75.2% / 重复 0.5%，佐证其 S. cerevisiae contig 集已接近基因组级组装质量。empty.flag（跑了没货）与 summary.tsv（有货）双标志设计正确区分了"未运行"与"预期空产出"，是低深度样本处理的正确姿势。
 
 ---
 

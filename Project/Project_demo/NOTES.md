@@ -41,7 +41,6 @@
 ✗8 的实际构成：megahit 重复启动 ×2（exit 245）+ virsorter2 conda 失败 ×6（exit 1，全部 3-4 秒即退）。
 此前误报为"virsorter2 ×2 + 其他早期 ×4"。
 成功事件 119 条按步骤+样本去重后 = 114 个（重复 5 条：71/Sample1 ×2、53/Sample1 测试 ×3、74f --force ×1）。
-48
 
 ## 执行进度索引（2026-10-10 更新）
 
@@ -79,3 +78,9 @@
 - CP1: 17/18 + 32 + 54b 完成后 → 核对基因目录/深度表/checkv
 - CP2: 37 checkm2 + 60 vOTU 完成后 → 核对 MAG/vOTU
 - CP3: 统计段启动前 → 全量 step_checklist 对齐
+
+## BUSCO 联网行为披露（质量审核 P0-2，2026-10-11）
+79b/79e 的 BUSCO 在 2026-10-10 运行时使用了 --auto-lineage-euk 但未加 --offline。
+日志证实联网刷新了版本清单（busco.log:6 "Downloading information..."）。
+本次运行未实际下载数据（lineage 已是最新版），但存在自动写入 db/ 的风险。
+修复：已加 --offline，修复后可安全重跑。违反 §10.5-2 数据库冻结，特此披露。

@@ -130,7 +130,7 @@ BUSCO_EXIT=0
     cd "${OUTDIR}"
     mgx_conda busco \
         busco -i "${TIARA_EUK_FASTA}" -o "${BUSCO_OUT}" \
-              -m genome --auto-lineage-euk -c "${CPUS}" -f \
+              -m genome --auto-lineage-euk --offline -c "${CPUS}" -f \
               --download_path "${BUSCO_DOWNLOAD_PATH}"
 ) || BUSCO_EXIT=$?
 
