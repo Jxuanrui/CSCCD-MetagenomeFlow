@@ -64,9 +64,12 @@ if $HAS_GENOMAD && $HAS_VS2; then
     # 用户approve 2026-10-11：交集做主结果（严格，减少假阳性），并集作为敏感性分析
     mkdir -p "${CONTIGS_DIR}"
     # 提取两个工具共同判定的 contig ID（交集）
+    # geNomad: >k127_xxx flag=... → 取 k127_xxx（sed 去掉 >、空格后内容、|provirus 后缀）
+    # VirSorter2: >k127_xxx||full → 取 k127_xxx（sed 去掉 >、||full 后缀）
+    # 不用 cut：GNU cut 不接受多字符分隔符（质量审核发现的 bug）
     comm -12 \
-        <(grep '^>' "${GENOMAD_VIRUS}" | sed 's/^>//' | cut -d' ' -f1 | cut -d'|' -f1 | sort -u) \
-        <(grep '^>' "${VS2_VIRUS}" | sed 's/^>//' | cut -d'||/' -f1 | cut -d' ' -f1 | sort -u) \
+        <(grep '^>' "${GENOMAD_VIRUS}" | sed 's/^>//; s/ .*//; s/|.*//' | sort -u) \
+        <(grep '^>' "${VS2_VIRUS}" | sed 's/^>//; s/||.*//' | sort -u) \
         > "${CONTIGS_DIR}/common_ids.txt"
     COMMON_COUNT=$(wc -l < "${CONTIGS_DIR}/common_ids.txt")
     echo "[checkv] 交集 contigs: ${COMMON_COUNT} (geNomad: $(grep -c '^>' "${GENOMAD_VIRUS}"), VirSorter2: $(grep -c '^>' "${VS2_VIRUS}"))"
