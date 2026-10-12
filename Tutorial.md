@@ -2649,3 +2649,9 @@ Snakemake 的 stat_functional 规则内部用 shell 循环依次跑 20 个 (dime
 > differential abundance"），从候选中选定模板并确认预览后物化到目标目录；
 > 已物化示例见 `tools/sfl_dl/`。注意：FigureYa 源为 CC BY-NC-SA，物化产物
 > 不得提交入本 MIT 仓库。
+
+> **步骤正确性验证（validate_step.py，2026-10-12 新增）**：每个步骤完成后，除确认退出码为 0 外，
+> 还可运行 `python3 scripts/utils/validate_step.py <步骤ID> <样本ID> <workdir>` 验证产出正确性
+> （文件存在、非空、格式合法、配对一致等）。验证结果写入 `logs/validation_log.jsonl` 审计日志。
+> 当前已覆盖 01/02/02b/11/13/14/51/53/54/78/79 等 11 个关键步骤；后续步骤的验证规则持续添加中。
+
