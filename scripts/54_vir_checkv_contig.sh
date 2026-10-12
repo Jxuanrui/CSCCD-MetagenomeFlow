@@ -2,10 +2,12 @@
 # ==============================================================================
 # 脚本名: 54_vir_checkv_contig.sh
 # 功  能: 病毒 contig 质量评估（CheckV end-to-end）
-#         合并完整病毒 + 原前病毒序列
+#         geNomad ∩ VirSorter2 交集判定病毒 contig（严格，减少假阳性）；
+#         geNomad 前病毒条目（k127_x|provirus_a_b）按 base ID 匹配交集，
+#         保留其 provirus 区域序列（P0-2：seqkit grep 曾静默丢弃全部 provirus）
 #         工具版本：CheckV 1.0.3（conda env: checkv）
 # 依  赖: 52_vir_genomad.sh + 53_vir_virsorter2.sh 的病毒预测
-# 输  入: 去重后的病毒 contigs（genomad + virsorter2 交集）
+# 输  入: 双工具共同判定（交集）的病毒 contigs
 # 输  出: ${WORKDIR}/result/virus/checkv/{sample}/
 #           quality_summary.tsv     — CheckV 质量汇总
 #           viruses.fna             — 去重病毒 contigs
@@ -61,12 +63,9 @@ HAS_GENOMAD=false; HAS_VS2=false
 [ -f "${VS2_VIRUS}" ] && [ -s "${VS2_VIRUS}" ] && HAS_VS2=true
 
 if $HAS_GENOMAD && $HAS_VS2; then
-    # 用户approve 2026-10-11：交集做主结果（严格，减少假阳性），并集作为敏感性分析
+    # 用户approve 2026-10-11：交集做主结果；前病毒按基础 contig ID 匹配（质量审核 P0-1 方案 A）
     mkdir -p "${CONTIGS_DIR}"
-    # 提取两个工具共同判定的 contig ID（交集）
-    # geNomad: >k127_xxx flag=... → 取 k127_xxx（sed 去掉 >、空格后内容、|provirus 后缀）
-    # VirSorter2: >k127_xxx||full → 取 k127_xxx（sed 去掉 >、||full 后缀）
-    # 不用 cut：GNU cut 不接受多字符分隔符（质量审核发现的 bug）
+    # 交集（按基础 ID）：sed 不用 cut（GNU cut 不接受多字符分隔符）
     comm -12 \
         <(grep '^>' "${GENOMAD_VIRUS}" | sed 's/^>//; s/ .*//; s/|.*//' | sort -u) \
         <(grep '^>' "${VS2_VIRUS}" | sed 's/^>//; s/||.*//' | sort -u) \
@@ -74,14 +73,23 @@ if $HAS_GENOMAD && $HAS_VS2; then
     COMMON_COUNT=$(wc -l < "${CONTIGS_DIR}/common_ids.txt")
     echo "[checkv] 交集 contigs: ${COMMON_COUNT} (geNomad: $(grep -c '^>' "${GENOMAD_VIRUS}"), VirSorter2: $(grep -c '^>' "${VS2_VIRUS}"))"
     if [ "${COMMON_COUNT}" -gt 0 ]; then
-        # 从 geNomad 输出中提取交集序列（保留原始序列，不截断）
-        mgx_conda assembly \
-            seqkit grep -f "${CONTIGS_DIR}/common_ids.txt" \
-            -o "${VIRAL_CONTIGS}" "${GENOMAD_VIRUS}"
+        # awk 按基础 ID 抽取（seqkit grep 匹配完整 ID 会丢 |provirus 条目）
+        awk 'NR==FNR{k[$1];next} /^>/{id=substr($1,2);sub(/\|.*/,"",id);p=(id in k)} p' \
+            "${CONTIGS_DIR}/common_ids.txt" "${GENOMAD_VIRUS}" > "${VIRAL_CONTIGS}"
     else
-        echo "[WARN] 交集为空，回退到仅 geNomad 结果"
-        cp "${GENOMAD_VIRUS}" "${VIRAL_CONTIGS}"
+        echo "[checkv] 交集为空，写出空摘要"
+        mkdir -p "${OUTDIR}"
+        echo -e "contig_id\tcontig_length\tprovirus\tproviral_length\tgene_count\tviral_genes\thost_genes\tcheckv_quality\tmiuvig_quality\tcompleteness\tcompleteness_method\tcontamination\tkmer_freq\twarnings" > "${SENTINEL}"
+        exit 0
     fi
+    # 审计记录
+    PROVIRUS_KEPT=$(grep -c '|provirus' "${VIRAL_CONTIGS}" 2>/dev/null || echo 0)
+    printf "metric\tvalue\nn_genomad\t%s\nn_vs2\t%s\nn_intersection\t%s\nn_provirus_kept\t%s\ncall_mode\tintersection\n" \
+        "$(grep -c '^>' "${GENOMAD_VIRUS}")" \
+        "$(grep -c '^>' "${VS2_VIRUS}")" \
+        "${COMMON_COUNT}" \
+        "${PROVIRUS_KEPT}" \
+        > "${OUTDIR}/call_stats.tsv"
     rm -f "${CONTIGS_DIR}/common_ids.txt" "${CONTIGS_DIR}/_merged.fasta"
 elif $HAS_GENOMAD || $HAS_VS2; then
     # 只有一个工具有结果时，直接使用该结果
