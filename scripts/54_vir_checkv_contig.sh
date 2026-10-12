@@ -77,28 +77,45 @@ if $HAS_GENOMAD && $HAS_VS2; then
         awk 'NR==FNR{k[$1];next} /^>/{id=substr($1,2);sub(/\|.*/,"",id);p=(id in k)} p' \
             "${CONTIGS_DIR}/common_ids.txt" "${GENOMAD_VIRUS}" > "${VIRAL_CONTIGS}"
     else
-        echo "[checkv] 交集为空，写出空摘要"
-        mkdir -p "${OUTDIR}"
+        echo "[checkv] 交集为空，写出空摘要 + 空 FASTA"
+        mkdir -p "${OUTDIR}" "${CONTIGS_DIR}"
+        # 空结果也须生成空 FASTA（54b 和 Snakemake 都依赖此文件存在）
+        : > "${VIRAL_CONTIGS}"
+        : > "${OUTDIR}/viruses.fna"
         echo -e "contig_id\tcontig_length\tprovirus\tproviral_length\tgene_count\tviral_genes\thost_genes\tcheckv_quality\tmiuvig_quality\tcompleteness\tcompleteness_method\tcontamination\tkmer_freq\twarnings" > "${SENTINEL}"
+        # 空结果的 call_stats
+        printf "metric\tvalue\nn_genomad\t%s\nn_vs2\t%s\nn_intersection\t0\nn_provirus_kept\t0\ncall_mode\tintersection_empty\n" \
+            "$(grep -c '^>' "${GENOMAD_VIRUS}")" \
+            "$(grep -c '^>' "${VS2_VIRUS}")" \
+            > "${OUTDIR}/call_stats.tsv"
         exit 0
     fi
     # 审计记录
-    PROVIRUS_KEPT=$(grep -c '|provirus' "${VIRAL_CONTIGS}" 2>/dev/null || echo 0)
+    PROVIRUS_KEPT=$(grep -c '|provirus' "${VIRAL_CONTIGS}" 2>/dev/null) || PROVIRUS_KEPT=0
     printf "metric\tvalue\nn_genomad\t%s\nn_vs2\t%s\nn_intersection\t%s\nn_provirus_kept\t%s\ncall_mode\tintersection\n" \
         "$(grep -c '^>' "${GENOMAD_VIRUS}")" \
         "$(grep -c '^>' "${VS2_VIRUS}")" \
         "${COMMON_COUNT}" \
         "${PROVIRUS_KEPT}" \
         > "${OUTDIR}/call_stats.tsv"
+    # 并集敏感性分析（用户 10-11 批准）：输出到独立文件，不干扰主结果
+    cat "${GENOMAD_VIRUS}" "${VS2_VIRUS}" | awk '!/^>/{print;next} !seen[$1]++{print}'         > "${OUTDIR}/viruses_union_sensitivity.fna"
+    UNION_COUNT=$(grep -c '^>' "${OUTDIR}/viruses_union_sensitivity.fna" 2>/dev/null) || UNION_COUNT=0
+    printf "union_count\t%s\n" "${UNION_COUNT}" >> "${OUTDIR}/call_stats.tsv"
     rm -f "${CONTIGS_DIR}/common_ids.txt" "${CONTIGS_DIR}/_merged.fasta"
 elif $HAS_GENOMAD || $HAS_VS2; then
-    # 只有一个工具有结果时，直接使用该结果
-    mkdir -p "${CONTIGS_DIR}"
+    # 只有一个工具有结果时，使用该结果但标记 fallback（不再静默）
+    mkdir -p "${CONTIGS_DIR}" "${OUTDIR}"
     if $HAS_GENOMAD; then
         cp "${GENOMAD_VIRUS}" "${VIRAL_CONTIGS}"
+        printf "metric\tvalue\nn_genomad\t%s\nn_vs2\t0\nn_intersection\t0\nn_provirus_kept\t0\ncall_mode\tfallback_genomad_only\n" \
+            "$(grep -c '^>' "${GENOMAD_VIRUS}")" > "${OUTDIR}/call_stats.tsv"
     else
         cp "${VS2_VIRUS}" "${VIRAL_CONTIGS}"
+        printf "metric\tvalue\nn_genomad\t0\nn_vs2\t%s\nn_intersection\t0\nn_provirus_kept\t0\ncall_mode\tfallback_vs2_only\n" \
+            "$(grep -c '^>' "${VS2_VIRUS}")" > "${OUTDIR}/call_stats.tsv"
     fi
+    echo "[WARN] 单工具回退模式：${OUTDIR}/call_stats.tsv 已标记 call_mode=fallback"
 else
     echo "[WARN] S01 中未检测到病毒序列: geNomad 和 VirSorter2 均无有效输出"
     mkdir -p "${OUTDIR}"

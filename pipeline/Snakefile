@@ -162,7 +162,8 @@ def _all_targets():
         _e("{workdir}/result/fungi/kraken2/{sample}/{sample}.report", sample=SAMPLES),
         _e("{workdir}/result/fungi/metaphlan4/{sample}/{sample}_profile.txt", sample=SAMPLES),
         _e("{workdir}/result/fungi/humann4/{sample}/{sample}_fungi_pathabundance.tsv", sample=SAMPLES),
-        _e("{workdir}/result/fungi/blast_gutdb/{sample}/{sample}_blast.tsv", sample=SAMPLES),
+        # 74_fun_blast_gutdb removed from rule all (supervisor 2026-10-12):
+        # database built from nucleotide sequences as protein — no biological meaning
         _e("{workdir}/result/fungi/funomic/{sample}/{sample}_classification.tsv", sample=SAMPLES),
         _e("{workdir}/result/fungi/phf_profiler/{sample}/{sample}.rc", sample=SAMPLES),
         WORKDIR + "/result/fungi/phf_profiler/merged_abundance.tsv",
