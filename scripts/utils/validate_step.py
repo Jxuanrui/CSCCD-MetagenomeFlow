@@ -131,7 +131,59 @@ VALIDATION_RULES = {
     ],
     # Default: just check exit code was 0 (no additional validation)
     "_default": [],
+    "22_bac_kegg": [
+        ("diamond_tsv_exists", lambda w, s: os.path.isfile(f"{w}/result/annotation/kegg/kegg_diamond.tsv"),
+         "KEGG diamond result table exists"),
+        ("diamond_rows", lambda w, s: count_tsv_data_rows(f"{w}/result/annotation/kegg/kegg_diamond.tsv", skip_header=False) > 1000,
+         "KEGG hits present (>1000; expect ~900K for 1M-protein catalog)"),
+        ("diamond_cols", lambda w, s: _first_ncols_ok(f"{w}/result/annotation/kegg/kegg_diamond.tsv", 12),
+         "KEGG rows have 12 diamond outfmt-6 columns"),
+    ],
+    "36_bac_dastool": [
+        ("c2b_tsv_exists", lambda w, s: os.path.isfile(f"{w}/result/binning/dastool/{s}/{s}_DASTool_contig2bin.tsv"),
+         "DASTool contig2bin table exists"),
+        ("c2b_rows", lambda w, s: count_tsv_data_rows(f"{w}/result/binning/dastool/{s}/{s}_DASTool_contig2bin.tsv", skip_header=False) > 0,
+         "contig2bin table has assignments"),
+        ("bins_present", lambda w, s: len(list(Path(f"{w}/result/binning/dastool/{s}/{s}_DASTool_bins").glob("*.fa"))) > 0,
+         "integrated bin FASTAs extracted"),
+        ("bin_contig_ids_consistent", lambda w, s: _dastool_ids_consistent(w, s),
+         "every bin contig ID appears in contig2bin table (same source)"),
+    ],
 }
+
+
+def _first_ncols_ok(path, ncols):
+    """First data line of a TSV has exactly ncols tab-separated columns."""
+    try:
+        with open(path) as f:
+            for line in f:
+                if line.strip():
+                    return len(line.rstrip("\n").split("\t")) == ncols
+    except Exception:
+        pass
+    return False
+
+
+def _dastool_ids_consistent(w, s):
+    """All contigs inside extracted bins are declared in the contig2bin table."""
+    c2b_path = f"{w}/result/binning/dastool/{s}/{s}_DASTool_contig2bin.tsv"
+    bins_dir = Path(f"{w}/result/binning/dastool/{s}/{s}_DASTool_bins")
+    if not os.path.isfile(c2b_path) or not bins_dir.is_dir():
+        return False
+    declared = set()
+    with open(c2b_path) as f:
+        for line in f:
+            parts = line.rstrip("\n").split("\t")
+            if parts:
+                declared.add(parts[0])
+    for fa in bins_dir.glob("*.fa"):
+        with open(fa) as f:
+            for line in f:
+                if line.startswith(">"):
+                    cid = line[1:].split()[0] if line[1:].split() else ""
+                    if cid and cid not in declared:
+                        return False
+    return bool(declared)
 
 
 def validate(step_id, sample, workdir, repo):
