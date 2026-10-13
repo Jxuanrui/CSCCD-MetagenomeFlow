@@ -71,8 +71,8 @@ gene_order = []
 for sid in samples:
     report = os.path.join(report_dir, sid, "report.tsv")
     if not os.path.exists(report):
-        print(f"[WARN] 跳过 {sid}: 无报告文件", file=sys.stderr)
-        continue
+        # 质量审核 2026-10-13 P1：缺样本报告即硬失败，不再整列补 0 静默通过
+        sys.exit(f"[ERROR] {sid} 缺 report.tsv（先运行 59 号）: {report}")
     with open(report) as f:
         for i, line in enumerate(f):
             if i == 0:
@@ -158,6 +158,10 @@ with open(src) as fh:
         if len(parts) < 2:
             continue
         cid = parts[0]
+        # 基因行判定（质量审核 2026-10-13 P1）：基因 ID 形如 样本|contig_N（| 在任何
+        # __ 之前）；contig 行形如 样本__contig[|provirus...]（先有 __ 再可能有 |）
+        head_part = cid.split("__", 1)[0]
+        is_gene_row = "|" in head_part
         if cid in by_original:
             votu = by_original[cid]
             joined += 1
@@ -166,13 +170,13 @@ with open(src) as fh:
                     agg[votu][c] += float(v)
                 except ValueError:
                     pass
-        elif "__" in cid:
-            # 形如 样本__contig 的 contig 级 ID 却无法归属：不允许静默丢弃
+        elif is_gene_row:
+            # 基因级行：按approve D 不计入
+            gene_rows += 1
+        else:
+            # 形如 contig 级 ID 却无法归属：不允许静默丢弃
             failed += 1
             failed_rows.append(cid)
-        else:
-            # 基因级行（58 号加前缀后形如 样本|contig_N）：按approve D 不计入
-            gene_rows += 1
 
 with open(stats_path, "w") as st:
     st.write("metric\tvalue\n")
@@ -208,25 +212,34 @@ PYINNER
 # with 'join failed'.
 if [ -f "${TAXONOMY}" ] && [ -f "${OUTDIR}/vOTU_table.txt" ]; then
     python3 - "${LEGACY_TABLE}" "${TAXONOMY}" "${ID_MAP}" "${SENTINEL}" <<'PYANN'
-import sys, re
-table, tax_path, id_map_path, out = sys.argv[1:5]
-tax = {}
-for line in open(tax_path):
-    parts = line.rstrip("\n").split("\t")
-    if len(parts) >= 5:
-        tax[parts[0]] = parts[4].strip()          # lineage column
+import sys
 
-bare_to_repr = {}
+table, tax_path, id_map_path, out = sys.argv[1:5]
+
+# 分类列按表头名取（质量审核 2026-10-13 P0-2：旧代码写死 parts[4]，取到的
+# 是 n_genes 而非 taxonomy，2,529 行被标成假 annotated）
+tax = {}
+with open(tax_path) as fh:
+    header = fh.readline().rstrip("\n").split("\t")
+    try:
+        tcol = header.index("taxonomy")
+    except ValueError:
+        tcol = 10  # 回退：taxonomy 为第 11 列
+    for line in fh:
+        parts = line.rstrip("\n").split("\t")
+        if len(parts) > tcol:
+            tax[parts[0]] = parts[tcol].strip()
+
+# 代表关系只用完整 ID（旧代码先查"去样本前缀"表，跨样本重名会拿错分类）
+repr_of = {}
 for line in open(id_map_path):
     parts = line.rstrip("\n").split("\t")
     if len(parts) >= 5:
-        bare_to_repr[parts[0].split("__", 1)[-1]] = parts[2]
+        repr_of[parts[0]] = parts[2]
 
 def status_for(votu):
-    contig = votu.split("__", 1)[-1]
-    repr_id = bare_to_repr.get(contig, contig)
     lineage = None
-    for key in (repr_id, contig, votu):
+    for key in (votu, repr_of.get(votu, votu)):
         if key in tax:
             lineage = tax[key]
             break
@@ -236,16 +249,18 @@ def status_for(votu):
         return lineage, "source_truly_unclassified"
     return lineage, "annotated"
 
+# 输出列名用 lineage（质量审核 P0-3：91/92 的 R 代码按 lineage 列名读取）
 with open(table) as fh, open(out, "w") as fo:
     header = fh.readline().rstrip("\n")
-    fo.write(header + "\ttaxonomy\tannotation_status\n")
+    fo.write(header + "\tlineage\tannotation_status\n")
     for line in fh:
         row = line.rstrip("\n").split("\t")
         lineage, status = status_for(row[0])
         fo.write(line.rstrip("\n") + "\t" + (lineage or "Unclassified") + "\t" + status + "\n")
 PYANN
 else
-    cp "${OUTDIR}/vOTU_table.txt" "${SENTINEL}"
+    # 无分类文件时哨兵与正常分支同构（质量审核 P1：旧代码复制的是基因+contig 混合中间表）
+    cp "${LEGACY_TABLE}" "${SENTINEL}"
 fi
 
 # LEGACY_TABLE (votu_table.tsv) is written by the canonical aggregation above;

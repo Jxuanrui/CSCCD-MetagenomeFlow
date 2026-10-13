@@ -18,7 +18,7 @@
 | Q1b | `quant.sf` NumReads(20) | NR gene | estimated read count | reads | 无(绝对计数估计) | 同上 | salmon 估计计数,非原始 mapped count |
 | Q2 | CoverM `-m relative_abundance`(39:66) | MAG | **genome-relative read fraction**(比对到该基因组的 read 占该样本总比对 read 比例) | fraction(0-1,**单样本内全基因组列和≈1**) | by mapped reads | 39_bac_coverm_quant | CoverM relative_abundance 语义=reads(mapped to genome)/total mapped reads |
 | Q2b | CoverM `rpkm / tpm / count / covered_bases`(39:66) | MAG | coverage 族 | RPKM/TPM/bases | 各按 CoverM 定义 | 39_bac_coverm_quant | 同一命令输出五列,98d 消费的是 **TPM 列** |
-| Q3 | vOTU TPM(59 salmon→60 聚合) | vOTU(canonical,经 T-16 map) | relative RNA abundance | TPM(vOTU 级=CDS TPM 之和) | within-sample | 59+60 | `salmon quant -l A` 无 bias 校正(59:50-53);60 按 canonical 聚合,总量守恒(Phase 1 已证) |
+| Q3 | vOTU TPM(59 salmon→60 聚合) | vOTU(canonical,经 T-16 map) | relative RNA abundance | TPM(**仅 contig 级**;索引只含 vOTU,成员 contig TPM 经 map 加总到代表) | within-sample | 59+60 | approve D(2026-10-13):丰度只取 contig 级行;58 索引仅 virus.fasta(质量审核 P0-1),基因不再与 contig 争抢 reads;60 失败行硬退出 |
 | Q4 | MetaPhlAn4 merged `taxonomy.tsv`(11b) | taxon(species 等) | relative abundance | fraction(0-100,mpa 惯例 ×100) | within-sample | 11+11b | 表实样:`UNCLASSIFIED 0.0 3.626199`(0-100 量纲) |
 | Q5 | Kraken2/Bracken(14+14b) | taxon | estimated read count → Bracken abundance | reads | 无 | 14+14b | Bracken 输出 abundance=估计 reads |
 | Q6 | 真菌 FunOMIC count(75b) | fungal species | **detection count(检测计数)** | count(存在性/次数) | 无 | 75+75b | `funomic_species_count.tsv`(75b:6) |

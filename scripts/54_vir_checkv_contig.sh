@@ -100,8 +100,18 @@ if $HAS_GENOMAD && $HAS_VS2; then
         > "${OUTDIR}/call_stats.tsv"
     # 并集敏感性分析（用户 10-11 批准；2026-10-13 修复）：去重键与交集一致
     # （基础 contig ID，剥 |provirus 后缀）；重复记录连同其序列行一起丢弃，
-    # 不再只丢表头保留序列行（旧实现会把两条序列拼进同一条记录）
-    cat "${GENOMAD_VIRUS}" "${VS2_VIRUS}" | awk '/^>/{key=substr($1,2); sub(/\|.*/,"",key); keep=!(key in seen); seen[key]=1; if(keep) print; next} keep{print}' > "${OUTDIR}/viruses_union_sensitivity.fna"
+    # 不再只丢表头保留序列行（旧实现会把两条序列拼进同一条记录）。
+    # 质量审核 2026-10-13 P1：若交集里存在同一 contig 带 ≥2 段 provirus，基础 ID
+    # 去重会使并集不再 ⊇ 交集，此时改用完整 ID 去重并在 call_stats 记录
+    N_MULTI_PROV=$(grep '^>' "${VIRAL_CONTIGS}" | sed 's/^>//; s/ .*//; s/|.*//' | sort | uniq -d | wc -l)
+    if [ "${N_MULTI_PROV}" -gt 0 ]; then
+        cat "${GENOMAD_VIRUS}" "${VS2_VIRUS}" | awk '/^>/{key=substr($1,2); keep=!(key in seen); seen[key]=1; if(keep) print; next} keep{print}' > "${OUTDIR}/viruses_union_sensitivity.fna"
+        printf "union_dedup_key\tfull\n" >> "${OUTDIR}/call_stats.tsv"
+    else
+        cat "${GENOMAD_VIRUS}" "${VS2_VIRUS}" | awk '/^>/{key=substr($1,2); sub(/\|.*/,"",key); keep=!(key in seen); seen[key]=1; if(keep) print; next} keep{print}' > "${OUTDIR}/viruses_union_sensitivity.fna"
+        printf "union_dedup_key\tbase\n" >> "${OUTDIR}/call_stats.tsv"
+    fi
+    printf "union_multi_provirus_contigs\t%s\n" "${N_MULTI_PROV}" >> "${OUTDIR}/call_stats.tsv"
     UNION_COUNT=$(grep -c '^>' "${OUTDIR}/viruses_union_sensitivity.fna" 2>/dev/null) || UNION_COUNT=0
     printf "union_count\t%s\n" "${UNION_COUNT}" >> "${OUTDIR}/call_stats.tsv"
     rm -f "${CONTIGS_DIR}/common_ids.txt" "${CONTIGS_DIR}/_merged.fasta"

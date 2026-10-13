@@ -68,6 +68,15 @@
 
 **冻结令**：votu_table.tsv 现版本不得作为统计输入（60 号打回）；64-72 注释步骤不受影响（不消费该表）。
 
+## 复审跟踪（质量审核 2026-10-13 复审：打回，3/5 销项）
+- 未销项根因：58 索引基因+contig 并存，Salmon EM 分摊 reads（单 vOTU 损失 35-77%）→ **P0-1 已修**：索引只放 virus.fasta，V2 泳道重跑 58→59→60 中（验收：0 基因行/ΣTPM≈10⁶/3 对照 contig NumReads 回升，对照基值已存 /tmp/vir_numreads_prefix.txt）。
+- 新发现 P0：60 注释段 taxonomy 取错列（第 5 列 n_genes）→ **P0-2 已修**：按表头列名取 taxonomy、vOTU 自身 ID 直查；输出列名改 lineage（**P0-3 已修**，91/92 R 兼容）。
+- 54 并集：多前病毒 contig 实测存在（H3=2、H10=1）→ 基础 ID 去重确会破坏超集性，**已改条件式完整 ID 去重**并在 call_stats 记录；H3/H10 并集重跑中。
+- P0-4：64-72 先小批试跑验 ID（55 条含 `__`/`|` 的 contigs pharokka 试批进行中）。
+- P0-5：QUANTIFICATION_CONTRACT Q3、技能卡 58/60 已同步（同 commit）。
+- **Project01 披露（approve #2）**：Project01 冻结基线的病毒丰度用同一"基因+contig 混合索引"，已发布结论带同源偏差（系统性偏低且 vOTU 间不可比）；按approve不重跑，此偏差须写入论文方法部分与 Project01 notes。
+- 91/92/94 若曾跑过病毒分类层，其结果作废待重算（污染扩散清单在 CP3 前核对）。
+
 ## 待披露清单（写入 walkthrough 对应章节时落实）
 - 25 dbCAN：实际仅 `--tools diamond` 单工具（overview.txt #ofTools=1）；`25:57-59` 无条件跳过破坏 --force 语义。
 - 60 vOTU 表：`length` 列实为首个基因长度非 vOTU 长度；305 行基因级记录（~0.6%）因 ID 歧义未并入任何 vOTU（votu_join_stats.tsv:3）。
