@@ -54,10 +54,6 @@ if [ ! -d "${DBCAN_DB}" ]; then
     echo "[ERROR] dbCAN 数据库目录不存在: ${DBCAN_DB}"; exit 1
 fi
 
-if [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
-    echo "[25_bac_dbcan] 结果已存在，跳过: ${SENTINEL}"; exit 0
-fi
-
 if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ]; then
     echo "[25_bac_dbcan] 结果已存在，跳过: ${SENTINEL}"; exit 0
 fi

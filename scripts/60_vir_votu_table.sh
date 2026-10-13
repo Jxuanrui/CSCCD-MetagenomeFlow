@@ -76,7 +76,10 @@ for sid in samples:
     with open(report) as f:
         for i, line in enumerate(f):
             if i == 0:
-                continue  # skip header
+                # 59 号 report.tsv 无表头（数据行开头）；仅当首行第二列非数值时才视为表头跳过
+                first = line.rstrip("\n").split("\t")
+                if len(first) > 1 and not first[1].replace(".", "", 1).isdigit():
+                    continue
             parts = line.rstrip("\n").split("\t")
             if len(parts) < 4:
                 continue
@@ -105,97 +108,94 @@ PYEOF
 # Clean up any leftover tmp files from previous partial runs
 rm -f "${OUTDIR}"/_*.tmp
 
-# --- T-16: aggregate gene-level TPM to CANONICAL vOTU identity -------------
-# votu_id_map.tsv (from 56_vir_votu_gen.sh) is the single source of identity.
-# gene "X_<digits>" -> contig X via the Prodigal naming rule (legitimate
-# suffix), then contig -> representative vOTU strictly through the map.
+# --- T-16: aggregate CONTIG-level TPM to CANONICAL vOTU identity -------------
+# 用户approve 2026-10-13（D）：vOTU 丰度只用 contig 级行（一条 vOTU 一个数），
+# 基因级行不再计入（旧实现把 contig 级与基因级 TPM 混加，vOTU 间不可比）。
+# length 列取代表 contig 自身序列长度（旧实现取"第一条归入行"导致 66 bp 假 vOTU）。
+# contig 级行无法归属时硬失败（旧实现仅 stderr 警告后 exit 0）。
 ID_MAP="${WORKDIR}/result/virus/votu/votu_id_map.tsv"
+MEMBERS_FA="${WORKDIR}/result/virus/votu/contigs/virus.fasta"
 JOIN_STATS="${OUTDIR}/votu_join_stats.tsv"
 
-python3 - "${OUTDIR}/vOTU_table.txt" "${ID_MAP}" "${LEGACY_TABLE}" "${JOIN_STATS}" <<'PYINNER'
-import sys, os, re
+python3 - "${OUTDIR}/vOTU_table.txt" "${ID_MAP}" "${MEMBERS_FA}" "${LEGACY_TABLE}" "${JOIN_STATS}" <<'PYINNER'
+import sys, os
 from collections import defaultdict
 
-src, id_map_path, out_path, stats_path = sys.argv[1:5]
+src, id_map_path, members_fa, out_path, stats_path = sys.argv[1:6]
 if not os.path.exists(id_map_path):
     sys.exit(f"[ERROR] votu_id_map.tsv not found: {id_map_path} (run 56_vir_votu_gen.sh first)")
 
 # map: original_contig_id | cluster_id | representative_votu_id | sample_id | source_step
 by_original = {}
-by_bare = {}
-ambiguous = set()
 for line in open(id_map_path):
     parts = line.rstrip("\n").split("\t")
-    if len(parts) < 5:
-        continue
-    orig, _cluster, repr_id, _sample, _src = parts[:5]
-    by_original[orig] = repr_id
-    bare = orig.split("__", 1)[-1]
-    if bare in by_bare and by_bare[bare] != repr_id:
-        # one bare contig name mapping to two representatives: refuse to guess
-        ambiguous.add(bare)
-    by_bare[bare] = repr_id
+    if len(parts) >= 5:
+        by_original[parts[0]] = parts[2]
 
-def canonical(gene, sid):
-    # gene/target -> canonical vOTU or None.
-    # Order matters: salmon reports mix contig-level rows (k127_1717) with
-    # gene-level rows (k127_1717_1). A bare contig id must be looked up as-is;
-    # only fall back to stripping the Prodigal gene index when the raw name is
-    # not itself a known contig. Never guess identity by suffix alone.
-    if gene in by_original:
-        return by_original[gene]
-    if gene in by_bare:
-        return None if gene in ambiguous else by_bare[gene]
-    contig = re.sub(r"_[0-9]+$", "", gene)
-    if contig in ambiguous:
-        return None
-    return by_bare.get(contig)
+# length 正源：代表 contig 自身长度（代表也是 member，members FASTA 必有）
+member_len = {}
+name, buf = None, 0
+for line in open(members_fa):
+    if line.startswith(">"):
+        if name is not None:
+            member_len[name] = buf
+        fields = line[1:].split()
+        name = fields[0] if fields else ""
+        buf = 0
+    else:
+        buf += len(line.strip())
+if name is not None:
+    member_len[name] = buf
 
-columns = []
 with open(src) as fh:
     header = fh.readline().rstrip("\n").split("\t")
-    for c in header[2:]:
-        if c.endswith("_tpm"):
-            pass
-        columns.append(c)
+    columns = header[2:]
     agg = defaultdict(lambda: defaultdict(float))
-    lengths = {}
-    failed, njoined = [], 0
+    joined = failed = gene_rows = 0
+    failed_rows = []
     for line in fh:
         parts = line.rstrip("\n").split("\t")
         if len(parts) < 2:
             continue
-        gene = parts[0]
-        votu = canonical(gene, "")
-        if votu is None:
-            failed.append(gene)
-            continue
-        njoined += 1
-        if votu not in lengths:
-            lengths[votu] = parts[1]
-        for c, v in zip(columns, parts[2:]):
-            try:
-                agg[votu][c] += float(v)
-            except ValueError:
-                pass
+        cid = parts[0]
+        if cid in by_original:
+            votu = by_original[cid]
+            joined += 1
+            for c, v in zip(columns, parts[2:]):
+                try:
+                    agg[votu][c] += float(v)
+                except ValueError:
+                    pass
+        elif "__" in cid:
+            # 形如 样本__contig 的 contig 级 ID 却无法归属：不允许静默丢弃
+            failed += 1
+            failed_rows.append(cid)
+        else:
+            # 基因级行（58 号加前缀后形如 样本|contig_N）：按approve D 不计入
+            gene_rows += 1
+
+with open(stats_path, "w") as st:
+    st.write("metric\tvalue\n")
+    st.write(f"joined_contig_rows\t{joined}\n")
+    st.write(f"gene_rows_skipped_by_design\t{gene_rows}\n")
+    st.write(f"failed_contig_rows\t{failed}\n")
+    st.write(f"canonical_votus\t{len(agg)}\n")
+    for c in failed_rows:
+        st.write(f"join_failed_row\t{c}\n")
+
+if failed > 0:
+    sys.exit(f"[ERROR] {failed} contig-level rows failed to map (see {stats_path}); "
+             f"refusing to silently drop rows")
 
 with open(out_path, "w") as out:
     out.write("votu\tlength\t" + "\t".join(columns) + "\n")
     for votu in sorted(agg):
         vals = agg[votu]
-        out.write(votu + "\t" + lengths.get(votu, "0") + "\t" +
+        out.write(votu + "\t" + str(member_len.get(votu, 0)) + "\t" +
                   "\t".join(f"{vals.get(c, 0.0):.10g}" for c in columns) + "\n")
 
-with open(stats_path, "w") as st:
-    st.write("metric\tvalue\n")
-    st.write(f"joined_gene_rows\t{njoined}\n")
-    st.write(f"join_failed_gene_rows\t{len(failed)}\n")
-    st.write(f"canonical_votus\t{len(agg)}\n")
-    for g in failed:
-        st.write(f"join_failed_row\t{g}\n")
-print(f"[votu_table] canonical aggregation: {len(agg)} vOTUs, joined={njoined}, join_failed={len(failed)} -> {stats_path}")
-if failed:
-    print("[votu_table] WARNING: join-failed rows are listed in " + stats_path, file=sys.stderr)
+print(f"[votu_table] contig-level aggregation: {len(agg)} vOTUs, joined={joined}, "
+      f"gene_rows_skipped={gene_rows}, failed={failed} -> {stats_path}")
 PYINNER
 
 

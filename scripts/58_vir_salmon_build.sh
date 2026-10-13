@@ -43,7 +43,7 @@ SALMON_VERSION_INFO="${INDEX_DIR}/versionInfo.json"
 
 if [ ! -f "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在: ${VOTU_FA}"; exit 1; fi
 if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ]; then echo "[salmon_build] 索引已存在，跳过"; exit 0; fi
-if [ -f "${SALMON_VERSION_INFO}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${SALMON_VERSION_INFO}" ]; then
     cp "${SALMON_VERSION_INFO}" "${SENTINEL}"
     echo "[salmon_build] 检测到已有 Salmon 索引，已补全 info.json 哨兵文件"
     exit 0
@@ -56,7 +56,11 @@ echo "[salmon_build] 准备 gentrome + decoy ..."
 ALL_FFN="${INDEX_DIR}/virus_cds.ffn"
 : > "${ALL_FFN}"
 for f in "${WORKDIR}"/result/virus/prodigal/*/*.fna; do
-    [ -f "$f" ] && cat "$f" >> "${ALL_FFN}"
+    [ -f "$f" ] || continue
+    # 基因 ID 加样本前缀（质量审核 2026-10-13 P0 / approve E）：不同样本的 prodigal 基因名
+    # 重名（k127_124496_1 等），直接进同一索引会歧义，60 号曾因此丢 305 行
+    sid=$(basename "$(dirname "$f")")
+    awk -v s="${sid}" '/^>/{print ">" s "|" substr($0,2); next} {print}' "$f" >> "${ALL_FFN}"
 done
 
 # gentrome = CDS + vOTU

@@ -98,8 +98,10 @@ if $HAS_GENOMAD && $HAS_VS2; then
         "${COMMON_COUNT}" \
         "${PROVIRUS_KEPT}" \
         > "${OUTDIR}/call_stats.tsv"
-    # 并集敏感性分析（用户 10-11 批准）：输出到独立文件，不干扰主结果
-    cat "${GENOMAD_VIRUS}" "${VS2_VIRUS}" | awk '!/^>/{print;next} !seen[$1]++{print}'         > "${OUTDIR}/viruses_union_sensitivity.fna"
+    # 并集敏感性分析（用户 10-11 批准；2026-10-13 修复）：去重键与交集一致
+    # （基础 contig ID，剥 |provirus 后缀）；重复记录连同其序列行一起丢弃，
+    # 不再只丢表头保留序列行（旧实现会把两条序列拼进同一条记录）
+    cat "${GENOMAD_VIRUS}" "${VS2_VIRUS}" | awk '/^>/{key=substr($1,2); sub(/\|.*/,"",key); keep=!(key in seen); seen[key]=1; if(keep) print; next} keep{print}' > "${OUTDIR}/viruses_union_sensitivity.fna"
     UNION_COUNT=$(grep -c '^>' "${OUTDIR}/viruses_union_sensitivity.fna" 2>/dev/null) || UNION_COUNT=0
     printf "union_count\t%s\n" "${UNION_COUNT}" >> "${OUTDIR}/call_stats.tsv"
     rm -f "${CONTIGS_DIR}/common_ids.txt" "${CONTIGS_DIR}/_merged.fasta"

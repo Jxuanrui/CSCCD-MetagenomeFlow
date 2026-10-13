@@ -115,6 +115,8 @@ if [ ${EXIT_CODE} -ne 0 ]; then echo "[ERROR] checkm2 失败"; exit ${EXIT_CODE}
 
 # 过滤：完整度 ≥50% 且 污染度 ≤10%
 mkdir -p "${FILTERED_DIR}" "${DREP_IN}"
+# 36b 重跑后 bin 命名/数量会变，先清空再复制，避免新旧 MAG 混入 dRep（质量审核 2026-10-13 P0-2）
+rm -f "${DREP_IN}"/*.fa
 awk -F'\t' 'NR==1 || ($2>=50 && $3<=10)' "${REPORT}" > "${FILTERED_DIR}/filtered_report.tsv"
 
 # 复制高质量 MAGs
