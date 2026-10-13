@@ -18,13 +18,13 @@
 | 15d_bac_sylph_merge | bacteria | ✓ 已完成 |  |
 | 15e_bac_metax | cross-domain | opt-in 未运行 | 本段留待后续按需运行 |
 | 16_bac_megahit | bacteria | ✓ 已完成 |  |
-| 16b_bac_metaspades | bacteria | 运行 |  |
-| 17_bac_prodigal | bacteria | 运行 |  |
-| 18_bac_cdhit | bacteria | 运行 |  |
-| 19_bac_salmon_build | bacteria | 运行 |  |
-| 20_bac_salmon_quant | bacteria | 运行 |  |
-| 21_bac_eggnog | bacteria | 运行 |  |
-| 22_bac_kegg | bacteria | 运行 |  |
+| 16b_bac_metaspades | bacteria | 不执行（用户批准，叶子步骤无下游使用） |  |
+| 17_bac_prodigal | bacteria | ✓ 已完成 |  |
+| 18_bac_cdhit | bacteria | ✓ 已完成 |  |
+| 19_bac_salmon_build | bacteria | ✓ 已完成 |  |
+| 20_bac_salmon_quant | bacteria | ✓ 已完成 |  |
+| 21_bac_eggnog | bacteria | ✓ 已完成 |  |
+| 22_bac_kegg | bacteria | ✓ 已完成 |  |
 | 23_bac_amrfinder | bacteria | 运行 |  |
 | 24_bac_card | bacteria | 运行 |  |
 | 24b_bac_card_summary | bacteria | 运行 |  |
@@ -40,12 +40,12 @@
 | 31c_bac_pfam | bacteria | 运行 |  |
 | 31d_bac_uniprot | bacteria | 运行 |  |
 | 31e_bac_fegenie | bacteria | 运行 |  |
-| 32_bac_coverm_depth | bacteria | 运行 |  |
-| 33_bac_metabat2 | bacteria | 运行 |  |
+| 32_bac_coverm_depth | bacteria | ✓ 已完成 |  |
+| 33_bac_metabat2 | bacteria | ✓ 已完成 |  |
 | 33b_bac_quickbin | bacteria | 运行 |  |
-| 34_bac_maxbin2 | bacteria | 运行 |  |
-| 35_bac_semibin2 | bacteria | 运行 |  |
-| 36_bac_dastool | bacteria | 运行 |  |
+| 34_bac_maxbin2 | bacteria | ✓ 已完成 |  |
+| 35_bac_semibin2 | bacteria | ✓ 已完成 |  |
+| 36_bac_dastool | bacteria | ✓ 已完成 |  |
 | 36b_bac_bin_reassembly | bacteria | 运行 |  |
 | 37_bac_checkm2 | bacteria | 运行 |  |
 | 38_bac_drep | bacteria | 运行 |  |
@@ -67,14 +67,14 @@
 | 51_vir_megahit | virome | ✓ 已完成 |  |
 | 52_vir_genomad | virome | ✓ 已完成 |  |
 | 53_vir_virsorter2 | virome | ✓ 已完成 |  |
-| 54_vir_checkv_contig | virome | 运行 |  |
+| 54_vir_checkv_contig | virome | ✓ 已完成 |  |
 | 54b_vir_checkv_filter | virome | 运行 |  |
-| 55_vir_prodigal_gv | virome | 运行 |  |
-| 56_vir_votu_gen | virome | 运行 |  |
-| 57_vir_votu_genomad | virome | 运行 |  |
-| 58_vir_salmon_build | virome | 运行 |  |
-| 59_vir_salmon_quant | virome | 运行 |  |
-| 60_vir_votu_table | virome | 运行 |  |
+| 55_vir_prodigal_gv | virome | ✓ 已完成 |  |
+| 56_vir_votu_gen | virome | ✓ 已完成 |  |
+| 57_vir_votu_genomad | virome | ✓ 已完成 |  |
+| 58_vir_salmon_build | virome | ✓ 已完成 |  |
+| 59_vir_salmon_quant | virome | ✓ 已完成 |  |
+| 60_vir_votu_table | virome | ✓ 已完成 |  |
 | 61_vir_vmag | virome | 运行 |  |
 | 62_vir_checkv_mag | virome | 待核/预期空 | 不适用候选：vMAG 依赖深链产出（Tutorial:1901 Project01 先例 0 vMAG，跑后核） |
 | 63_vir_coverm_quant | virome | 待核/预期空 | 同 62 |
@@ -90,31 +90,31 @@
 | 72_vir_phagcn3 | virome | 运行 |  |
 | 71_fun_kraken2_fungi | fungi | ✓ 已完成 |  |
 | 72_fun_metaphlan4_euk | fungi | ✓ 已完成 |  |
-| 72b_fun_metaphlan4_merge | fungi | ⬜ 未运行 |  |
+| 72b_fun_metaphlan4_merge | fungi | ✓ 已完成 |  |
 | 73_fun_humann4_fungi | fungi | ✓ 已完成 |  |
-| 74_fun_blast_gutdb | fungi | ⬜ 未运行（可启动） |  |
-| 74a_fun_gut_db_build | fungi | 运行 |  |
+| 74_fun_blast_gutdb | fungi | 已废弃（gut_fungi.dmnd 核酸库误作蛋白库，产出恒 0；勿启动） |  |
+| 74a_fun_gut_db_build | fungi | ⬜ 未运行（依赖 74，74 已废弃，此步不再排期） |  |
 | 74e_fun_phf_profiler | fungi | ✓ 已完成 |  |
 | 74f_fun_phf_aggregate |  | 运行 |  |
-| 75_fun_funomics | fungi | 运行 |  |
-| 75b_fun_funomics_aggregate | fungi | 运行 |  |
+| 75_fun_funomics | fungi | ⬜ 未运行 |  |
+| 75b_fun_funomics_aggregate | fungi | ⬜ 未运行 |  |
 | 76_fun_ccmetagen | fungi | 不适用（registry removed，脚本已删除） |  |
-| 77_fun_microfisher | fungi | 运行 |  |
+| 77_fun_microfisher | fungi | ⬜ 未运行 |  |
 | 78_fun_megahit | fungi | ✓ 已完成 |  |
 | 79_fun_eukfinder | fungi | ✓ 已完成 |  |
 | 79b_fun_veba_qc | fungi | ✓ 已完成 |  |
-| 79c_fun_coverm_depth | fungi | 运行 |  |
-| 79d_fun_metabat2 | fungi | 运行 |  |
-| 79e_fun_euk_qc_per_bin | fungi | 运行 |  |
-| 79f_fun_metaeuk_per_bin | fungi | 运行 |  |
+| 79c_fun_coverm_depth | fungi | ⬜ 未运行 |  |
+| 79d_fun_metabat2 | fungi | ⬜ 未运行 |  |
+| 79e_fun_euk_qc_per_bin | fungi | ⬜ 未运行 |  |
+| 79f_fun_metaeuk_per_bin | fungi | ⬜ 未运行 |  |
 | 80_fun_prodigal | fungi | ⬜ 未运行（只依赖 78，不依赖 79b） |
-| 80b_fun_metaeuk | fungi | 运行 |  |
-| 81_fun_eggnog | fungi | 运行 |  |
-| 82_fun_kegg | fungi | 运行 |  |
-| 83_fun_dbcan | fungi | 运行 |  |
-| 84_fun_vfdb | fungi | 运行 |  |
-| 85_fun_amr | fungi | 运行 |  |
-| 86_fun_merops | fungi | 运行 |  |
+| 80b_fun_metaeuk | fungi | ⬜ 未运行 |  |
+| 81_fun_eggnog | fungi | ⬜ 未运行 |  |
+| 82_fun_kegg | fungi | ⬜ 未运行 |  |
+| 83_fun_dbcan | fungi | ⬜ 未运行 |  |
+| 84_fun_vfdb | fungi | ⬜ 未运行 |  |
+| 85_fun_amr | fungi | ⬜ 未运行 |  |
+| 86_fun_merops | fungi | ⬜ 未运行 |  |
 | 91_stat_diversity | stats | 运行 |  |
 | 92_stat_differential | stats | 运行 |  |
 | 93_stat_cooccurrence | stats | 运行 |  |

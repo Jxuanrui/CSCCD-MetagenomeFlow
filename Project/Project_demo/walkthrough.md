@@ -494,7 +494,7 @@ genomad end-to-end \
 
 产出：`result/virus/genomad/<样本>/<样本>.contigs_summary/`（virus/plasmid summary + 分类注释）。
 
-**执行点评**（主代理起草）：`--sensitivity 7.5` 为推荐区间（4.2–7.5）上限，灵敏度最高也最耗时；`--splits 4` 分块降内存，`--cleanup` 删中间文件。检出病毒 contigs 占组装总量约 2–4%，量级合理。与 53 VirSorter2 结果取并集（cat + rmdup，非交集）可提高病毒判定置信度；下游供 54 checkv 质检与 vOTU 聚类使用。
+**执行点评**（主代理起草）：`--sensitivity 7.5` 为推荐区间（4.2–7.5）上限，灵敏度最高也最耗时；`--splits 4` 分块降内存，`--cleanup` 删中间文件。检出病毒 contigs 占组装总量约 2–4%，量级合理。与 53 VirSorter2 结果取并集（cat + rmdup）构成候选池供 54 号质检；最终病毒判定以**双工具交集为主结果**（严格），**并集仅作敏感性分析**（2026-10-11 用户approve口径；并集敏感性产物待补做）。
 
 ---
 
