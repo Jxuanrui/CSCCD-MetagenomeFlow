@@ -56,7 +56,7 @@ mkdir -p "${INDEX_DIR}"
 # 索引只含 vOTU contigs（approve D 落实到定量层，质量审核 P0-1）。
 # 移除旧的 CDS 收集与 gentrome 拼接；基因 ID 样本前缀逻辑随之移除
 # （索引中已无基因行，58→59 不再产生基因级定量）。
-grep '^>' "${VOTU_FA}" | sed 's/^>//' > "${INDEX_DIR}/decoys.txt"
+grep '^>' "${VOTU_FA}" | sed 's/^>//' > "${INDEX_DIR}/decoys.txt"  # 保留：phase1_tierA_golden.sha256 引用此文件；标准索引不消费它
 
 if [ ! -s "${INDEX_DIR}/decoys.txt" ]; then
     echo "[salmon_build] WARN: 索引序列为空（可能是测试数据无病毒序列）"

@@ -191,16 +191,10 @@ build_mt_bacteria <- function(bact_path, meta) {
 }
 
 build_mt_virus <- function(votu_path, meta) {
-  clusters_path <- file.path(dirname(dirname(votu_path)), "vclust", "clusters.tsv")
-  if (!file.exists(clusters_path)) stop("Missing clusters.tsv: ", clusters_path)
-
-  clusters <- read.table(
-    clusters_path,
-    header = TRUE,
-    sep = "\t",
-    col.names = c("contig", "votu_rep"),
-    stringsAsFactors = FALSE
-  )
+  # 质量审核 2026-10-14 P0-A：直接消费 canonical vOTU 行（60 号按approve D 已聚合到
+  # 代表 vOTU，一条 vOTU 一个数）。旧的"剥基因后缀 + clusters 重聚合"逻辑
+  # 基于已废弃的基因级表语义（raw$gene 在新表为 NULL，且后缀剥离会破坏
+  # 含下划线的 contig ID），整段删除。
   raw <- read.table(
     votu_path,
     header = TRUE,
@@ -213,24 +207,8 @@ build_mt_virus <- function(votu_path, meta) {
   if (!length(tpm_cols)) stop("No *_tpm columns in vOTU table")
   sample_ids <- sub("_tpm$", "", tpm_cols, ignore.case = TRUE)
 
-  # 基因命名规则为 {contig}_{geneNum}（Prodigal/Phanotate 约定），contig 本身可能
-  # 含下划线（如 Sample10__k127_116589），逐 orf 对 contigs 做 O(N*M) 前缀扫描在
-  # 大表（数十万基因 x 万级 contig）下会跑数小时；改为剥离基因名末尾的 "_数字"
-  # 后缀反查精确匹配 contig，用哈希表做 O(N) 向量化查找
-  contig_to_votu <- setNames(clusters$votu_rep, clusters$contig)
-  orf_contig <- sub("_[0-9]+$", "", raw$gene)
-  orf_to_votu <- unname(contig_to_votu[orf_contig])
-
-  raw[tpm_cols] <- lapply(raw[tpm_cols], function(x) suppressWarnings(as.numeric(x)))
-  raw$votu_rep <- orf_to_votu
-
-  agg <- raw %>%
-    filter(!is.na(votu_rep)) %>%
-    group_by(votu_rep) %>%
-    summarise(across(all_of(tpm_cols), ~ sum(.x, na.rm = TRUE)), .groups = "drop")
-
-  otu_df <- as.data.frame(agg[, tpm_cols, drop = FALSE])
-  rownames(otu_df) <- agg$votu_rep
+  otu_df <- as.data.frame(raw[, tpm_cols, drop = FALSE])
+  rownames(otu_df) <- raw[[1]]
   colnames(otu_df) <- sample_ids
   otu_df[is.na(otu_df)] <- 0
   otu_df <- otu_df[rowSums(otu_df) > 0, , drop = FALSE]
@@ -346,7 +324,10 @@ enrich_virus_taxonomy <- function(mt, workdir) {
       NULL
     }
   )
-  if (is.null(gdf) || !all(c("seq_name", "lineage") %in% names(gdf))) return(mt)
+  # 质量审核 2026-10-14 P0-A：geNomad 原始表实际列名为 taxonomy（非 lineage），
+  # 旧检查要求 lineage 导致病毒分类静默跳过
+  tax_col <- if (!is.null(gdf) && "taxonomy" %in% names(gdf)) "taxonomy" else "lineage"
+  if (is.null(gdf) || !"seq_name" %in% names(gdf) || !tax_col %in% names(gdf)) return(mt)
 
   parse_lin <- function(lin) {
     if (is.na(lin) || !nzchar(lin)) {
@@ -365,7 +346,7 @@ enrich_virus_taxonomy <- function(mt, workdir) {
     )
   }
 
-  tax_mat <- do.call(rbind, lapply(gdf$lineage, parse_lin))
+  tax_mat <- do.call(rbind, lapply(gdf[[tax_col]], parse_lin))
   rownames(tax_mat) <- gdf$seq_name
   tax_df_gen <- as.data.frame(tax_mat, stringsAsFactors = FALSE)
 

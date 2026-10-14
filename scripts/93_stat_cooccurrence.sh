@@ -257,9 +257,11 @@ read_virus_table <- function(votu_path) {
   # Read simple vOTU table: vOTU_ID (rows) x Samples (columns)
   raw <- readr::read_tsv(votu_path, show_col_types = FALSE)
 
-  # First column is vOTU ID, rest are samples
   votu_col <- names(raw)[1]
-  sample_cols <- setdiff(names(raw), votu_col)
+  # 质量审核 2026-10-14 P0-B：样本列只取 *_tpm；length/_count/lineage/annotation_status
+  # 一律排除（旧代码把首列之外所有列当样本，会把序列长度和计数混进丰度矩阵）
+  sample_cols <- grep("_tpm$", names(raw), value = TRUE)
+  if (!length(sample_cols)) sample_cols <- setdiff(names(raw), votu_col)
 
   # Convert to matrix
   mat <- as.matrix(raw[, sample_cols, drop = FALSE])

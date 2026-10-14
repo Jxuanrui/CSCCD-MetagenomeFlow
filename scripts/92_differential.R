@@ -187,7 +187,9 @@ enrich_virus_taxonomy <- function(mt, workdir) {
       NULL
     }
   )
-  if (is.null(gdf) || !all(c("seq_name", "lineage") %in% names(gdf))) return(mt)
+  # 质量审核 2026-10-14 P0-A：geNomad 原始表实际列名为 taxonomy（非 lineage）
+  tax_col <- if (!is.null(gdf) && "taxonomy" %in% names(gdf)) "taxonomy" else "lineage"
+  if (is.null(gdf) || !"seq_name" %in% names(gdf) || !tax_col %in% names(gdf)) return(mt)
 
   parse_lin <- function(lin) {
     if (is.na(lin) || !nzchar(lin)) return(c(Domain = NA, Phylum = NA, Class = NA, Order = NA, Family = NA, Genus = NA))
@@ -204,7 +206,7 @@ enrich_virus_taxonomy <- function(mt, workdir) {
     )
   }
 
-  tax_mat <- do.call(rbind, lapply(gdf$lineage, parse_lin))
+  tax_mat <- do.call(rbind, lapply(gdf[[tax_col]], parse_lin))
   rownames(tax_mat) <- gdf$seq_name
   tax_df_gen <- as.data.frame(tax_mat, stringsAsFactors = FALSE)
 

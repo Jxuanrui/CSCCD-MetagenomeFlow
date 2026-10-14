@@ -68,12 +68,12 @@
 
 **冻结令**：votu_table.tsv 现版本不得作为统计输入（60 号打回）；64-72 注释步骤不受影响（不消费该表）。
 
-## 复审跟踪（质量审核 2026-10-13 复审：打回，3/5 销项）
-- 未销项根因：58 索引基因+contig 并存，Salmon EM 分摊 reads（单 vOTU 损失 35-77%）→ **P0-1 已修**：索引只放 virus.fasta，V2 泳道重跑 58→59→60 中（验收：0 基因行/ΣTPM≈10⁶/3 对照 contig NumReads 回升，对照基值已存 /tmp/vir_numreads_prefix.txt）。
-- 新发现 P0：60 注释段 taxonomy 取错列（第 5 列 n_genes）→ **P0-2 已修**：按表头列名取 taxonomy、vOTU 自身 ID 直查；输出列名改 lineage（**P0-3 已修**，91/92 R 兼容）。
-- 54 并集：多前病毒 contig 实测存在（H3=2、H10=1）→ 基础 ID 去重确会破坏超集性，**已改条件式完整 ID 去重**并在 call_stats 记录；H3/H10 并集重跑中。
-- P0-4：64-72 先小批试跑验 ID（55 条含 `__`/`|` 的 contigs pharokka 试批进行中）。
-- P0-5：QUANTIFICATION_CONTRACT Q3、技能卡 58/60 已同步（同 commit）。
+## 复审跟踪（质量审核 2026-10-13 两轮打回 → 2026-10-14 三审**有条件通过**）
+- **口径更正（主代理自纠）**：此前报告"输出列名 lineage 后 91/92 R 兼容"不实——91/92 读的是 geNomad 原始表（列名 taxonomy），60 的 lineage 列与彼无关；三审揪出并已修（91/92 列名检查兼容 taxonomy、91 build_mt_virus 重写为直接消费 canonical 行、93 样本列只取 _tpm 防 length/count 混入）。
+- V2 验收全部核证：六样本基因行 0、ΣTPM=10⁶、三对照 contig NumReads 回升（420.99→1614.48 / 2597.61→3995.86 / 1511.06→2553.89）、join 3062/0/2622、annotated=2,513 真分类（数值假分类 0）、length 抽查 3/3 与实长一致（证据归档 logs/evidence/）。
+- **分级解冻（质量审核 2026-10-14 approve）**：`votu_table.tsv`/`vOTU_table_ann.txt` 对 **98c/98g 即时解冻**；**93、91/92/94/96 待修复复验后解冻**（93/91/92 的 R 修复已提交，复验排 CP2 收口）。
+- 64-72 病毒下游全量已获质量审核放行（pharokka 55 条试批 ID 回传 55/55），V3 泳道运行中（含 H1/H2/H4/H11 union 补齐 4×54 --force）。
+- 三审报告：.claude/reviews/supervisor_20261014_v2_audit.md（注：claude CLI 环境变更不可用，本轮以子代理加载质量审核章程执行，已在报告中披露）。
 - **Project01 披露（approve #2）**：Project01 冻结基线的病毒丰度用同一"基因+contig 混合索引"，已发布结论带同源偏差（系统性偏低且 vOTU 间不可比）；按approve不重跑，此偏差须写入论文方法部分与 Project01 notes。
 - 91/92/94 若曾跑过病毒分类层，其结果作废待重算（污染扩散清单在 CP3 前核对）。
 

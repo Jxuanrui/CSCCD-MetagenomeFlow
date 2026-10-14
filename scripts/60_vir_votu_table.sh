@@ -96,7 +96,7 @@ for sid in samples:
     cols += [f"{sid}_tpm", f"{sid}_count"]
 
 with open(out_file, "w") as f:
-    f.write("gene\tlength\t" + "\t".join(cols) + "\n")
+    f.write("contig\tlength\t" + "\t".join(cols) + "\n")
     for gene in gene_order:
         vals = tables[gene]
         row = [gene, vals.get("length", "0")] + [vals.get(c, "0") for c in cols]
