@@ -54,7 +54,14 @@
 | W4 | 40 gtdbtk→41 prokka→41b→41c/41d | 39→39b→39c×6→39d | 43 gapseq→43b→43c | — |
 | W5 | 98b/98c/98d、98c_mge、98d_mag | 98e→98f→98g | — | CP3 全量对齐 |
 | W6 | 91→92→93→94→96 系→99a/99b→98 | | | 统计附 3v3 功效披露 |
-串行：36b→37→38→38b→MAG 尾链；39b→c→d；43→43c；80→81-86；75→75b。并行：目录级注释互斥安全；64-72 互不依赖；28/31e/42/42b 与 MAG 链无依赖（读 16/17 号产物）。
+串行：36b→37→38→38b→MAG 尾链；39b→c→d；43→43c；80→81-86；75→75b。并行：目录级注释互斥安全；**病毒下游依赖修正（质量审核四审）：65/66 真实依赖 64（pharokka.gbk/phanotate.faa），67/67b/68/69/70/72 仅依赖 virus.fasta**；28/31e/42/42b 与 MAG 链无依赖（读 16/17 号产物）。
+
+## 四审决议落实（质量审核 2026-10-14，有条件通过）
+- **91/92/93 烟测复验钉入排程（P0-2）**：V3 泳道完成后立即执行（16t 空闲窗口，单次 <1h），通过前**禁止 W5 任何 98 系**（93/91/92 修复代码尚未跑过任何数据）。watcher：/tmp/lane_w5_gate.sh。
+- **36b 回退哨兵逐样本核对（P1-5）**：H1-H4 已核——N_FALLBACK 全 0（56/51/65/48 bins 全部真重组装，220/220）；H10/H11 完成后即核。
+- **磁盘水位（P0-3，待用户approve）**：/ 用 90%（余 2.1T）；temp/humann3 447GB 为最大可回收项（13 号已验收归档）。
+- **git 异动上报（非 A 线所为）**：envs-pixi/kneaddata{pixi.lock,pixi.toml}、envs-pixi/prokka/pixi.toml 被删（C 线领域）；mining/snapshots/curation_snapshot.csv.gz 变更（B 线 cron）；未跟踪 tools/、feishu_notes/、samples.txt。均不代提交。
+- W3-B（28/28b）/W3-C（31e/42/42b）改为按泳道空位插空，不整波等待（依赖 16/17 早已就绪）。
 
 ## 待用户approve（质量审核 2026-10-13 两轮合并 6 项 → **用户批示"按质量审核建议执行"，全部落实施中**）
 | # | 事项 | 处置 |
@@ -70,7 +77,7 @@
 
 ## 复审跟踪（质量审核 2026-10-13 两轮打回 → 2026-10-14 三审**有条件通过**）
 - **口径更正（主代理自纠）**：此前报告"输出列名 lineage 后 91/92 R 兼容"不实——91/92 读的是 geNomad 原始表（列名 taxonomy），60 的 lineage 列与彼无关；三审揪出并已修（91/92 列名检查兼容 taxonomy、91 build_mt_virus 重写为直接消费 canonical 行、93 样本列只取 _tpm 防 length/count 混入）。
-- V2 验收全部核证：六样本基因行 0、ΣTPM=10⁶、三对照 contig NumReads 回升（420.99→1614.48 / 2597.61→3995.86 / 1511.06→2553.89）、join 3062/0/2622、annotated=2,513 真分类（数值假分类 0）、length 抽查 3/3 与实长一致（证据归档 logs/evidence/）。
+- V2 验收全部核证：六样本基因行 0、ΣTPM=10⁶、三对照 contig（Sample1 样本 reads 对 Sample10 来源 contig）NumReads 回升 420.99→1614.48 / 2597.61→3995.86 / 1511.06→2553.89（**取值来源：Sample1/quant.sf**，2026-10-14 复核一致并归档 logs/evidence/vir_numreads_surviving_quant_sf_20261014.tsv；注意 Sample10 自身 quant.sf 对同名 contig 是另一定量，数值不同属预期——质量审核四审曾因此误判证据链断裂，实为跨样本混淆）、join 3062/0/2622、annotated=2,513 真分类（数值假分类 0）、length 抽查 3/3 与实长一致。Sample10 quant 与 votu_table H10_count 逐位一致（60 号聚合无损的交叉验证）。
 - **分级解冻（质量审核 2026-10-14 approve）**：`votu_table.tsv`/`vOTU_table_ann.txt` 对 **98c/98g 即时解冻**；**93、91/92/94/96 待修复复验后解冻**（93/91/92 的 R 修复已提交，复验排 CP2 收口）。
 - 64-72 病毒下游全量已获质量审核放行（pharokka 55 条试批 ID 回传 55/55），V3 泳道运行中（含 H1/H2/H4/H11 union 补齐 4×54 --force）。
 - 三审报告：.claude/reviews/supervisor_20261014_v2_audit.md（注：claude CLI 环境变更不可用，本轮以子代理加载质量审核章程执行，已在报告中披露）。
