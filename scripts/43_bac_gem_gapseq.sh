@@ -139,8 +139,10 @@ for mag_fa in "${MAGS[@]}"; do
 
     # Step 1: Pathway prediction
     echo "[gapseq] Step 1/4: Pathway prediction..." | tee -a "${mag_log}"
+    # < /dev/null：gapseq_find.sh 会读 stdin，nohup 泳道的 stdin 是永不关闭的
+    # 管道导致永久阻塞（2026-10-15 实测挂起 80 分钟零产出；质量审核终审 A 类同族）
     if ! conda run --prefix "${REPO}/envs/gapseq" gapseq find \
-        -p all -b 200 "${mag_fa}" >> "${mag_log}" 2>&1; then
+        -p all -b 200 "${mag_fa}" >> "${mag_log}" 2>&1 < /dev/null; then
         echo "[ERROR] gapseq find 失败: ${mag_name}" | tee -a "${LOG}"
         N_FAILED=$((N_FAILED+1))
         continue
@@ -163,7 +165,7 @@ for mag_fa in "${MAGS[@]}"; do
         -t "${transporter_tbl}" \
         -p "${pathways_tbl}" \
         -c "${mag_fa}" \
-        -u 200 -l 100 >> "${mag_log}" 2>&1; then
+        -u 200 -l 100 >> "${mag_log}" 2>&1 < /dev/null; then
         echo "[ERROR] gapseq draft 失败: ${mag_name}" | tee -a "${LOG}"
         N_FAILED=$((N_FAILED+1))
         continue
@@ -190,7 +192,7 @@ for mag_fa in "${MAGS[@]}"; do
         -m "${draft_model}" \
         -n medium \
         -c "${rxn_weights}" \
-        -g "${rxn_genes}" >> "${mag_log}" 2>&1; then
+        -g "${rxn_genes}" >> "${mag_log}" 2>&1 < /dev/null; then
         echo "[WARNING] gapseq fill 失败，使用 draft 模型: ${mag_name}" | tee -a "${LOG}"
         cp "${draft_model}" "${mag_name}-gapfilled.RDS"
     fi
