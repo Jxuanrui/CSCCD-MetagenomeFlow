@@ -56,6 +56,11 @@
 | W6 | 91→92→93→94→96 系→99a/99b→98 | | | 统计附 3v3 功效披露 |
 串行：36b→37→38→38b→MAG 尾链；39b→c→d；43→43c；80→81-86；75→75b。并行：目录级注释互斥安全；**病毒下游依赖修正（质量审核四审）：65/66 真实依赖 64（pharokka.gbk/phanotate.faa），67/67b/68/69/70/72 仅依赖 virus.fasta**；28/31e/42/42b 与 MAG 链无依赖（读 16/17 号产物）。
 
+## W4-C GEM 链尺寸approve（用户批准"按建议执行"，2026-10-15）
+- **取 CheckM2 质量前 10 的代表 MAG 跑全链**（43 gapseq → 43b carveme → 43c cobrapy FBA），非全量 128——128 全跑约 2-4 天（carveme 30-60 分钟/MAG），超出演示需要。
+- **披露**：名单按 comp−cont 排序取前 10（全部 comp≥99.7、cont≤0.22，见 /tmp/gem_top10.txt 与 walkthrough 待补章节）；其余 118 个代表的 GEM 建模不在演示范围。
+- 泳道：/tmp/lane_w4c_gem.sh（-t 8，插空负载）。
+
 ## CP2-MAG 关口（质量审核 2026-10-15：有条件通过 → C1 整改执行中）
 - 数字全核真：353→269→128 闭合；重组装真实生效（352/353 字节级改写，唯一回退 H10 semibin2_271）；128 代表 = HQ 96 + MQ 32（全部 MIMAG medium）。
 - **C1（P0）**：W1 基线被 --force 覆盖丢失——影子工作目录重建执行中（/tmp/lane_w1_baseline.sh，产出 → checkm2_w1_baseline/drep_w1_baseline/gunc_w1_baseline/），现行路径零接触。
