@@ -40,6 +40,7 @@ EOF
 # MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
 export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO m:MAG_FILTER"
 export MGX_OPTS_FLAG="force"
+MAG_FILTER=""  # 可选参数默认值（2026-10-15 修复：set -u 下未传 -m 时 unbound variable）
 mgx_parse "$@"
 mgx_require CPUS WORKDIR REPO
 
