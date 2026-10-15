@@ -28,7 +28,9 @@ EOF
 }
 
 # MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
-export MGX_OPTS_STRING="m:MAG_NAME w:WORKDIR r:REPO"
+# -t 为接口兼容参数：carveme 不暴露线程控制，接受但不透传（2026-10-15 修复：
+# 帮助文本声明 -t 而解析表未注册）
+export MGX_OPTS_STRING="m:MAG_NAME t:CPUS w:WORKDIR r:REPO"
 export MGX_OPTS_FLAG="force"
 mgx_parse "$@"
 mgx_require MAG_NAME WORKDIR REPO
