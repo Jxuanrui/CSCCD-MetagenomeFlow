@@ -50,8 +50,10 @@ if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ]; then echo "[phabox2] 结果已存
 mkdir -p "${OUTDIR}"
 
 echo "[phabox2] 病毒端到端分析 ..."
+# PYTHONNOUSERSITE=1：隔离 ~/.local 用户级 pip 包（2026-10-15 修复：用户级 numpy 2.2.6
+# 遮蔽环境内 numpy 1.26.4，pyarrow ABI 断裂致 ImportError——同 53 号 SIF 宿主污染模式）
 mgx_conda phabox2 \
-    phabox2 --task end_to_end \
+    env PYTHONNOUSERSITE=1 phabox2 --task end_to_end \
         --dbdir "${PHABOX_DB}" \
         --outpth "${PREDICT_DIR}" \
         --contigs "${VOTU_FA}" \
