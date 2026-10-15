@@ -136,6 +136,7 @@ rm -rf "${FINAL_DIR}"
 mkdir -p "${FINAL_DIR}"
 N_REASSEMBLED=0
 N_FALLBACK=0
+FALLBACK_BINS=""
 for bin_fa in "${BINS_DIR}"/*.fa; do
     bin_name="$(basename "${bin_fa}" .fa)"
     strict="${MW_WORKDIR}/reassembled_bins/${bin_name}.strict.fa"
@@ -156,6 +157,7 @@ for bin_fa in "${BINS_DIR}"/*.fa; do
     else
         cp "${bin_fa}" "${FINAL_DIR}/${bin_name}.fa"
         N_FALLBACK=$((N_FALLBACK+1))
+        FALLBACK_BINS="${FALLBACK_BINS}${bin_name},"
     fi
 done
 
@@ -171,6 +173,8 @@ rm -rf "${MW_WORKDIR}" "${BINS_CLEAN_DIR}"
 echo "N_INPUT_BINS=${N_INPUT_BINS}" > "${SENTINEL}"
 echo "N_REASSEMBLED=${N_REASSEMBLED}" >> "${SENTINEL}"
 echo "N_FALLBACK_TO_ORIGINAL=${N_FALLBACK}" >> "${SENTINEL}"
+# 质量审核 CP2-MAG P2：回退 bin 名落哨兵，免事后字节比对反推
+echo "FALLBACK_BINS=${FALLBACK_BINS:-none}" >> "${SENTINEL}"
 
 echo "[bin_reassembly] 完成 | 输入: ${N_INPUT_BINS} | 重组装成功: ${N_REASSEMBLED} | 回退原始bin: ${N_FALLBACK}"
 mgx_end "bin_reassembly"

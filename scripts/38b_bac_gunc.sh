@@ -89,6 +89,11 @@ if [ ${FORCE} -eq 0 ] && ls "${OUT_DIR}"/GUNC.*.tsv >/dev/null 2>&1; then
     exit 0
 fi
 
+# 质量审核 CP2-MAG P1：--force 重跑前清空旧产物，防止上一轮的逐-bin 文件混入
+# （W1 基线残留 16 个文件曾致 gunc_output 计数 144≠128）
+if [ ${FORCE} -eq 1 ]; then
+    rm -rf "${OUT_DIR}" "${TEMP_DIR}"
+fi
 mkdir -p "${OUT_DIR}" "${TEMP_DIR}"
 
 echo "[gunc] MAG 输入目录: ${MAG_DIR} ($(find "${MAG_DIR}" -maxdepth 1 -name '*.fa' 2>/dev/null | wc -l) 个 MAG)"
