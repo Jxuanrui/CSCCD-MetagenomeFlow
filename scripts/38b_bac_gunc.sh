@@ -58,6 +58,7 @@ mgx_parse "$@"
 mgx_require CPUS WORKDIR REPO
 
 mgx_begin
+if [ ${FORCE} -eq 1 ]; then mgx_force_backup "${WORKDIR}/result/binning/gunc"; fi
 
 MAG_DIR="${WORKDIR}/result/binning/drep/dereplicated_genomes"
 OUT_DIR="${WORKDIR}/result/binning/gunc"

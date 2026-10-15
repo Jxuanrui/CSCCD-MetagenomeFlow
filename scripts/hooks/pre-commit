@@ -90,4 +90,13 @@ if [ "${FAILED}" -ne 0 ]; then
     echo "[HINT]  临时跳过（不推荐）: git commit --no-verify"
     exit 1
 fi
+# ── Gate 4: interface-consistency lint (supervisor final review P0-3, 2026-10-15) ──
+# usage-help vs MGX_OPTS registry: catches "documented but unregistered" options
+# (43/43b -t class) that shellcheck is structurally blind to. Blocking.
+STAGED_SH_LINT=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^scripts/.*\.sh$' || true)
+if [ -n "$STAGED_SH_LINT" ]; then
+    # shellcheck disable=SC2086
+    python3 "$REPO_ROOT/scripts/utils/lint_iface.py" $STAGED_SH_LINT
+fi
+
 exit 0

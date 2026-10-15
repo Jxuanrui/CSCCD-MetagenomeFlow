@@ -57,6 +57,11 @@ mgx_parse() {
     for flag in ${MGX_OPTS_FLAG:-}; do
         printf -v "$(_mgx_var "${flag}")" '%s' 0
     done
+    # 带值选项默认空串（质量审核终审 2026-10-15 P0-1：set -u 脚本未传可选参数时
+    # unbound variable 崩溃——41 号 MAG_FILTER 实爆；一次覆盖全部脚本）
+    for opt in ${MGX_OPTS_STRING:-} ${MGX_OPTS_LONG:-}; do
+        printf -v "$(_mgx_var "${opt#*:}")" '%s' ""
+    done
     while [ $# -gt 0 ]; do
         case "$1" in
             -h|--help)
@@ -289,7 +294,22 @@ mgx_conda() {
         echo "[ERROR] mgx_conda: REPO 未设置"
         exit 1
     fi
-    conda run --prefix "${REPO}/envs/$1" --no-capture-output "${@:2}"
+    # 质量审核终审 2026-10-15 P0-2：调用点级环境隔离（会话层 activate.sh 的策略对
+    # nohup 泳道/续接会话无效；~/.local numpy 曾遮蔽环境内 numpy 致 53/70 二爆）
+    PYTHONNOUSERSITE=1 conda run --prefix "${REPO}/envs/$1" --no-capture-output "${@:2}"
+}
+
+# --force 重跑前的产物备份钩子（质量审核终审 2026-10-15 P0-5）：把将被覆盖的目录
+# 移入 temp/trash/<时间戳>/（调用方自行清理，建议保留 72h）。只护"唯一副本"
+# 类高危步骤（W1 基线被 --force 覆盖丢失的教训）。
+mgx_force_backup() {
+    local dir="$1"
+    [ -d "$dir" ] || return 0
+    local trash
+    trash="${WORKDIR:-.}/temp/trash/$(date +%Y%m%d_%H%M%S)"
+    mkdir -p "$trash"
+    mv "$dir" "$trash/$(basename "$dir")" && echo "[mgx] 已备份 ${dir} -> ${trash}/"
+    return 0
 }
 
 # errexit 屏蔽执行: 运行命令并返回其退出码，不终止当前 shell（set +e; cmd; set -e 的函数化）

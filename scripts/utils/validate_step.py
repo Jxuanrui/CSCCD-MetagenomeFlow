@@ -131,6 +131,35 @@ VALIDATION_RULES = {
     ],
     # Default: just check exit code was 0 (no additional validation)
     "_default": [],
+    # ── 质量审核终审 2026-10-15 P1-6：高价值不变式（只给"错了会静默污染下游"的步骤）──
+    "38_bac_drep": [
+        ("genomes_present", lambda w, s: len(list(Path(f"{w}/result/binning/drep/dereplicated_genomes").glob("*.fa"))) > 0,
+         "dereplicated MAG FASTAs exist"),
+        ("count_closure", lambda w, s: _drep_count_closed(w),
+         "dereplicated_genomes count == dRep Cdb cluster count"),
+    ],
+    "40_bac_gtdbtk": [
+        ("summary_rows", lambda w, s: _tsv_data_rows(f"{w}/result/binning/gtdbtk/gtdbtk.bac120.summary.tsv") > 0,
+         "GTDB-Tk summary has classified MAGs"),
+        ("count_closure", lambda w, s: _gtdbtk_count_closed(w),
+         "GTDB-Tk summary rows == dereplicated MAG count"),
+    ],
+    "74f_fun_phf_aggregate": [
+        ("merged_exists", lambda w, s: os.path.isfile(f"{w}/result/fungi/phf_profiler/merged_abundance.tsv"),
+         "merged PHF abundance table exists"),
+        ("cluster_closure", lambda w, s: _phf_cluster_closed(w),
+         "merged rows == unique clusters across per-sample .rc (catches header-misdetection line drops)"),
+    ],
+    "60_vir_votu_table": [
+        ("table_exists", lambda w, s: os.path.isfile(f"{w}/result/virus/votu/votu_table.tsv"),
+         "canonical vOTU table exists"),
+        ("join_closure", lambda w, s: _votu_join_closed(w),
+         "votu_join_stats failed_contig_rows == 0 and canonical == representative count"),
+        ("tpm_conservation", lambda w, s: _votu_tpm_sums_ok(w),
+         "each sample's vOTU TPM sums to 1e6 (index EM-split regression guard)"),
+        ("column_shape", lambda w, s: _votu_columns_ok(w),
+         "columns are votu,length,<sample>_tpm/_count pairs[,lineage,annotation_status]"),
+    ],
     "22_bac_kegg": [
         ("diamond_tsv_exists", lambda w, s: os.path.isfile(f"{w}/result/annotation/kegg/kegg_diamond.tsv"),
          "KEGG diamond result table exists"),
@@ -150,6 +179,94 @@ VALIDATION_RULES = {
          "every bin contig ID appears in contig2bin table (same source)"),
     ],
 }
+
+
+def _tsv_data_rows(path):
+    """Non-empty data rows in a TSV (header assumed)."""
+    return count_tsv_data_rows(path)
+
+
+def _drep_count_closed(w):
+    try:
+        genomes = len(list(Path(f"{w}/result/binning/drep/dereplicated_genomes").glob("*.fa")))
+        clusters = set()
+        for line in open(f"{w}/result/binning/drep/data_tables/Cdb.csv"):
+            p = line.rstrip("\n").split(",")
+            if len(p) > 1 and p[0] != "genome":
+                clusters.add(p[1])
+        return genomes == len(clusters) and genomes > 0
+    except Exception:
+        return False
+
+
+def _gtdbtk_count_closed(w):
+    try:
+        rows = _tsv_data_rows(f"{w}/result/binning/gtdbtk/gtdbtk.bac120.summary.tsv")
+        genomes = len(list(Path(f"{w}/result/binning/drep/dereplicated_genomes").glob("*.fa")))
+        return rows == genomes and rows > 0
+    except Exception:
+        return False
+
+
+def _phf_cluster_closed(w):
+    try:
+        merged = count_tsv_data_rows(f"{w}/result/fungi/phf_profiler/merged_abundance.tsv")
+        clusters = set()
+        for rc in Path(f"{w}/result/fungi/phf_profiler").glob("*/*.rc"):
+            for line in open(rc):
+                if line.startswith("#") or not line.strip():
+                    continue
+                cid = line.split("\t")[0]
+                if cid:
+                    clusters.add(cid)
+        return merged == len(clusters) and merged > 0
+    except Exception:
+        return False
+
+
+def _votu_join_closed(w):
+    try:
+        stats = {}
+        for line in open(f"{w}/result/virus/votu/table/votu_join_stats.tsv"):
+            p = line.rstrip("\n").split("\t")
+            if len(p) == 2:
+                stats[p[0]] = p[1]
+        reps = count_tsv_data_rows(f"{w}/result/virus/votu/votu_representatives.tsv", skip_header=False)
+        return (int(stats.get("failed_contig_rows", -1)) == 0
+                and int(stats.get("canonical_votus", -1)) == reps > 0)
+    except Exception:
+        return False
+
+
+def _votu_tpm_sums_ok(w):
+    try:
+        with open(f"{w}/result/virus/votu/votu_table.tsv") as f:
+            header = f.readline().rstrip("\n").split("\t")
+            tpm_idx = [i for i, c in enumerate(header) if c.endswith("_tpm")]
+            sums = [0.0] * len(tpm_idx)
+            for line in f:
+                p = line.rstrip("\n").split("\t")
+                for k, i in enumerate(tpm_idx):
+                    try:
+                        sums[k] += float(p[i])
+                    except (ValueError, IndexError):
+                        pass
+        return bool(tpm_idx) and all(abs(s - 1e6) < 1.0 for s in sums)
+    except Exception:
+        return False
+
+
+def _votu_columns_ok(w):
+    try:
+        header = open(f"{w}/result/virus/votu/votu_table.tsv").readline().rstrip("\n").split("\t")
+        if header[:2] != ["votu", "length"]:
+            return False
+        mid = header[2:]
+        if mid and mid[-1] in ("lineage", "annotation_status"):
+            mid = mid[:-2] if mid[-2:-1] == ["lineage"] or (len(mid) >= 2 and mid[-2] == "lineage") else mid
+        return all(c.endswith("_tpm") or c.endswith("_count") for c in mid)
+    except Exception:
+        return False
 
 
 def _first_ncols_ok(path, ncols):

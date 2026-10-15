@@ -44,6 +44,7 @@ mgx_parse "$@"
 mgx_require CPUS WORKDIR REPO
 
 mgx_begin
+if [ ${FORCE} -eq 1 ]; then mgx_force_backup "${WORKDIR}/result/binning/drep"; fi
 INPUT_DIR="${WORKDIR}/result/binning/checkm2/drep_input"
 FILTERED_REPORT="${WORKDIR}/result/binning/checkm2/checkm2_filtered/filtered_report.tsv"
 OUTDIR="${WORKDIR}/result/binning/drep"

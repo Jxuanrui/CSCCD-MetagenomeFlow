@@ -38,6 +38,7 @@ mgx_parse "$@"
 mgx_require SAMPLE CPUS WORKDIR REPO
 
 mgx_begin
+if [ ${FORCE} -eq 1 ]; then mgx_force_backup "${WORKDIR}/result/virus/checkv/${SAMPLE}"; fi
 GENOMAD_DIR="${WORKDIR}/result/virus/genomad/${SAMPLE}"
 VS2_DIR="${WORKDIR}/result/virus/virsorter2/${SAMPLE}"
 CONTIGS_DIR="${WORKDIR}/result/virus/checkv/${SAMPLE}"
