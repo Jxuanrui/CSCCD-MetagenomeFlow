@@ -56,6 +56,12 @@
 | W6 | 91→92→93→94→96 系→99a/99b→98 | | | 统计附 3v3 功效披露 |
 串行：36b→37→38→38b→MAG 尾链；39b→c→d；43→43c；80→81-86；75→75b。并行：目录级注释互斥安全；**病毒下游依赖修正（质量审核四审）：65/66 真实依赖 64（pharokka.gbk/phanotate.faa），67/67b/68/69/70/72 仅依赖 virus.fasta**；28/31e/42/42b 与 MAG 链无依赖（读 16/17 号产物）。
 
+## 质量审核通道架构（2026-10-16 起，用户提供中转站）
+- **当前默认：sicoding.ai 中转 + gpt-6-astra**（用户提供；实测可用但慢——首包 1-2 分钟；Cloudflare 按 TLS 指纹拦 urllib（403/1010），传输层已改 curl 子进程）。
+- 调用：`SUPERVISOR_TODAY=YYYY-MM-DD python3 scripts/utils/supervisor_api.py "<审核请求>"`；带只读工具循环（read_file/grep/glob，限仓库根），质量审核自行核证文件证据；冒烟测试通过（自主读文件+五段式报告+文件:行号证据）。
+- **多站切换**：`.claude/supervisor_relays.local.json`（gitignored，含密钥）登记站点；`--station 名` / `SUPERVISOR_STATION` / `default_station` 三选一切换；新增站点=加一条 JSON。
+- 既有通道保留：ZCode 子代理加载章程（中转故障后备）；claude CLI（环境恢复则用）。通道裁决力等价，均按 supervisor.md 章程出五段式报告。
+
 ## 质量审核终审（2026-10-15，用户三问：完成度/复发根因/防复发保证）→ **用户批准后 P0 防线已落地（f7f6edb）**
 - **已上**：① mgx_parse 预初始化全部带值选项（41 号 unbound 家族源头消灭）；② mgx_conda 调用点级 PYTHONNOUSERSITE=1（53→70 宿主污染家族终结）；③ 接口一致性 lint 挂 pre-commit 门 4（43 号"-t 声明未注册"类；回归测试验证可抓，全库扫描现零违例，已发现 38 号 -A/-a 注册未文档化漂移）；④ --force 备份钩子挂 5 个唯一副本高危步骤（19/37/38/38b/54）；⑤ validate_step 补 4 组高价值不变式（60 TPM 守恒/join 闭合、38/40 计数闭合、74f 簇闭合）——全部对现产出 PASS。
 - **缓上（按质量审核排期）**：flock 单实例锁（演示收尾后）；泳道脚本模板化迁入版本库（W2-W4 收尾后统一）。
