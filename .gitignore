@@ -141,3 +141,4 @@ mining/m4/profiles/
 mining/m4/annotations_cache.jsonl
 .mcp.json
 .pixi/
+.claude/supervisor_relays.local.json
