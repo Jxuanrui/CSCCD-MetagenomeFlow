@@ -8,7 +8,7 @@
 | 11_bac_metaphlan4 | bacteria | ✓ 已完成 |  |
 | 11b_bac_metaphlan4_merge | bacteria | ✓ 已完成 |  |
 | 12_bac_strainphlan4 | bacteria | ✓ 已完成（aggregate：须等 11 全部完成） | 依赖 11 ×6 样本 |
-| 13_bac_humann3 ¹ | bacteria | 运行 |  |
+| 13_bac_humann3 ¹ | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 13b_bac_humann3_merge | bacteria | ✓ 已完成 |  |
 | 14_bac_kraken2 | bacteria | ✓ 已完成 |  |
 | 14b_bac_kraken2_merge | bacteria | ✓ 已完成 |  |
@@ -25,50 +25,50 @@
 | 20_bac_salmon_quant | bacteria | ✓ 已完成 |  |
 | 21_bac_eggnog | bacteria | ✓ 已完成 |  |
 | 22_bac_kegg | bacteria | ✓ 已完成 |  |
-| 23_bac_amrfinder | bacteria | 运行 |  |
-| 24_bac_card | bacteria | 运行 |  |
-| 24b_bac_card_summary | bacteria | 运行 |  |
-| 25_bac_dbcan | bacteria | 运行 |  |
-| 26_bac_vfdb | bacteria | 运行 |  |
-| 27_bac_bacmet | bacteria | 运行 |  |
-| 28_bac_antismash | bacteria | 运行 |  |
-| 28b_bac_bgc_novelty | bacteria | 运行 |  |
-| 29_bac_defense_finder | bacteria | 运行 |  |
-| 30_bac_ncyc | bacteria | 运行 |  |
-| 31_bac_pcyc | bacteria | 运行 |  |
-| 31b_bac_scyc | bacteria | 运行 |  |
-| 31c_bac_pfam | bacteria | 运行 |  |
-| 31d_bac_uniprot | bacteria | 运行 |  |
-| 31e_bac_fegenie | bacteria | 运行 |  |
+| 23_bac_amrfinder | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 24_bac_card | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 24b_bac_card_summary | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 25_bac_dbcan | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 26_bac_vfdb | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 27_bac_bacmet | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 28_bac_antismash | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 28b_bac_bgc_novelty | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 29_bac_defense_finder | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 30_bac_ncyc | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 31_bac_pcyc | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 31b_bac_scyc | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 31c_bac_pfam | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 31d_bac_uniprot | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 31e_bac_fegenie | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 32_bac_coverm_depth | bacteria | ✓ 已完成 |  |
 | 33_bac_metabat2 | bacteria | ✓ 已完成 |  |
-| 33b_bac_quickbin | bacteria | 运行 |  |
+| 33b_bac_quickbin | bacteria | 不单独执行（36 号注释：4 工具对照实测有害，见 scripts/36_bac_dastool.sh 头注） |  |
 | 34_bac_maxbin2 | bacteria | ✓ 已完成 |  |
 | 35_bac_semibin2 | bacteria | ✓ 已完成 |  |
 | 36_bac_dastool | bacteria | ✓ 已完成 |  |
-| 36b_bac_bin_reassembly | bacteria | 运行 |  |
-| 37_bac_checkm2 | bacteria | 运行 |  |
-| 38_bac_drep | bacteria | 运行 |  |
-| 38b_bac_gunc | bacteria | 运行 |  |
-| 39_bac_coverm_quant | bacteria | 运行 |  |
-| 39b_bac_instrain_map | bacteria | 运行 |  |
+| 36b_bac_bin_reassembly | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 37_bac_checkm2 | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 38_bac_drep | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 38b_bac_gunc | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 39_bac_coverm_quant | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 39b_bac_instrain_map | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 39c_bac_instrain_profile | bacteria | 运行 |  |
 | 39d_bac_instrain_compare | bacteria | 运行 |  |
-| 40_bac_gtdbtk | bacteria | 运行 |  |
-| 41_bac_prokka | bacteria | 运行 |  |
-| 41b_bac_mlst | bacteria | 运行 |  |
-| 41c_bac_pangenome | bacteria | 运行 |  |
-| 41d_bac_snippy | bacteria | 运行 |  |
-| 42_bac_mge | bacteria | 运行 |  |
-| 42b_bac_plasmidfinder | bacteria | 运行 |  |
-| 43_bac_gem_gapseq | bacteria | 运行 |  |
+| 40_bac_gtdbtk | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 41_bac_prokka | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 41b_bac_mlst | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 41c_bac_pangenome | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 41d_bac_snippy | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 42_bac_mge | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 42b_bac_plasmidfinder | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 43_bac_gem_gapseq | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 43b_bac_gem_carveme | bacteria | 运行 |  |
 | 43c_bac_gem_cobrapy_fba | bacteria | 运行 |  |
 | 51_vir_megahit | virome | ✓ 已完成 |  |
 | 52_vir_genomad | virome | ✓ 已完成 |  |
 | 53_vir_virsorter2 | virome | ✓ 已完成 |  |
 | 54_vir_checkv_contig | virome | ✓ 已完成 |  |
-| 54b_vir_checkv_filter | virome | 运行 |  |
+| 54b_vir_checkv_filter | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 55_vir_prodigal_gv | virome | ✓ 已完成 |  |
 | 56_vir_votu_gen | virome | ✓ 已完成 |  |
 | 57_vir_votu_genomad | virome | ✓ 已完成 |  |
@@ -78,16 +78,16 @@
 | 61_vir_vmag | virome | 运行 |  |
 | 62_vir_checkv_mag | virome | 待核/预期空 | 不适用候选：vMAG 依赖深链产出（Tutorial:1901 Project01 先例 0 vMAG，跑后核） |
 | 63_vir_coverm_quant | virome | 待核/预期空 | 同 62 |
-| 64_vir_pharokka | virome | 运行 |  |
-| 65_vir_phold | virome | 运行 |  |
-| 66_vir_vog | virome | 运行 |  |
-| 67_vir_bacphlip | virome | 运行 |  |
-| 67b_vir_phastyle | virome | 运行 |  |
-| 68_vir_iphop | virome | 运行 |  |
-| 69_vir_vcontact3 | virome | 运行 |  |
-| 70_vir_phabox2 | virome | 运行 |  |
+| 64_vir_pharokka | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 65_vir_phold | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 66_vir_vog | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 67_vir_bacphlip | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 67b_vir_phastyle | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 68_vir_iphop | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 69_vir_vcontact3 | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 70_vir_phabox2 | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 71_vir_dram | virome | 待核/预期空（依赖 vMAG，见 62/63） |  |
-| 72_vir_phagcn3 | virome | 运行 |  |
+| 72_vir_phagcn3 | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 71_fun_kraken2_fungi | fungi | ✓ 已完成 |  |
 | 72_fun_metaphlan4_euk | fungi | ✓ 已完成 |  |
 | 72b_fun_metaphlan4_merge | fungi | ✓ 已完成 |  |
@@ -95,11 +95,11 @@
 | 74_fun_blast_gutdb | fungi | 已废弃（gut_fungi.dmnd 核酸库误作蛋白库，产出恒 0；勿启动） |  |
 | 74a_fun_gut_db_build | fungi | ⬜ 未运行（依赖 74，74 已废弃，此步不再排期） |  |
 | 74e_fun_phf_profiler | fungi | ✓ 已完成 |  |
-| 74f_fun_phf_aggregate |  | 运行 |  |
-| 75_fun_funomics | fungi | ⬜ 未运行 |  |
-| 75b_fun_funomics_aggregate | fungi | ⬜ 未运行 |  |
+| 74f_fun_phf_aggregate |  | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 75_fun_funomics | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 75b_fun_funomics_aggregate | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 76_fun_ccmetagen | fungi | 不适用（registry removed，脚本已删除） |  |
-| 77_fun_microfisher | fungi | ⬜ 未运行 |  |
+| 77_fun_microfisher | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 78_fun_megahit | fungi | ✓ 已完成 |  |
 | 79_fun_eukfinder | fungi | ✓ 已完成 |  |
 | 79b_fun_veba_qc | fungi | ✓ 已完成 |  |
@@ -107,17 +107,17 @@
 | 79d_fun_metabat2 | fungi | ⬜ 未运行 |  |
 | 79e_fun_euk_qc_per_bin | fungi | ⬜ 未运行 |  |
 | 79f_fun_metaeuk_per_bin | fungi | ⬜ 未运行 |  |
-| 80_fun_prodigal | fungi | ⬜ 未运行（只依赖 78，不依赖 79b） |
-| 80b_fun_metaeuk | fungi | ⬜ 未运行 |  |
-| 81_fun_eggnog | fungi | ⬜ 未运行 |  |
-| 82_fun_kegg | fungi | ⬜ 未运行 |  |
+| 80_fun_prodigal | fungi | ✓ 已完成（事件流核证 2026-10-16） |
+| 80b_fun_metaeuk | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 81_fun_eggnog | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 82_fun_kegg | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 83_fun_dbcan | fungi | ⬜ 未运行 |  |
 | 84_fun_vfdb | fungi | ⬜ 未运行 |  |
 | 85_fun_amr | fungi | ⬜ 未运行 |  |
 | 86_fun_merops | fungi | ⬜ 未运行 |  |
-| 91_stat_diversity | stats | 运行 |  |
-| 92_stat_differential | stats | 运行 |  |
-| 93_stat_cooccurrence | stats | 运行 |  |
+| 91_stat_diversity | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 92_stat_differential | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 93_stat_cooccurrence | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 94_stat_visualization | stats | 运行 |  |
 | 95a_stat_batch_correct | stats | 运行 |  |
 | 95b_stat_batch_evaluate | stats | 运行 |  |
