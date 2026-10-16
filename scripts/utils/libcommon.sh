@@ -58,9 +58,16 @@ mgx_parse() {
         printf -v "$(_mgx_var "${flag}")" '%s' 0
     done
     # 带值选项默认空串（质量审核终审 2026-10-15 P0-1：set -u 脚本未传可选参数时
-    # unbound variable 崩溃——41 号 MAG_FILTER 实爆；一次覆盖全部脚本）
+    # unbound variable 崩溃——41 号 MAG_FILTER 实爆；一次覆盖全部脚本）。
+    # 2026-10-16 修正：仅对"完全未设置"的变量预置空串——91/93 曾在 mgx_parse
+    # 前给非空默认值（GROUP_COL="group"、NET_TYPE="all"），被无条件覆盖成空串
+    # 导致 gate 烟测三连败（regression 由 W5 gate 在统计段启动前拦截）
     for opt in ${MGX_OPTS_STRING:-} ${MGX_OPTS_LONG:-}; do
-        printf -v "$(_mgx_var "${opt#*:}")" '%s' ""
+        local pvar
+        pvar="$(_mgx_var "${opt#*:}")"
+        if [ -z "${!pvar+x}" ]; then
+            printf -v "$pvar" '%s' ""
+        fi
     done
     while [ $# -gt 0 ]; do
         case "$1" in
