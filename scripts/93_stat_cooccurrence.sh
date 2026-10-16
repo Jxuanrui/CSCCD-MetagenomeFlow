@@ -29,7 +29,7 @@ Optional:
 EOF
 }
 
-GROUP_COL=""
+GROUP_COL="group"
 NET_TYPE="all"
 
 # MGX_* tables are consumed by mgx_parse (libcommon.sh)
@@ -271,6 +271,11 @@ read_virus_table <- function(votu_path) {
   mat <- apply(mat, 2, as.numeric)
   rownames(mat) <- raw[[votu_col]]
   mat[is.na(mat)] <- 0
+
+  # 剥 _tpm 后缀以匹配 metadata 行名（质量审核 5 审 E2：read_abundance_table:251 有
+  # 此行而病毒侧漏掉——列名 Sample1_tpm vs 元数据 Sample1 交集为 0，
+  # 曾伪装成"需≥5 样本"的误导性失败）
+  colnames(mat) <- sub("_tpm$", "", colnames(mat))
 
   # Filter out zero-sum rows
   mat <- mat[rowSums(mat) > 0, , drop = FALSE]
@@ -563,7 +568,11 @@ save_network_outputs <- function(net, label, out_dir) {
 }
 
 run_netcomi_compare <- function(mat, meta, group_col, label, out_dir) {
-  if (!nzchar(group_col) || !group_col %in% names(meta)) return(invisible(NULL))
+  # 质量审核 5 审 E3：guard 命中时不得静默记 OK——返回 SKIPPED 标记由调用方写状态
+  if (!nzchar(group_col) || !group_col %in% names(meta)) {
+    message("[netcomi] SKIPPED: group column '", group_col, "' missing for ", label)
+    return(invisible(NULL))
+  }
   lvls <- levels(as.factor(meta[[group_col]]))
   if (length(lvls) < 2) return(invisible(NULL))
   keep <- meta[[group_col]] %in% lvls[1:2]

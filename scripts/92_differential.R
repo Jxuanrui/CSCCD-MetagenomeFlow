@@ -569,6 +569,8 @@ write_tsv(status_df, file.path(stat_root, "differential_status.tsv"))
 write_tsv(summary_df, file.path(stat_root, "differential_summary.tsv"))
 
 if (!success_dims) {
-  message("[WARN] No dimension completed successfully; wrote header-only differential_summary.tsv")
+  # 质量审核 5 审 E1：全维度失败不得 exit 0（曾以表头空壳 + exit 0 通过哨兵与 gate）
+  message("[ERROR] No dimension completed successfully; differential_summary.tsv is header-only")
+  quit(status = 1)
 }
 message("[INFO] Differential analysis finished")

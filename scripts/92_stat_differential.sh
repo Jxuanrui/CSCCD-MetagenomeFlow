@@ -61,7 +61,8 @@ if [ ! -f "${METADATA_CSV}" ]; then
     exit 1
 fi
 
-if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ] && [ "$(wc -l < "${SENTINEL}")" -ge 2 ]; then
+    # 质量审核 5 审 E1：哨兵须有 ≥1 数据行——仅表头的空壳曾短路重跑
     echo "[INFO] Existing outputs detected, skipping rerun"
     echo "  Sentinel: ${SENTINEL}"
     echo "[INFO] Use --force to re-run"
