@@ -146,12 +146,23 @@ run_step <- function(step, expr) {
       log_status(step, "OK", "")
       TRUE
     },
+    # 质量审核 6 审 P0-1c：SKIPPED 为正式终态（guard/超时/禁用），不再冒充 OK
+    skipped_step = function(e) {
+      log_status(step, "SKIPPED", conditionMessage(e))
+      message("[INFO] ", step, " SKIPPED: ", conditionMessage(e))
+      FALSE
+    },
     error = function(e) {
       log_status(step, "FAILED", conditionMessage(e))
       message("[WARN] ", step, ": ", conditionMessage(e))
       FALSE
     }
   )
+}
+
+# 抛出 SKIPPED 终态（被 run_step 的 skipped_step 分支捕获）
+skip_step <- function(msg) {
+  stop(structure(list(message = msg), class = c("skipped_step", "error", "condition")))
 }
 
 read_metadata <- function(path) {
@@ -568,27 +579,40 @@ save_network_outputs <- function(net, label, out_dir) {
 }
 
 run_netcomi_compare <- function(mat, meta, group_col, label, out_dir) {
-  # 质量审核 5 审 E3：guard 命中时不得静默记 OK——返回 SKIPPED 标记由调用方写状态
+  # 质量审核 6 审 P0-1d：构建优先开关——NETCOMI_DISABLE=1 时跳过比较只出网络
+  if (identical(Sys.getenv("NETCOMI_DISABLE", "0"), "1")) {
+    skip_step("netcomi disabled via NETCOMI_DISABLE (build-only run)")
+  }
+  # 质量审核 5 审 E3 / 6 审 P0-1c：guard 命中→SKIPPED 终态并留痕
   if (!nzchar(group_col) || !group_col %in% names(meta)) {
-    message("[netcomi] SKIPPED: group column '", group_col, "' missing for ", label)
-    return(invisible(NULL))
+    skip_step(paste0("group column '", group_col, "' missing"))
   }
   lvls <- levels(as.factor(meta[[group_col]]))
-  if (length(lvls) < 2) return(invisible(NULL))
+  if (length(lvls) < 2) skip_step(paste0("group column '", group_col, "' has <2 levels"))
   keep <- meta[[group_col]] %in% lvls[1:2]
   meta2 <- meta[keep, , drop = FALSE]
   sample_ids <- if ("sample_id" %in% names(meta2)) as.character(meta2$sample_id) else rownames(meta2)
   sample_ids <- sample_ids[sample_ids %in% colnames(mat)]
-  if (length(sample_ids) < 6) return(invisible(NULL))
+  if (length(sample_ids) < 6) skip_step(paste0("only ", length(sample_ids), " metadata-matched samples (need 6 for 3v3 label permutation)"))
   if ("sample_id" %in% names(meta2)) {
     meta2 <- meta2[match(sample_ids, as.character(meta2$sample_id)), , drop = FALSE]
   } else {
     meta2 <- meta2[match(sample_ids, rownames(meta2)), , drop = FALSE]
   }
   mat2 <- mat[, sample_ids, drop = FALSE]
-  if (ncol(mat2) < 6) return(invisible(NULL))
+  if (ncol(mat2) < 6) skip_step("fewer than 6 sample columns after subsetting")
   idx1 <- sample_ids[meta2[[group_col]] == lvls[1]]
   idx2 <- sample_ids[meta2[[group_col]] == lvls[2]]
+  # 质量审核 6 审 P0-1a（防复发规则②）：nPerm 上限对齐组标签置换空间 C(n1+n2,n1)
+  # ——3v3 仅 20 种，默认 1000 中 ~98% 为重复计算（NetCoMi 默认 1000 见其文档）
+  perm_space <- choose(length(idx1) + length(idx2), length(idx1))
+  n_perm <- min(as.integer(Sys.getenv("NETCOMI_NPERM", "1000")), perm_space)
+  if (perm_space < 100) {
+    message("[netcomi] WARN: label-permutation space C(", length(idx1) + length(idx2),
+            ",", length(idx1), ")=", perm_space, " < 100 — p 值分辨率受此天花板限制，",
+            "nPerm 已降至 ", n_perm)
+  }
+  fuse_sec <- as.integer(Sys.getenv("NETCOMI_TIMEOUT", "7200"))
   compare_path <- file.path(out_dir, "group_compare.txt")
   cmp <- tryCatch(
     {
@@ -617,15 +641,23 @@ run_netcomi_compare <- function(mat, meta, group_col, label, out_dir) {
         )
       }
       net_props <- NetCoMi::netAnalyze(net_obj, graphlet = FALSE, verbose = 0)
+      # 质量审核 6 审 P0-1b（防复发规则③）：墙钟熔断——超时按 SKIPPED(timeout) 终态，
+      # 禁止无限等待（setTimeLimit 在每次置换回到 R 层时触发检查）
+      setTimeLimit(elapsed = fuse_sec, transient = TRUE)
+      on.exit(setTimeLimit(), add = TRUE)
       NetCoMi::netCompare(
         net_props,
         testRand = FALSE,
         gcd = FALSE,
+        nPerm = n_perm,
         cores = as.integer(Sys.getenv("THREADS", "1")),
         verbose = FALSE
       )
     },
     error = function(e) {
+      if (grepl("reached elapsed time limit|time limit", conditionMessage(e), ignore.case = TRUE)) {
+        skip_step(paste0("netcomi exceeded NETCOMI_TIMEOUT=", fuse_sec, "s wall clock (SKIPPED by fuse)"))
+      }
       writeLines(
         c(
           paste("NetCoMi group comparison:", label),
@@ -635,6 +667,7 @@ run_netcomi_compare <- function(mat, meta, group_col, label, out_dir) {
           paste("Features:", nrow(mat2)),
           paste("Samples group 1:", length(idx1)),
           paste("Samples group 2:", length(idx2)),
+          paste("nPerm:", n_perm, "(capped at permutation space", perm_space, ")"),
           "Measure: sparcc; normMethod: clr; zeroMethod: pseudo; sparsMethod: threshold; thresh: 0.3"
         ),
         compare_path
@@ -642,6 +675,10 @@ run_netcomi_compare <- function(mat, meta, group_col, label, out_dir) {
       NULL
     }
   )
+  # 质量审核 6 审 P0-1c：仅真实产出 group_compare.txt 才算完成比较
+  if (is.null(cmp) && !file.exists(compare_path)) {
+    skip_step(paste0("netcomi produced no output for ", label))
+  }
   if (!is.null(cmp)) capture.output(cmp, file = compare_path)
 }
 
