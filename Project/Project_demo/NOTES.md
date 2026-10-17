@@ -138,11 +138,12 @@
 ### 当前运行中（2026-10-17 04:30 更新）
 | 泳道 | 内容 | 状态 |
 |---|---|---|
-| L1B | 有界 netcomi（nPerm=20 自动封顶生效；细菌域 group_compare ~10min 已出；病毒域逐组重建阶段）——总预算 2h，超时按约终止记 SKIPPED | 运行中 |
+| ~~L1B~~ | **终局（2026-10-17 05:00，质量审核七审核证）**：nPerm=20 封顶与熔断机制真实生效；细菌域 group_compare.txt 为退化诊断（3v3 逐组 SparCC 退化，"Status: unavailable"，非成功比较）；其余 4 目标于 2h 总预算点按六审approve #1 终止 = SKIPPED(overall-timeout)；L1A 状态表未被覆写（保住诚实 SKIPPED 披露） | 已终局 |
 | L2 W4-B | 39c/H11 → 39d 收官在即 | 在跑 |
 | L3 W4-C | gapseq 7/10 → 43b → 43c | 在跑 |
 
 > **L1A 完成（2026-10-17，24b4dbb + 用户批准三项approve）**：25h 卡死链终止、旧假表隔离；93 修复包四件套（nPerm 置换空间封顶/2h 熔断/SKIPPED 终态语义/NETCOMI_DISABLE）；**5/5 网络建成**（补齐 virus 299 节点/4022 边、cross_bac_vir 600/15069）；**92 首次真实产出**（细菌 DESeq2 2 显著类群、病毒 2 vOTU；LEfSe 如实报无显著=3v3 上限；ancombc2 小 n 退化 FAILED；fungi SKIPPED 披露）。netcomi 细菌域有界比较 10 分钟完成（对照无限版 25h 零产出）。
+> **CP2 正式收口通过（质量审核七审，2026-10-17）**：判据三项逐项核证（5/5 网络+SKIPPED 语义留痕、92 真实产出含 DESeq2 显著特征抽查、有界披露诚实）；W5 获准启动（前置=本条落盘+参数预算自检）。报告：.claude/reviews/supervisor_20261017_cp2_closure.md。
 > 根因与调研：docs/research/2026-10-17_network_comparison_small_n.md（NetCoMi 默认 nPerm=1000×每次置换重建网；C(6,3)=20；业界 25-30/组）；质量审核六轮裁决：.claude/reviews/supervisor_20261017_netcomi_joint.md。
 
 ### 决定不执行
