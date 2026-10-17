@@ -120,7 +120,20 @@ metadata <- read.csv(opt$metadata_file, header=TRUE, check.names=FALSE,
 if(!"sample_id" %in% colnames(metadata)) stop("Metadata must contain a sample_id column")
 if(anyDuplicated(metadata$sample_id)) stop("Metadata sample_id values must be unique")
 
+# 质量审核七审预警的 _tpm/_count 后缀 join 陷阱家族：votu_table 列名为 <sample>_tpm，
+# 与元数据裸样本名交集为 0。直接匹配失败时改用 _tpm 子列（剥后缀重命名、
+# 丢弃成对的 _count 列防重名）——与 93 号修复同源
 common_samples <- intersect(colnames(abundance), metadata$sample_id)
+if (length(common_samples) == 0) {
+  tpm_cols <- grep("_tpm$", colnames(abundance), value = TRUE)
+  if (length(tpm_cols) > 0) {
+    base_cols <- setdiff(colnames(abundance), grep("_(tpm|count)$", colnames(abundance), value = TRUE))
+    tpm_block <- abundance[, tpm_cols, drop = FALSE]
+    colnames(tpm_block) <- sub("_tpm$", "", tpm_cols)
+    abundance <- cbind(abundance[, base_cols, drop = FALSE], tpm_block)
+    common_samples <- intersect(colnames(abundance), metadata$sample_id)
+  }
+}
 if(length(common_samples) == 0) stop("No common samples between abundance table and metadata")
 if(length(common_samples) < ncol(abundance)) {
   warning(sprintf("Using %d of %d abundance samples present in metadata",
