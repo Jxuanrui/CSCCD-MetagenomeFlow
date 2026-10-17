@@ -103,18 +103,18 @@
 | 78_fun_megahit | fungi | ✓ 已完成 |  |
 | 79_fun_eukfinder | fungi | ✓ 已完成 |  |
 | 79b_fun_veba_qc | fungi | ✓ 已完成 |  |
-| 79c_fun_coverm_depth | fungi | ⬜ 未运行 |  |
-| 79d_fun_metabat2 | fungi | ⬜ 未运行 |  |
-| 79e_fun_euk_qc_per_bin | fungi | ⬜ 未运行 |  |
-| 79f_fun_metaeuk_per_bin | fungi | ⬜ 未运行 |  |
+| 79c_fun_coverm_depth | fungi | ✓ 已完成（事件流核证 2026-10-17）|  |
+| 79d_fun_metabat2 | fungi | ✓ 已完成（事件流核证 2026-10-17）|  |
+| 79e_fun_euk_qc_per_bin | fungi | ✓ 已完成（事件流核证 2026-10-17）|  |
+| 79f_fun_metaeuk_per_bin | fungi | ✓ 已完成（事件流核证 2026-10-17）|  |
 | 80_fun_prodigal | fungi | ✓ 已完成（事件流核证 2026-10-16） |
 | 80b_fun_metaeuk | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 81_fun_eggnog | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 82_fun_kegg | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
-| 83_fun_dbcan | fungi | ⬜ 未运行 |  |
-| 84_fun_vfdb | fungi | ⬜ 未运行 |  |
-| 85_fun_amr | fungi | ⬜ 未运行 |  |
-| 86_fun_merops | fungi | ⬜ 未运行 |  |
+| 83_fun_dbcan | fungi | ✓ 已完成（事件流核证 2026-10-17）|  |
+| 84_fun_vfdb | fungi | ✓ 已完成（事件流核证 2026-10-17）|  |
+| 85_fun_amr | fungi | ✓ 已完成（事件流核证 2026-10-17）|  |
+| 86_fun_merops | fungi | ✓ 已完成（事件流核证 2026-10-17）|  |
 | 91_stat_diversity | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 92_stat_differential | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 93_stat_cooccurrence | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
