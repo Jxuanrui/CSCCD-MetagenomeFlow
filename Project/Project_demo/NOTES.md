@@ -135,15 +135,15 @@
 | eggNOG+KEGG | 21（302MB）+ 22（903,807 命中） | — | ✅ validate PASS |
 | 三路分箱+整合 | 32/33/34/35 + 36（353 MAGs） | — | ✅ validate PASS（含 bins↔c2b 一致性） |
 
-### 当前运行中（2026-10-17 01:50 更新）
+### 当前运行中（2026-10-17 04:30 更新）
 | 泳道 | 内容 | 状态 |
 |---|---|---|
-| W-fix 统计 | 93 --force：病毒网络构建完成，**NetCoMi 组间比较阶段**（R 单线程 24.7h+，其中 NetCoMi 9.3h；2,621 特征×置换检验）→ 92 --force 待接 | 已呈质量审核裁决规模问题 |
-| W4-B | 39×6✓ 39b×6✓ 39c×5✓（H11 运行 3.5h）→ 39d | 数小时内收官 |
-| W4-C | 43 gapseq 6/10 → 43b×10 → 43c×10 | ~1 天 |
+| L1B | 有界 netcomi（nPerm=20 自动封顶生效；细菌域 group_compare ~10min 已出；病毒域逐组重建阶段）——总预算 2h，超时按约终止记 SKIPPED | 运行中 |
+| L2 W4-B | 39c/H11 → 39d 收官在即 | 在跑 |
+| L3 W4-C | gapseq 7/10 → 43b → 43c | 在跑 |
 
-> 2026-10-16 收官：**F 真菌链全段完成**（71→86 含 83-86，15:07）；**Fungi-MAG 79c-f 全过**（15:56）——真菌域全部完结。
-> 瓶颈：93 的 NetCoMi 是 CP2→W5→W6 统计尾链的关键路径。
+> **L1A 完成（2026-10-17，24b4dbb + 用户批准三项approve）**：25h 卡死链终止、旧假表隔离；93 修复包四件套（nPerm 置换空间封顶/2h 熔断/SKIPPED 终态语义/NETCOMI_DISABLE）；**5/5 网络建成**（补齐 virus 299 节点/4022 边、cross_bac_vir 600/15069）；**92 首次真实产出**（细菌 DESeq2 2 显著类群、病毒 2 vOTU；LEfSe 如实报无显著=3v3 上限；ancombc2 小 n 退化 FAILED；fungi SKIPPED 披露）。netcomi 细菌域有界比较 10 分钟完成（对照无限版 25h 零产出）。
+> 根因与调研：docs/research/2026-10-17_network_comparison_small_n.md（NetCoMi 默认 nPerm=1000×每次置换重建网；C(6,3)=20；业界 25-30/组）；质量审核六轮裁决：.claude/reviews/supervisor_20261017_netcomi_joint.md。
 
 ### 决定不执行
 - 16b metaSPAdes（叶子步骤，无下游使用，用户批准不跑）
