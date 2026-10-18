@@ -222,12 +222,13 @@ def pair_step_starts(step_events: list) -> set:
     运行中 instead of stealing the rerun's pairing (supervisor stage-3 P0-3);
     unpaired starts are still-running (or killed) steps.
 
-    2026-10-18 (CP3 W1): sample_id normalization — some scripts log the start
-    with an empty sample_id but the end with the real one (98e residual card:
-    start sample='' vs end sample='Sample4' never paired). Empty-sample starts
-    are keyed under (step, '*') and an end with sample S closes an exact
-    (step, S) start first, falling back to (step, '*'). Concurrent runs of the
-    same step with DIFFERENT real samples still pair exactly."""
+    2026-10-18 (CP3 P0-2 revision): identity-preferred pairing with an
+    AMBIGUITY GUARD — a sample-mismatched end only closes a mismatched
+    start when that step has EXACTLY ONE pending candidate (unambiguous
+    bijection, e.g. the legacy 98e start=''/end='Sample4' pair). With
+    multiple pending candidates the pairing is left UNRESOLVED (the start
+    stays visible as running) rather than guessing by recency, per the
+    CP3 final-review ruling."""
     paired: set = set()
     pending: dict = {}
     for i, ev in enumerate(step_events):
@@ -237,15 +238,14 @@ def pair_step_starts(step_events: list) -> set:
             pending.setdefault((step, sample), []).append(i)
         else:
             stack = pending.get((step, sample))
-            if not stack and sample:
-                stack = pending.get((step, ""))
-            if not stack and not sample:
-                # 对称回退：空样本 end 关闭该 step 最近一个未配对 start（任意样本）
-                cands = [k for k in pending if k[0] == step and pending[k]]
-                if cands:
-                    stack = pending[max(cands, key=lambda k: pending[k][-1])]
             if stack:
                 paired.add(stack.pop())
+                continue
+            # sample-mismatch fallback: only when the bijection is unambiguous
+            cands = [k for k in pending if k[0] == step and pending[k]]
+            if len(cands) == 1:
+                paired.add(pending[cands[0]].pop())
+            # len(cands) != 1 -> ambiguity unresolved, start stays visible
     return paired
 
 

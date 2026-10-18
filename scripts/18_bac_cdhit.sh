@@ -134,6 +134,8 @@ mkdir -p "${RESULT_DIR}"
 # --- Step 1: 合并所有样本基因序列 ---
 
 echo "[cdhit] Step 1/4: 合并 ${N_SAMPLES} 个样本基因序列（添加样本名前缀防冲突）..."
+# CP3 P0-3：先清空再追加——上次崩溃残留的合并文件会使重跑输入翻倍（追加隐患）
+: > "${COMBINED_FNA}"
 for fna in "${FNA_FILES[@]}"; do
     sname=$(basename "$(dirname "$fna")")
     sed "s/^>/>${sname}|/" "$fna" >> "${COMBINED_FNA}"

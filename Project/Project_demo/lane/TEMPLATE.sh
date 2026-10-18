@@ -5,10 +5,10 @@
 # 纪律：启动前参数齐全性自检（对照各脚本 usage 的必传参）；重统计类步骤显式
 # 声明 nPerm/bootstrap 上限并换算墙钟（质量审核六审规则①）。
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-: "${WD:=/home/labuser/Course/Maxmetagenome/Project/PROJECT_NAME}"  # 复制后改为实际项目目录名（默认值形式避免未用告警）
-REPO=/home/labuser/Course/Maxmetagenome
-cd "$REPO" || exit 1
+REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+export PATH="${REPO}/miniforge3/bin:$PATH"
+: "${WD:?复制后设为实际项目目录绝对路径}"
+cd "$REPO" || exit 1  # REPO 已在文件头自发现
 
 fail() { echo "=== <LANE> ABORTED at \$1 (\$(date +%T)) ==="; exit 1; }
 

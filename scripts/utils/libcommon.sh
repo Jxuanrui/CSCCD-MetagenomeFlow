@@ -275,7 +275,7 @@ mgx_begin() {
     else
         _MGX_LOCK_DIR="${TMPDIR:-/tmp}/mgx_locks"
         mkdir -p "${_MGX_LOCK_DIR}" 2>/dev/null || true
-        _MGX_LOCK_KEY="$(printf '%s|%s|%s' "${WORKDIR:-?}" "${BASH_SOURCE[${#BASH_SOURCE[@]}-1]}" "${SAMPLE:-${SAMPLE_NAME:-}}" | md5sum | cut -d' ' -f1)"
+        _MGX_LOCK_KEY="$(printf '%s|%s|%s' "${WORKDIR:-?}" "${BASH_SOURCE[${#BASH_SOURCE[@]}-1]}" "${SAMPLE:-${SAMPLE_NAME:-${SAMPLE_ID:-}}}" | md5sum | cut -d' ' -f1)"
         exec 9>>"${_MGX_LOCK_DIR}/${_MGX_LOCK_KEY}.lock"
         if ! flock -n 9; then
             echo "[GUARD] 同一 (workdir, step, sample) 已有实例在运行（flock 拒绝重复启动，事故档案 #2 家族）"
