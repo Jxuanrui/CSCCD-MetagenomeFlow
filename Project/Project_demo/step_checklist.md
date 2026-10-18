@@ -76,8 +76,8 @@
 | 59_vir_salmon_quant | virome | ✓ 已完成 |  |
 | 60_vir_votu_table | virome | ✓ 已完成 |  |
 | 61_vir_vmag | x |不执行（Project01 先例 0 vMAG，连带 62/63/71） |  |
-| 62_vir_checkv_mag | virome | 待核/预期空 | 不适用候选：vMAG 依赖深链产出（Tutorial:1901 Project01 先例 0 vMAG，跑后核） |
-| 63_vir_coverm_quant | virome | 待核/预期空 | 同 62 |
+| 62_vir_checkv_mag | virome | 批准不执行 | 依据：NOTES「决定不执行」——vMAG 依赖深链产出，Project01 先例 0 vMAG（用户批准 2026-10-10 计划） |
+| 63_vir_coverm_quant | virome | 批准不执行 | 同 62（同批次用户批准） |
 | 64_vir_pharokka | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 65_vir_phold | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 66_vir_vog | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
@@ -86,7 +86,7 @@
 | 68_vir_iphop | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 69_vir_vcontact3 | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 70_vir_phabox2 | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
-| 71_vir_dram | virome | 待核/预期空（依赖 vMAG，见 62/63） |  |
+| 71_vir_dram | virome | 批准不执行 | 依赖 vMAG（62/63 不执行连带，同批次批准） |
 | 72_vir_phagcn3 | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 71_fun_kraken2_fungi | fungi | ✓ 已完成 |  |
 | 72_fun_metaphlan4_euk | fungi | ✓ 已完成 |  |
@@ -138,9 +138,9 @@
 | 98c_bac_mge_summary | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
 | 98d_bac_mag_integration | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
 | downstream_summary | stats | 不适用（占位步骤，实际由 98 系整合表承担） |  |
-| rag_build_experience | shared | 待approve/暂不跑 | 写入 mcp/chromadb_data（§10.1 禁改）；须 C1 approve且 B 线 RAG 重跑冻结后 |
-| rag_refresh_literature | shared | 待approve/暂不跑 | 同 rag_build_experience（质量审核 C1） |
-| 97_stat_crosscohort | stats | 待核/预期空 | 不适用：跨队列复现需第二队列，单项目演示不适用 |
+| rag_build_experience | shared | 本阶段排除（B 线范围） | 属 B 线 RAG 职责非本演示 A 线；写入路径 §10.1 禁改区；如需启用另行approve（当前状态=已decision非未决） |
+| rag_refresh_literature | shared | 本阶段排除（B 线范围） | 同上 |
+| 97_stat_crosscohort | stats | 不适用（结构性） | 跨队列复现需第二队列，单项目演示结构性不适用 |
 | 98e_cross_domain_ani_cluster | x |✓ 已完成（终版核证 2026-10-18） |  |
 | 98f_cross_domain_orthogroup | stats | ✓ 已完成（终版核证 2026-10-18） |  |
 | 98g_cross_domain_correlation | stats | ✓ 已完成（终版核证 2026-10-18） |  |

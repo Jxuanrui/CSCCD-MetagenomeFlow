@@ -241,11 +241,15 @@ def pair_step_starts(step_events: list) -> set:
             if stack:
                 paired.add(stack.pop())
                 continue
-            # sample-mismatch fallback: only when the bijection is unambiguous
+            # CP3 复审 P0-2：真唯一性 = 候选 key 数恰为 1（n_candidate_keys）
+            # 且该 key 下 pending start 总数也恰为 1（n_candidate_starts）——
+            # 同 key 多 start（连续重跑）或跨 key 歧义一律保持未决，防止误关旧 start
             cands = [k for k in pending if k[0] == step and pending[k]]
-            if len(cands) == 1:
+            n_candidate_keys = len(cands)
+            n_candidate_starts = sum(len(pending[k]) for k in cands)
+            if n_candidate_keys == 1 and n_candidate_starts == 1:
                 paired.add(pending[cands[0]].pop())
-            # len(cands) != 1 -> ambiguity unresolved, start stays visible
+            # otherwise: ambiguity unresolved, starts stay visible
     return paired
 
 

@@ -16,3 +16,21 @@
 52 个带样本主步骤脚本全部经 mgx_begin 受锁保护。
 
 **模板整改**：`lane/TEMPLATE.sh` 已去除机器绝对路径（改 `${REPO:-$(cd "$(dirname ...)" && pwd)}` 自发现）。
+
+## 测试命令与原始输出（CP3 复审 P0-3 补，2026-10-18 实跑）
+
+命令骨架（T1-T4/T6）：
+```
+bash /tmp/flock_matrix_test.sh <mode> <sample>   # 内部 source libcommon; mgx_parse; mgx_begin; echo ACQUIRED / kill -9 $$
+```
+原始输出摘录（当轮实跑）：
+```
+T1: [GUARD] 同一 (workdir, step, sample) 已有实例在…      → 拒绝 ✓
+T2: ACQUIRED:Sample2                                      → 放行 ✓
+T3: ACQUIRED:Sample3 (second acquire after normal exit)   → 正常释放 ✓
+T4: ACQUIRED:Sample4 (acquire after SIGKILL holder)       → 异常释放 ✓（内核回收 fd）
+T5: [GUARD] …（SAMPLE_ID 变体重复被拒）                    → 键覆盖 ✓
+T6: [GUARD] …（聚合步空样本并发被拒）                       → 聚合互斥 ✓
+```
+T5 命令变体：MGX_OPTS_STRING="z:SAMPLE_ID …"（键三重回退 SAMPLE→SAMPLE_NAME→SAMPLE_ID）。
+测试脚本为一次性 /tmp 构造（本档记录命令骨架与输出即完整复现信息）。

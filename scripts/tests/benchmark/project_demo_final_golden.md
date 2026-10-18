@@ -26,3 +26,23 @@
 | core_votus_denominator | 2622 | 全局核心 1631 / 2,622 canonical |
 | gem_denominator | 10 | 前 10 名单（gem_top10.txt）；FBA 9/10 |
 | salmon_index_compat | 兼容 | 重建目录头集合与幸存 .clstr 代表集完全一致（incident20_recovery_evidence.md） |
+
+## 逐项复核绑定（CP3 复审 P0-4，2026-10-18）
+
+| 指标 | 计算命令 | 工具/版本 | 输出摘要 |
+|---|---|---|---|
+| nucleotide 995242 | awk '/^>/{n++}END{print n}' nucleotide_nr.fa | awk(gawk 5.x) | 995242 |
+| protein 995199 | awk '/^>/{n++}END{print n}' protein_nr.fa | awk | 995199 |
+| votus 2622 | awk -F'\t' '$1=="canonical_votus"{print $2}' votu_join_stats.tsv | awk | 2622 |
+| tpm x6 | awk 六列 _tpm 求和 | awk | 6x1000000.0 |
+| drep 128 | ls dereplicated_genomes/*.fa \| wc -l | coreutils | 128 |
+| gunc 81/47 | awk -F'\t' 'NR>1{if($13=="True")p++;else f++}' | awk | 81/47 |
+| core 1631 | awk 'NR>1{n++}' core_microbiome_global.csv | awk | 1631 |
+| gem 9 | ls fba/ \| grep -cE '__\|bin' | coreutils/grep | 9 |
+| 内容级对照 | 重建 headers vs .clstr 代表集交集（python set） | python3.10 | 交集=995242=双方全集 |
+| 输入无翻倍 | 重建日志 N_RAW 行 | — | 合并基因总数: 2014354 |
+| sha256 | sha256sum 两目录文件 | coreutils | nucl=147774b92530282d… prot=3ce480817b79c732… |
+
+**证据等级分级**（承 incident20_recovery_evidence.md）：核酸=内容级（幸存 .clstr 全集对照）；
+蛋白=数量级+确定性管线背书（无独立幸存对照物，不提升）。
+**版本标识**：本文件对应提交 b994f9a 后续修订；CD-HIT 4.8.1（envs/cdhit）。

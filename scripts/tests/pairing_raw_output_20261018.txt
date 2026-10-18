@@ -1,0 +1,10 @@
+exact pair, cross-sample concurrency	expected=(2,0)	actual=(2,0)	PASS
+LIFO rerun: killed run stays visible	expected=(1,1)	actual=(1,1)	PASS
+legacy empty-start/typed-end (98e): unambiguous	expected=(1,0)	actual=(1,0)	PASS
+typed-start/empty-end: unambiguous	expected=(1,0)	actual=(1,0)	PASS
+AMBIGUOUS: two starts, one mismatched end	expected=(0,2)	actual=(0,2)	PASS
+case-variant ids distinct	expected=(1,1)	actual=(1,1)	PASS
+path-prefixed distinct	expected=(1,1)	actual=(1,1)	PASS
+NEW: same-identity consecutive starts + mismatched end -> BOTH unresolved	expected=(0,2)	actual=(0,2)	PASS
+NEW: typed A,B starts + typed mismatched C end -> unresolved	expected=(0,2)	actual=(0,2)	PASS
+OVERALL: ALL PASS
