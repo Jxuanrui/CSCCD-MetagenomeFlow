@@ -52,8 +52,8 @@
 | 38b_bac_gunc | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 39_bac_coverm_quant | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 39b_bac_instrain_map | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
-| 39c_bac_instrain_profile | bacteria | 运行 |  |
-| 39d_bac_instrain_compare | bacteria | 运行 |  |
+| 39c_bac_instrain_profile | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
+| 39d_bac_instrain_compare | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
 | 40_bac_gtdbtk | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 41_bac_prokka | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 41b_bac_mlst | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
@@ -62,8 +62,8 @@
 | 42_bac_mge | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 42b_bac_plasmidfinder | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 43_bac_gem_gapseq | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
-| 43b_bac_gem_carveme | bacteria | 运行 |  |
-| 43c_bac_gem_cobrapy_fba | bacteria | 运行 |  |
+| 43b_bac_gem_carveme | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
+| 43c_bac_gem_cobrapy_fba | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
 | 51_vir_megahit | virome | ✓ 已完成 |  |
 | 52_vir_genomad | virome | ✓ 已完成 |  |
 | 53_vir_virsorter2 | virome | ✓ 已完成 |  |
@@ -75,7 +75,7 @@
 | 58_vir_salmon_build | virome | ✓ 已完成 |  |
 | 59_vir_salmon_quant | virome | ✓ 已完成 |  |
 | 60_vir_votu_table | virome | ✓ 已完成 |  |
-| 61_vir_vmag | virome | 运行 |  |
+| 61_vir_vmag | x |不执行（Project01 先例 0 vMAG，连带 62/63/71） |  |
 | 62_vir_checkv_mag | virome | 待核/预期空 | 不适用候选：vMAG 依赖深链产出（Tutorial:1901 Project01 先例 0 vMAG，跑后核） |
 | 63_vir_coverm_quant | virome | 待核/预期空 | 同 62 |
 | 64_vir_pharokka | virome | ✓ 已完成（事件流核证 2026-10-16） |  |
@@ -93,7 +93,7 @@
 | 72b_fun_metaphlan4_merge | fungi | ✓ 已完成 |  |
 | 73_fun_humann4_fungi | fungi | ✓ 已完成 |  |
 | 74_fun_blast_gutdb | fungi | 已废弃（gut_fungi.dmnd 核酸库误作蛋白库，产出恒 0；勿启动） |  |
-| 74a_fun_gut_db_build | fungi | ⬜ 未运行（依赖 74，74 已废弃，此步不再排期） |  |
+| 74a_fun_gut_db_build | x |不排期（依赖已废弃的 74） |  |
 | 74e_fun_phf_profiler | fungi | ✓ 已完成 |  |
 | 74f_fun_phf_aggregate |  | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 75_fun_funomics | fungi | ✓ 已完成（事件流核证 2026-10-16） |  |
@@ -118,32 +118,32 @@
 | 91_stat_diversity | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 92_stat_differential | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 93_stat_cooccurrence | stats | ✓ 已完成（事件流核证 2026-10-16） |  |
-| 94_stat_visualization | stats | 运行 |  |
-| 95a_stat_batch_correct | stats | 运行 |  |
-| 95b_stat_batch_evaluate | stats | 运行 |  |
-| 96_stat_ml_siamcat | stats | 运行 | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
-| 96b_pathway_activity | stats | 运行 | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
-| 96c_functional_redundancy | stats | 运行 | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
-| 98_stat_report | stats | 运行 |  |
-| 98b_bac_integration_tables | bacteria | 运行 |  |
-| 98c_vir_integration_tables | virome | 运行 |  |
-| 98d_fun_integration_tables | fungi | 运行 |  |
-| 99a_core_microbiome | stats | 运行 |  |
-| 99b_lefse | stats | 运行 | n 下限 4（本组 6 贴近下限） |
-| 01_metadata_qc | stats | 运行 |  |
-| 96_stat_functional | stats | 运行 | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
-| 96_functional_permanova | stats | 运行 | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
-| 96_functional_integrated | stats | 运行 | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
-| 96_functional_cross_dimension | stats | 运行 | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
-| 98c_bac_mge_summary | bacteria | 运行 |  |
-| 98d_bac_mag_integration | bacteria | 运行 |  |
-| downstream_summary | stats | 运行 |  |
+| 94_stat_visualization | stats | ✓ 已完成（终版核证 2026-10-18） |  |
+| 95a_stat_batch_correct | x |不执行（metadata 无 batch 列） |  |
+| 95b_stat_batch_evaluate | x |不执行（同上） |  |
+| 96_stat_ml_siamcat | x |SKIPPED-by-guard（≥10 样本要求，n=6 设计限制，POWER_DISCLOSURE 披露） | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
+| 96b_pathway_activity | x |✓ 已完成（96 伞内执行） | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
+| 96c_functional_redundancy | x |✓ 已完成（96 伞内执行） | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
+| 98_stat_report | stats | ✓ 已完成（终版核证 2026-10-18） |  |
+| 98b_bac_integration_tables | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
+| 98c_vir_integration_tables | virome | ✓ 已完成（终版核证 2026-10-18） |  |
+| 98d_fun_integration_tables | fungi | ✓ 已完成（终版核证 2026-10-18） |  |
+| 99a_core_microbiome | stats | ✓ 已完成（终版核证 2026-10-18） |  |
+| 99b_lefse | stats | ✓ 已完成（终版核证 2026-10-18） | n 下限 4（本组 6 贴近下限） |
+| 01_metadata_qc | x |✓ 已完成（项目前置，samplesheet/metadata 齐备） |  |
+| 96_stat_functional | stats | ✓ 已完成（终版核证 2026-10-18） | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
+| 96_functional_permanova | x |✓ 已完成（96 伞内执行） | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
+| 96_functional_integrated | x |✓ 已完成（96 伞内执行） | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
+| 96_functional_cross_dimension | x |✓ 已完成（96 伞内执行） | permanova 下限 3；SIAMCAT 3v3 未验证，如实记录 |
+| 98c_bac_mge_summary | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
+| 98d_bac_mag_integration | bacteria | ✓ 已完成（终版核证 2026-10-18） |  |
+| downstream_summary | stats | 不适用（占位步骤，实际由 98 系整合表承担） |  |
 | rag_build_experience | shared | 待approve/暂不跑 | 写入 mcp/chromadb_data（§10.1 禁改）；须 C1 approve且 B 线 RAG 重跑冻结后 |
 | rag_refresh_literature | shared | 待approve/暂不跑 | 同 rag_build_experience（质量审核 C1） |
 | 97_stat_crosscohort | stats | 待核/预期空 | 不适用：跨队列复现需第二队列，单项目演示不适用 |
-| 98e_cross_domain_ani_cluster | stats | 运行 |  |
-| 98f_cross_domain_orthogroup | stats | 运行 |  |
-| 98g_cross_domain_correlation | stats | 运行 |  |
+| 98e_cross_domain_ani_cluster | x |✓ 已完成（终版核证 2026-10-18） |  |
+| 98f_cross_domain_orthogroup | stats | ✓ 已完成（终版核证 2026-10-18） |  |
+| 98g_cross_domain_correlation | stats | ✓ 已完成（终版核证 2026-10-18） |  |
 
 > ¹ 13_bac_humann3 依赖同一样本的 11 metaphlan4 profile（质量审核 E1 2026-10-04），不可先跑。
 

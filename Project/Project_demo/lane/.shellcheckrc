@@ -1,0 +1,4 @@
+# lane/ 为历史泳道脚本存档（不可变史料，不改写）+ 模板；SC2164 为存档件普遍
+# 历史写法，豁免之。新写的泳道脚本应以 TEMPLATE.sh 为准（cd 带 || exit）。
+disable=SC2164
+disable=SC2034
