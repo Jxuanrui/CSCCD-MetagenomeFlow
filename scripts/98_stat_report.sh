@@ -79,6 +79,10 @@ extract_table_preview() {
     echo "- Workdir: ${WORKDIR}"
     echo "- Repo: ${REPO}"
     echo
+    echo "> **统计功效与口径披露（必读）**：本项目 n=6（3v3）为流程演示设计——"
+    echo "> 置换检验 p 值下限≈0.05、LEfSe/SIAMCAT/网络组间比较受小样本限制，"
+    echo "> 全部组间结论仅具探索性。详见 \`docs/08_statistics/POWER_DISCLOSURE.md\`。"
+    echo
 
     echo "## QC Summary"
     echo

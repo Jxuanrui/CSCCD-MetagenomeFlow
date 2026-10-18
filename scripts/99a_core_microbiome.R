@@ -167,10 +167,30 @@ if(!group_available) {
   if(length(nonempty_groups) < 2) {
     warning("Metadata contains only one non-empty group; grouped comparisons may be incomplete")
   }
-  case_samples <- metadata$sample_id[group_values == "case"]
-  control_samples <- metadata$sample_id[group_values == "control"]
-  if(length(case_samples) == 0) warning("No samples labeled 'case'; case core table will be empty")
-  if(length(control_samples) == 0) warning("No samples labeled 'control'; control core table will be empty")
+  # 质量审核 CP3 计划联审 W0：显式确定性分组映射（treat→case），不依赖因子首水平
+  # 或 CSV 排序；映射结果与每组样本数打印进日志留痕
+  case_label <- NULL
+  for (cand in c("case", "treat", "treatment", "disease")) {
+    if (cand %in% group_values) { case_label <- cand; break }
+  }
+  control_label <- NULL
+  for (cand in c("control", "healthy", "placebo")) {
+    if (cand %in% group_values) { control_label <- cand; break }
+  }
+  if (is.null(case_label) || is.null(control_label)) {
+    lv <- nonempty_groups[nonempty_groups %in% c("case","control","treat","treatment","disease","healthy","placebo")]
+    case_label <- if (length(lv) >= 1) lv[1] else nonempty_groups[1]
+    control_label <- if (length(lv) >= 2) lv[2] else nonempty_groups[2]
+  }
+  cat(sprintf("[99a] group mapping: '%s' -> case, '%s' -> control (raw levels: %s)\n",
+              case_label, control_label, paste(nonempty_groups, collapse = ", ")))
+  case_samples <- metadata$sample_id[group_values == case_label]
+  control_samples <- metadata$sample_id[group_values == control_label]
+  cat(sprintf("[99a] case n=%d (%s), control n=%d (%s)\n",
+              length(case_samples), paste(case_samples, collapse = ","),
+              length(control_samples), paste(control_samples, collapse = ",")))
+  if(length(case_samples) == 0) warning("No samples mapped to case; case core table will be empty")
+  if(length(control_samples) == 0) warning("No samples mapped to control; control core table will be empty")
   if(length(case_samples) > 0) {
     case_core <- core_statistics(abundance[, case_samples, drop=FALSE], effective_threshold)
   }
