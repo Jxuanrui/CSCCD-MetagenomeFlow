@@ -80,8 +80,10 @@ extract_table_preview() {
     echo "- Repo: ${REPO}"
     echo
     echo "> **统计功效与口径披露（必读）**：本项目 n=6（3v3）为流程演示设计——"
-    echo "> 置换检验 p 值下限≈0.05、LEfSe/SIAMCAT/网络组间比较受小样本限制，"
-    echo "> 全部组间结论仅具探索性。详见 \`docs/08_statistics/POWER_DISCLOSURE.md\`。"
+    echo "> 置换空间 C(6,3)=20 限制 p 值分辨率、n=3/组统计功效不足，"
+    echo "> LEfSe/SIAMCAT/网络组间比较受小样本设计限制；全部组间结论仅具探索性，"
+    echo "> 详见 \`docs/08_statistics/POWER_DISCLOSURE.md\`（三概念分开表述版）。"''
+
     echo
 
     echo "## QC Summary"
