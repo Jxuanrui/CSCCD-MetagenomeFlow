@@ -266,6 +266,23 @@ mgx_begin() {
         esac
     fi
     SECONDS=0
+    # flock 单实例锁（质量审核 CP3 计划联审 W4，approve #3）：锁键 = (WORKDIR, 脚本名,
+    # 样本)。按质量审核要求精确到实例级——同脚本不同样本的合法并行不受影响，
+    # 同 workdir+step+sample 的重复启动（事故档案 #2 家族）被拒。非阻塞获取
+    # 失败即 exit 65；fd 生命周期与进程绑定，正常/异常退出均自动释放。
+    if [ -n "${MGX_LOCK_DISABLE:-}" ] && [ "${MGX_LOCK_DISABLE}" = "1" ]; then
+        :
+    else
+        _MGX_LOCK_DIR="${TMPDIR:-/tmp}/mgx_locks"
+        mkdir -p "${_MGX_LOCK_DIR}" 2>/dev/null || true
+        _MGX_LOCK_KEY="$(printf '%s|%s|%s' "${WORKDIR:-?}" "${BASH_SOURCE[${#BASH_SOURCE[@]}-1]}" "${SAMPLE:-${SAMPLE_NAME:-}}" | md5sum | cut -d' ' -f1)"
+        exec 9>>"${_MGX_LOCK_DIR}/${_MGX_LOCK_KEY}.lock"
+        if ! flock -n 9; then
+            echo "[GUARD] 同一 (workdir, step, sample) 已有实例在运行（flock 拒绝重复启动，事故档案 #2 家族）"
+            echo "[GUARD] key=${_MGX_LOCK_KEY}; 确认无残留后可 MGX_LOCK_DISABLE=1 跳过（不推荐）"
+            exit 65
+        fi
+    fi
     # ENG-6/run-monitor: opt-in per-step event emission (supervisor-approved, default OFF)
     if [ "${MGX_MONITOR:-0}" = "1" ]; then
         _MGX_STARTED_AT="$(date +%FT%T%z 2>/dev/null || printf '')"
