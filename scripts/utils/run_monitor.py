@@ -220,15 +220,30 @@ def pair_step_starts(step_events: list) -> set:
     (step_id, sample_id). LIFO per key: a rerun's end event closes its OWN
     start (the most recent one), so a SIGKILL'd earlier run stays visible as
     运行中 instead of stealing the rerun's pairing (supervisor stage-3 P0-3);
-    unpaired starts are still-running (or killed) steps."""
+    unpaired starts are still-running (or killed) steps.
+
+    2026-10-18 (CP3 W1): sample_id normalization — some scripts log the start
+    with an empty sample_id but the end with the real one (98e residual card:
+    start sample='' vs end sample='Sample4' never paired). Empty-sample starts
+    are keyed under (step, '*') and an end with sample S closes an exact
+    (step, S) start first, falling back to (step, '*'). Concurrent runs of the
+    same step with DIFFERENT real samples still pair exactly."""
     paired: set = set()
     pending: dict = {}
     for i, ev in enumerate(step_events):
-        key = (str(ev.get("step_id") or ""), str(ev.get("sample_id") or ""))
+        step = str(ev.get("step_id") or "")
+        sample = str(ev.get("sample_id") or "")
         if is_step_start(ev):
-            pending.setdefault(key, []).append(i)
+            pending.setdefault((step, sample), []).append(i)
         else:
-            stack = pending.get(key)
+            stack = pending.get((step, sample))
+            if not stack and sample:
+                stack = pending.get((step, ""))
+            if not stack and not sample:
+                # 对称回退：空样本 end 关闭该 step 最近一个未配对 start（任意样本）
+                cands = [k for k in pending if k[0] == step and pending[k]]
+                if cands:
+                    stack = pending[max(cands, key=lambda k: pending[k][-1])]
             if stack:
                 paired.add(stack.pop())
     return paired
