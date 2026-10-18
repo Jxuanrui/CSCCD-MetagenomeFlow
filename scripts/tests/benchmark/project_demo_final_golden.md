@@ -41,7 +41,7 @@
 | gem 9 | ls fba/ \| grep -cE '__\|bin' | coreutils/grep | 9 |
 | 内容级对照 | 重建 headers vs .clstr 代表集交集（python set） | python3.10 | 交集=995242=双方全集 |
 | 输入无翻倍 | 重建日志 N_RAW 行 | — | 合并基因总数: 2014354 |
-| sha256 | sha256sum 两目录文件 | coreutils | nucl=147774b92530282d… prot=3ce480817b79c732… |
+| sha256 | sha256sum 两目录文件 | coreutils | nucl=147774b92530282d6d24cdaf6133f387d59752ad7181970d506306ffe42126d3 prot=3ce480817b79c732252bc158264f98024265d4ef4035123f299b17e1d87f905b |
 
 **证据等级分级**（承 incident20_recovery_evidence.md）：核酸=内容级（幸存 .clstr 全集对照）；
 蛋白=数量级+确定性管线背书（无独立幸存对照物，不提升）。
