@@ -23,7 +23,7 @@ done
 
 # Files/dirs that must NEVER enter the public snapshot.
 # Project/ carries production cohort metadata + machine-specific sheets.
-EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.omo/|\.codegraph|agents/provenance/|skills/.*\.pdf|Project/|docs/plans/|scripts/tests/benchmark/)'
+EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.zcodeignore|\.omo/|\.codegraph|agents/provenance/|skills/.*\.pdf|Project/|docs/plans/|scripts/tests/|scripts/utils/supervisor_api\.py)'
 
 cd "${REPO}"
 
@@ -67,6 +67,17 @@ echo "${FILES}" | xargs -d '\n' grep -l 'Harbin' 2>/dev/null | xargs -r -d '\n' 
 # Machine-specific repo paths in mined tooling become portable placeholders.
 echo "${FILES}" | xargs -d '\n' grep -l -E '/home/[^/]*/Course/(CSCCD-MetagenomeFlow|Maxmetagenome)' 2>/dev/null | \
     xargs -r -d '\n' sed -i -E 's#/home/[^/]*/Course/(CSCCD-MetagenomeFlow|Maxmetagenome)#~/Course/CSCCD-MetagenomeFlow#g' || true
+# 2026-10-19 pass: this cycle's review-process vocabulary and tool refs are
+# neutralized across shipped text (review channel terms, agent jargon, client names).
+echo "${FILES}" | xargs -d '\n' grep -l -e '质量审核' -e '主代理' -e '子代理' 2>/dev/null | \
+    xargs -r -d '\n' sed -i -e 's/质量审核/质量审核/g' -e 's/主代理/执行方/g' -e 's/子代理/后台任务/g' || true
+echo "${FILES}" | xargs -d '\n' grep -l -E 'supervisor (P0|final|stage|review)|supervisor_[0-9]|，supervisor|, supervisor' 2>/dev/null | \
+    xargs -r -d '\n' sed -i -E 's/supervisor_(19|20)[0-9]{4}[a-z_]*/review/g; s/，supervisor/，review/g; s/, supervisor/, review/g' || true
+echo "${FILES}" | xargs -d '\n' grep -l -E 'Claude Code|claude mcp|claude -p' 2>/dev/null | \
+    xargs -r -d '\n' sed -i -E -e 's/Claude Code/MCP 客户端/g' -e 's/claude mcp add/mcp add/g' -e 's/claude -p [^ ]* --agent [a-z]+/cli-review/g' || true
+# Internal review-archive path references drop to generic wording.
+echo "${FILES}" | xargs -d '\n' grep -l '\.claude/reviews/' 2>/dev/null | \
+    xargs -r -d '\n' sed -i -E 's/`?\.claude\/reviews\/[A-Za-z0-9_.-]+`?/内部审校记录/g' || true
 # Development-era attributions and retired dual-agent jargon are neutralized;
 # dead /mgx-* references into the unshipped .claude/ tree drop their lines.
 echo "${FILES}" | xargs -d '\n' grep -l '^# Author: Claude Code' 2>/dev/null | \
