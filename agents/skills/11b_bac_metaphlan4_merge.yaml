@@ -1,0 +1,48 @@
+id: "11b_bac_metaphlan4_merge"
+script: "scripts/11b_bac_metaphlan4_merge.sh"
+tool: "merge_metaphlan_tables.py"
+tool_version: "4.2.4"
+conda_env: "envs/humann4"
+description: "Merge per-sample MetaPhlAn4 profiles into project-level taxonomy matrices."
+dimension: "bacteria"
+category: "taxonomy"
+rule_type: "aggregate"
+
+inputs:
+  - name: "profiles"
+    path_pattern: "{workdir}/result/metaphlan4/{sample}/{sample}_profile.txt"
+    required: true
+
+outputs:
+  - name: "taxonomy_tsv"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy.tsv"
+    description: "All-rank merged MetaPhlAn4 abundance matrix."
+  - name: "species_tsv"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy_species.tsv"
+    description: "Species-level merged abundance matrix."
+  - name: "genus_tsv"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy_genus.tsv"
+    description: "Genus-level merged abundance matrix."
+  - name: "species_csv"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy_species.csv"
+    description: "Species-level CSV formatted for spreadsheet or R import."
+
+depends_on:
+  - "11_bac_metaphlan4"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "metaphlan4_merge"

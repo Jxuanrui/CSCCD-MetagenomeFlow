@@ -1,0 +1,44 @@
+id: "59_vir_salmon_quant"
+script: "scripts/59_vir_salmon_quant.sh"
+tool: "Salmon"
+tool_version: "1.10+"
+conda_env: "envs/assembly"
+description: "Per-sample vOTU abundance quantification (Salmon quasi-mapping, --meta, 100 bootstraps)."
+dimension: "virome"
+category: "quantification"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+  - name: "salmon_index"
+    path_pattern: "{workdir}/result/virus/salmon/index/info.json"
+    required: true
+
+outputs:
+  - name: "quant_sf"
+    path_pattern: "{workdir}/result/virus/salmon/{sample}/report.tsv"
+    description: "Salmon quantification file (TPM + count)."
+
+depends_on:
+  - "02_qc_kneaddata"
+  - "58_vir_salmon_build"
+required_by:
+  - "60_vir_votu_table"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_salmon_quant"

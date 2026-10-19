@@ -1,0 +1,39 @@
+id: "29_bac_defense_finder"
+name: "DefenseFinder Bacterial Defense System Detection"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::defense_finder"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: systems
+    path_pattern: "{workdir}/result/annotation/defense_finder/defense_finder_systems.tsv"
+    description: "Defense system summary table (type, subtype, gene count)"
+  - name: genes
+    path_pattern: "{workdir}/result/annotation/defense_finder/defense_finder_genes.tsv"
+    description: "Per-gene defense annotation"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/defensefinder"
+db_path: "db/defense_finder"
+
+parameters:
+  db_type: "unordered"
+
+benchmarks:
+  typical_runtime_min: 45
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "NR protein input lacks genomic context → must use --db-type unordered to bypass neighborhood checks"
+    workaround: "Script already passes --db-type unordered; ordered-replicon would fail on NR FASTA"
+  - description: "DefenseFinder requires MacSyFinder 2.x; check conda env if 'macsyfinder' errors appear"
+    workaround: "conda run --prefix envs/defensefinder macsyfinder --version"

@@ -1,0 +1,55 @@
+id: "39c_bac_instrain_profile"
+name: "inStrain Microdiversity Profiling"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::instrain_profile"
+
+inputs:
+  - name: bam
+    path_pattern: "{workdir}/result/binning/instrain_map/{sample}/{sample}.sorted.bam"
+    required: true
+    description: "Sorted BAM from inStrain map step"
+  - name: bai
+    path_pattern: "{workdir}/result/binning/instrain_map/{sample}/{sample}.sorted.bam.bai"
+    required: true
+    description: "BAM index (inStrain profile subprocess checks for it)"
+  - name: combined_mags
+    path_pattern: "{workdir}/result/binning/instrain_map/combined_mags.fa"
+    required: true
+    description: "Concatenated dereplicated MAG reference"
+  - name: combined_stb
+    path_pattern: "{workdir}/result/binning/instrain_map/combined_mags.stb"
+    required: true
+    description: "Scaffold-to-bin mapping file"
+
+outputs:
+  - name: genome_info
+    path_pattern: "{workdir}/result/binning/instrain_profile/{sample}/output/{sample}_genome_info.tsv"
+    description: "Per-genome microdiversity metrics (breadth, coverage, SNV counts, nucleotide diversity)"
+  - name: SNVs
+    path_pattern: "{workdir}/result/binning/instrain_profile/{sample}/output/{sample}_SNVs.tsv"
+    description: "Single nucleotide variants table"
+  - name: linkage
+    path_pattern: "{workdir}/result/binning/instrain_profile/{sample}/output/{sample}_linkage.tsv"
+    description: "SNV linkage information"
+
+depends_on:
+  - "39b_bac_instrain_map"
+
+conda_env: "envs/instrain"
+
+parameters:
+  min_cov: 5
+  min_snp: 20
+  threads: 16
+
+benchmarks:
+  typical_runtime_min: 20
+  peak_memory_gb: 12
+
+known_issues:
+  - description: "Empty BAM (zero MAGs upstream) gracefully handled: script checks samtools view -c and exits 0 with warning"
+    workaround: "No action needed; check log for '[instrain_profile] WARNING: BAM 为空' message"
+  - description: "Minimal synthetic data (1 scaffold, 2000 reads) triggers KeyError: 'scaffold' in genome-wide step"
+    workaround: "Not a real-world issue; tested successfully with real data (2 MAGs, 100k read pairs)"

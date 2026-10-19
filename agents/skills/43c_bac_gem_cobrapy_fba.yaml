@@ -1,0 +1,94 @@
+id: "43c_bac_gem_cobrapy_fba"
+script: "scripts/43c_bac_gem_cobrapy_fba.sh"
+tool: "cobrapy"
+tool_version: "0.29.1"
+conda_env: "envs/cobrapy"
+description: "Flux balance analysis (FBA) on genome-scale metabolic models using COBRApy. Predicts growth rates, flux distributions, essential genes, and substrate utilization capabilities. Supports models from CarveMe (43b) or gapseq (43; manual-only, excluded from the Snakemake DAG)."
+dimension: "bacteria"
+category: "binning"
+rule_type: "aggregate"
+
+inputs:
+  - name: "sbml_models"
+    path_pattern: "{workdir}/result/gem/carveme/{mag}/{mag}.xml OR {workdir}/result/gem/gapseq/{mag}/{mag}.xml"
+    required: true
+    description: "SBML genome-scale metabolic models from CarveMe or gapseq"
+
+outputs:
+  - name: "growth_rate"
+    path_pattern: "{workdir}/result/gem/fba/{mag}/{mag}_growth_rate.txt"
+    description: "Predicted maximal growth rate (h⁻¹) under specified medium"
+  - name: "flux_distribution"
+    path_pattern: "{workdir}/result/gem/fba/{mag}/{mag}_flux_distribution.tsv"
+    description: "Flux values for all reactions (reaction_id, flux, lower_bound, upper_bound)"
+  - name: "essential_genes"
+    path_pattern: "{workdir}/result/gem/fba/{mag}/{mag}_essential_genes.tsv"
+    description: "Genes whose knockout reduces growth >99% (gene_id, wildtype_growth, knockout_growth, growth_reduction_pct)"
+  - name: "substrate_utilization"
+    path_pattern: "{workdir}/result/gem/fba/{mag}/{mag}_substrate_utilization.tsv"
+    description: "Carbon source utilization predictions (substrate, exchange_reaction, can_utilize, growth_rate)"
+  - name: "completion_marker"
+    path_pattern: "{workdir}/result/gem/fba/fba_done.txt"
+    description: "Sentinel file indicating batch completion"
+
+depends_on:
+  - "43b_bac_gem_carveme"
+  - "43_bac_gem_gapseq"
+required_by: []
+
+params:
+  mag_name: "all"
+  threads: "1"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  substrates: ""
+  medium: "default"
+  force: "false"
+
+benchmarks:
+  typical_runtime_sec: 7-10 per MAG
+  typical_input_size_mb: 2-4
+  peak_memory_gb: 2
+
+performance_notes:
+  - "Runtime: 7-10 seconds per MAG (extremely fast)"
+  - "213 MAG dataset: ~31 minutes serial, ~2 minutes on 16-core parallel"
+  - "Not a bottleneck - CarveMe reconstruction is the rate-limiting step"
+  - "Validated on 3 test MAGs: 100% success rate"
+
+analysis_outputs:
+  growth_rate:
+    description: "Predicted growth rate under specified medium conditions"
+    typical_range: "10-20 h⁻¹ for gut bacteria"
+    interpretation: "Higher values indicate faster-growing organisms"
+
+  essential_genes:
+    description: "Genes whose knockout is lethal (>99% growth reduction)"
+    typical_count: "14-40 genes per MAG"
+    interpretation: "Core metabolic genes required for survival. Potential drug targets."
+
+  substrate_utilization:
+    description: "Carbon sources the organism can metabolize"
+    auto_detection: "When substrates parameter is empty, auto-detects from model's exchange reactions"
+    typical_count: "10-24 substrates per MAG"
+    interpretation: "Metabolic flexibility indicator. More substrates = more versatile."
+
+batch_mode:
+  - description: "Supports batch processing via -m all parameter"
+  - behavior: "Auto-discovers all .xml models in carveme/ or gapseq/ directories"
+  - skip_logic: "Automatically skips MAGs with existing FBA results unless --force"
+
+bug_fixes:
+  - date: "2026-08-06"
+    issue: "Essential genes analysis silent failure - expected tuples but got DataFrame with set-based gene IDs"
+    fix: "Updated iteration to handle row.ids as set object, extract first element"
+  - date: "2026-08-06"
+    issue: "All substrates returned 'not_found' - hardcoded substrate list not in CarveMe models"
+    fix: "Implemented auto-detection mode that discovers carbon sources from model's exchange reactions"
+  - date: "2026-08-06"
+    issue: "Flux distribution AttributeError: 'Solution' object has no attribute 'model'"
+    fix: "Added model parameter to export_flux_distribution() function signature"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/bacteria_gem.smk::gem_fba"

@@ -1,0 +1,49 @@
+id: "15c_bac_sylph"
+script: "scripts/15c_bac_sylph.sh"
+tool: "sylph+sylph-tax"
+tool_version: "0.9.0+1.9.1"
+conda_env: "envs/sylph"
+description: "Ultrafast species-level taxonomic classification via abundance-corrected minhash sketching against GTDB-R220 (>50x faster than Kraken2/MetaPhlAn4, ~15GB RAM for full GTDB). Complements, does not replace, existing MetaPhlAn4/Kraken2 classifiers."
+dimension: "bacteria"
+category: "taxonomy"
+rule_type: "per_sample"
+
+inputs:
+  - name: "r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "sylph_profile"
+    path_pattern: "{workdir}/result/sylph/{sample}/{sample}.sylph_profile.tsv"
+    description: "Raw sylph profile output (genome-ID keyed, no species names)."
+  - name: "sylphmpa"
+    path_pattern: "{workdir}/result/sylph/{sample}/{sample}.sylphmpa"
+    description: "sylph-tax annotated species-level profile (MetaPhlAn-style clade_name/relative_abundance)."
+
+depends_on:
+  - "02_qc_kneaddata"
+required_by:
+  - "15d_bac_sylph_merge"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  min_ani: "95"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - description: "Requires GTDB-R220 pre-built sketch database (13.1GB, gtdb-r220-c200-dbv1.syldb) and matching taxonomy metadata (gtdb_r220_metadata.tsv.gz), not bundled with the conda package."
+    workaround: "Download via 0Install.sh §17.1 (wget from Google Cloud mirror recommended over the primary faust.compbio.cs.cmu.edu host, which was observed to throttle to <100KB/s) and `sylph-tax download --download-to db/sylph`."
+
+integration_status: "integrated"
+integrated_date: "2026-07-29"
+snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::sylph"

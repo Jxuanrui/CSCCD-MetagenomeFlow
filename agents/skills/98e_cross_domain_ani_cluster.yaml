@@ -1,0 +1,85 @@
+id: "98e_cross_domain_ani_cluster"
+script: "scripts/98e_cross_domain_ani_cluster.sh"
+tool: "fastani+networkx"
+tool_version: "1.34+3.0"
+conda_env: "envs/cluster"
+description: "Cross-domain whole-genome ANI comparison + Louvain community detection. VEBA cluster methodology reference (no source code reused). Uses FastANI for pairwise ANI and networkx Louvain for clustering."
+dimension: "stats"
+category: "integration"
+rule_type: "aggregate"
+
+inputs:
+  - name: "bacterial_mags"
+    path_pattern: "{workdir}/result/binning/drep/dereplicated_genomes/*.fa"
+    required: true
+    description: "Dereplicated bacterial MAGs from dRep (38)"
+  - name: "viral_votu_reps"
+    path_pattern: "{workdir}/result/virus/vOTU_representative/*.fa"
+    required: true
+    description: "vOTU representative sequences from viral clustering"
+  - name: "eukaryotic_mags"
+    path_pattern: "{workdir}/result/fungi/veba_qc/*/euk_mags/bin.*.fa"
+    required: false
+    description: "Eukaryotic MAGs from 79e (optional, may be 0)"
+
+outputs:
+  - name: "genome_clusters"
+    path_pattern: "{workdir}/result/cross_domain/cluster/genome_clusters.tsv"
+    description: "Cluster assignments: genome_id, cluster_id, domain"
+  - name: "ani_matrix"
+    path_pattern: "{workdir}/result/cross_domain/cluster/ani_matrix.tsv"
+    description: "Pairwise ANI matrix (sparse, only pairs with ANI >= threshold)"
+  - name: "cluster_stats"
+    path_pattern: "{workdir}/result/cross_domain/cluster/cluster_stats.tsv"
+    description: "Per-cluster statistics: cluster_id, size, domains, cross_domain_flag"
+
+depends_on:
+  - "38_bac_drep"
+  - "60_vir_votu_table"
+  - "79e_fun_euk_qc_per_bin"
+required_by: []
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+  threads: "{cpus}"
+  ani_threshold: "80"
+  force: "false"
+
+benchmarks:
+  typical_runtime_sec: 166
+  typical_input_genomes: 10320
+  peak_memory_gb: 16
+
+workflow:
+  - stage: "Collect genome paths"
+    description: "Discover all bacterial/viral/fungal genome files"
+  - stage: "FastANI all-vs-all"
+    description: "Pairwise ANI comparison with --fragLen 3000"
+  - stage: "Build ANI graph"
+    description: "Parse FastANI output into networkx graph (edges = ANI >= threshold)"
+  - stage: "Louvain clustering"
+    description: "Community detection using python-louvain library"
+  - stage: "Generate outputs"
+    description: "Write genome_clusters.tsv, ani_matrix.tsv, cluster_stats.tsv"
+
+validation:
+  test_dataset: "Project01 production data"
+  input_genomes:
+    bacterial_mags: 213
+    viral_votu_reps: 10106
+    eukaryotic_mags: 1
+    total: 10320
+  output_clusters: 2844
+  runtime_sec: 166
+  notes: "Successfully clustered real multi-domain dataset"
+
+known_limitations:
+  - description: "Nucleotide ANI has limited biological meaning across large evolutionary distances"
+    rationale: "Deliberate design choice retained after review"
+    recommendation: "Use protein-level orthogroup detection (98f) for more meaningful cross-domain signal"
+    threshold_note: "Default 80% ANI threshold may capture some bacteria-virus recombination events but not bacteria-fungi"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/statistics.smk::cross_domain_ani_cluster"

@@ -1,0 +1,45 @@
+id: "32_bac_coverm_depth"
+name: "CoverM Contig Depth Calculation"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::coverm_depth"
+
+inputs:
+  - name: contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+    description: "Assembled contigs from MEGAHIT (step 16)"
+  - name: r1
+    path_pattern: "{workdir}/temp/qc/kneaddata/{sample}/{sample}_1_kneaddata.fastq.gz"
+    required: true
+    description: "Kneaddata clean reads forward"
+  - name: r2
+    path_pattern: "{workdir}/temp/qc/kneaddata/{sample}/{sample}_2_kneaddata.fastq.gz"
+    required: true
+    description: "Kneaddata clean reads reverse"
+
+outputs:
+  - name: bam
+    path_pattern: "{workdir}/result/binning/coverm/{sample}/{sample}.bam"
+    description: "Sorted BAM from minimap2 alignment"
+  - name: depth
+    path_pattern: "{workdir}/result/binning/coverm/{sample}/depth.txt"
+    description: "MetaBAT-format depth table (contig, avg_depth, variance, etc.)"
+
+depends_on:
+  - "16_bac_megahit"
+
+conda_env: "envs/coverm"
+
+parameters:
+  aligner: "minimap2-sr"
+  method: "metabat"
+
+benchmarks:
+  typical_runtime_min: 20
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "coverm make produces BAM; coverm contig produces depth; two-step process"
+    workaround: "Script handles both steps with idempotency checks per output"

@@ -1,0 +1,61 @@
+id: "13_bac_humann3"
+script: "scripts/13_bac_humann3.sh"
+tool: "HUMAnN3"
+tool_version: "3.9"
+conda_env: "envs/humann4"
+description: "Quantify functional pathways and gene families from host-decontaminated reads with optional MetaPhlAn4 guidance."
+dimension: "bacteria"
+category: "functional"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+  - name: "metaphlan_profile"
+    path_pattern: "{workdir}/result/metaphlan4/{sample}/{sample}_profile.txt"
+    required: false
+
+outputs:
+  - name: "pathabundance"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_pathabundance.tsv"
+    description: "Raw MetaCyc pathway abundance table."
+  - name: "pathcoverage"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_pathcoverage.tsv"
+    description: "MetaCyc pathway coverage table."
+  - name: "genefamilies"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_genefamilies.tsv"
+    description: "UniRef90 gene family abundance table."
+  - name: "pathabundance_relab"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_pathabundance_relab.tsv"
+    description: "Relative-abundance normalized pathway table."
+  - name: "genefamilies_relab"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_genefamilies_relab.tsv"
+    description: "Relative-abundance normalized gene-family table."
+
+depends_on:
+  - "02_qc_kneaddata"
+  - "11_bac_metaphlan4"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  speed_mode: "{humann_speed}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "Speed modes trade accuracy for throughput: balanced filters to >=1% taxa, while fast uses R1-only plus >=3% taxa and can miss low-abundance stratified pathways."
+  - "The script relies on --bypass-prescreen because HUMAnN 3.9 misparses the deployed MetaPhlAn 4.2.4 version output."
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "humann3"

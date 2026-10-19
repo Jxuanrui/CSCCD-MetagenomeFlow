@@ -1,0 +1,150 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/dastool.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "dastool"
+channels = ["https://repo.anaconda.com/pkgs/main", "conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[system-requirements]
+libc = "2.34"
+
+[dependencies]
+_openmp_mutex = { version = "==5.1", build = "52_gnu", channel = "https://repo.anaconda.com/pkgs/main" }
+_r-mutex = { version = "==1.0.1", build = "anacondar_1" }
+ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
+font-ttf-dejavu-sans-mono = { version = "==2.37", build = "hab24e00_0" }
+font-ttf-inconsolata = { version = "==3.000", build = "h77eed37_0" }
+font-ttf-source-code-pro = { version = "==2.038", build = "h77eed37_0" }
+font-ttf-ubuntu = { version = "==0.83", build = "h77eed37_3" }
+kernel-headers_linux-64 = { version = "==5.14.0", build = "he073ed8_3" }
+libgcc-devel_linux-64 = { version = "==15.2.0", build = "hcc6f6b0_119" }
+libgomp = { version = "==15.2.0", build = "he0feb66_19" }
+libstdcxx-devel_linux-64 = { version = "==15.2.0", build = "hd446a21_119" }
+libzlib = { version = "==1.3.2", build = "h25fd6f3_2" }
+tzdata = { version = "==2026b", build = "he532380_0", channel = "https://repo.anaconda.com/pkgs/main" }
+fonts-conda-forge = { version = "==1", build = "hc364b38_1" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+sysroot_linux-64 = { version = "==2.34", build = "h087de78_3" }
+zlib = { version = "==1.3.2", build = "h25fd6f3_2" }
+zstd = { version = "==1.5.7", build = "hb78ec9c_6" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+c-ares = { version = "==1.34.6", build = "hb03c661_0" }
+fonts-conda-ecosystem = { version = "==1", build = "0" }
+fribidi = { version = "==1.0.16", build = "hb03c661_0" }
+jansson = { version = "==2.15.0", build = "h280c20c_0" }
+keyutils = { version = "==1.6.3", build = "hb9d3cd8_0" }
+ld_impl_linux-64 = { version = "==2.45.1", build = "default_hbd61a6d_102" }
+libdeflate = { version = "==1.25", build = "h17f619e_0" }
+libexpat = { version = "==2.8.1", build = "hecca717_0" }
+libffi = { version = "==3.5.2", build = "h3435931_0" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran5 = { version = "==15.2.0", build = "h68bc16d_19" }
+libiconv = { version = "==1.18", build = "h3b78370_2" }
+libjpeg-turbo = { version = "==3.1.4.1", build = "hb03c661_0" }
+liblzma = { version = "==5.8.3", build = "hb03c661_0" }
+libpng = { version = "==1.6.58", build = "h421ea60_0" }
+libsqlite = { version = "==3.53.1", build = "h0c1763c_0" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libuuid = { version = "==2.42.1", build = "h5347b49_0" }
+libwebp-base = { version = "==1.6.0", build = "hd42ef1d_0" }
+libxcrypt = { version = "==4.5.2", build = "h47b2149_0", channel = "https://repo.anaconda.com/pkgs/main" }
+make = { version = "==4.4.1", build = "hb9d3cd8_2" }
+ncurses = { version = "==6.6", build = "hdb14827_0" }
+openssl = { version = "==3.6.3", build = "h35e630c_0" }
+prodigal = { version = "==2.6.3", build = "h577a1d6_11", channel = "bioconda" }
+pthread-stubs = { version = "==0.4", build = "hb9d3cd8_1002" }
+sed = { version = "==4.10", build = "h19d0853_0" }
+unzip = { version = "==6.0", build = "hb03c661_4" }
+xorg-libice = { version = "==1.1.2", build = "hb9d3cd8_0" }
+xorg-libxau = { version = "==1.0.12", build = "hb03c661_1" }
+xorg-libxdmcp = { version = "==1.1.5", build = "hb03c661_1" }
+yaml = { version = "==0.2.5", build = "h280c20c_3" }
+binutils_impl_linux-64 = { version = "==2.45.1", build = "default_hfdba357_102" }
+diamond = { version = "==2.2.1", build = "he361c42_0", channel = "bioconda" }
+graphite2 = { version = "==1.3.14", build = "hecca717_2" }
+gsl = { version = "==2.7.1", build = "h6e86dc7_1", channel = "https://repo.anaconda.com/pkgs/main" }
+icu = { version = "==78.3", build = "h33c6efd_0" }
+lerc = { version = "==4.1.0", build = "hdb68285_0" }
+libasprintf = { version = "==0.25.1", build = "h3f43e3d_1" }
+libedit = { version = "==3.1.20250104", build = "pl5321h7949ede_0" }
+libev = { version = "==4.33", build = "hd590300_2" }
+libfreetype6 = { version = "==2.14.3", build = "h73754d4_0" }
+libgettextpo = { version = "==0.25.1", build = "h3f43e3d_1" }
+libgfortran = { version = "==15.2.0", build = "h69a702a_19" }
+libsanitizer = { version = "==15.2.0", build = "h90f66d4_19" }
+libssh2 = { version = "==1.11.1", build = "hcf80075_0" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libunistring = { version = "==0.9.10", build = "h7f98852_0" }
+libxcb = { version = "==1.17.0", build = "h8a09558_0" }
+ncbi-vdb = { version = "==3.4.1", build = "hd63eeec_0", channel = "bioconda" }
+pcre2 = { version = "==10.47", build = "haa7fec5_0" }
+perl = { version = "==5.32.1", build = "7_hd590300_perl5" }
+pixman = { version = "==0.46.4", build = "h54a6638_1" }
+readline = { version = "==8.3", build = "h853b02a_0" }
+xorg-libsm = { version = "==1.2.6", build = "he73a12e_0" }
+gcc_impl_linux-64 = { version = "==15.2.0", build = "he0086c7_19" }
+gmp = { version = "==6.3.0", build = "hac33072_2" }
+krb5 = { version = "==1.22.2", build = "ha1258a1_0" }
+libfreetype = { version = "==2.14.3", build = "ha770c72_0" }
+libgfortran-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libglib = { version = "==2.88.1", build = "h0d30a3d_2" }
+libidn2 = { version = "==2.3.8", build = "hfac485b_1" }
+libopenblas = { version = "==0.3.33", build = "pthreads_h94d23a6_0" }
+libtiff = { version = "==4.7.1", build = "h9d88235_1" }
+libxml2-16 = { version = "==2.14.6", build = "hca6bf5a_3" }
+pcre = { version = "==8.45", build = "h9c3ff4c_0" }
+perl-common-sense = { version = "==3.75", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-compress-raw-bzip2 = { version = "==2.214", build = "pl5321hda65f42_0" }
+perl-compress-raw-zlib = { version = "==2.214", build = "pl5321h4dac143_0" }
+perl-exporter-tiny = { version = "==1.002002", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-extutils-makemaker = { version = "==7.78", build = "pl5422h47b2149_0", channel = "https://repo.anaconda.com/pkgs/main" }
+perl-io-zlib = { version = "==1.15", build = "pl5321hdfd78af_1", channel = "bioconda" }
+perl-list-moreutils-xs = { version = "==0.430", build = "pl5321h7b50bb2_5", channel = "bioconda" }
+perl-parent = { version = "==0.243", build = "pl5321hd8ed1ab_0" }
+perl-scalar-list-utils = { version = "==1.70", build = "pl5321hb03c661_0" }
+perl-storable = { version = "==3.15", build = "pl5321hec16e2b_3", channel = "bioconda" }
+xorg-libx11 = { version = "==1.8.13", build = "he1eb515_0" }
+fontconfig = { version = "==2.18.0", build = "h27c8c51_0" }
+gfortran_impl_linux-64 = { version = "==15.2.0", build = "h281d09f_19" }
+gxx_impl_linux-64 = { version = "==15.2.0", build = "hda75c37_19" }
+libblas = { version = "==3.11.0", build = "8_h4a7cf45_openblas" }
+libxml2 = { version = "==2.14.6", build = "he237659_3" }
+mpfr = { version = "==4.2.2", build = "he0a73b1_0" }
+perl-list-moreutils = { version = "==0.430", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-types-serialiser = { version = "==1.01", build = "pl5321hdfd78af_0", channel = "bioconda" }
+pullseq = { version = "==1.0.2", build = "h1104d80_11", channel = "bioconda" }
+ruby = { version = "==4.0.5", build = "h95e6935_0" }
+tk = { version = "==8.6.15", build = "h54e0aa7_0", channel = "https://repo.anaconda.com/pkgs/main" }
+wget = { version = "==1.25.0", build = "h653f8fd_1" }
+xorg-libxext = { version = "==1.3.7", build = "hb03c661_0" }
+xorg-libxrender = { version = "==0.9.12", build = "hb9d3cd8_0" }
+xorg-libxt = { version = "==1.3.1", build = "hb9d3cd8_0" }
+bwidget = { version = "==1.10.1", build = "ha770c72_1" }
+cairo = { version = "==1.18.4", build = "he90730b_1" }
+entrez-direct = { version = "==24.0", build = "he881be0_0", channel = "bioconda" }
+gawk = { version = "==5.4.0", build = "h0a3468a_0" }
+liblapack = { version = "==3.11.0", build = "8_h47877c9_openblas" }
+libnghttp2 = { version = "==1.69.0", build = "hc59f8b6_0", channel = "https://repo.anaconda.com/pkgs/main" }
+perl-json-xs = { version = "==4.04", build = "pl5321h9948957_0", channel = "bioconda" }
+tktable = { version = "==2.10", build = "h5a7a40f_8" }
+harfbuzz = { version = "==14.2.0", build = "h6083320_0" }
+libcurl = { version = "==8.20.0", build = "hcf29cc6_0" }
+perl-json = { version = "==4.11", build = "pl5321hdfd78af_0", channel = "bioconda" }
+curl = { version = "==8.20.0", build = "hcf29cc6_0" }
+pango = { version = "==1.56.4", build = "hda50119_1" }
+r-base = { version = "==4.4.3", build = "h15dba0b_9" }
+"r-data.table" = { version = "==1.17.8", build = "r44h1c8cec4_1" }
+r-docopt = { version = "==0.7.1", build = "r44hc72bb7e_4" }
+r-magrittr = { version = "==2.0.5", build = "r44h54b55ab_0" }
+blast = { version = "==2.17.0", build = "h66d330f_0", channel = "bioconda" }
+das_tool = { version = "==1.1.7", build = "r44hdfd78af_1", channel = "bioconda" }
+perl-io-compress = { version = "==2.216", build = "pl5321h503566f_0", channel = "bioconda" }
+perl-pathtools = { version = "==3.75", build = "pl5321hec16e2b_3", channel = "bioconda" }
+perl-archive-tar = { version = "==3.10", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-encode = { version = "==3.21", build = "pl5321hb9d3cd8_1" }
+perl-carp = { version = "==1.50", build = "pl5321hd8ed1ab_0" }
+perl-exporter = { version = "==5.79", build = "pl5422h06a4308_0", channel = "https://repo.anaconda.com/pkgs/main" }

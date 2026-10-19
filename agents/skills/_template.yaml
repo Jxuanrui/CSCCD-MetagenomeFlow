@@ -1,0 +1,39 @@
+# Skill Card Template — copy and fill in when integrating a new script
+id: "<script_id>"
+script: "scripts/<filename>.sh"
+tool: "<ToolName>"
+tool_version: "<x.y.z>"
+conda_env: "envs/<env_name>"
+description: "<one-line description>"
+dimension: "<bacteria|virome|fungi|shared|stats>"
+category: "<taxonomy|functional|assembly|binning|annotation|qc|stats>"
+rule_type: "per_sample"   # per_sample | aggregate
+
+inputs:
+  - name: "<input_name>"
+    path_pattern: "{workdir}/result/..."
+    required: true
+
+outputs:
+  - name: "<output_name>"
+    path_pattern: "{workdir}/result/..."
+    description: "<what this file is>"
+
+depends_on: []
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo:    "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "pending"
+integrated_date: ~
+snakemake_rule: ~
