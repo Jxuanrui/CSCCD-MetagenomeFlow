@@ -1,0 +1,240 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/prokka.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "prokka"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
+font-ttf-dejavu-sans-mono = { version = "==2.37", build = "hab24e00_0" }
+font-ttf-inconsolata = { version = "==3.000", build = "h77eed37_0" }
+font-ttf-source-code-pro = { version = "==2.038", build = "h77eed37_0" }
+font-ttf-ubuntu = { version = "==0.83", build = "h77eed37_3" }
+libgomp = { version = "==15.2.0", build = "he0feb66_19" }
+libzlib = { version = "==1.3.2", build = "h25fd6f3_2" }
+mpi = { version = "==1.0", build = "openmpi" }
+_openmp_mutex = { version = "==4.5", build = "20_gnu" }
+fonts-conda-forge = { version = "==1", build = "hc364b38_1" }
+zlib = { version = "==1.3.2", build = "h25fd6f3_2" }
+zstd = { version = "==1.5.7", build = "hb78ec9c_6" }
+fonts-conda-ecosystem = { version = "==1", build = "0" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+alsa-lib = { version = "==1.2.16", build = "hb03c661_0" }
+aragorn = { version = "==1.2.41", build = "h7b50bb2_5", channel = "bioconda" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+c-ares = { version = "==1.34.6", build = "hb03c661_0" }
+keyutils = { version = "==1.6.3", build = "hb9d3cd8_0" }
+libdeflate = { version = "==1.25", build = "h17f619e_0" }
+libexpat = { version = "==2.8.1", build = "hecca717_0" }
+libffi = { version = "==3.5.2", build = "h3435931_0" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran5 = { version = "==15.2.0", build = "h68bc16d_19" }
+libiconv = { version = "==1.18", build = "h3b78370_2" }
+libjpeg-turbo = { version = "==3.1.4.1", build = "hb03c661_0" }
+liblzma = { version = "==5.8.3", build = "hb03c661_0" }
+libpng = { version = "==1.6.58", build = "h421ea60_0" }
+libsqlite = { version = "==3.53.1", build = "h0c1763c_0" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libtasn1 = { version = "==4.21.0", build = "hb03c661_0" }
+libuuid = { version = "==2.42.1", build = "h5347b49_0" }
+libwebp-base = { version = "==1.6.0", build = "hd42ef1d_0" }
+ncurses = { version = "==6.6", build = "hdb14827_0" }
+openssl = { version = "==3.6.2", build = "h35e630c_0" }
+paml = { version = "==4.10.10", build = "h87e0c26_2", channel = "bioconda" }
+prodigal = { version = "==2.6.3", build = "h577a1d6_11", channel = "bioconda" }
+pthread-stubs = { version = "==0.4", build = "hb9d3cd8_1002" }
+viennarna = { version = "==2.4.7", build = "py27_2", channel = "bioconda" }
+xorg-libice = { version = "==1.1.2", build = "hb9d3cd8_0" }
+xorg-libxau = { version = "==1.0.12", build = "hb03c661_1" }
+xorg-libxdmcp = { version = "==1.1.5", build = "hb03c661_1" }
+argtable2 = { version = "==2.13", build = "hd590300_1004" }
+bedtools = { version = "==2.31.1", build = "h13024bc_3", channel = "bioconda" }
+clustalw = { version = "==2.1", build = "h9948957_12", channel = "bioconda" }
+expat = { version = "==2.8.1", build = "hecca717_0" }
+giflib = { version = "==5.2.2", build = "hd590300_0" }
+graphite2 = { version = "==1.3.15", build = "hecca717_0" }
+icu = { version = "==78.3", build = "h33c6efd_0" }
+lerc = { version = "==4.1.0", build = "hdb68285_0" }
+libasprintf = { version = "==0.25.1", build = "h3f43e3d_1" }
+libedit = { version = "==3.1.20250104", build = "pl5321h7949ede_0" }
+libev = { version = "==4.33", build = "hd590300_2" }
+libfreetype6 = { version = "==2.14.3", build = "h73754d4_0" }
+libgettextpo = { version = "==0.25.1", build = "h3f43e3d_1" }
+libgfortran = { version = "==15.2.0", build = "h69a702a_19" }
+libidn11 = { version = "==1.34", build = "h1cef754_0" }
+libssh2 = { version = "==1.11.1", build = "hcf80075_0" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libunistring = { version = "==0.9.10", build = "h7f98852_0" }
+libxcb = { version = "==1.17.0", build = "h8a09558_0" }
+libxcrypt = { version = "==4.4.36", build = "hd590300_1" }
+muscle = { version = "==5.3", build = "h9948957_3", channel = "bioconda" }
+ncbi-vdb = { version = "==3.4.1", build = "hd63eeec_0", channel = "bioconda" }
+p11-kit = { version = "==0.26.2", build = "h3435931_0" }
+pcre2 = { version = "==10.47", build = "haa7fec5_0" }
+pixman = { version = "==0.46.4", build = "h54a6638_1" }
+readline = { version = "==8.3", build = "h853b02a_0" }
+samtools = { version = "==0.1.19", build = "h9dcdb79_15", channel = "bioconda" }
+xorg-libsm = { version = "==1.2.6", build = "he73a12e_0" }
+clustalo = { version = "==1.2.4", build = "h503566f_10", channel = "bioconda" }
+gmp = { version = "==6.3.0", build = "hac33072_2" }
+krb5 = { version = "==1.22.2", build = "ha1258a1_0" }
+libdb = { version = "==6.2.32", build = "h9c3ff4c_0" }
+libfreetype = { version = "==2.14.3", build = "ha770c72_0" }
+libgfortran-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libglib = { version = "==2.88.1", build = "h0d30a3d_2" }
+libidn2 = { version = "==2.3.8", build = "hfac485b_1" }
+libnghttp2 = { version = "==1.68.1", build = "h877daf1_0" }
+libopenblas = { version = "==0.3.33", build = "pthreads_h94d23a6_0" }
+libtiff = { version = "==4.7.1", build = "h9d88235_1" }
+perl = { version = "==5.32.1", build = "7_hd590300_perl5" }
+tbl2asn-forever = { version = "==25.7.2f", build = "h7b50bb2_6", channel = "bioconda" }
+xorg-libx11 = { version = "==1.8.13", build = "he1eb515_0" }
+fontconfig = { version = "==2.18.1", build = "h27c8c51_0" }
+infernal = { version = "==1.1.5", build = "pl5321h7b50bb2_4", channel = "bioconda" }
+lcms2 = { version = "==2.19.1", build = "h0c24ade_1" }
+libblas = { version = "==3.11.0", build = "8_h4a7cf45_openblas" }
+libcups = { version = "==2.3.3", build = "h7a8fb5f_6" }
+libcurl = { version = "==8.20.0", build = "hcf29cc6_0" }
+mpfr = { version = "==4.2.2", build = "he0a73b1_0" }
+nettle = { version = "==3.10.1", build = "h4a9d5aa_0" }
+openmpi = { version = "==4.1.6", build = "hc5af2df_101" }
+parallel = { version = "==20260422", build = "ha770c72_0" }
+perl-algorithm-diff = { version = "==1.201", build = "pl5321hd8ed1ab_0" }
+perl-b-cow = { version = "==0.007", build = "pl5321hb9d3cd8_1" }
+perl-base = { version = "==2.23", build = "pl5321hd8ed1ab_0" }
+perl-class-data-inheritable = { version = "==0.09", build = "pl5321ha770c72_0" }
+perl-common-sense = { version = "==3.75", build = "pl5321hd8ed1ab_0" }
+perl-compress-raw-bzip2 = { version = "==2.214", build = "pl5321hda65f42_0" }
+perl-compress-raw-zlib = { version = "==2.214", build = "pl5321h4dac143_0" }
+perl-constant = { version = "==1.33", build = "pl5321hd8ed1ab_0" }
+perl-data-dump = { version = "==1.25", build = "pl5321h7b50bb2_2", channel = "bioconda" }
+perl-data-dumper = { version = "==2.183", build = "pl5321hb9d3cd8_1" }
+perl-db_file = { version = "==1.858", build = "pl5321hb9d3cd8_0" }
+perl-devel-stacktrace = { version = "==2.04", build = "pl5321h296ab09_0" }
+perl-digest-hmac = { version = "==1.05", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-digest-md5 = { version = "==2.59", build = "pl5321hb9d3cd8_3" }
+perl-exporter = { version = "==5.74", build = "pl5321hd8ed1ab_0" }
+perl-exporter-tiny = { version = "==1.002002", build = "pl5321hd8ed1ab_0" }
+perl-extutils-makemaker = { version = "==7.70", build = "pl5321hd8ed1ab_0" }
+perl-file-sort = { version = "==1.01", build = "pl5321hdfd78af_3", channel = "bioconda" }
+perl-file-spec = { version = "==3.48_01", build = "pl5321hdfd78af_2", channel = "bioconda" }
+perl-getopt-long = { version = "==2.58", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-html-tagset = { version = "==3.24", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-inc-latest = { version = "==0.500", build = "pl5321ha770c72_0" }
+perl-io-html = { version = "==1.004", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-io-string = { version = "==1.08", build = "pl5321hdfd78af_4", channel = "bioconda" }
+perl-io-tty = { version = "==1.31", build = "pl5321hb03c661_0" }
+perl-io-zlib = { version = "==1.15", build = "pl5321hdfd78af_1", channel = "bioconda" }
+perl-list-moreutils-xs = { version = "==0.430", build = "pl5321h7b50bb2_5", channel = "bioconda" }
+perl-mime-base64 = { version = "==3.16", build = "pl5321hb9d3cd8_3" }
+perl-module-load = { version = "==0.34", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-mozilla-ca = { version = "==20250602", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-parent = { version = "==0.243", build = "pl5321hd8ed1ab_0" }
+perl-scalar-list-utils = { version = "==1.70", build = "pl5321hb03c661_0" }
+perl-socket = { version = "==2.027", build = "pl5321h5c03b87_6", channel = "bioconda" }
+perl-storable = { version = "==3.15", build = "pl5321hb9d3cd8_2" }
+perl-sub-uplevel = { version = "==0.2800", build = "pl5321hb9d3cd8_0" }
+perl-test-deep = { version = "==1.130", build = "pl5321hd8ed1ab_0" }
+perl-test-needs = { version = "==0.002009", build = "pl5321hd8ed1ab_0" }
+perl-test-warnings = { version = "==0.031", build = "pl5321ha770c72_0" }
+perl-timedate = { version = "==2.35", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-try-tiny = { version = "==0.31", build = "pl5321ha770c72_0" }
+perl-url-encode = { version = "==0.03", build = "pl5321h9ee0642_1", channel = "bioconda" }
+perl-xml-parser = { version = "==2.44_01", build = "pl5321hf2e2c51_1004" }
+perl-xml-regexp = { version = "==0.04", build = "pl5321hdfd78af_3", channel = "bioconda" }
+perl-xml-sax-base = { version = "==1.09", build = "pl5321hd8ed1ab_0" }
+perl-xml-xpathengine = { version = "==0.14", build = "pl5321hdfd78af_3", channel = "bioconda" }
+wget = { version = "==1.25.0", build = "h653f8fd_1" }
+xorg-libxext = { version = "==1.3.7", build = "hb03c661_0" }
+xorg-libxfixes = { version = "==6.0.2", build = "hb03c661_0" }
+xorg-libxrender = { version = "==0.9.12", build = "hb9d3cd8_0" }
+xorg-libxt = { version = "==1.3.1", build = "hb9d3cd8_0" }
+cairo = { version = "==1.18.4", build = "he90730b_1" }
+curl = { version = "==8.20.0", build = "hcf29cc6_0" }
+entrez-direct = { version = "==24.0", build = "he881be0_0", channel = "bioconda" }
+gawk = { version = "==5.4.0", build = "h0a3468a_0" }
+gnutls = { version = "==3.8.13", build = "h18acefa_0" }
+libcblas = { version = "==3.11.0", build = "8_h0358290_openblas" }
+perl-bioperl-core = { version = "==1.7.8", build = "pl5321hdfd78af_1", channel = "bioconda" }
+perl-carp = { version = "==1.50", build = "pl5321hd8ed1ab_0" }
+perl-clone = { version = "==0.46", build = "pl5321hb9d3cd8_1" }
+perl-encode = { version = "==3.24", build = "pl5321hb03c661_0" }
+perl-exception-class = { version = "==1.45", build = "pl5321ha770c72_0" }
+perl-file-path = { version = "==2.18", build = "pl5321hd8ed1ab_0" }
+perl-ipc-run = { version = "==20250809.0", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-libxml-perl = { version = "==0.08", build = "pl5321hdfd78af_3", channel = "bioconda" }
+perl-list-moreutils = { version = "==0.430", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-module-build = { version = "==0.4234", build = "pl5321ha770c72_1" }
+perl-net-ssleay = { version = "==1.96", build = "pl5321h34fdc24_0" }
+perl-ntlm = { version = "==1.09", build = "pl5321hdfd78af_5", channel = "bioconda" }
+perl-test-exception = { version = "==0.43", build = "pl5321hd8ed1ab_0" }
+perl-test-fatal = { version = "==0.016", build = "pl5321ha770c72_0" }
+perl-test-requiresinternet = { version = "==0.05", build = "pl5321hdfd78af_1", channel = "bioconda" }
+perl-test-warn = { version = "==0.37", build = "pl5321hd8ed1ab_0" }
+perl-text-diff = { version = "==1.45", build = "pl5321hd8ed1ab_0" }
+perl-types-serialiser = { version = "==1.01", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-xml-namespacesupport = { version = "==1.12", build = "pl5321hd8ed1ab_0" }
+xorg-libxi = { version = "==1.8.3", build = "hb03c661_0" }
+xorg-libxrandr = { version = "==1.5.5", build = "hb03c661_0" }
+blast-legacy = { version = "==2.2.26", build = "hf7ff83a_5", channel = "bioconda" }
+gsl = { version = "==2.7", build = "he838d99_0" }
+harfbuzz = { version = "==14.2.1", build = "h6083320_0" }
+mafft = { version = "==7.526", build = "h4bc722e_0" }
+perl-bio-samtools = { version = "==1.43", build = "pl5321h577a1d6_6", channel = "bioconda" }
+perl-bio-searchio-hmmer = { version = "==1.7.3", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-business-isbn-data = { version = "==20210112.006", build = "pl5321hd8ed1ab_0" }
+perl-encode-locale = { version = "==1.05", build = "pl5321hdfd78af_7", channel = "bioconda" }
+perl-file-slurper = { version = "==0.014", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-file-temp = { version = "==0.2304", build = "pl5321hd8ed1ab_0" }
+perl-io-compress = { version = "==2.216", build = "pl5321h503566f_0", channel = "bioconda" }
+perl-io-socket-ssl = { version = "==2.075", build = "pl5321hd8ed1ab_0" }
+perl-json-xs = { version = "==4.04", build = "pl5321h9948957_0", channel = "bioconda" }
+perl-lwp-mediatypes = { version = "==6.04", build = "pl5321hdfd78af_1", channel = "bioconda" }
+perl-pathtools = { version = "==3.75", build = "pl5321hb9d3cd8_2" }
+perl-test-differences = { version = "==0.72", build = "pl5321ha770c72_0" }
+perl-time-local = { version = "==1.35", build = "pl5321hdfd78af_0", channel = "bioconda" }
+xorg-libxtst = { version = "==1.2.5", build = "hb9d3cd8_3" }
+hmmer = { version = "==3.4", build = "hb6cb901_4", channel = "bioconda" }
+openjdk = { version = "==25.0.2", build = "ha668962_0" }
+perl-archive-tar = { version = "==3.12", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-bioperl-run = { version = "==1.007003", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-business-isbn = { version = "==3.007", build = "pl5321hd8ed1ab_0" }
+perl-http-date = { version = "==6.06", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-json = { version = "==4.11", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-test-most = { version = "==0.42", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-tree-dag_node = { version = "==1.37", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-xml-sax = { version = "==1.02", build = "pl5321hd8ed1ab_0" }
+poa = { version = "==2.0", build = "h7b50bb2_6", channel = "bioconda" }
+barrnap = { version = "==0.9", build = "hdfd78af_4", channel = "bioconda" }
+blast = { version = "==2.17.0", build = "h66d330f_0", channel = "bioconda" }
+minced = { version = "==0.4.2", build = "hdfd78af_1", channel = "bioconda" }
+perl-bio-asn1-entrezgene = { version = "==1.73", build = "pl5321hdfd78af_3", channel = "bioconda" }
+perl-bio-coordinate = { version = "==1.007001", build = "pl5321hdfd78af_3", channel = "bioconda" }
+perl-bio-tools-phylo-paml = { version = "==1.7.3", build = "pl5321hdfd78af_3", channel = "bioconda" }
+perl-bio-tools-run-alignment-clustalw = { version = "==1.7.4", build = "pl5321hdfd78af_3", channel = "bioconda" }
+perl-file-listing = { version = "==6.16", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-http-cookiejar-lwp = { version = "==0.014", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-uri = { version = "==5.34", build = "pl5321ha770c72_0" }
+perl-xml-sax-expat = { version = "==0.51", build = "pl5321hd8ed1ab_0" }
+perl-http-message = { version = "==7.02", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-net-http = { version = "==6.24", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-www-robotrules = { version = "==6.03", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-xml-simple = { version = "==2.25", build = "pl5321hdfd78af_2", channel = "bioconda" }
+t-coffee = { version = "==12.00.7fb08c2", build = "h26a2512_0", channel = "bioconda" }
+perl-bio-tools-run-alignment-tcoffee = { version = "==1.7.4", build = "pl5321hdfd78af_5", channel = "bioconda" }
+perl-html-parser = { version = "==3.81", build = "pl5321h4ac6f70_1", channel = "bioconda" }
+perl-http-cookies = { version = "==6.11", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-http-daemon = { version = "==6.17", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-http-negotiate = { version = "==6.01", build = "pl5321hdfd78af_4", channel = "bioconda" }
+perl-lwp-protocol-https = { version = "==6.15", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-libwww-perl = { version = "==6.82", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-xml-dom = { version = "==1.46", build = "pl5321hdfd78af_1", channel = "bioconda" }
+perl-xml-dom-xpath = { version = "==0.14", build = "pl5321hdfd78af_2", channel = "bioconda" }
+perl-bio-featureio = { version = "==1.6.905", build = "pl5321hdfd78af_4", channel = "bioconda" }
+perl-bioperl = { version = "==1.7.8", build = "hdfd78af_1", channel = "bioconda" }
+prokka = { version = "==1.15.6", build = "pl5321hdfd78af_0", channel = "bioconda" }
