@@ -23,7 +23,7 @@ done
 
 # Files/dirs that must NEVER enter the public snapshot.
 # Project/ carries production cohort metadata + machine-specific sheets.
-EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.zcodeignore|\.omo/|\.codegraph|agents/provenance/|skills/.*\.pdf|Project/|docs/plans/|scripts/tests/|scripts/utils/supervisor_api\.py)'
+EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.zcodeignore|\.omo/|\.codegraph|agents/provenance/|skills/|mining/|Project/|docs/plans/|scripts/tests/|scripts/utils/supervisor_api\.py|scripts/utils/publish_public\.sh)'
 
 cd "${REPO}"
 
@@ -77,6 +77,13 @@ echo "${FILES}" | xargs -d '\n' grep -l -E 'supervisor (P0|final|stage|review)|s
     xargs -r -d '\n' sed -i -E 's/supervisor_(19|20)[0-9]{4}[a-z_]*/review/g; s/，supervisor/，review/g; s/, supervisor/, review/g' || true
 echo "${FILES}" | xargs -d '\n' grep -l -E 'Claude Code|claude mcp|claude -p' 2>/dev/null | \
     xargs -r -d '\n' sed -i -E -e 's/Claude Code/MCP 客户端/g' -e 's/claude mcp add/mcp add/g' -e 's/claude -p [^ ]* --agent [a-z]+/cli-review/g' || true
+# 2026-10-19 pass 2: scattered client/tooling mentions in shipped docs.
+echo "${FILES}" | xargs -d '\n' grep -l -E '\.claude|Claude|claude|Codex|ZCode|zcode' 2>/dev/null | \
+    xargs -r -d '\n' sed -i -E -e 's#\.claude/skills#本地技能目录#g' -e 's#~?/\.claude/skills#~/local/skills#g' \
+        -e 's/`\.claude[^`]*`/内部目录/g' -e 's/Claude|MCP 客户端/g' -e 's/claude/内部 CLI/g' \
+        -e 's/Codex/外部执行器/g' -e 's/ZCode 工作区级/工作区级/g' -e 's/ZCode/工作区/g' -e 's/zcode/内部工具/g' || true
+# gitignore: drop the internal relay-config line from the snapshot
+sed -i '/supervisor_relays/d' .gitignore 2>/dev/null || true
 # Internal review-archive path references drop to generic wording.
 echo "${FILES}" | xargs -d '\n' grep -l '\.claude/reviews/' 2>/dev/null | \
     xargs -r -d '\n' sed -i -E 's/`?\.claude\/reviews\/[A-Za-z0-9_.-]+`?/内部审校记录/g' || true
