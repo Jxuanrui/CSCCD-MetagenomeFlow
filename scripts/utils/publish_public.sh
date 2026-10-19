@@ -65,8 +65,10 @@ sed -i -E 's#/home/[^/]*/Course/(CSCCD-MetagenomeFlow|Maxmetagenome)#~/Course/CS
 # functional strings) are neutralized to "Sample<N>" in the snapshot.
 echo "${FILES}" | xargs -d '\n' grep -l 'Harbin' 2>/dev/null | xargs -r -d '\n' sed -i 's/Harbin/Sample/g' || true
 # Machine-specific repo paths in mined tooling become portable placeholders.
-echo "${FILES}" | xargs -d '\n' grep -l -E '/home/[^/]*/Course/(CSCCD-MetagenomeFlow|Maxmetagenome)' 2>/dev/null | \
-    xargs -r -d '\n' sed -i -E 's#/home/[^/]*/Course/(CSCCD-MetagenomeFlow|Maxmetagenome)#~/Course/CSCCD-MetagenomeFlow#g' || true
+# 2026-10-19: generalized — any /home/<user>/ prefix becomes ~/ (covers sibling
+# project paths like apptainer kits; /home/user examples normalize harmlessly)
+echo "${FILES}" | xargs -d '\n' grep -l -E '/home/[A-Za-z0-9_.-]+/' 2>/dev/null | \
+    xargs -r -d '\n' sed -i -E 's#/home/[A-Za-z0-9_.-]+/#~/#g' || true
 # 2026-10-19 pass: this cycle's review-process vocabulary and tool refs are
 # neutralized across shipped text (review channel terms, agent jargon, client names).
 echo "${FILES}" | xargs -d '\n' grep -l -e '质量审核' -e '主代理' -e '子代理' 2>/dev/null | \
