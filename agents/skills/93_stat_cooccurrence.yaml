@@ -1,0 +1,39 @@
+id: "93_stat_cooccurrence"
+script: "scripts/93_stat_cooccurrence.sh"
+tool: "Rscript"
+tool_version: "SpiecEasi, NetCoMi, igraph, ggraph, phyloseq, tidyverse"
+conda_env: "envs/r_stat"
+description: "Infer intra- and cross-domain co-occurrence networks and summarize hub and modularity metrics."
+dimension: "statistics"
+category: "network"
+rule_type: "aggregate"
+
+inputs:
+  - name: "diversity_sentinel"
+    path_pattern: "{workdir}/result/stat/diversity_alpha_summary.tsv"
+    required: true
+
+outputs:
+  - name: "network_summary"
+    path_pattern: "{workdir}/result/stat/network/network_summary.txt"
+    description: "Network summary sentinel."
+
+depends_on:
+  - "91_stat_diversity"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-08"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_cooccurrence"
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"

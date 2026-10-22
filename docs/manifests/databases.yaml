@@ -1,0 +1,612 @@
+# CSCCD-MetagenomeFlow database manifest
+# Generated: 2026-09-24 by 0Install-db audit (see 0Install.sh for download commands).
+# One entry per first-level directory under db/. Sizes via 'du -sh'.
+# sha256 only for files < 1 GB (index/config-like); larger files are marked skipped.
+databases:
+  - name: amrfinder
+    size: 488M
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "NCBI AMRFinderPlus DB; official update via 'amrfinder -u'; local copy from SIBLING_DB"
+  - name: antismash
+    size: 9.4G
+    last_modified: 2026-09-19
+    source: "unknown"
+    source_note: "official 'download-antismash-databases'; local antismash-db.tar.gz from Apptainer project"
+  - name: antismash8
+    size: 8.0G
+    last_modified: 2026-09-19
+    source: "unknown"
+    source_note: "antiSMASH 8 database; not covered by 0Install.sh sections"
+  - name: bacmet
+    size: 867M
+    last_modified: 2026-06-07
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: bacmet/bacmet.dmnd
+        size_bytes: 303471
+        sha256: e896933482f0707b5086201259ea832aa9d2e8007aaeba0ee08967fc79109ac3
+      - path: bacmet/bacmet.udb
+        size_bytes: 5266489
+        sha256: 08bbe77f30184da9e0a6daac354649a7168cd27ad771242408e43545929c96cd
+      - path: bacmet/RELEASE
+        size_bytes: 942
+        sha256: a8098b1ba5314e20999f5d7b1f56a6840a5fa9fe13c67ddb9497b3a1e986b753
+  - name: bakta
+    size: 4.0G
+    last_modified: 2026-07-02
+    source: "unknown"
+    source_note: "local bakta.tar.gz from Binning project"
+  - name: busco_downloads
+    size: 1.4G
+    last_modified: 2026-08-06
+    source: "unknown"
+    source_note: "BUSCO lineage sets"
+    files:
+      - path: busco_downloads/file_versions.tsv
+        size_bytes: 106586
+        sha256: c2615b6ec8b7a65d70ab5c995180e16d5d8b9898b8ff69e620cddb8e9e7f91f5
+  - name: card
+    size: 48M
+    last_modified: 2026-06-01
+    source: "https://card.mcmaster.ca/latest/data"
+    files:
+      - path: card/card.json
+        size_bytes: 35114782
+        sha256: 04ccfa0553c88df524b8f1a9223aea64d57c2119c0b185e5530d515bd8a79698
+  - name: ccyc
+    size: 12G
+    last_modified: 2024-12-26
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+  - name: centrifuger
+    size: 166G
+    last_modified: 2026-06-02
+    source: "https://genome-idx.s3.amazonaws.com/centrifuger/cfr_gtdb_r226+refseq_hvfc.tar.gz"
+  - name: cgf
+    size: 19G
+    last_modified: 2026-06-15
+    source: "unknown"
+    source_note: "NCBI BioProject PRJNA833221 (Yan et al. 2024 Cell 187)"
+    files:
+      - path: cgf/download_manifest.tsv
+        size_bytes: 134710
+        sha256: 5d41630c29b74714b0f3cd958e8aaaaab25b3e85bd6210b231b346341b33eb43
+  - name: checkm
+    size: 1.7G
+    last_modified: 2026-06-01
+    source: "https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz"
+    files:
+      - path: checkm/selected_marker_sets.tsv
+        size_bytes: 81505
+        sha256: bc3d579457dbf6a1e9939daee452fcc93b64aaa81e213da3488a77fb267f73a5
+      - path: checkm/taxon_marker_sets.tsv
+        size_bytes: 21521855
+        sha256: 4e79c1cd98d0916d55ae0cd53f8a7c2076a1a506b187b857a46143904df4db92
+  - name: checkm2
+    size: 2.9G
+    last_modified: 2026-06-01
+    source: "unknown"
+    source_note: "official 'checkm2 database --download' (uniref100.KO.1.dmnd)"
+  - name: checkv
+    size: 6.4G
+    last_modified: 2025-11-27
+    source: "unknown"
+    source_note: "official 'checkv download_database' (checkv-db-v1.x)"
+    files:
+      - path: checkv/README.txt
+        size_bytes: 4678
+        sha256: b7bc89171830e13ac37107d34a9bafe8cead8ff6848302db81906b35866c07c0
+      - path: checkv/RELEASE
+        size_bytes: 15
+        sha256: 3a6ed0184d77574dfcec8ef46d9370efb3d0f25410b1c9fb208414168d36777b
+  - name: dbcan3
+    size: 4.0G
+    last_modified: 2026-07-22
+    source: "https://bcb.unl.edu/dbCAN2/download/ (CAZyDB.07262023.fa, dbCAN-HMMdb-V12.txt)"
+    files:
+      - path: dbcan3/CAZyDB.08062022.fam-activities.txt
+        size_bytes: 71475
+        sha256: eb703df4772b3eebc53c2294c293832f3c7e62d9593fe1680aa7f3b96da5592e
+      - path: dbcan3/CAZy_description.txt
+        size_bytes: 70485
+        sha256: 3c25f9fe792a575996aaf102c0bfe4e8dd8b8c2bfdf89536b103e24b9ed272e7
+      - path: dbcan3/dbCAN-HMMdb-V8.txt
+        size_bytes: 129842960
+        sha256: 396c791fb13defab152864d8046687ef03b492937ec6f9bbab008bc77cbaa7a5
+      - path: dbcan3/dbCAN.txt
+        size_bytes: 129842960
+        sha256: 396c791fb13defab152864d8046687ef03b492937ec6f9bbab008bc77cbaa7a5
+      - path: dbcan3/CAZyDB.dmnd
+        checksum: skipped (>1GB)
+  - name: defense-finder
+    size: 320M
+    last_modified: 2025-06-18
+    source: "unknown"
+    source_note: "local defense-finder-db.tar.gz from Binning project"
+  - name: dram_db
+    size: 180G
+    last_modified: 2026-06-16
+    source: "unknown"
+    source_note: "rsync from ViOTUcluster DRAM (refseq_viral + peptidases + kofam ...)"
+    files:
+      - path: dram_db/amg_database.20260527.tsv
+        size_bytes: 21569
+        sha256: 8e0d81dd8e33315dd50cf022e23257d41bcd21f474af4a953f19ecf483b6c1cd
+      - path: dram_db/CAZyDB.08062022.fam-activities.txt
+        size_bytes: 71475
+        sha256: eb703df4772b3eebc53c2294c293832f3c7e62d9593fe1680aa7f3b96da5592e
+      - path: dram_db/CAZyDB.08062022.fam.subfam.ec.txt
+        size_bytes: 666757
+        sha256: 632ccbc67f947900e95ed10f0f77569a50d293a9b8d4aaa04cce33ed87724149
+      - path: dram_db/dbCAN-HMMdb-V11.txt
+        size_bytes: 100919249
+        sha256: 755b244c18f8627a7b446b6999eef7f5e02144ab00715f41417d3971820777d2
+      - path: dram_db/etc_mdoule_database.20260527.tsv
+        size_bytes: 2378
+        sha256: 1dfc5811b95b3ee40f74a6d4ba7cca415606ad67612bbc5d83b95818c3b9bc40
+      - path: dram_db/function_heatmap_form.20260527.tsv
+        size_bytes: 11199
+        sha256: 279e8016eab84ec337c1fa61ae794fa8a0636179f84e0223fcb3356ed8d74d00
+      - path: dram_db/genome_summary_form.20260527.tsv
+        size_bytes: 580242
+        sha256: 9dea0f26cba1e300ebadb39099b99b01e66714bfc4b2be9ecedc0488afbca9ca
+      - path: dram_db/kofam_ko_list.tsv
+        size_bytes: 2852451
+        sha256: 26bc2e92450a9c203dd4d9925ff50d41c316db6b581980b92eb7cb55edc0b938
+      - path: dram_db/kofam_profiles.hmm
+        checksum: skipped (>1GB)
+      - path: dram_db/vog_latest_hmms.txt
+        checksum: skipped (>1GB)
+  - name: eggnog
+    size: 48G
+    last_modified: 2026-06-01
+    source: "unknown"
+    source_note: "official download_eggnog_data.py (eggNOG 5.0.2)"
+    files:
+      - path: eggnog/eggnog_proteins.dmnd
+        checksum: skipped (>1GB)
+  - name: eukfinder_db
+    size: 72G
+    last_modified: 2026-06-17
+    source: "unknown"
+    source_note: "local build from NCBI RefSeq fungi + CHM13v2; official alt https://perun.biochem.dal.ca/Eukfinder/compressed_db/centrifuge_db.tar.gz"
+    files:
+      - path: eukfinder_db/PlastDB_map.txt
+        size_bytes: 10473331
+        sha256: a1dc0e163089a2f4aa02e11416fde527c203f234dee7a293e85a44b04430413f
+  - name: fungi
+    size: 18G
+    last_modified: 2026-06-10
+    source: "unknown"
+    source_note: "NCBI RefSeq fungi genomes ('datasets download genome taxon fungi'); local DB_BANK fungi_human_gut_reference"
+    files:
+      - path: fungi/gut_fungi.dmnd
+        checksum: skipped (>1GB)
+  - name: funomic
+    size: 19G
+    last_modified: 2023-07-31
+    source: "unknown"
+    source_note: "local FunOMIC-P.tar.xz / FunOMIC-T.tar.xz"
+  - name: genomad
+    size: 3.7G
+    last_modified: 2025-12-15
+    source: "unknown"
+    source_note: "official 'genomad download-database'"
+  - name: gtdbtk
+    size: 160G
+    last_modified: 2026-07-01
+    source: "https://data.gtdb.ecogenomic.org/releases/latest/auxillary_files/gtdbtk_package/full_package/gtdbtk_data.tar.gz"
+  - name: gunc
+    size: 20G
+    last_modified: 2026-09-15
+    source: "https://swifter.embl.de/~fullam/gunc/gunc_db_progenomes2.1.dmnd.gz (md5 bc93a855e0760aad5c4e5f2d0e26da46)"
+    files:
+      - path: gunc/gunc_db_progenomes2.1.dmnd
+        checksum: skipped (>1GB)
+  - name: gut_fungi_db
+    size: 38G
+    last_modified: 2026-06-15
+    source: "unknown"
+    source_note: "Yan et al. 2024 Cell 187 authors' shared archive (Reference/Gut_Fungi_DB)"
+    files:
+      - path: gut_fungi_db/db.fungi.taxonomy.tsv
+        size_bytes: 40290
+        sha256: ac6d58f488ac820240566aa28fedc3e103cabaf8e056cf0442f06541077566a4
+      - path: gut_fungi_db/gene2clu.map
+        size_bytes: 90195612
+        sha256: d3c49e7c0cec3750aa5dfc4bd4adc446a2c35b0cf1d4931beb537c6a6b395092
+      - path: gut_fungi_db/genomes_2_clu.tsv
+        size_bytes: 25205
+        sha256: 8381a20aa4c0289afe5e2db3fc4763d6d0db19a0e7372b9808c931d9860a4402
+      - path: gut_fungi_db/bwt.index.gut_fungi_geneset.1.bt2l
+        checksum: skipped (>1GB)
+      - path: gut_fungi_db/bwt.index.gut_fungi_geneset.2.bt2l
+        checksum: skipped (>1GB)
+      - path: gut_fungi_db/bwt.index.gut_fungi_geneset.4.bt2l
+        checksum: skipped (>1GB)
+      - path: gut_fungi_db/bwt.index.gut_fungi_geneset.rev.1.bt2l
+        checksum: skipped (>1GB)
+      - path: gut_fungi_db/bwt.index.gut_fungi_geneset.rev.2.bt2l
+        checksum: skipped (>1GB)
+      - path: gut_fungi_db/bwt.index.uhgg.1.bt2l
+        checksum: skipped (>1GB)
+  - name: humann4
+    size: 52G
+    last_modified: 2026-06-01
+    source: "http://huttenhower.sph.harvard.edu/humann_data/ (chocophlan.v201901_v31, uniref90_annotated_v201901b, full_mapping_v201901b)"
+  - name: ICEberg
+    size: 101M
+    last_modified: 2026-06-30
+    source: "https://db-mml.sjtu.edu.cn/ICEberg2/download/ICEberg.fasta"
+  - name: integrall
+    size: 4.3G
+    last_modified: 2026-06-30
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: integrall/RELEASE
+        size_bytes: 3629
+        sha256: 6d0de4a663d9ec2f4ebaeab99f70a43f2ba1cb64d6c5711f704537081ba27c03
+  - name: iphop
+    size: 8.0K
+    last_modified: 1970-01-01
+    source: "unknown"
+    source_note: "official 'iphop download' (Jun_2025_pub_rw); local symlink to Virus project copy"
+  - name: ISfinder
+    size: 921M
+    last_modified: 2026-06-30
+    source: "https://isfinder.biotoul.fr/download/ISfinder.faa"
+    files:
+      - path: ISfinder/ISfinder.udb
+        size_bytes: 16039052
+        sha256: 18ae7b02a87c456b02861a5876664887bc63b04eb663163e8e144d9b71399d0d
+      - path: ISfinder/RELEASE
+        size_bytes: 1026
+        sha256: 6b8222f2077aa6520fb258f64aa9613b06f53d4022836cad6ceeba30a6472ecd
+  - name: kegg
+    size: 48G
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: kegg/RELEASE
+        size_bytes: 8
+        sha256: 8136505d2e2fb7c55c0c1e7e9d4a3069fbedd93422fcdc471f47b2b85c7c84b5
+  - name: kneaddata
+    size: 11G
+    last_modified: 2026-06-01
+    source: "https://huttenhower.sph.harvard.edu/kneadData_databases/ (hg37/hg39_T2T/mouse_C57BL_6NJ); https://genome-idx.s3.amazonaws.com/bt/Rnor_6.0.zip"
+  - name: kraken2
+    size: 77G
+    last_modified: 2026-06-01
+    source: "https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_20251015.tar.gz"
+  - name: mcyc
+    size: 638M
+    last_modified: 2025-08-14
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+  - name: merops
+    size: 4.0G
+    last_modified: 2026-06-10
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: merops/peptidases.dmnd
+        size_bytes: 322893371
+        sha256: a6d8769b209d1aa952e1f2f73a9761d297140c7341eb16f27e26e1229736fedf
+      - path: merops/RELEASE
+        size_bytes: 1089
+        sha256: 9e159ed2791d60b07e63fe753343cbfc62a42fe599723daf17ca256314a26919
+  - name: metaeuk_db
+    size: 9.5G
+    last_modified: 2026-06-15
+    source: "unknown"
+    source_note: "local build from NCBI RefSeq fungal proteins (MMseqs2 format)"
+    files:
+      - path: metaeuk_db/download_list.txt
+        size_bytes: 2655
+        sha256: 50b63c10af056c475dd1ae8dc0fb6270ec859e777879c8d04a776d68bf1ea6ce
+  - name: metaphlan4
+    size: 40G
+    last_modified: 2026-06-01
+    source: "http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/ (mpa_vOct22_CHOCOPhlAnSGB)"
+    files:
+      - path: metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202212_VINFO.csv
+        size_bytes: 44092
+        sha256: 8e453aa6d5ac96d20f397232d1d7699d63ac4c0f4cb8d547908640d7d0da1767
+      - path: metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202212.1.bt2l
+        checksum: skipped (>1GB)
+      - path: metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202212.2.bt2l
+        checksum: skipped (>1GB)
+      - path: metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202212.4.bt2l
+        checksum: skipped (>1GB)
+      - path: metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202212.rev.1.bt2l
+        checksum: skipped (>1GB)
+      - path: metaphlan4/mpa_vOct22_CHOCOPhlAnSGB_202212.rev.2.bt2l
+        checksum: skipped (>1GB)
+  - name: metax
+    size: 58G
+    last_modified: 2026-09-15
+    source: "https://research.bifo.helmholtz-hzi.de/downloads/metax/metax_db.tar.xz"
+  - name: mobileog
+    size: 19G
+    last_modified: 2025-08-22
+    source: "unknown"
+    source_note: "local mobileOG-db.tar.gz from Binning project"
+  - name: mvirdb
+    size: 1.2G
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: mvirdb/mvirdb.udb
+        size_bytes: 64183765
+        sha256: 91b06d77a7a0091007b7f7ca28f10eca6f87bd0bdac7e55c94473790ed333d21
+      - path: mvirdb/RELEASE
+        size_bytes: 214
+        sha256: 4edf71c16e96d1a5c50fa23004dbe4b491d635bc3127576e112b215a0a746244
+  - name: ncyc
+    size: 214M
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: ncyc/ncyc.dmnd
+        size_bytes: 111284882
+        sha256: 3636e261dde2877b67be7f3934e938a5b217e4451452fb7ef51aef193a2ecf07
+      - path: ncyc/RELEASE
+        size_bytes: 198
+        sha256: 4e9366e0aa8f16d123fa43509383a68171a807d1a0c7e388a93cc4baf7c38d5d
+  - name: pcyc
+    size: 846M
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: pcyc/pcyc.dmnd
+        size_bytes: 444221206
+        sha256: 81d126d252d481bb4a9eadbff57efef7307eb118315bf287cd5d5c1bacdcd28e
+      - path: pcyc/RELEASE
+        size_bytes: 111
+        sha256: 4d9d55daaca56f34effa0a55b36ce899f22de7c4242eaff2e03187943539a762
+  - name: pfam
+    size: 2.4G
+    last_modified: 2026-06-30
+    source: "https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz"
+  - name: phabox2_db
+    size: 1.7G
+    last_modified: 2026-06-16
+    source: "unknown"
+    source_note: "copy from Virus project phabox2-db"
+    files:
+      - path: phabox2_db/contamination.dmnd
+        size_bytes: 5479156
+        sha256: 89d746ab458534e07d095179e034283a7bcfa25bbee69d1fdd89f51ec6b97ca8
+      - path: phabox2_db/contamination_marker.tsv
+        size_bytes: 753141
+        sha256: db01033bccd76ee926eec9a260bd89eb5ceae271aeb781952b240af53eceb876
+      - path: phabox2_db/contamination.tsv
+        size_bytes: 1448258
+        sha256: 66af6d52d2a567396bf2fdfdc7de26c5cf19ae944083e3fc56a6cd9a6f1530bf
+      - path: phabox2_db/database_aai.tsv
+        size_bytes: 335854454
+        sha256: 5c2ef32fe0896ecdaa95d4b2cdc67bc3eed2c1d22ff38e8761b0a7007974d42e
+      - path: phabox2_db/db2ref_protein_map.csv
+        size_bytes: 19985898
+        sha256: eb89de918c44f0416bf1a3d3480caeab26009f00675f94fb33603568a4f9b135
+      - path: phabox2_db/names.csv
+        size_bytes: 90364806
+        sha256: cef99761a11f78c11c5a50b4d7e316d0d0d59759d2378ec32393279a22647c08
+      - path: phabox2_db/nodes.csv
+        size_bytes: 59495465
+        sha256: 9f9f1a703778da79ac719eac7cfa52daccd4de1492dbcbf6d83cab21394f64be
+      - path: phabox2_db/prokaryote.csv
+        size_bytes: 9207374
+        sha256: 83ccbf73fdf6c8075511f9f73b0b4f1f366623d892b2472b80813ece30821331
+  - name: phagcn3_db
+    size: 1.3G
+    last_modified: 2026-06-16
+    source: "unknown"
+    source_note: "copy from Virus project phagcn3-db"
+    files:
+      - path: phagcn3_db/draw.yaml
+        size_bytes: 5827
+        sha256: 58e3f3a3179f9477aeb6c3a2a081291acc2109423dc6d1548f59c851d6ccfc79
+      - path: phagcn3_db/PhaGCN3.yaml
+        size_bytes: 3717
+        sha256: 967b15ebc951cae63c2a6f886c03eeb8928006ba4a01050c18f9a3e24aea6a02
+  - name: pharokka
+    size: 2.3G
+    last_modified: 2025-11-27
+    source: "unknown"
+    source_note: "official 'install_databases.py'; local pharokka-db.tar.gz from Virus project"
+    files:
+      - path: pharokka/1Aug2023_data.tsv
+        size_bytes: 10562617
+        sha256: bda95060e249a470cb05e24d0743c8ceec67c43216626fa563ea9b89d5f0754f
+      - path: pharokka/._9Aug2025_data.tsv
+        size_bytes: 268
+        sha256: d5089d94359d324d994540e09d4bfca9902feba3c3b59756aa440597d2e0dd12
+      - path: pharokka/9Aug2025_data.tsv
+        size_bytes: 14839138
+        sha256: 81c068be1a88721a0b037a1913f7f57397be79011c871d812413f495cdcc7db9
+      - path: pharokka/aro_index.tsv
+        size_bytes: 879500
+        sha256: d3fd8f1fede725b735905d3bfb22902667de220fbc0b2906dd457995d697b2cf
+      - path: pharokka/._phold_annots_updated.tsv
+        size_bytes: 244
+        sha256: 73724857ef6ac4573e0625d34ecc2badf55d3b2beae1f9c5f15c9251d974ec9e
+      - path: pharokka/phold_annots_updated.tsv
+        size_bytes: 3194895
+        sha256: 9ade2abd520828667686c0536629bdd3553f1fd113b7eebc45fbb911591288d5
+      - path: pharokka/._phrog_annot_v4.tsv
+        size_bytes: 244
+        sha256: 0b48685564469543b28caafa1f58519113bd7a613644c2240db9feb2e2279617
+      - path: pharokka/phrog_annot_v4.tsv
+        size_bytes: 3943821
+        sha256: 2cf6ade849dbabfafa9bd10d24bc26e63b9ccd3221c81d4a3bcee6dccacf7eaf
+  - name: phi
+    size: 946M
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: phi/phi.dmnd
+        size_bytes: 5368376
+        sha256: 2c86a065b4b989adef99732e14a7e682d0d4ddd015a70dbe4398757ced5d0473
+      - path: phi/phi.udb
+        size_bytes: 28060237
+        sha256: 0a91f641108f45c7f1418881b2b555055485bbdd0006a246cc60eabfa22ae0a6
+      - path: phi/RELEASE.txt
+        size_bytes: 1487
+        sha256: 23d363ede4b94ba49616d4be77df082da42b2e1764762308dadfa0fe959492a5
+  - name: phold
+    size: 32G
+    last_modified: 2025-11-27
+    source: "unknown"
+    source_note: "official 'phold install'; local phold-db.tar.gz from Virus project"
+    files:
+      - path: phold/acrs_plddt_over_70_metadata.tsv
+        size_bytes: 1306626
+        sha256: f27add35a41c1208c214320e06d03842c8a58e483ca819bfc0d01d8c7429a79f
+      - path: phold/card_plddt_over_70_metadata.tsv
+        size_bytes: 790698
+        sha256: 73fbb5e1ef61919e14b1a8d71633d02b96d4806a91a20005eac8febba5c562d4
+      - path: phold/defensefinder_plddt_over_70_metadata.tsv
+        size_bytes: 80279
+        sha256: 39df505268324996cab12da72c49bf406f4390be227f860f51d491843bc05806
+      - path: phold/netflax_annotation_table.tsv
+        size_bytes: 689173
+        sha256: 0e37d005eb59f1dac136382c7d29249353e5980abfc90d8528492f6265e907e3
+      - path: phold/phold_annots.tsv
+        size_bytes: 3195316
+        sha256: 79499b8fa7023e807ea6f262f48ef203304fca0534ba651458fd41ffc0534c7f
+      - path: phold/vfdb_description_output.csv
+        size_bytes: 4099114
+        sha256: 0ae62f4e579d019829c143138b6d337ebe38d7a2081a2ecf519ef8d8913e35b9
+  - name: sarg
+    size: 264M
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: sarg/sarg.dmnd
+        size_bytes: 64417957
+        sha256: 72a9f91ebf2008d0b0bb22deffbfccf57b727d3bf2cf89065b73f970797d86c8
+      - path: sarg/sarg_ext.dmnd
+        size_bytes: 60626167
+        sha256: 583241fde35127fcb06fb065f2b42caa14534644f83c410f66835b7daecbf325
+      - path: sarg/sarg_ref.dmnd
+        size_bytes: 3878666
+        sha256: 960931411638ce03b2294595c141af52764958c7a04e8107c92c185b48781f31
+  - name: scyc
+    size: 642M
+    last_modified: 2025-08-14
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+  - name: sylph
+    size: 14G
+    last_modified: 2026-07-29
+    source: "https://storage.googleapis.com/sylph-stuff/gtdb-r220-c200-dbv1.syldb (+ sylph-tax download metadata)"
+    files:
+      - path: sylph/fungi_refseq_2024-07-25_metadata.tsv.gz
+        size_bytes: 12510
+        sha256: 9a41e26d36280b5a287dfd7a2d904fccc8eab49ee2cde22c9fbda8ecdf8020c5
+      - path: sylph/fungi_refseq_2025-10-11_metadata.tsv.gz
+        size_bytes: 16698
+        sha256: 1df730f667b7744db77d829ee07838a4dbb9f9ff37d304e214ae5b36e78df144
+      - path: sylph/gtdb_r220_metadata.tsv.gz
+        size_bytes: 12587613
+        sha256: efb4db7a68e39e9e273c8ad152bcbf3b3c627fc71c1527a6b313e1203f4b594a
+      - path: sylph/gtdb-r220-c200-dbv1.syldb
+        checksum: skipped (>1GB)
+  - name: tcdb
+    size: 982M
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: tcdb/RELEASE
+        size_bytes: 1499
+        sha256: 4546808d78d9aac16742471a55e2f00c716280aa943916ab43a4f48550338fd2
+  - name: transposase-db
+    size: 10M
+    last_modified: 2026-06-30
+    source: "https://github.com/cjmateos/transposase-db/raw/main/transposase.hmm.gz"
+    files:
+      - path: transposase-db/transposase.hmm
+        size_bytes: 4434333
+        sha256: 33f508d01d3588f3fc256c016be8fdb2a3866d36439391c12b6af646753769e9
+  - name: uniprot_sprot
+    size: 3.8G
+    last_modified: 2026-06-30
+    source: "https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz"
+    files:
+      - path: uniprot_sprot/RELEASE
+        size_bytes: 644
+        sha256: 05669fc857e70d8ea9da6bcc7643d875e5c2a944f5c35e688aa5bc722520addc
+      - path: uniprot_sprot/uniprot_sprot.dmnd
+        size_bytes: 254798462
+        sha256: bf2367d41eef1b76b4c5e441ea1f987f29bc208d90266e5523deb324036e69b3
+  - name: vcontact3
+    size: 9.1G
+    last_modified: 2025-11-27
+    source: "unknown"
+    source_note: "official 'vcontact3 prepare_databases'; local vcontact3-db.tar.gz from Virus project"
+    files:
+      - path: vcontact3/._230.json
+        size_bytes: 163
+        sha256: 52de050dcb350109abc59312b7e974567c897331222f162be95e272424b5e5b9
+      - path: vcontact3/230.json
+        size_bytes: 20179
+        sha256: d823fe74b8304a21e6a32aa877e64352403698749987b198709dad44f4c765d0
+  - name: vfdb
+    size: 2.0G
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "local copy from SIBLING_DB; no URL recorded in 0Install.sh"
+    files:
+      - path: vfdb/RELEASE
+        size_bytes: 3571
+        sha256: d8ee68e5c8ccc069f1ac8d7c366f76e7fbbca039b86b111a6ba7c025c28ba8ee
+      - path: vfdb/vfdb_setA.dmnd
+        size_bytes: 1933417
+        sha256: d0a6ba65a84b0a2573038fb5fe5ab7a18a90d74ef58abea2e23a150151b6acf9
+      - path: vfdb/vfdb_setA.udb
+        size_bytes: 12395855
+        sha256: 908b07cf87069662cb7e95edd78b18cc4e81a7f8250815c15f7a10657131272e
+      - path: vfdb/vfdb_setB.dmnd
+        size_bytes: 14311954
+        sha256: 6947747eeb8bc3eda6833d38565649e68ae8e6bf1b665cd9d731367f01502040
+      - path: vfdb/vfdb_setB.udb
+        size_bytes: 73242802
+        sha256: 693b91419f26c6649a7148b3b7f2facd78c3b17fb158c77714df6d53db6ebfd7
+  - name: vibrant
+    size: 11G
+    last_modified: 2026-06-02
+    source: "unknown"
+    source_note: "official 'download-db.sh'; local rebuild from kofam_profiles (KEGG) + Pfam/VOG"
+  - name: virsorter2
+    size: 9.8G
+    last_modified: 2026-06-08
+    source: "unknown"
+    source_note: "official 'virsorter setup'"
+  - name: vogdb
+    size: 11G
+    last_modified: 2026-06-08
+    source: "unknown"
+    source_note: "VOGDB release; local vog.tar.gz from Virus project"
+    files:
+      - path: vogdb/RELEAS
+        size_bytes: 864
+        sha256: 7bca176839c4d3be6ebcf44a0d3a6c078b2c1c489acdef136676d1d6e7903b06
+      - path: vogdb/vog_annotations.tsv
+        size_bytes: 1892106
+        sha256: 6165483ca38416ea5f9cebc999c430251b0ef97f65da7e531cd7f018142ea0d9
+      - path: vogdb/vog.dmnd
+        size_bytes: 201399917
+        sha256: 4b3c7d9df4c5896cb97f306ff491115b411ee1f88e33bed0b3e905d1441e9122
+      - path: vogdb/VOG.hmm
+        checksum: skipped (>1GB)

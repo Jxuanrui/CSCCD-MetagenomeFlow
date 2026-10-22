@@ -1,0 +1,47 @@
+id: "56_vir_votu_gen"
+script: "scripts/56_vir_votu_gen.sh"
+tool: "vclust"
+tool_version: "1.3+"
+conda_env: "envs/vclust"
+description: "Cross-sample vOTU clustering (vclust prefilter → align → Leiden, 95% ANI, qcov 0.85)."
+dimension: "virome"
+category: "clustering"
+rule_type: "aggregate"
+
+inputs:
+  - name: "viral_contigs"
+    path_pattern: "{workdir}/result/virus/checkv/{sample}/viruses.fna"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "representatives"
+    path_pattern: "{workdir}/result/virus/votu/votu_representatives.tsv"
+    description: "vOTU representative sequence mapping (Leiden clusters)."
+  - name: "virus_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    description: "Dereplicated vOTU representative sequences."
+
+depends_on:
+  - "54_vir_checkv_contig"
+required_by:
+  - "57_vir_votu_genomad"
+  - "58_vir_salmon_build"
+  - "64_vir_pharokka"
+  - "65_vir_phold"
+  - "67_vir_bacphlip"
+  - "68_vir_iphop"
+  - "69_vir_vcontact3"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_votu_gen"

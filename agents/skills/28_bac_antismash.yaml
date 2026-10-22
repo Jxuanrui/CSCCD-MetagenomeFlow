@@ -1,0 +1,51 @@
+id: "28_bac_antismash"
+name: "antiSMASH BGC Prediction (per sample)"
+tool: "antiSMASH"
+tool_version: "8.0.4"
+conda_env: "envs/antismash8"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::antismash"
+
+inputs:
+  - name: contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+    description: "Assembled contigs per sample from MEGAHIT (step 16)"
+
+outputs:
+  - name: sentinel
+    path_pattern: "{workdir}/result/annotation/antismash/{sample}/antismash_done.txt"
+    description: "success sentinel (merge gate = all chunks DONE + flatten verification passed)"
+  - name: region_gbk_flat
+    path_pattern: "{workdir}/result/annotation/antismash/{sample}/*.region*.gbk"
+    description: "region GenBank files flattened to sample dir (28b maxdepth-1 consumption contract); per-chunk full outputs remain under chunk_XX/"
+  - name: sample_failed
+    path_pattern: "{workdir}/result/annotation/antismash/{sample}/antismash_FAILED.txt"
+    description: "sample-level explicit failure marker, two triggers: (a) all contigs <1000bp after prefilter (eligible_records=0, T-24 semantics); (b) flatten incomplete after merge gate (T-22). Downstream consumers must refuse it."
+
+depends_on:
+  - "16_bac_megahit"
+
+db_path: "db/antismash8"
+
+parameters:
+  taxon: "bacteria"
+  genefinding_tool: "prodigal-m"
+  minimal: true
+  enable_nrps_pks: true
+
+benchmarks:
+  typical_runtime_min: 30
+  peak_memory_gb: 8
+
+known_issues:
+  - description: "antiSMASH refuses to write to an existing output directory; script deletes and recreates it"
+    workaround: "Script uses rm -rf then mkdir -p to handle re-runs safely"
+  - description: "--minimal skips NCBI taxonomy lookups (ClusterBlast, MIBiG), reduces runtime ~5x"
+    workaround: "Remove --minimal for full annotation in publication runs (requires internet or local DBs)"
+  - description: "antiSMASH 8.0.4 micro-batching pathology on metagenome input: hmm_detection spawns one hmmsearch per 2-17 records (each reloads the full HMM db), ~0.6-1 record/s => 40h+ per 60k-record assembly. Diagnosed 2026-09-19 during the Project01 v8 re-run (see agents/provenance/20260919_28_antismash8_rerun_all.json)."
+    workaround: "Chunked execution (pre-filter >=1000bp, bp-balanced full-record chunks). Project01-era interim orchestration used seqkit split + 12-way concurrency + JSON merge; the production implementation is script 28 itself (see its header). ~25 min/sample for 40-60k records."
+  - description: "v8 region counts on Project01 run +40-45% over v7 (v8 is a strict superset incl. the new terpene-precursor type). 28b novelty scoring intentionally stays on MIBiG 3.1 so historical novelty scores remain comparable."
+    workaround: "Expect higher region counts when comparing v7-era and v8-era outputs; not a regression"

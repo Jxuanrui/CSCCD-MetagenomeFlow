@@ -1,0 +1,55 @@
+id: "96_stat_functional"
+script: "scripts/96_stat_functional.sh"
+tool: "Rscript"
+tool_version: "companion script scripts/96_stat_functional.R (renamed from 96_functional.R on 2026-07-16 to match wrapper name)"
+conda_env: "envs/r_stat"
+description: "Functional differential analysis across bacteria/fungi/virus for every supported functional-table type (pathway, KEGG-KO, COG, CAZyme, ARG, VFDB, defense systems, N/P-cycle genes for bacteria; KEGG-KO/COG/CAZyme/VFDB/AMR/MEROPS for fungi; PHROG/VOG/lifestyle/host-genus/viral-family for virus)."
+dimension: "statistics"
+category: "functional_differential"
+rule_type: "aggregate"
+
+inputs:
+  - name: "metadata"
+    path_pattern: "{workdir}/result/stat/metadata.tsv"
+    required: true
+  - name: "humann_pathabundance"
+    path_pattern: "{workdir}/result/humann3/merged/pathabundance_relab.tsv"
+    required: true
+  - name: "bac_functional_tables"
+    path_pattern: "{workdir}/result/integration/bacteria/{func_type}_abundance.tsv"
+    required: true
+  - name: "vir_functional_tables"
+    path_pattern: "{workdir}/result/integration/virus/{func_type}_abundance.tsv"
+    required: true
+  - name: "fun_functional_tables"
+    path_pattern: "{workdir}/result/integration/fungi/{func_type}_gene_count.tsv"
+    required: true
+
+outputs:
+  - name: "functional_done_sentinels"
+    path_pattern: "{workdir}/result/stat/{dimension}/functional/{func_type}/{dimension}_functional_{func_type}_done.txt"
+    description: "One sentinel per (dimension, func_type) pair; 20 total (bacteria x9, fungi x6, virus x5)."
+
+depends_on:
+  - "01_metadata_qc"
+  - "98b_bac_integration_tables"
+  - "98c_vir_integration_tables"
+  - "98d_fun_integration_tables"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_functional"
+
+known_issues:
+  - description: "Prior to 2026-07-16 the .sh wrapper (96_stat_functional.sh) called a companion R script named 96_functional.R, a naming mismatch that made the pair easy to lose track of during audits."
+    workaround: "Renamed to 96_stat_functional.R; all repo-wide references updated."

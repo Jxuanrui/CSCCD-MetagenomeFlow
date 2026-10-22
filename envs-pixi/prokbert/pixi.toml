@@ -1,0 +1,39 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/prokbert.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "prokbert"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+ca-certificates = { version = "==2026.7.22", build = "hbd8a1cb_0" }
+libgomp = { version = "==16.2.0", build = "he0feb66_5" }
+libzlib = { version = "==1.3.2", build = "h25fd6f3_3" }
+tzdata = { version = "==2026c", build = "h151e31d_0" }
+_openmp_mutex = { version = "==4.5", build = "20_gnu" }
+zstd = { version = "==1.5.7", build = "hb78ec9c_7" }
+ld_impl_linux-64 = { version = "==2.46.1", build = "default_hbd61a6d_102" }
+libgcc = { version = "==16.2.0", build = "ha9f2e26_5" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_10" }
+libexpat = { version = "==2.8.1", build = "hecca717_1" }
+libffi = { version = "==3.7.0", build = "h81df57d_1" }
+liblzma = { version = "==5.8.3", build = "hb03c661_1" }
+libnsl = { version = "==2.0.1", build = "hb9d3cd8_1" }
+libstdcxx = { version = "==16.2.0", build = "h934c35e_5" }
+libuuid = { version = "==2.42.3", build = "hcfc3c73_0" }
+libxcrypt = { version = "==4.4.38", build = "h280c20c_0" }
+ncurses = { version = "==6.6", build = "hdb14827_1" }
+openssl = { version = "==3.6.4", build = "h781a0a9_0" }
+tk = { version = "==8.6.13", build = "noxft_h1df4ec4_4" }
+icu = { version = "==78.3", build = "py310h44b86e0_2" }
+readline = { version = "==8.3", build = "hd6e31c0_1" }
+libsqlite = { version = "==3.53.4", build = "h13e7031_1" }
+python = { version = "==3.10.21", build = "h267e890_0_cpython" }
+packaging = { version = "==26.3", build = "pyhc364b38_0" }
+setuptools = { version = "==84.0.0", build = "pyh332efcf_0" }
+wheel = { version = "==0.48.0", build = "pyhd8ed1ab_0" }
+pip = { version = "==26.2.1", build = "pyh8b19718_0" }

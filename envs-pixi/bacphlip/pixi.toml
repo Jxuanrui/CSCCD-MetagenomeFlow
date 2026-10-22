@@ -1,0 +1,55 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/bacphlip.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "bacphlip"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
+libgomp = { version = "==15.2.0", build = "he0feb66_19" }
+libzlib = { version = "==1.3.2", build = "h25fd6f3_2" }
+mpi = { version = "==1.0", build = "openmpi" }
+python_abi = { version = "==3.8", build = "8_cp38" }
+_openmp_mutex = { version = "==4.5", build = "20_gnu" }
+zlib = { version = "==1.3.2", build = "h25fd6f3_2" }
+zstd = { version = "==1.5.7", build = "hb78ec9c_6" }
+ld_impl_linux-64 = { version = "==2.45.1", build = "default_hbd61a6d_102" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+libffi = { version = "==3.5.2", build = "h3435931_0" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran5 = { version = "==15.2.0", build = "h68bc16d_19" }
+liblzma = { version = "==5.8.3", build = "hb03c661_0" }
+libnsl = { version = "==2.0.1", build = "hb9d3cd8_1" }
+libsqlite = { version = "==3.53.2", build = "h0c1763c_0" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libuuid = { version = "==2.42.1", build = "h5347b49_0" }
+ncurses = { version = "==6.6", build = "hdb14827_0" }
+openssl = { version = "==3.6.2", build = "h35e630c_0" }
+tk = { version = "==8.6.13", build = "noxft_h366c992_103" }
+libgfortran = { version = "==15.2.0", build = "h69a702a_19" }
+liblzma-devel = { version = "==5.8.3", build = "hb03c661_0" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libxcrypt = { version = "==4.4.36", build = "hd590300_1" }
+readline = { version = "==8.3", build = "h853b02a_0" }
+xz-gpl-tools = { version = "==5.8.3", build = "ha02ee65_0" }
+xz-tools = { version = "==5.8.3", build = "hb03c661_0" }
+libgfortran-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libopenblas = { version = "==0.3.33", build = "pthreads_h94d23a6_0" }
+xz = { version = "==5.8.3", build = "ha02ee65_0" }
+libblas = { version = "==3.11.0", build = "8_h4a7cf45_openblas" }
+openmpi = { version = "==4.1.6", build = "hc5af2df_101" }
+python = { version = "==3.8.20", build = "h4a871b0_2_cpython" }
+libcblas = { version = "==3.11.0", build = "8_h0358290_openblas" }
+liblapack = { version = "==3.11.0", build = "8_h47877c9_openblas" }
+setuptools = { version = "==75.3.0", build = "pyhd8ed1ab_0" }
+wheel = { version = "==0.45.1", build = "pyhd8ed1ab_0" }
+gsl = { version = "==2.7", build = "he838d99_0" }
+numpy = { version = "==1.23.5", build = "py38h7042d01_0" }
+pip = { version = "==24.3.1", build = "pyh8b19718_0" }
+hmmer = { version = "==3.4", build = "hb6cb901_4", channel = "bioconda" }

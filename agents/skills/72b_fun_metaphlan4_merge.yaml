@@ -1,0 +1,48 @@
+id: "72b_fun_metaphlan4_merge"
+script: "scripts/72b_fun_metaphlan4_merge.sh"
+tool: "merge_metaphlan_tables.py (MetaPhlAn4)"
+tool_version: "4.2.4+"
+conda_env: "envs/humann4"
+description: "Merge per-sample fungal MetaPhlAn4 profiles into project-level community matrices (full taxonomy, species-only, genus-only, species CSV)."
+dimension: "mycobiome"
+category: "aggregation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "profiles"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/{sample}/{sample}_profile.txt"
+    required: true
+    description: "Per-sample profiles from 72_fun_metaphlan4_euk (all samples scanned)"
+
+outputs:
+  - name: "taxonomy"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/merged/taxonomy.tsv"
+    description: "Full-level abundance table (all taxonomic ranks) — consumed by 91+ statistics scripts, 99a_core_microbiome, 96c_functional_redundancy"
+  - name: "taxonomy_species"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/merged/taxonomy_species.tsv"
+    description: "Species-level only (s__ without t__)"
+  - name: "taxonomy_genus"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/merged/taxonomy_genus.tsv"
+    description: "Genus-level only (g__ without s__)"
+  - name: "taxonomy_species_csv"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/merged/taxonomy_species.csv"
+    description: "Species-level CSV with clean species names (columns=samples, rows=species)"
+
+depends_on:
+  - "72_fun_metaphlan4_euk"
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: 1
+  peak_memory_gb: 1
+
+integration_status: "integrated"
+integrated_date: "2026-07-15"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_metaphlan4_merge"
+
+known_issues:
+  - description: "Idempotency check only looks for taxonomy.tsv + taxonomy_species.csv; if merge was interrupted mid-way, remove result/fungi/metaphlan4/merged/ before rerunning"
+    workaround: "rm -rf {workdir}/result/fungi/metaphlan4/merged && rerun"

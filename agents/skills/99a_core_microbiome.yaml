@@ -1,0 +1,95 @@
+name: "Core Microbiome"
+script_id: "99a_core_microbiome"
+purpose: "核心微生物组识别"
+category: "ecological_analysis"
+dimension: "multi_omics"
+description: "基于特征在样本中的检出流行率和最低相对丰度阈值，识别细菌、真菌或病毒维度的全局核心成员，以及 case/control 组共享和组特异核心成员。适用于寻找跨个体稳定定植的微生物、比较疾病与健康组的核心群落差异、筛选后续机制研究候选特征，并评估核心成员对群落总丰度的贡献。"
+
+parameters:
+  abundance_file:
+    type: "path"
+    default: ~
+    range: "有效的 feature-by-sample TSV 文件"
+    tuning_advice: "优先使用相对丰度矩阵；特征位于行、样本位于列，样本名必须与 metadata 的 sample_id 一致。"
+  metadata_file:
+    type: "path"
+    default: "{workdir}/metadata.csv"
+    range: "包含 sample_id，建议包含 group 列的 CSV"
+    tuning_advice: "若需要 case/control 特异核心分析，group 值应规范为 case 和 control；仅做全局核心时可不提供有效分组。"
+  output_dir:
+    type: "path"
+    default: "{workdir}/result/stat/{dimension}/core_microbiome"
+    range: "可写目录"
+    tuning_advice: "不同维度使用独立目录，避免细菌、真菌和病毒结果相互覆盖。"
+  dimension:
+    type: "string"
+    default: "bacteria"
+    range: ["bacteria", "fungi", "virus"]
+    tuning_advice: "必须与输入矩阵的生物学维度一致；病毒流程默认使用 viral family 丰度作为分类代理。"
+  prevalence_threshold:
+    type: "float"
+    default: 0.5
+    range: "0.0-1.0"
+    tuning_advice: "探索性分析可用 0.3-0.5；强调稳定核心时用 0.7-0.9。样本量较小或群落异质性高时不宜设置过严。"
+  min_abundance:
+    type: "float"
+    default: 0.0001
+    range: ">= 0"
+    tuning_advice: "相对丰度数据推荐 0.0001-0.001；测序深度低时可适当降低，污染或测序噪声较多时可提高。"
+
+inputs:
+  - name: "abundance_table"
+    format: "TSV"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy.tsv 或 result/integration/{dimension}/*_abundance.tsv"
+    required: true
+    description: "特征为行、样本为列的非负丰度矩阵。"
+  - name: "metadata"
+    format: "CSV"
+    path_pattern: "{workdir}/metadata.csv"
+    required: true
+    description: "至少包含 sample_id；group 列用于 case/control 分组核心比较。"
+
+outputs:
+  - name: "global_core"
+    format: "CSV"
+    path_pattern: "{output_dir}/core_microbiome_global.csv"
+    description: "达到阈值的全局核心特征及其流行率、丰度统计。"
+  - name: "group_core"
+    format: "CSV"
+    path_pattern: "{output_dir}/core_microbiome_{case,control}.csv"
+    description: "病例组和对照组核心特征列表。"
+  - name: "summary"
+    format: "TXT"
+    path_pattern: "{output_dir}/core_microbiome_summary.txt"
+    description: "核心数量、共享/特异成员和核心丰度占比摘要。"
+  - name: "visualizations"
+    format: "PDF"
+    path_pattern: "{output_dir}/{venn_diagram,prevalence_curve,core_abundance_barplot}.pdf"
+    description: "组间共享关系、阈值敏感性和核心丰度贡献图。"
+
+interpretation:
+  typical_ranges:
+    - "prevalence_threshold=0.5 表示特征至少在 50% 样本中达到最低丰度，适合作为默认核心定义。"
+    - "核心特征数通常随 prevalence_threshold 提高而单调减少；不同队列间数量差异应结合样本量和测序深度解释。"
+    - "global core abundance fraction 越高，说明稳定成员对总体群落贡献越大，但不存在适用于所有生态位的固定正常范围。"
+  alerts:
+    - "核心特征为 0 时，优先检查矩阵方向、丰度尺度和阈值是否过严，不应直接解释为不存在核心微生物组。"
+    - "case/control 样本量严重不平衡时，组特异核心数量不可直接比较，建议分层抽样或进行敏感性分析。"
+    - "大量低丰度特征进入核心集合通常提示 min_abundance 过低或污染过滤不足。"
+
+troubleshooting:
+  - problem: "输出提示没有核心特征或核心表为空"
+    solution: "确认输入为 feature-by-sample 且数值为相对丰度；依次将 prevalence_threshold 从 0.5 降至 0.3，并检查 min_abundance 是否与百分比/比例尺度匹配。"
+  - problem: "case/control 核心文件生成失败或分组均为空"
+    solution: "检查 metadata 是否包含 sample_id 和 group，样本名是否与丰度表列名完全一致，并将 group 值统一为 case/control。"
+  - problem: "核心成员数量异常多"
+    solution: "提高 min_abundance 或 prevalence_threshold，先去除未分类、污染和极低丰度特征，再比较阈值敏感性曲线。"
+
+example_command: "bash scripts/99a_core_microbiome.sh -i result/metaphlan4/merged/taxonomy.tsv -m metadata.csv -o result/stat/bacteria/core_microbiome -d bacteria --prevalence-threshold 0.5 --min-abundance 0.0001"
+
+references:
+  - "Shade A, Handelsman J. Beyond the Venn diagram: the hunt for a core microbiome. Environmental Microbiology. 2012;14:4-12."
+  - "Neu AT, Allen EE, Roy K. Defining and quantifying the core microbiome: challenges and prospects. Proceedings of the National Academy of Sciences. 2021;118:e2104429118."
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"

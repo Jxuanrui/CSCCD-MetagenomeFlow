@@ -1,0 +1,42 @@
+id: "71_fun_kraken2_fungi"
+script: "scripts/71_fun_kraken2_fungi.sh"
+tool: "Kraken2+Bracken"
+tool_version: "2.1.3"
+conda_env: "envs/kraken2"
+description: "Fungal taxonomic classification and abundance estimation (PlusPF database covers fungi)."
+dimension: "mycobiome"
+category: "classification"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "kraken2_report"
+    path_pattern: "{workdir}/result/fungi/kraken2/{sample}/{sample}.report"
+    description: "Kraken2 full classification report."
+  - name: "bracken_species"
+    path_pattern: "{workdir}/result/fungi/kraken2/{sample}/bracken/{sample}_S.bracken"
+    description: "Bracken species-level abundance."
+
+depends_on:
+  - "02_qc_kneaddata"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_kraken2"
+

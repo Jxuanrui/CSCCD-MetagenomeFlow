@@ -1,0 +1,81 @@
+id: "98g_cross_domain_correlation"
+script: "scripts/98g_cross_domain_correlation.sh"
+tool: "scipy+pandas+networkx"
+tool_version: "1.x+2.x+3.0"
+conda_env: "envs/phagcn3"
+description: "Cross-domain bacteria/virus/fungi abundance Spearman correlation network with BH-FDR correction, augmented with iPHoP virus-host prediction edges (type=host_prediction)."
+dimension: "stats"
+category: "integration"
+rule_type: "aggregate"
+
+inputs:
+  - name: "bacterial_abundance"
+    path_pattern: "{workdir}/result/metaphlan4/*/*_profile.txt"
+    required: true
+    description: "MetaPhlAn4 per-sample species relative abundance profiles"
+  - name: "viral_abundance"
+    path_pattern: "{workdir}/result/virus/votu/votu_table.tsv"
+    required: true
+    description: "vOTU abundance table (rows=vOTU, columns=samples)"
+  - name: "fungal_abundance"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/*/*_profile.txt"
+    required: false
+    description: "Fungal MetaPhlAn4/PHF profiler abundance (optional; degrades to bacteria-virus network if absent)"
+  - name: "iphop_host_prediction"
+    path_pattern: "{workdir}/result/virus/iphop/Host_prediction_to_genome_m90.csv"
+    required: false
+    description: "iPHoP virus-host prediction (optional; skipped if absent)"
+
+outputs:
+  - name: "abundance_matrix"
+    path_pattern: "{workdir}/result/cross_domain/correlation/abundance_matrix.tsv"
+    description: "Merged TSS+CLR-normalized abundance matrix across domains"
+  - name: "network_edges"
+    path_pattern: "{workdir}/result/cross_domain/correlation/network_edges.tsv"
+    description: "Edge table: source, target, weight, pvalue, fdr, type (correlation|host_prediction)"
+  - name: "network_nodes"
+    path_pattern: "{workdir}/result/cross_domain/correlation/network_nodes.tsv"
+    description: "Node table: node_id, domain, prevalence, abundance_mean"
+  - name: "network_summary"
+    path_pattern: "{workdir}/result/cross_domain/correlation/network_summary.txt"
+    description: "Summary statistics: node/edge counts, connected components, degree distribution"
+
+depends_on:
+  - "11_bac_metaphlan4"
+  - "56_vir_votu_gen"
+  - "98e_cross_domain_ani_cluster"
+required_by: []
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+  threads: "{cpus}"
+  min_prevalence: "0.1"
+  rho_cutoff: "0.3"
+  fdr_cutoff: "0.05"
+  force: "false"
+
+workflow:
+  - stage: "Discover abundance inputs"
+    description: "Locate bacteria/virus/fungi abundance tables, degrade gracefully if fungi/iPHoP absent"
+  - stage: "Normalize"
+    description: "TSS (total-sum-scaling) followed by CLR transform per domain"
+  - stage: "Prevalence filter"
+    description: "Drop features present in <10% of samples"
+  - stage: "Block-vectorized Spearman"
+    description: "Compute cross-domain rank correlations in chunks (block_size) to bound memory"
+  - stage: "BH-FDR correction"
+    description: "Benjamini-Hochberg correction on all cross-domain p-values"
+  - stage: "iPHoP host-prediction edges"
+    description: "Add virus-host edges (type=host_prediction) as a separate edge category, not mixed with correlation edges"
+  - stage: "Generate outputs"
+    description: "Write abundance_matrix.tsv, network_edges.tsv, network_nodes.tsv, network_summary.txt"
+
+known_limitations:
+  - description: "Spearman correlation captures co-occurrence, not causal or mechanistic interaction"
+    rationale: "Standard limitation of abundance-correlation network approaches"
+    recommendation: "Combine with iPHoP host-prediction edges (mechanistic) and 98e/98f (sequence/protein-level) for a fuller picture"
+
+integration_status: "integrated"
+integrated_date: "2026-08-22"
+snakemake_rule: "pipeline/rules/statistics.smk::cross_domain_correlation"

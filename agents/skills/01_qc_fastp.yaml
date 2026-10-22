@@ -1,0 +1,51 @@
+id: "01_qc_fastp"
+script: "scripts/01_qc_fastp.sh"
+tool: "fastp"
+tool_version: "0.22.0"
+conda_env: "envs/fastp"
+description: "Quality-control paired-end reads with adapter trimming and summary reports."
+dimension: "shared"
+category: "qc"
+rule_type: "per_sample"
+
+inputs:
+  - name: "r1"
+    path_pattern: "{workdir}/data/{sample}_1.fastq.gz"
+    required: true
+  - name: "r2"
+    path_pattern: "{workdir}/data/{sample}_2.fastq.gz"
+    required: true
+
+outputs:
+  - name: "clean_r1"
+    path_pattern: "{workdir}/result/fastp/{sample}/{sample}_1.fastq.gz"
+    description: "Filtered paired-end read 1."
+  - name: "clean_r2"
+    path_pattern: "{workdir}/result/fastp/{sample}/{sample}_2.fastq.gz"
+    description: "Filtered paired-end read 2."
+  - name: "json_report"
+    path_pattern: "{workdir}/result/fastp/{sample}/{sample}.json"
+    description: "Machine-readable fastp QC summary."
+  - name: "html_report"
+    path_pattern: "{workdir}/result/fastp/{sample}/{sample}.html"
+    description: "Interactive fastp QC report."
+
+depends_on: []
+required_by:
+  - "02_qc_kneaddata"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-06"
+snakemake_rule: "fastp_qc"

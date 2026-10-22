@@ -1,0 +1,44 @@
+id: "downstream_summary"
+script: "n/a — implemented directly as a Snakemake shell rule (no standalone script)"
+tool: "bash (inline in rule)"
+conda_env: "n/a (pure shell)"
+description: "Aggregate the SUCCEEDED/FAILED completion status of the 4 downstream statistics modules (Core Microbiome x3 dimensions, Functional Redundancy x3 dimensions, Pathway Activity) into a single status table."
+dimension: "statistics"
+category: "reporting"
+rule_type: "aggregate"
+
+inputs:
+  - name: "core_microbiome_summaries"
+    path_pattern: "{workdir}/result/stat/{bacteria,fungi,virus}/core_microbiome/core_microbiome_summary.txt"
+    required: true
+  - name: "functional_redundancy_summaries"
+    path_pattern: "{workdir}/result/stat/{bacteria,fungi,virus}/functional_redundancy/functional_redundancy_summary.txt"
+    required: true
+  - name: "pathway_activity_summary"
+    path_pattern: "{workdir}/result/stat/bacteria/pathway_activity/pathway_activity_summary.txt"
+    required: true
+
+outputs:
+  - name: "downstream_summary_tsv"
+    path_pattern: "{workdir}/result/stat/downstream_summary.tsv"
+    description: "dimension / module / status / file table."
+
+depends_on:
+  - "99a_core_microbiome"
+  - "96c_functional_redundancy"
+  - "96b_pathway_activity"
+
+params:
+  workdir: "{workdir}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/statistics.smk::downstream_summary"
+
+known_issues:
+  - description: "Replaces the batch-orchestration + status-reporting role previously served by 99c_batch_downstream.sh / 99d_downstream_summary.R (deprecated 2026-07-16), which duplicated Snakemake's own DAG execution/aggregation."
+    workaround: "n/a — this rule is the intended replacement; the superseded scripts were removed."

@@ -1,0 +1,40 @@
+id: "35_bac_semibin2"
+name: "SemiBin2 Self-Supervised Binning"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::semibin2"
+
+inputs:
+  - name: contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+  - name: bam
+    path_pattern: "{workdir}/result/binning/coverm/{sample}/{sample}.bam"
+    required: true
+    description: "Sorted BAM from CoverM (required by SemiBin2 --input-bam)"
+
+outputs:
+  - name: tsv
+    path_pattern: "{workdir}/result/binning/semibin2/{sample}/{sample}.semibin2.tsv"
+    description: "Contig2bin table for DAS_Tool"
+
+depends_on:
+  - "32_bac_coverm_depth"
+
+conda_env: "envs/semibin2x"  # SemiBin 2.5.0; old 1.5.0 env frozen at envs/semibin
+
+parameters:
+  mode: "human_gut pretrained (single_easy_bin --environment human_gut --depth-metabat2)"
+
+benchmarks:
+  typical_runtime_min: 10
+  peak_memory_gb: 16
+
+known_issues:
+  - description: "SemiBin2 needs raw BAM (not depth table), unlike MetaBAT2/MaxBin2"
+    workaround: "Script takes BAM from coverm output; do NOT skip coverm depth step"
+  - description: "SemiBin2 output structure varies by version; contig_bins.tsv may be in output/ or output_bins.tsv"
+    workaround: "Script checks multiple locations for contig2bin table"
+  - description: "2.5.0 upgrade pilot (Sample4, 2026-09-19, provenance 20260919_35_semibin25_pilot_Sample4.json): strict-HQ MAGs 16 vs 16 identical to production 1.5.0 bins (lenient +2, MQ -2, median completeness +19pp)"
+    workaround: "Production Project01 stays on the v1.1.4 MAG set (frozen); script now ships 2.5.0 for NEW projects; full-chain rebuild rejected by the decision gate"

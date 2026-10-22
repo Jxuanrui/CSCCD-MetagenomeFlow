@@ -1,0 +1,101 @@
+name: "LEfSe Analysis"
+script_id: "99b_lefse"
+purpose: "生物标志物发现"
+category: "differential_analysis"
+dimension: "multi_omics"
+description: "对细菌、病毒或真菌的分类与功能丰度矩阵执行 LEfSe-like 生物标志物筛选，结合组间非参数检验、组内 Wilcoxon 验证和 LDA 效应量排序，识别在不同表型组中稳定富集的特征。适用于病例-对照标志物发现、功能通路或耐药基因差异筛选、候选诊断特征排序及结果可视化；结果应结合多重检验、混杂因素和独立队列验证谨慎解释。"
+
+parameters:
+  abundance_file:
+    type: "path"
+    default: ~
+    range: "有效的 feature-by-sample TSV 文件"
+    tuning_advice: "建议使用经过低丰度过滤和适当归一化的矩阵，避免原始测序深度主导组间差异。"
+  metadata_file:
+    type: "path"
+    default: "{workdir}/metadata.csv"
+    range: "包含 sample_id 和 group 的 CSV"
+    tuning_advice: "group 至少包含两个水平；运行前检查分组、批次和协变量是否混淆。"
+  output_dir:
+    type: "path"
+    default: "{workdir}/result/stat/{dimension}/lefse/{type}"
+    range: "可写目录"
+    tuning_advice: "按 dimension 和 type 分目录保存，便于追踪不同功能表的结果。"
+  dimension:
+    type: "string"
+    default: "bacteria"
+    range: ["bacteria", "fungi", "virus"]
+    tuning_advice: "仅用于结果标注，必须与输入数据来源一致。"
+  type:
+    type: "string"
+    default: "taxonomy"
+    range: "taxonomy、kegg_ko、cog、arg、cazyme、vog 等特征类型"
+    tuning_advice: "taxonomy 且特征含层级分隔符时可生成分类层级图；功能表应使用清晰、稳定的功能 ID。"
+  lda_threshold:
+    type: "float"
+    default: 2.0
+    range: ">= 0"
+    tuning_advice: "探索性筛选常用 2.0；需要更强效应和更短候选列表时提高到 3.0-4.0。不要仅依据 LDA 分数判断生物学重要性。"
+  min_prevalence:
+    type: "float"
+    default: 0.1
+    range: "0.0-1.0"
+    tuning_advice: "小样本可保持 0.1；大队列或稀疏功能表建议 0.2-0.3，以减少偶发检出造成的假阳性。"
+  wilcoxon_alpha:
+    type: "float"
+    default: 0.05
+    range: "0.0-1.0"
+    tuning_advice: "默认 0.05；特征很多或需要严格验证时建议配合 FDR 结果，或降低到 0.01。"
+
+inputs:
+  - name: "abundance_table"
+    format: "TSV"
+    path_pattern: "{workdir}/result/integration/{dimension}/*_abundance.tsv"
+    required: true
+    description: "特征为行、样本为列的非负丰度矩阵。"
+  - name: "metadata"
+    format: "CSV"
+    path_pattern: "{workdir}/metadata.csv"
+    required: true
+    description: "包含与丰度表对应的 sample_id 和用于比较的 group。"
+
+outputs:
+  - name: "lefse_results"
+    format: "TSV"
+    path_pattern: "{output_dir}/lefse_results.tsv"
+    description: "通过统计阈值的特征、富集组、检验统计量和 LDA 分数。"
+  - name: "lda_barplot"
+    format: "PDF"
+    path_pattern: "{output_dir}/lefse_barplot.pdf"
+    description: "按效应量排序并按富集组着色的生物标志物图。"
+  - name: "cladogram"
+    format: "PDF"
+    path_pattern: "{output_dir}/cladogram.pdf"
+    description: "分类学输入可生成的简化层级关系图。"
+
+interpretation:
+  typical_ranges:
+    - "LDA >= 2 通常代表可报告的中等效应，LDA >= 3-4 代表更强的组间分离贡献。"
+    - "显著标志物数量受样本量、稀疏度和预过滤强烈影响，不存在固定合理数量。"
+    - "同一方向且在多个相关功能表或独立队列中重复出现的特征可信度更高。"
+  alerts:
+    - "某一组出现大量标志物时需检查组间测序深度、批次、药物使用和年龄等混杂因素。"
+    - "仅通过名义 P 值和 LDA 阈值的结果可能包含假阳性，特征较多时应同步查看 FDR 或使用 ANCOM-BC2/MaAsLin2 复核。"
+    - "每组样本过少或组别极不平衡时，LDA 分数不稳定，不宜直接用于诊断模型。"
+
+troubleshooting:
+  - problem: "lefse_results.tsv 为空"
+    solution: "检查 metadata 分组是否有至少两个水平和足够样本；将 min_prevalence 降低至 0.05-0.1 或 lda_threshold 降至 2.0，并确认输入不是全零或已过度过滤。"
+  - problem: "样本名不匹配或有效样本数为零"
+    solution: "统一丰度表列名与 metadata 的 sample_id，去除重复样本和隐藏空格，确认分隔符与文件编码正确。"
+  - problem: "结果被单个批次或极端样本主导"
+    solution: "先进行批次评估和异常值检查，必要时使用 95a/95b 模块校正，并用包含协变量的方法复核候选标志物。"
+
+example_command: "bash scripts/99b_lefse.sh -i result/integration/bacteria/kegg_ko_abundance.tsv -m metadata.csv -o result/stat/bacteria/lefse/kegg_ko -d bacteria -y kegg_ko --lda-threshold 2.0 --min-prevalence 0.1 --wilcoxon-alpha 0.05"
+
+references:
+  - "Segata N, Izard J, Waldron L, et al. Metagenomic biomarker discovery and explanation. Genome Biology. 2011;12:R60."
+  - "Nearing JT, Douglas GM, Hayes MG, et al. Microbiome differential abundance methods produce different results across 38 datasets. Nature Communications. 2022;13:342."
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"

@@ -1,0 +1,59 @@
+id: "15e_bac_metax"
+script: "scripts/15e_bac_metax.sh"
+tool: "MetaX"
+tool_version: "0.9.22"
+conda_env: "envs/metax"
+description: "Cross-domain unified taxonomic profiler (bacteria/archaea/eukaryotes/viruses/host) in a single pass, using coverage-informed OEBR/COEBR breadth-vs-expected-breadth statistics to filter reference contamination, homologous misparsing and kitome DNA, with EM-based abundance refinement. Verification layer that complements, does not replace, the single-domain classifiers (MetaPhlAn4/Kraken2/Centrifuger + geNomad/iPHoP)."
+dimension: "cross-domain"
+category: "taxonomy"
+rule_type: "per_sample"
+
+inputs:
+  - name: "r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "profile"
+    path_pattern: "{workdir}/result/metax/{sample}/{sample}.profile.txt"
+    description: "Final taxonomic profile, 13 tab-separated columns: name, taxid, rank, reads, depth, abundance, observed breadth, expected breadth, breadth cov_prob, fixed chunk breadth, flex chunk breadth, expected flex chunk breadth, flex chunk_prob."
+  - name: "readfrac"
+    path_pattern: "{workdir}/result/metax/{sample}/{sample}.readfrac.tsv"
+    description: "Read-fraction table derived from profile column 4 (taxon, reads, read_fraction_pct). Use THIS for comparison against MetaPhlAn4/Kraken2 percentages; the profile's coverage-based abundance (column 6) is not a read fraction."
+  - name: "classify"
+    path_pattern: "{workdir}/result/metax/{sample}/{sample}.classify.txt"
+    description: "Per-read classifications (large; skipped when a fractional index is used)."
+
+depends_on:
+  - "02_qc_kneaddata"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  mode: "default"
+
+benchmarks:
+  typical_runtime_min: 1.2
+  typical_input_size_gb: "fixture-scale"
+  peak_memory_gb: 55
+
+known_issues:
+  - description: "The pre-built RefSeq reference database (33,143 genomes, 2022-08-10) is not bundled; it is a 37.8 GB .tar.xz (~58 GB extracted: metax_db.json + maCMD/BWT index .bwt/.sa/.pac/.amb/.ann) downloaded from research.bifo.helmholtz-hzi.de, and paired with an NCBI taxonomy dump."
+    workaround: "Download metax_db.tar.xz + taxdump.tar.gz into db/metax/. Use aria2c -x16 (-c to resume) — a single-connection curl was observed to throttle to ~1 MB/s (≈9 h); 16 connections reached ~70 MB/s (≈8 min)."
+  - description: "Version/database format is coupled: metax 2.0.1 (latest on the zldeng channel) uses a new metax_db.tsv.gz/.mxi format and 3-field FASTA headers, incompatible with the pre-built 2022 database. Verified working pair is metax 0.9.22 + the pre-built metax_db.json database."
+    workaround: "Pin metax=0.9.22 (conda install -c zldeng metax=0.9.22 + -c bioconda ma=1.1.4). Do not upgrade to 2.x without rebuilding a matching index."
+  - description: "Full-database profiling needs ~55 GB peak RAM and a modern x86-64 CPU (Metax errors with 'Processor ... is not supported by this build' on older instructions). Uses the maCMD aligner (MA 1.1.4) from bioconda."
+    workaround: "Server has ample RAM (755 GB). For constrained hosts, build a fractional index (-f 0.05-0.1) to cut index size and peak memory, at the cost of disabling per-read classify.txt output."
+  - description: "Not wired into rule all (verification layer): the wrapper and rule exist and are registered, but rule all does not require metax output, so it runs only when explicitly requested."
+    workaround: "Run by requesting the output as a target: snakemake -s pipeline/Snakefile <workdir>/result/metax/<sample>/<sample>.profile.txt (a bare -R metax does not pull a non-rule-all rule into the DAG), or step-by-step via scripts/15e_bac_metax.sh."
+  - description: "The profile abundance column (col 6) is COVERAGE-NORMALISED relative abundance, not a read fraction: col6/col5 (depth) is constant across all taxa (CV ~1e-4). Small genomes therefore appear far more abundant than their read share — phages (~50 kb) were measured inflated ~23-32x (Sample1: 30.96% reported vs 0.97% of reads; Kraken2 read-based 0.19%). The taxa are real (PhaBox2 independently calls the same Crassivirales), and the read fraction matches Kraken2 within one order of magnitude."
+    workaround: "Do NOT compare MetaX percentages directly with MetaPhlAn4/Kraken2 percentages, especially for taxa with very different genome sizes (viruses, small plasmids). To get a read fraction from a MetaX profile, sum col 4 (reads) per taxon and divide by the column total; use col 6 only for within-similar-genome-size comparisons."
+
+integration_status: "integrated"
+integrated_date: "2026-09-15"
+snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::metax"

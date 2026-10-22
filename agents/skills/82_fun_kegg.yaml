@@ -1,0 +1,37 @@
+id: "82_fun_kegg"
+script: "scripts/82_fun_kegg.sh"
+tool: "DIAMOND blastp"
+tool_version: "2.x"
+conda_env: "envs/assembly"
+description: "Aggregate fungal KEGG KO annotation via DIAMOND blastp."
+dimension: "mycobiome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "faa_files"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.faa"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "kegg_hits"
+    path_pattern: "{workdir}/result/fungi/kegg/kegg_diamond.tsv"
+    description: "Best-hit KEGG protein matches."
+
+depends_on:
+  - "80_fun_prodigal"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_kegg"
+

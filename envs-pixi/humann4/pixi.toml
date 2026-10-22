@@ -1,0 +1,58 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/humann4.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "humann4"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
+ld_impl_linux-64 = { version = "==2.45.1", build = "bootstrap_ha15bf96_2" }
+libgomp = { version = "==15.2.0", build = "he0feb66_19" }
+tzdata = { version = "==2025c", build = "hc9c84f9_1" }
+_openmp_mutex = { version = "==4.5", build = "20_gnu" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+c-ares = { version = "==1.34.6", build = "hb03c661_0" }
+fasttree = { version = "==2.2.0", build = "h7b50bb2_1", channel = "bioconda" }
+keyutils = { version = "==1.6.3", build = "hb9d3cd8_0" }
+libdeflate = { version = "==1.25", build = "h17f619e_0" }
+libexpat = { version = "==2.8.1", build = "hecca717_0" }
+libffi = { version = "==3.5.2", build = "h3435931_0" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+liblzma = { version = "==5.8.3", build = "hb03c661_0" }
+libnsl = { version = "==2.0.1", build = "hb9d3cd8_1" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libuuid = { version = "==2.42.1", build = "h5347b49_0" }
+ncurses = { version = "==6.6", build = "hdb14827_0" }
+openssl = { version = "==3.6.2", build = "h35e630c_0" }
+libedit = { version = "==3.1.20250104", build = "pl5321h7949ede_0" }
+libev = { version = "==4.33", build = "hd590300_2" }
+liblzma-devel = { version = "==5.8.3", build = "hb03c661_0" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libxcrypt = { version = "==4.4.36", build = "hd590300_1" }
+libzlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+readline = { version = "==8.3", build = "h853b02a_0" }
+xz-gpl-tools = { version = "==5.8.3", build = "ha02ee65_0" }
+xz-tools = { version = "==5.8.3", build = "hb03c661_0" }
+gawk = { version = "==5.4.0", build = "h0a3468a_0" }
+krb5 = { version = "==1.21.3", build = "h659f571_0" }
+libnghttp2 = { version = "==1.58.0", build = "h47da74e_1" }
+libsqlite = { version = "==3.46.0", build = "hde9e2c9_0" }
+libssh2 = { version = "==1.11.0", build = "h0841786_0" }
+tk = { version = "==8.6.13", build = "noxft_h4845f30_101" }
+xz = { version = "==5.8.3", build = "ha02ee65_0" }
+zlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+zstd = { version = "==1.5.6", build = "ha6fb4c9_0" }
+libcurl = { version = "==8.8.0", build = "hca28451_1" }
+mafft = { version = "==7.526", build = "h4bc722e_0" }
+python = { version = "==3.9.19", build = "h0755675_0_cpython" }
+htslib = { version = "==1.21", build = "h5efdd21_0", channel = "bioconda" }
+setuptools = { version = "==80.9.0", build = "pyhff2d567_0" }
+wheel = { version = "==0.45.1", build = "pyhd8ed1ab_1" }
+pip = { version = "==25.2", build = "pyh8b19718_0" }
+samtools = { version = "==1.15.1", build = "h6899075_1", channel = "bioconda" }

@@ -1,0 +1,38 @@
+id: "98c_bac_mge_summary"
+script: "scripts/98c_bac_mge_summary.sh"
+tool: "bash + awk"
+conda_env: "n/a (pure shell/awk)"
+description: "Summarize bacterial mobile genetic element (ISFinder/ICEberg/IntegAll/transposase) and plasmid (PlasmidFinder) calls across all samples into a single integration table."
+dimension: "bacteria"
+category: "integration"
+rule_type: "aggregate"
+
+inputs:
+  - name: "mge_hits"
+    path_pattern: "{workdir}/result/mge/{isfinder,iceberg,integrall,transposase}/{sample}/*.tsv"
+    required: true
+  - name: "plasmidfinder_hits"
+    path_pattern: "{workdir}/result/mge/plasmidfinder/{sample}/results_tab.tsv"
+    required: true
+
+outputs:
+  - name: "mge_plasmid_summary"
+    path_pattern: "{workdir}/result/integration/bacteria/mge_plasmid_summary.tsv"
+    description: "Per-sample MGE/plasmid summary table."
+
+depends_on:
+  - "42_bac_mge"
+  - "42b_bac_plasmidfinder"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/statistics.smk::bac_mge_summary"

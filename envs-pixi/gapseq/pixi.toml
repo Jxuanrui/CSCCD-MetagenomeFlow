@@ -1,0 +1,223 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/gapseq.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "gapseq"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[system-requirements]
+libc = "2.34"
+
+[dependencies]
+_r-mutex = { version = "==1.0.1", build = "anacondar_1" }
+ca-certificates = { version = "==2026.7.22", build = "hbd8a1cb_0" }
+font-ttf-dejavu-sans-mono = { version = "==2.37", build = "hab24e00_0" }
+font-ttf-inconsolata = { version = "==3.000", build = "h77eed37_0" }
+font-ttf-source-code-pro = { version = "==2.038", build = "h77eed37_0" }
+font-ttf-ubuntu = { version = "==0.83", build = "h77eed37_3" }
+kernel-headers_linux-64 = { version = "==5.14.0", build = "he073ed8_3" }
+libgcc-devel_linux-64 = { version = "==16.1.0", build = "h59071f9_101" }
+libgomp = { version = "==16.1.0", build = "he0feb66_1" }
+libstdcxx-devel_linux-64 = { version = "==16.1.0", build = "h41cdd0d_101" }
+libzlib = { version = "==1.3.2", build = "h25fd6f3_3" }
+mpi = { version = "==1.0", build = "openmpi" }
+python_abi = { version = "==3.13", build = "8_cp313" }
+seqkit = { version = "==2.13.0", build = "he881be0_0", channel = "bioconda" }
+taxonkit = { version = "==0.20.0", build = "h9ee0642_1", channel = "bioconda" }
+tzdata = { version = "==2026c", build = "h151e31d_0" }
+_openmp_mutex = { version = "==4.5", build = "20_gnu" }
+fonts-conda-forge = { version = "==1", build = "hc364b38_1" }
+sysroot_linux-64 = { version = "==2.34", build = "h087de78_3" }
+zlib = { version = "==1.3.2", build = "h25fd6f3_3" }
+zstd = { version = "==1.5.7", build = "hb78ec9c_6" }
+fonts-conda-ecosystem = { version = "==1", build = "0" }
+ld_impl_linux-64 = { version = "==2.46.1", build = "default_hbd61a6d_102" }
+libgcc = { version = "==16.1.0", build = "ha9f2e26_1" }
+aragorn = { version = "==1.2.41", build = "h7b50bb2_5", channel = "bioconda" }
+binutils_impl_linux-64 = { version = "==2.46.1", build = "default_hfdba357_102" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_10" }
+c-ares = { version = "==1.34.8", build = "hb03c661_0" }
+fribidi = { version = "==1.0.16", build = "hb03c661_1" }
+gzip = { version = "==1.14", build = "hb9d3cd8_0" }
+keyutils = { version = "==1.6.3", build = "hb9d3cd8_0" }
+libdeflate = { version = "==1.25", build = "hd45a770_1" }
+libev = { version = "==4.33", build = "h280c20c_3" }
+libexpat = { version = "==2.8.1", build = "hecca717_1" }
+libffi = { version = "==3.5.2", build = "h3435931_0" }
+libgcc-ng = { version = "==16.1.0", build = "h69a702a_1" }
+libgfortran5 = { version = "==16.1.0", build = "h79bb938_1" }
+libiconv = { version = "==1.18", build = "h3b78370_2" }
+libjpeg-turbo = { version = "==3.2.0", build = "hb03c661_1" }
+liblzma = { version = "==5.8.3", build = "hb03c661_0" }
+libmpdec = { version = "==4.0.0", build = "hb03c661_1" }
+libpng = { version = "==1.6.58", build = "h421ea60_0" }
+libsqlite = { version = "==3.53.4", build = "h0c1763c_0" }
+libstdcxx = { version = "==16.1.0", build = "h934c35e_1" }
+libuuid = { version = "==2.42.2", build = "h5347b49_0" }
+libwebp-base = { version = "==1.6.0", build = "hd42ef1d_1" }
+libxcrypt = { version = "==4.4.38", build = "h280c20c_0" }
+make = { version = "==4.4.1", build = "hb03c661_3" }
+ncurses = { version = "==6.6", build = "hdb14827_0" }
+openssl = { version = "==3.6.3", build = "h35e630c_1" }
+pthread-stubs = { version = "==0.4", build = "hb9d3cd8_1002" }
+sed = { version = "==4.10", build = "h19d0853_0" }
+tk = { version = "==8.6.13", build = "noxft_hd70dff1_3" }
+unzip = { version = "==6.0", build = "hb03c661_4" }
+xorg-libice = { version = "==1.1.2", build = "hb9d3cd8_0" }
+xorg-libxau = { version = "==1.0.12", build = "hb03c661_1" }
+xorg-libxdmcp = { version = "==1.1.5", build = "hb03c661_1" }
+bc = { version = "==1.07.1", build = "h7f98852_0" }
+bedtools = { version = "==2.31.1", build = "h13024bc_3", channel = "bioconda" }
+bwidget = { version = "==1.10.1", build = "ha770c72_1" }
+coreutils = { version = "==9.5", build = "hd590300_0" }
+diamond = { version = "==2.2.5", build = "he361c42_0", channel = "bioconda" }
+graphite2 = { version = "==1.3.15", build = "hecca717_0" }
+lerc = { version = "==4.2.0", build = "hdb68285_0" }
+libasprintf = { version = "==0.25.1", build = "h3f43e3d_1" }
+libedit = { version = "==3.1.20250104", build = "pl5321h7949ede_0" }
+libfreetype6 = { version = "==2.14.3", build = "h73754d4_1" }
+libgettextpo = { version = "==0.25.1", build = "h3f43e3d_1" }
+libgfortran = { version = "==16.1.0", build = "h69a702a_1" }
+liblzma-devel = { version = "==5.8.3", build = "hb03c661_0" }
+libnghttp2 = { version = "==1.68.1", build = "h877daf1_0" }
+libsanitizer = { version = "==16.1.0", build = "hf2715c6_1" }
+libssh2 = { version = "==1.11.1", build = "hcf80075_0" }
+libstdcxx-ng = { version = "==16.1.0", build = "hdf11a46_1" }
+libunistring = { version = "==0.9.10", build = "h7f98852_0" }
+libxcb = { version = "==1.17.0", build = "h8a09558_0" }
+ncbi-vdb = { version = "==3.4.1", build = "hd63eeec_0", channel = "bioconda" }
+pcre2 = { version = "==10.47", build = "haa7fec5_0" }
+perl = { version = "==5.32.1", build = "7_hd590300_perl5" }
+pixman = { version = "==0.46.4", build = "h54a6638_2" }
+readline = { version = "==8.3", build = "h853b02a_0" }
+transtermhp = { version = "==2.09", build = "h9948957_2", channel = "bioconda" }
+xorg-libsm = { version = "==1.2.6", build = "he73a12e_0" }
+xz-gpl-tools = { version = "==5.8.3", build = "ha02ee65_0" }
+xz-tools = { version = "==5.8.3", build = "hb03c661_0" }
+gcc_impl_linux-64 = { version = "==16.1.0", build = "h5fcb69b_1" }
+gmp = { version = "==6.3.0", build = "hac33072_2" }
+grep = { version = "==3.12", build = "hbe4e646_1" }
+icu = { version = "==75.1", build = "he02047a_0" }
+infernal = { version = "==1.1.5", build = "pl5321h7b50bb2_4", channel = "bioconda" }
+krb5 = { version = "==1.22.2", build = "hbde042b_1" }
+libfreetype = { version = "==2.14.3", build = "ha770c72_1" }
+libgfortran-ng = { version = "==16.1.0", build = "h69a702a_1" }
+libglib = { version = "==2.88.3", build = "h0d30a3d_0" }
+libidn2 = { version = "==2.3.8", build = "hfac485b_1" }
+libopenblas = { version = "==0.3.33", build = "pthreads_h94d23a6_0" }
+libtiff = { version = "==4.7.2", build = "h9d88235_0" }
+parallel = { version = "==20260722", build = "hd8ed1ab_0" }
+pcre = { version = "==8.45", build = "h9c3ff4c_0" }
+perl-common-sense = { version = "==3.75", build = "pl5321hd8ed1ab_0" }
+perl-compress-raw-bzip2 = { version = "==2.214", build = "pl5321hda65f42_0" }
+perl-compress-raw-zlib = { version = "==2.214", build = "pl5321h4dac143_0" }
+perl-exporter = { version = "==5.74", build = "pl5321hd8ed1ab_0" }
+perl-exporter-tiny = { version = "==1.002002", build = "pl5321hd8ed1ab_0" }
+perl-extutils-makemaker = { version = "==7.70", build = "pl5321hd8ed1ab_0" }
+perl-file-which = { version = "==1.24", build = "pl5321hd8ed1ab_0" }
+perl-io-zlib = { version = "==1.15", build = "pl5321hdfd78af_1", channel = "bioconda" }
+perl-list-moreutils-xs = { version = "==0.430", build = "pl5321h7b50bb2_5", channel = "bioconda" }
+perl-parent = { version = "==0.243", build = "pl5321hd8ed1ab_0" }
+perl-path-tiny = { version = "==0.150", build = "pl5321hd8ed1ab_0" }
+perl-scalar-list-utils = { version = "==1.70", build = "pl5321hb03c661_0" }
+perl-storable = { version = "==3.15", build = "pl5321hb9d3cd8_2" }
+python = { version = "==3.13.14", build = "h6add32d_100_cp313" }
+xorg-libx11 = { version = "==1.8.13", build = "he1eb515_0" }
+xz = { version = "==5.8.3", build = "ha02ee65_0" }
+ziggypep = { version = "==0.3.1", build = "hdfd78af_0", channel = "bioconda" }
+any2fasta = { version = "==0.8.1", build = "hdfd78af_0", channel = "bioconda" }
+archspec = { version = "==0.2.5", build = "pyhd8ed1ab_0" }
+fontconfig = { version = "==2.18.2", build = "h27c8c51_0" }
+freetype = { version = "==2.14.3", build = "ha770c72_1" }
+gfortran_impl_linux-64 = { version = "==16.1.0", build = "h08e1a1a_1" }
+glib-tools = { version = "==2.88.3", build = "h95f0039_0" }
+glpk = { version = "==5.0", build = "h445213a_0" }
+gxx_impl_linux-64 = { version = "==16.1.0", build = "he33a5f8_1" }
+libblas = { version = "==3.11.0", build = "8_h4a7cf45_openblas" }
+libcurl = { version = "==8.21.0", build = "hcf29cc6_1" }
+libxml2 = { version = "==2.13.9", build = "h04c0eec_0" }
+mpfr = { version = "==4.2.2", build = "he0a73b1_0" }
+openmpi = { version = "==4.1.6", build = "hc5af2df_101" }
+packaging = { version = "==26.3", build = "pyhc364b38_0" }
+perl-carp = { version = "==1.50", build = "pl5321hd8ed1ab_0" }
+perl-encode = { version = "==3.24", build = "pl5321hb03c661_0" }
+perl-list-moreutils = { version = "==0.430", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-types-serialiser = { version = "==1.01", build = "pl5321hdfd78af_0", channel = "bioconda" }
+pip = { version = "==26.2.1", build = "pyh145f28c_0" }
+tktable = { version = "==2.10", build = "h5a7a40f_8" }
+wget = { version = "==1.25.0", build = "h653f8fd_1" }
+xorg-libxext = { version = "==1.3.7", build = "hb03c661_0" }
+xorg-libxrender = { version = "==0.9.12", build = "hb9d3cd8_0" }
+xorg-libxt = { version = "==1.3.1", build = "hb9d3cd8_0" }
+aria2 = { version = "==1.37.0", build = "h4e1c2bf_3" }
+cairo = { version = "==1.18.4", build = "h3394656_0" }
+curl = { version = "==8.21.0", build = "hcf29cc6_1" }
+entrez-direct = { version = "==24.0", build = "he881be0_0", channel = "bioconda" }
+gawk = { version = "==5.4.1", build = "h0a3468a_0" }
+git = { version = "==2.55.0", build = "pl5321h5685339_1" }
+glib = { version = "==2.88.3", build = "h84d461a_0" }
+libcblas = { version = "==3.11.0", build = "8_h0358290_openblas" }
+liblapack = { version = "==3.11.0", build = "8_h47877c9_openblas" }
+libsbml = { version = "==5.20.5", build = "hb83472a_0" }
+perl-io-compress = { version = "==2.216", build = "pl5321h503566f_0", channel = "bioconda" }
+perl-json-xs = { version = "==4.04", build = "pl5321h9948957_0", channel = "bioconda" }
+perl-pathtools = { version = "==3.75", build = "pl5321hb9d3cd8_2" }
+pyrodigal = { version = "==3.7.1", build = "py313h8c92656_1", channel = "bioconda" }
+exonerate = { version = "==2.4.0", build = "hf34a1b8_9", channel = "bioconda" }
+gsl = { version = "==2.7", build = "he838d99_0" }
+harfbuzz = { version = "==12.2.0", build = "h15599e2_0" }
+mmseqs2 = { version = "==18.8cc5c", build = "hd6d6fdc_0", channel = "bioconda" }
+perl-archive-tar = { version = "==3.12", build = "pl5321hdfd78af_0", channel = "bioconda" }
+perl-json = { version = "==4.11", build = "pl5321hdfd78af_0", channel = "bioconda" }
+barrnap = { version = "==1.10.6", build = "pl5321hdfd78af_0", channel = "bioconda" }
+blast = { version = "==2.17.0", build = "h66d330f_0", channel = "bioconda" }
+hmmer = { version = "==3.4", build = "h7d74f8d_5", channel = "bioconda" }
+pango = { version = "==1.56.4", build = "hadf4263_0" }
+r-base = { version = "==4.5.2", build = "h835929b_3" }
+r-biocmanager = { version = "==1.30.27", build = "r45hc72bb7e_0" }
+r-bitops = { version = "==1.0_9", build = "r45h54b55ab_1" }
+r-chnosz = { version = "==2.2.0", build = "r45heaba542_1" }
+r-cli = { version = "==3.6.6", build = "r45h3697838_0" }
+r-codetools = { version = "==0.2_20", build = "r45hc72bb7e_2" }
+r-crayon = { version = "==1.5.3", build = "r45hc72bb7e_2" }
+r-curl = { version = "==7.1.0", build = "r45h10955f1_0" }
+"r-data.table" = { version = "==1.18.4", build = "r45h1c8cec4_0" }
+r-generics = { version = "==0.1.4", build = "r45hc72bb7e_1" }
+r-getopt = { version = "==1.21.1", build = "r45ha770c72_0" }
+r-glpkapi = { version = "==1.3.4.1", build = "r45hcbc0784_1" }
+r-glue = { version = "==1.8.1", build = "r45h54b55ab_0" }
+r-iterators = { version = "==1.0.14", build = "r45hc72bb7e_4" }
+r-jsonlite = { version = "==2.0.0", build = "r45h54b55ab_1" }
+r-lattice = { version = "==0.22_9", build = "r45h54b55ab_0" }
+r-magrittr = { version = "==2.0.5", build = "r45h54b55ab_0" }
+r-mime = { version = "==0.13", build = "r45h54b55ab_1" }
+"r-r.methodss3" = { version = "==1.8.2", build = "r45hc72bb7e_4" }
+r-r6 = { version = "==2.6.1", build = "r45hc72bb7e_1" }
+r-renv = { version = "==1.2.4", build = "r45h54b55ab_0" }
+r-rlang = { version = "==1.3.0", build = "r45h3697838_0" }
+r-stringi = { version = "==1.8.7", build = "r45h2dae267_1" }
+r-sys = { version = "==3.4.3", build = "r45h54b55ab_1" }
+bioconductor-biocgenerics = { version = "==0.56.0", build = "r45hdfd78af_2", channel = "bioconda" }
+r-askpass = { version = "==1.2.1", build = "r45h54b55ab_1" }
+r-foreach = { version = "==1.5.2", build = "r45hc72bb7e_4" }
+r-lifecycle = { version = "==1.0.5", build = "r45hc72bb7e_0" }
+r-matrix = { version = "==1.7_5", build = "r45h0e4624f_0" }
+"r-r.oo" = { version = "==1.27.1", build = "r45hc72bb7e_1" }
+r-rcurl = { version = "==1.98_1.17", build = "r45hb79926e_1" }
+bioconductor-s4vectors = { version = "==0.48.0", build = "r45h01b2380_1", channel = "bioconda" }
+r-doparallel = { version = "==1.0.17", build = "r45hc72bb7e_4" }
+r-openssl = { version = "==2.4.2", build = "r45h68c19f5_0" }
+"r-r.utils" = { version = "==2.13.0", build = "r45hc72bb7e_1" }
+r-sybil = { version = "==2.2.0", build = "r45hc72bb7e_4" }
+r-vctrs = { version = "==0.7.3", build = "r45h3697838_0" }
+bioconductor-iranges = { version = "==2.44.0", build = "r45h01b2380_1", channel = "bioconda" }
+r-httr = { version = "==1.4.8", build = "r45hc72bb7e_0" }
+r-stringr = { version = "==1.6.0", build = "r45h785f33e_0" }
+bioconductor-seqinfo = { version = "==1.0.0", build = "r45hdfd78af_0", channel = "bioconda" }
+bioconductor-xvector = { version = "==0.50.0", build = "r45h01b2380_0", channel = "bioconda" }
+bioconductor-biostrings = { version = "==2.78.0", build = "r45h01b2380_0", channel = "bioconda" }
+gapseq = { version = "==1.4.0", build = "h9ee0642_0", channel = "bioconda" }

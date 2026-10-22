@@ -1,0 +1,45 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/metax.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "metax"
+channels = ["conda-forge", "bioconda", "zldeng"]
+platforms = ["linux-64"]
+
+[dependencies]
+ca-certificates = { version = "==2026.6.17", build = "hbd8a1cb_0" }
+ld_impl_linux-64 = { version = "==2.45.1", build = "bootstrap_ha15bf96_2" }
+libgomp = { version = "==15.2.0", build = "he0feb66_19" }
+python_abi = { version = "==3.9", build = "8_cp39" }
+tzdata = { version = "==2025c", build = "hc9c84f9_1" }
+_openmp_mutex = { version = "==4.5", build = "20_gnu" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+libffi = { version = "==3.5.2", build = "h3435931_0" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+liblzma = { version = "==5.8.3", build = "hb03c661_0" }
+libnsl = { version = "==2.0.1", build = "hb9d3cd8_1" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libuuid = { version = "==2.42.2", build = "h5347b49_0" }
+ncurses = { version = "==6.6", build = "hdb14827_0" }
+openssl = { version = "==3.6.3", build = "h35e630c_0" }
+liblzma-devel = { version = "==5.8.3", build = "hb03c661_0" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libxcrypt = { version = "==4.4.36", build = "hd590300_1" }
+libzlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+readline = { version = "==8.3", build = "h853b02a_0" }
+xz-gpl-tools = { version = "==5.8.3", build = "ha02ee65_0" }
+xz-tools = { version = "==5.8.3", build = "hb03c661_0" }
+libsqlite = { version = "==3.46.0", build = "hde9e2c9_0" }
+tk = { version = "==8.6.13", build = "noxft_h4845f30_101" }
+xz = { version = "==5.8.3", build = "ha02ee65_0" }
+zlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+python = { version = "==3.9.19", build = "h0755675_0_cpython" }
+ma = { version = "==1.1.4", build = "py39h6935b12_3", channel = "bioconda" }
+setuptools = { version = "==80.9.0", build = "pyhff2d567_0" }
+wheel = { version = "==0.45.1", build = "pyhd8ed1ab_1" }
+metax = { version = "==0.9.22", build = "0", channel = "zldeng" }
+pip = { version = "==25.2", build = "pyh8b19718_0" }

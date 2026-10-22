@@ -1,0 +1,44 @@
+id: "98d_fun_integration_tables"
+script: "scripts/98d_fun_integration_tables.sh"
+tool: "Python"
+tool_version: "3"
+conda_env: "envs/assembly"
+description: "Integrate fungal gene annotations and FunOMIC summaries into count, normalized, and gene-level summary tables."
+dimension: "fungi"
+category: "integration"
+rule_type: "aggregate"
+
+inputs:
+  - name: "metaeuk_dir"
+    path_pattern: "{workdir}/result/fungi/metaeuk/"
+    required: true
+  - name: "eggnog_dir"
+    path_pattern: "{workdir}/result/fungi/eggnog/"
+    required: true
+
+outputs:
+  - name: "integration_done"
+    path_pattern: "{workdir}/result/integration/fungi/.done"
+    description: "Sentinel marking fungal integration table generation complete."
+
+depends_on:
+  - "80b_fun_metaeuk"
+  - "81_fun_eggnog"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "The integration script still reads result/fungi/prodigal/ as its primary FAA source, not result/fungi/metaeuk/."
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/statistics.smk::fun_integration_tables"

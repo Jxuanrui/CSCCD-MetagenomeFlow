@@ -1,0 +1,54 @@
+id: "94_stat_visualization"
+script: "scripts/94_stat_visualization.sh"
+tool: "Rscript"
+tool_version: "ComplexHeatmap, ggplot2, ggpubr, ggalluvial, UpSetR, patchwork, phyloseq"
+conda_env: "envs/r_stat"
+description: "Build unified stacked barplots, heatmaps, alluvial plots, UpSet plots, and PCoA composites."
+dimension: "statistics"
+category: "visualization"
+rule_type: "aggregate"
+
+inputs:
+  - name: "bac_taxonomy"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy.tsv"
+    required: true
+  - name: "vir_votu_table"
+    path_pattern: "{workdir}/result/virus/votu/table/vOTU_table_ann.txt"
+    required: true
+  - name: "fun_taxonomy"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/merged/taxonomy.tsv"
+    required: true
+  - name: "metadata"
+    path_pattern: "{workdir}/result/stat/metadata.tsv"
+    required: true
+
+outputs:
+  - name: "plots_done"
+    path_pattern: "{workdir}/result/stat/composition_done.txt"
+    description: "Composition visualization sentinel."
+
+depends_on:
+  - "11b_bac_metaphlan4_merge"
+  - "72b_fun_metaphlan4_merge"
+  - "01_metadata_qc"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_visualization"
+
+known_issues:
+  - description: "Registry previously claimed status: integrated since 2026-06-08 with this exact snakemake_rule, but the rule did not exist in statistics.smk until 2026-07-16 (verified via orphan-script audit). The old date/claim was stale documentation, not a functioning integration."
+    workaround: "None needed going forward; corrected as part of the 2026-07-16 Phase 2 integration pass."
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"
