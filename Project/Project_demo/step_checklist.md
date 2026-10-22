@@ -28,6 +28,7 @@
 | 23_bac_amrfinder | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 24_bac_card | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 24b_bac_card_summary | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
+| 24c_bac_amr_harmonize | bacteria | ⬜ 可选步骤（GATE-OPT1 通过 2026-10-21；不在默认 rule all，需显式调用） |  |
 | 25_bac_dbcan | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 26_bac_vfdb | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |
 | 27_bac_bacmet | bacteria | ✓ 已完成（事件流核证 2026-10-16） |  |

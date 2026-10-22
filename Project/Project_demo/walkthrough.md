@@ -3795,3 +3795,62 @@ bash scripts/98_stat_report.sh -w Project/Project_demo -r . --force
 <!-- GEM 章节（43/43b/43c）见批次②完整版 -->
 
 <!-- GEM 章节（43/43b/43c）见批次②完整版 -->
+
+## 24c · AMR 报表融合层（hAMRonization，可选步骤）
+
+**启动提示词**：将 AMRFinderPlus 和 RGI/CARD 两种异构耐药基因报告统一为标准格式表，保留原始结果不动、提供零丢失对账证明。
+
+**核心命令**：
+```bash
+bash scripts/24c_bac_amr_harmonize.sh -t 16 \
+  -w /absolute/path/to/Project_demo \
+  -r /absolute/path/to/CSCCD-MetagenomeFlow
+```
+
+**执行结果**（2026-10-21 优化轮）：
+| 来源 | 输入 | 输出 | 差异 |
+|---|---|---|---|
+| AMRFinderPlus | 363 | 335 | -28（VIRULENCE 设计内跳过） |
+| RGI/CARD | 69,905 | 69,905 | 零丢失 |
+| **合计** | **70,268** | **70,240** | **0 无解释丢失** |
+
+**执行点评**（执行方起草）：
+- **运算时间**：秒级（纯格式转换，无重计算）
+- **输出文件**：`result/annotation/amr_harmonized/`（标准化表×2 + 对账 JSON）
+- **后续使用**：下游消费者可用统一格式做跨工具比较，但需注意置信等级差异
+- **加速空间**：无需加速
+- **内存硬盘**：极轻（<1MB 临时文件）
+
+**⚠️ 已知限制**（GATE-OPT1 披露）：
+1. AMRFinderPlus protein-only 模式需补 Contig id/Start/Stop/Strand 四列占位值（0/0/0/+），非实测坐标
+2. hAMRonization 设计内跳过 Type=VIRULENCE 行（AMR 专注工具）
+3. 跨工具 ID 格式不同：AMRFinderPlus 短蛋白 ID vs RGI 完整 prodigal 描述串
+4. RGI 含 Loose 命中（`--include_loose`），跨工具置信比较需过滤到匹配等级
+
+**参考**：[pha4ge/hAMRonization](https://github.com/pha4ge/hAMRonization)（2024，17 种 AMR 工具输出标准化）
+
+---
+
+## 优化基准对照：galah vs dRep（GATE-OPT1 隔离评估）
+
+**执行结果**（2026-10-21 优化轮，隔离目录 `result/opt_bench/galah_vs_drep/`）：
+| 指标 | galah | dRep（现有） |
+|---|---|---|
+| 代表数 | 141 | 128 |
+| 共同代表 | 93/128（72.7%） | — |
+| 耗时 | 0.4s（24t） | 79s（16t） |
+
+**⚠️ 公平性披露**：两侧线程数不同（24 vs 16），"200x 加速"仅供参考；dRep 实际使用 skani 而非 fastANI。判定为 STRUCTURAL_CONSISTENCY（非强一致），**不建议在当前 128 MAGs 规模替代 dRep**。
+
+---
+
+## 优化原型：MICOM 群落代谢建模（GATE-OPT2 研究型可选）
+
+**执行结果**（2026-10-21 优化轮，隔离目录 `result/opt_bench/micom_prototype/`）：
+- 10 物种个体 FBA：9/10 成功（Escherichia carveme 模型已知缺失）
+- 生长率 7.7-18.4（CarveMe 默认培养基）；反应网 283-526/菌
+- 交叉喂养候选筛查：8 对（以水交换为主 + 1 对鸟氨酸 Caecibacter→Megasphaera）
+
+**⚠️ 解读纪律**：结果为**基于个体模型的候选筛查**，非群落级已确认交叉喂养。等丰度为人为假设。群落级 MICOM 社区模型延后（需逐 MAG 丰度转换 + API 兼容 + 培养基定义）。
+
+---
