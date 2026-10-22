@@ -110,7 +110,7 @@
 ## 复审跟踪（质量审核 2026-10-13 两轮打回 → 2026-10-14 三审**有条件通过**）
 - **口径更正（主代理自纠）**：此前报告"输出列名 lineage 后 91/92 R 兼容"不实——91/92 读的是 geNomad 原始表（列名 taxonomy），60 的 lineage 列与彼无关；三审揪出并已修（91/92 列名检查兼容 taxonomy、91 build_mt_virus 重写为直接消费 canonical 行、93 样本列只取 _tpm 防 length/count 混入）。
 - V2 验收全部核证：六样本基因行 0、ΣTPM=10⁶、三对照 contig（Sample1 样本 reads 对 Sample10 来源 contig）NumReads 回升 420.99→1614.48 / 2597.61→3995.86 / 1511.06→2553.89（**取值来源：Sample1/quant.sf**，2026-10-14 复核一致并归档 logs/evidence/vir_numreads_surviving_quant_sf_20261014.tsv；注意 Sample10 自身 quant.sf 对同名 contig 是另一定量，数值不同属预期——质量审核四审曾因此误判证据链断裂，实为跨样本混淆）、join 3062/0/2622、annotated=2,513 真分类（数值假分类 0）、length 抽查 3/3 与实长一致。Sample10 quant 与 votu_table H10_count 逐位一致（60 号聚合无损的交叉验证）。
-- **分级解冻（质量审核 2026-10-14 approve）**：`votu_table.tsv`/`vOTU_table_ann.txt` 对 **98c/98g 即时解冻**；**93、91/92/94/96 待修复复验后解冻**（93/91/92 的 R 修复已提交，复验排 CP2 收口）。
+- **分级解冻（质量审核 2026-10-14 approve）**：`votu_table.tsv`/`vOTU_table_ann.txt` 对 **98c/98g 即时解冻**；**93/91/92/94/96 已全部修复复验通过（CP2 收口 2026-10-17）**（93/91/92 的 R 修复已提交，复验排 CP2 收口）。
 - 64-72 病毒下游全量已获质量审核放行（pharokka 55 条试批 ID 回传 55/55），V3 泳道运行中（含 H1/H2/H4/H11 union 补齐 4×54 --force）。
 - 三审报告：.claude/reviews/supervisor_20261014_v2_audit.md（注：claude CLI 环境变更不可用，本轮以子代理加载质量审核章程执行，已在报告中披露）。
 - **Project01 披露（approve #2）**：Project01 冻结基线的病毒丰度用同一"基因+contig 混合索引"，已发布结论带同源偏差（系统性偏低且 vOTU 间不可比）；按approve不重跑，此偏差须写入论文方法部分与 Project01 notes。
@@ -131,7 +131,7 @@
 | 细菌读式 | 11→15d | 58 | ✅ 已过（第四轮通过，C1 已销项） |
 | 病毒链全段 | 51→59（60 打回） | — | ⚠️ CP2-病毒：60 号 vOTU 表 FAIL（见 supervisor_20261013_cp_audit.md），58→59→60 整改重跑待approve |
 | 真菌链前段 | 71→79b | 44+ | ⏳ 段未完 |
-| 细菌组装+基因目录 | 16→20 | — | ⏳ 待 CP1 |
+| 细菌组装+基因目录 | 16→20 | — | ✅ CP1 已通过（supervisor_20261004） |
 | eggNOG+KEGG | 21（302MB）+ 22（903,807 命中） | — | ✅ validate PASS |
 | 三路分箱+整合 | 32/33/34/35 + 36（353 MAGs） | — | ✅ validate PASS（含 bins↔c2b 一致性） |
 

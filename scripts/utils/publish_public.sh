@@ -84,6 +84,21 @@ echo "${FILES}" | xargs -d '\n' grep -l -E '\.claude|Claude|claude|Codex|ZCode|z
         -e 's/Codex/外部执行器/g' -e 's/ZCode 工作区级/工作区级/g' -e 's/ZCode/工作区/g' -e 's/zcode/内部工具/g' || true
 # gitignore: drop the internal relay-config line from the snapshot
 sed -i '/supervisor_relays/d' .gitignore 2>/dev/null || true
+# 2026-10-21: export sanitized tutorial + optimization evidence for public docs.
+# Copy walkthrough (sanitized: no sample IDs, no absolute paths) to docs/tutorial/
+mkdir -p docs/tutorial
+if [ -f Project/Project_demo/walkthrough.md ]; then
+    sed -e 's/Harbin[0-9]\+/Sample<N>/g' \
+        -e 's#/home/[A-Za-z0-9_.-]\+/#~/#g' \
+        -e 's/质量审核/质量审核/g' -e 's/主代理/执行方/g' -e 's/子代理/后台任务/g' \
+        Project/Project_demo/walkthrough.md > docs/tutorial/walkthrough.md
+    echo "[publish] exported sanitized walkthrough to docs/tutorial/"
+fi
+# Export optimization summary (sanitized)
+if [ -f Project/Project_demo/result/opt_bench/amr_fusion/reconciliation.json ]; then
+    sed 's/Harbin[0-9]\+/Sample<N>/g' \
+        Project/Project_demo/result/opt_bench/amr_fusion/reconciliation.json > docs/tutorial/amr_fusion_summary.json 2>/dev/null || true
+fi
 # Internal review-archive path references drop to generic wording.
 echo "${FILES}" | xargs -d '\n' grep -l '\.claude/reviews/' 2>/dev/null | \
     xargs -r -d '\n' sed -i -E 's/`?\.claude\/reviews\/[A-Za-z0-9_.-]+`?/内部审校记录/g' || true
