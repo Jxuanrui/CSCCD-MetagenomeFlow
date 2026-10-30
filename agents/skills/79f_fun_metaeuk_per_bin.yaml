@@ -1,0 +1,77 @@
+id: "79f_fun_metaeuk_per_bin"
+script: "scripts/79f_fun_metaeuk_per_bin.sh"
+tool: "metaeuk"
+tool_version: "7.1"
+conda_env: "envs/metaeuk"
+description: "MetaEuk protein prediction on eukaryotic MAGs. Fills fungal-side protein gap (BUSCO only produces marker fragments). Prerequisite for cross-domain orthogroup detection (98f)."
+dimension: "fungi"
+category: "annotation"
+rule_type: "per_sample"
+
+inputs:
+  - name: "euk_mags"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/euk_mags/bin.*.fa"
+    required: true
+    description: "Eukaryotic MAG bins from 79e"
+
+outputs:
+  - name: "per_bin_proteins"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/euk_mags/bin.*/metaeuk/{bin}.proteins.faa"
+    description: "Predicted protein sequences per bin"
+  - name: "per_bin_codons"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/euk_mags/bin.*/metaeuk/{bin}.codon.fas"
+    description: "Codon sequences per bin"
+  - name: "metaeuk_done"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/euk_mags/{sample}.metaeuk_done.txt"
+    description: "Completion marker with bin count"
+
+depends_on:
+  - "79e_fun_euk_qc_per_bin"
+required_by:
+  - "98f_cross_domain_orthogroup"
+
+params:
+  sample: "{sample}"
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  force: "false"
+
+benchmarks:
+  typical_runtime_min: 5-10 per bin
+  typical_input_size_mb: 2-10 per bin
+  peak_memory_gb: 8
+
+workflow:
+  - stage: "Check MetaEuk database"
+    description: "Verify UniRef50 or custom eukaryotic protein database exists"
+  - stage: "Iterate over bins"
+    description: "For each bin.*.fa in euk_mags/ directory"
+  - stage: "MetaEuk easy-predict"
+    description: "Run metaeuk easy-predict per bin"
+  - stage: "Generate completion marker"
+    description: "Write metaeuk_done.txt with processed bin count"
+
+validation:
+  test_samples: ["Sample4"]
+  success_cases:
+    - sample: "Sample4"
+      bin: "bin.1"
+      proteins_predicted: "~3000-5000"
+      notes: "Protein sequences ready for orthogroup clustering"
+
+database_requirements:
+  - name: "MetaEuk database"
+    path: "{repo}/db/metaeuk/uniref50_euk"
+    size_gb: "~20-30"
+    notes: "UniRef50 or custom eukaryotic reference database required"
+
+known_issues:
+  - description: "MetaEuk database check uses incorrect test condition"
+    issue: "Line 72: [ \"${DB}.dbtype\" ] should be [ -e \"${DB}.dbtype\" ]"
+    status: "Shellcheck SC2157 error, needs fix"
+    workaround: "Script still works if database exists, but error handling is incorrect"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_metaeuk_per_bin"

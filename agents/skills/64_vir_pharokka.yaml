@@ -1,0 +1,48 @@
+id: "64_vir_pharokka"
+script: "scripts/64_vir_pharokka.sh"
+tool: "PHAROKKA"
+tool_version: "1.7+"
+conda_env: "envs/pharokka"
+description: "End-to-end viral genome annotation — CDS prediction, PHROG assignment, ARG detection."
+dimension: "virome"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+
+outputs:
+  - name: "pharokka_gff"
+    path_pattern: "{workdir}/result/virus/pharokka/pharokka.gff"
+    description: "GFF annotation file."
+  - name: "pharokka_cds"
+    path_pattern: "{workdir}/result/virus/pharokka/pharokka_cds_final_merged_output.tsv"
+    description: "CDS summary table."
+  - name: "prodigal_faa"
+    path_pattern: "{workdir}/result/virus/pharokka/prodigal-gv.faa"
+    description: "Predicted viral proteins (downstream VOG / vConTACT3)."
+
+depends_on:
+  - "56_vir_votu_gen"
+required_by:
+  - "65_vir_phold"
+  - "66_vir_vog"
+  - "69_vir_vcontact3"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "PHAROKKA database (pharokka_db) must be pre-downloaded."
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_pharokka"

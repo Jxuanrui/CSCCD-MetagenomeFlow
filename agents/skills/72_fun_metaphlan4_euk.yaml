@@ -1,0 +1,42 @@
+id: "72_fun_metaphlan4_euk"
+script: "scripts/72_fun_metaphlan4_euk.sh"
+tool: "MetaPhlAn4"
+tool_version: "4.2.4+"
+conda_env: "envs/humann4"
+description: "Fungal and eukaryotic marker-gene taxonomic profiling."
+dimension: "mycobiome"
+category: "classification"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "metaphlan_profile"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/{sample}/{sample}_profile.txt"
+    description: "MetaPhlAn4 profile retaining eukaryotic lineages."
+  - name: "samout"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/{sample}/{sample}.sam.bz2"
+    description: "Compressed marker alignment output."
+
+depends_on:
+  - "02_qc_kneaddata"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_metaphlan4"
+

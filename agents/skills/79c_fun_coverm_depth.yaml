@@ -1,0 +1,75 @@
+id: "79c_fun_coverm_depth"
+script: "scripts/79c_fun_coverm_depth.sh"
+tool: "coverm+minimap2"
+tool_version: "0.7.0+2.28"
+conda_env: "envs/coverm"
+description: "Calculate read coverage depth for eukaryotic candidate contigs using CoverM + minimap2. Generates depth table and BAM files required for MetaBAT2 binning."
+dimension: "fungi"
+category: "binning"
+rule_type: "per_sample"
+
+inputs:
+  - name: "tiara_confirmed_fasta"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/tiara_confirmed_eukaryota.fa"
+    required: true
+    description: "Tiara-confirmed eukaryotic contigs from 79b"
+  - name: "clean_reads_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "clean_reads_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "depth_table"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/coverm/{sample}.depth.tsv"
+    description: "MetaBAT2-compatible depth table (contig_id, depth)"
+  - name: "bam_file"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/coverm/{sample}.sorted.bam"
+    description: "Sorted BAM alignment file"
+  - name: "bam_index"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/coverm/{sample}.sorted.bam.bai"
+    description: "BAM index file"
+
+depends_on:
+  - "79b_fun_veba_qc"
+  - "02_qc_kneaddata"
+required_by:
+  - "79d_fun_metabat2"
+
+params:
+  sample: "{sample}"
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  force: "false"
+
+benchmarks:
+  typical_runtime_min: 5-10
+  typical_input_size_mb: 10-50
+  peak_memory_gb: 4
+
+workflow:
+  - stage: "Mapping"
+    description: "minimap2 -ax sr to align reads to eukaryotic contigs"
+  - stage: "Sorting"
+    description: "samtools sort to create sorted BAM"
+  - stage: "Indexing"
+    description: "samtools index to create BAM index"
+  - stage: "Depth calculation"
+    description: "coverm contig to calculate per-contig mean depth"
+
+validation:
+  test_samples: ["Sample4"]
+  success_cases:
+    - sample: "Sample4"
+      depth_range: "10-500x"
+      notes: "Depth table successfully generated for downstream MetaBAT2 binning"
+
+known_issues:
+  - description: "Empty input (0 contigs after Tiara filter)"
+    workaround: "Script skips gracefully with exit 0, no depth table generated"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_coverm_depth_euk"

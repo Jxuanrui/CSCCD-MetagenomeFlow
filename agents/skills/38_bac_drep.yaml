@@ -1,0 +1,46 @@
+id: "38_bac_drep"
+name: "dRep MAG Dereplication"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::drep"
+
+inputs:
+  - name: mags
+    path_pattern: "{workdir}/result/binning/checkm2/drep_input/*.fa"
+    required: true
+    description: "CheckM2-filtered MAGs (completeness>=50%, contamination<=10%)"
+
+outputs:
+  - name: dereplicated
+    path_pattern: "{workdir}/result/binning/drep/dereplicated_genomes/*.fa"
+    description: "Dereplicated MAGs at 95% ANI threshold"
+  - name: Cdb
+    path_pattern: "{workdir}/result/binning/drep/data_tables/Cdb.csv"
+    description: "Comparison data table"
+  - name: Widb
+    path_pattern: "{workdir}/result/binning/drep/data_tables/Widb.csv"
+    description: "MAG statistics table"
+
+depends_on:
+  - "37_bac_checkm2"
+
+conda_env: "envs/drep"
+
+parameters:
+  ani_threshold: 0.95
+  primary_ani: 0.9
+  min_coverage: 0.30
+  s_algorithm: "skani"
+
+benchmarks:
+  typical_runtime_min: 60
+  peak_memory_gb: 16
+
+known_issues:
+  - description: "ANI threshold: 0.95=species, 0.97=strain; script defaults to 0.95 with -a override"
+    workaround: "bash 38_bac_drep.sh -a 0.97 ... for strain-level dereplication"
+  - description: "Secondary-clustering algorithm is configurable via -A (default skani, faster than fastANI). skani 0.3.2 is reused from envs/gtdbtk via a project-local symlink envs/drep/bin/skani; ANI estimates differ marginally from fastANI."
+    workaround: "bash 38_bac_drep.sh -A fastANI ... to restore the previous fastANI behaviour"
+  - description: "A forced re-run used to fail silently: dRep refuses to run into a populated work directory ('Both Bdb and a genome list are found'), the script aborted in ~7 s, then reported the STALE MAG count as success. Same ERROR was seen 3x in the Project01 log (08-12/08-20/09-16), i.e. dRep had not actually re-run for weeks."
+    workaround: "Fixed in b991f68 (rm -rf the work dir before a --force run). Verify a re-run by checking the dereplicated_genomes mtime is newer than the input, not just the file count."

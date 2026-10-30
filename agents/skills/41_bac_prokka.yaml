@@ -1,0 +1,49 @@
+id: "41_bac_prokka"
+name: "Prokka MAG Genome Annotation"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::prokka"
+
+inputs:
+  - name: mags
+    path_pattern: "{workdir}/result/binning/drep/dereplicated_genomes/*.fa"
+    required: true
+    description: "Dereplicated MAGs from dRep (step 38)"
+  - name: gtdbtk_summary
+    path_pattern: "{workdir}/result/binning/gtdbtk/gtdbtk.bac120.summary.tsv"
+    required: false
+    description: "Optional GTDB-Tk classification, used to pass --genus to Prokka for higher-precision annotation"
+
+outputs:
+  - name: summary
+    path_pattern: "{workdir}/result/binning/prokka/prokka_summary.tsv"
+    description: "Concatenated Prokka annotation summary across all MAGs"
+  - name: per_mag
+    path_pattern: "{workdir}/result/binning/prokka/{mag_name}/{mag_name}.tsv"
+    description: "Per-MAG annotation (also .gff, .faa, .ffn, .gbk)"
+  - name: sentinel
+    path_pattern: "{workdir}/result/binning/prokka/.done"
+    description: "Completion sentinel for Snakemake tracking"
+
+depends_on:
+  - "38_bac_drep"
+
+conda_env: "envs/prokka"
+
+parameters:
+  mincontiglen: 200
+  kingdom: "Bacteria"
+  metagenome: true
+
+benchmarks:
+  typical_runtime_min: 5  # per MAG
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "Prokka loops over all MAGs sequentially; for >50 MAGs, consider Snakemake dynamic dispatch"
+    workaround: "Script skips completed MAGs automatically (idempotent per MAG output via {mag_name}.tsv check)"
+  - description: "Replaces 41_bac_bakta (removed 2026-07-15): Bakta had DB size/runtime tradeoffs and was less stable in batch runs"
+    workaround: "Prokka trades RefSeq-precision matching for stability; downstream 41c pangenome (Roary) and 41d snippy consume Prokka GFFs identically to the old Bakta layout"
+  - description: "A --force re-run left stale per-MAG dirs from a previous MAG set behind (65 orphan dirs confirmed on Project01 when rebuilding a smaller drep set), so downstream consumers could read annotations for MAGs no longer in the set."
+    workaround: "Fixed in 717c89e: OUTDIR is cleared on --force. The non-force path keeps its per-MAG skip logic (idempotent via {mag_name}.tsv)."

@@ -1,0 +1,48 @@
+id: "24c_bac_amr_harmonize"
+script: "scripts/24c_bac_amr_harmonize.sh"
+tool: "hAMRonization"
+tool_version: "1.3.1"
+conda_env: "miniforge3"
+description: "Harmonize AMRFinderPlus + RGI/CARD outputs into unified AMR report format (format-only, no re-detection)."
+dimension: "bacteria"
+category: "annotation"
+rule_type: "post_processing"
+optional: true
+
+inputs:
+  - name: "amrfinder_report"
+    path_pattern: "{workdir}/result/annotation/amrfinder/amrfinder_results.tsv"
+    required: true
+  - name: "rgi_report"
+    path_pattern: "{workdir}/result/annotation/card/rgi_results.txt"
+    required: true
+
+outputs:
+  - name: "hamronized_amrfinder"
+    path_pattern: "{workdir}/result/annotation/amr_harmonized/hamronized_amrfinder.tsv"
+    description: "AMRFinderPlus results in hAMRonization standard format."
+  - name: "hamronized_rgi"
+    path_pattern: "{workdir}/result/annotation/amr_harmonized/hamronized_rgi.tsv"
+    description: "RGI/CARD results in hAMRonization standard format."
+  - name: "reconciliation"
+    path_pattern: "{workdir}/result/annotation/amr_harmonized/reconciliation.json"
+    description: "No-loss reconciliation proof (input/output/skip counts + limitations)."
+
+depends_on:
+  - "23_bac_amrfinder"
+  - "24_bac_card"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: 1
+  peak_memory_gb: 1
+
+integration_status: "integrated"
+integrated_date: "2026-10-21"
+snakemake_rule: ""
+notes: "Optional step — not in default rule all. Known limitations (GATE-OPT1): AMRFinderPlus protein-only needs 4 placeholder columns; hAMRonization skips VIRULENCE rows by design; RGI includes Loose hits; cross-tool ID formats differ. Reference: pha4ge/hAMRonization 2024."
