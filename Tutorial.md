@@ -2655,3 +2655,10 @@ Snakemake 的 stat_functional 规则内部用 shell 循环依次跑 20 个 (dime
 > （文件存在、非空、格式合法、配对一致等）。验证结果写入 `logs/validation_log.jsonl` 审计日志。
 > 当前已覆盖 01/02/02b/11/13/14/51/53/54/78/79 等 11 个关键步骤；后续步骤的验证规则持续添加中。
 
+
+## Optional: AMR Report Fusion (24c)
+
+After running steps 23 (AMRFinderPlus) and 24 (RGI/CARD), optionally harmonize both outputs:
+```bash
+bash scripts/24c_bac_amr_harmonize.sh -t 16 -w /path/to/workdir -r /path/to/repo
+```

@@ -69,6 +69,10 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 
 ---
 
+## Optional Steps
+
+- **hAMRonization AMR Report Fusion**: harmonize AMRFinderPlus + RGI outputs into unified format. Run `bash scripts/24c_bac_amr_harmonize.sh -t <threads> -w <workdir> -r <repo>` after steps 23+24, or use Snakemake target `amr_harmonize`.
+
 ## Quick Start
 
 ```bash

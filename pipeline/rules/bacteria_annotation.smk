@@ -85,6 +85,27 @@ rule card_summary:
         "> {log} 2>&1"
 
 
+# ── Optional: hAMRonization AMR report fusion (24c) ──────────────────────────
+# Not in default `rule all` — run explicitly with: snakemake amr_harmonize
+rule amr_harmonize:
+    """Harmonize AMRFinderPlus + RGI/CARD outputs into unified format (optional, format-only)."""
+    input:
+        amrfinder = WORKDIR + "/result/annotation/amrfinder/amrfinder_results.tsv",
+        rgi = WORKDIR + "/result/annotation/card/rgi_results.txt",
+    output:
+        afp = WORKDIR + "/result/annotation/amr_harmonized/hamronized_amrfinder.tsv",
+        rgi_h = WORKDIR + "/result/annotation/amr_harmonized/hamronized_rgi.tsv",
+        recon = WORKDIR + "/result/annotation/amr_harmonized/reconciliation.json",
+    log:
+        WORKDIR + "/logs/amr_harmonize/hamronize.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    shell:
+        "bash {REPO}/scripts/24c_bac_amr_harmonize.sh -t {CPUS} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
+        "> {log} 2>&1"
+
+
 # ─── 25: dbCAN3 CAZyme annotation ───────────────────────────────────────────
 
 rule dbcan:

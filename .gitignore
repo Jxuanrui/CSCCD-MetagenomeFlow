@@ -142,3 +142,5 @@ mining/m4/annotations_cache.jsonl
 .mcp.json
 .pixi/
 .claude/supervisor_relays.local.json
+tools/
+Project/Project_demo/feishu_notes/
