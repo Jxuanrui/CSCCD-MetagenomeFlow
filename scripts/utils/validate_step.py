@@ -129,6 +129,36 @@ VALIDATION_RULES = {
         ("results", lambda w, s: os.path.isfile(f"{w}/result/fungi/eukfinder/{s}/results.txt"),
          "eukfinder results exist"),
     ],
+    "21_bac_eggnog": [
+        ("annotations_exist", lambda w, s: os.path.isfile(f"{w}/result/annotation/eggnog/eggnog.emapper.annotations"),
+         "eggNOG annotation table exists"),
+        ("annotations_nonempty", lambda w, s: count_tsv_data_rows(f"{w}/result/annotation/eggnog/eggnog.emapper.annotations", skip_header=False) > 100000,
+         "eggNOG annotations substantial (>100K; expect ~886K hits)"),
+        ("id_provenance", lambda w, s: _eggnog_id_provenance(w),
+         "every eggNOG query ID is from protein_nr.fa (identity consistency, P3-8)"),
+    ],
+    "18_bac_cdhit": [
+        ("nr_nucleotide", lambda w, s: os.path.isfile(f"{w}/result/assembly/cdhit/nucleotide_nr.fa"),
+         "non-redundant nucleotide catalog exists"),
+        ("nr_protein", lambda w, s: os.path.isfile(f"{w}/result/assembly/cdhit/protein_nr.fa"),
+         "non-redundant protein catalog exists"),
+        ("protein_lt_nucleotide", lambda w, s: _protein_lt_nuc(w),
+         "protein catalog ≤ nucleotide catalog (expected: seqkit translate filters empty)"),
+    ],
+    "20_bac_salmon_quant": [
+        ("quant_files", lambda w, s: all(os.path.isfile(f"{w}/result/assembly/salmon/{sid}/quant.sf") for sid in ['Sample1','Sample2','Sample3','Sample4','Sample10','Sample11']),
+         "all 6 sample quant.sf files exist"),
+        ("quant_rows_consistent", lambda w, s: _salmon_rows_consistent(w),
+         "all samples have same transcript count"),
+    ],
+    "24c_bac_amr_harmonize": [
+        ("afp_table", lambda w, s: os.path.isfile(f"{w}/result/annotation/amr_harmonized/hamronized_amrfinder.tsv"),
+         "harmonized AMRFinderPlus table exists"),
+        ("rgi_table", lambda w, s: os.path.isfile(f"{w}/result/annotation/amr_harmonized/hamronized_rgi.tsv"),
+         "harmonized RGI table exists"),
+        ("reconciliation", lambda w, s: os.path.isfile(f"{w}/result/annotation/amr_harmonized/reconciliation.json"),
+         "no-loss reconciliation JSON exists"),
+    ],
     # Default: just check exit code was 0 (no additional validation)
     "_default": [],
     # ── 质量审核终审 2026-10-15 P1-6：高价值不变式（只给"错了会静默污染下游"的步骤）──
@@ -268,6 +298,44 @@ def _votu_columns_ok(w):
     except Exception:
         return False
 
+
+
+def _eggnog_id_provenance(w):
+    """Every eggNOG query ID must be from protein_nr.fa."""
+    try:
+        prot_ids = set()
+        for line in open(f"{w}/result/assembly/cdhit/protein_nr.fa"):
+            if line.startswith('>'):
+                prot_ids.add(line[1:].split()[0])
+        eggnog_ids = set()
+        for line in open(f"{w}/result/annotation/eggnog/eggnog.emapper.annotations", encoding='utf-8', errors='replace'):
+            if not line.startswith('#') and line.strip():
+                eggnog_ids.add(line.split('\t')[0])
+        return eggnog_ids.issubset(prot_ids)
+    except Exception:
+        return False
+
+
+def _protein_lt_nuc(w):
+    """Protein catalog should be ≤ nucleotide catalog count."""
+    try:
+        nuc = count_fasta_headers(f"{w}/result/assembly/cdhit/nucleotide_nr.fa")
+        prot = count_fasta_headers(f"{w}/result/assembly/cdhit/protein_nr.fa")
+        return 0 < prot <= nuc
+    except Exception:
+        return False
+
+
+def _salmon_rows_consistent(w):
+    """All salmon quant.sf files should have the same number of transcripts."""
+    try:
+        counts = set()
+        for sid in ['Sample1','Sample2','Sample3','Sample4','Sample10','Sample11']:
+            n = count_tsv_data_rows(f"{w}/result/assembly/salmon/{sid}/quant.sf", skip_header=True)
+            counts.add(n)
+        return len(counts) == 1 and counts.pop() > 0
+    except Exception:
+        return False
 
 def _first_ncols_ok(path, ncols):
     """First data line of a TSV has exactly ncols tab-separated columns."""
