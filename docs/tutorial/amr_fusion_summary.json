@@ -1,0 +1,36 @@
+{
+ "reconciliation": [
+  {
+   "tool": "amrfinderplus",
+   "input_records": 363,
+   "output_records": 335,
+   "unmapped": 28,
+   "placeholder_cols_added": "Contig id/Start/Stop/Strand (protein-only mode lacks nucleotide coords)",
+   "source_tool": "amrfinder",
+   "software_version": "4.0.19",
+   "db_version": "2024-01-23.1",
+   "designed_skip": 28,
+   "skip_reason": "hAMRonization by-design skips Type=VIRULENCE rows (AMR-focused tool; not a loss bug)",
+   "reconciliation": "363 = 335 mapped + 28 VIRULENCE designed-skip = 0 unexplained loss"
+  },
+  {
+   "tool": "rgi",
+   "input_records": 69905,
+   "output_records": 69905,
+   "unmapped": 0,
+   "placeholder_cols_added": "none (full compatibility)",
+   "source_tool": "rgi",
+   "software_version": "6.0.3",
+   "db_version": "CARD 3.2.5"
+  }
+ ],
+ "totals": {
+  "input": 70268,
+  "output": 70240,
+  "designed_skip": 28,
+  "unexplained_loss": 0
+ },
+ "contract": "output records = input records (per tool); original files untouched",
+ "contract_note": "Cross-tool ID formats differ by design: AMRFinderPlus outputs short protein IDs (e.g. 'Sample<N>|k127_103006_2'), RGI outputs full prodigal descriptions (e.g. 'Sample<N>|k127_74392_3 # 1519 # 2016 # 1 # ID=30_3;...'). The hamronized tables preserve each tool's native ID; no cross-tool ID mapping is attempted (that would require a separate identity mapping contract). AMRFinderPlus protein-only mode: Contig id/Start/Stop/Strand are placeholder values (0/0/0/+) \u2014 documented, NOT real coordinates.",
+ "confidence_levels": "RGI includes Loose hits (--include_loose in 24_bac_card.sh:86); AMRFinderPlus includes all types except VIRULENCE (designed skip). Cross-tool confidence comparison requires filtering to matching levels (e.g. RGI Perfect/Strict vs AMRFinderPlus Exact) \u2014 NOT provided by format harmonization alone."
+}
