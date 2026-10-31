@@ -58,7 +58,7 @@ bash scripts/00_pipeline_bacteria.sh \
 
 | Profile | 适用场景 | 核数 | 实际并发 |
 |---------|---------|------|---------|
-| `auto` | 由 `/mgx-tune` 根据当前机器自动生成 | 自动检测 | 自动 |
+| `auto` | 由 ZCode/GLM 主代理根据当前机器自动生成（原 `/mgx-tune` 已退役） | 自动检测 | 自动 |
 | `local_16c` | 16 核笔记本/小型工作站 | 12 | 1 |
 | `local_48c` | 48 核服务器（本机） | 44 | 2 |
 | `local_96c` | 96 核服务器 | 92 | 5 |
@@ -66,7 +66,7 @@ bash scripts/00_pipeline_bacteria.sh \
 
 ```bash
 # 0. 首次使用：检测当前硬件并生成 profiles/auto/
-/mgx-tune   # 在 Claude Code 中执行
+# 原通过 Claude Code 的 /mgx-tune 执行；现由 ZCode/GLM 主代理执行（CLI 已退役）
 
 # 1. 编辑运行参数（samplesheet 路径、workdir、threads_per_job）
 vim pipeline/config/config.yaml
@@ -86,7 +86,7 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 
 > **注意**：
 > - Snakemake 已安装在项目内 miniforge3 base 环境，激活 `activate.sh` 后即可直接调用。
-> - 迁移到新服务器后运行 `/mgx-tune` 重新生成 `profiles/auto/`。
+> - 迁移到新服务器后由主代理重新生成 `profiles/auto/`（原 `/mgx-tune` 已退役）。
 > - 开启步骤事件监控（同模式一/二的事件流与看板）：`pipeline/config/config.yaml` 设 `monitor: true`（或 `MGX_MONITOR=1 snakemake ...`）。
 > - `--cores` 控制总线程预算，Snakemake 根据每个 rule 的 `threads:` 声明自动分配并发数；merge 等聚合 rule 的 DAG 依赖保证所有 per-sample job 完成后才触发，无需人工分步。
 
@@ -406,9 +406,9 @@ scripts/*.sh          ← 原子执行单元（永远不变，所有模式共用
 agents/               ← Agent Skills 系统（Claude Code 交互式驱动）
   registry.yaml       全局脚本状态（not_started/in_progress/ready/integrated）
   skills/*.yaml       工具卡片（输入/输出/依赖/性能/已知问题）
-  provenance/*.json   运行轨迹记录（/mgx-learn 自动写入）
+  provenance/*.json   运行轨迹记录（原 /mgx-learn，现由管线脚本自动写入）
 
-.claude/skills/*.md   ← Claude Code 可调用技能（/mgx-* 前缀）
+.claude/skills/*.md   ← CLI 技能文档（原 /mgx-* 前缀，现 ZCode/GLM 直接读取 agents/skills/*.yaml）
 ```
 
 ### 各层文件职责
@@ -419,7 +419,7 @@ agents/               ← Agent Skills 系统（Claude Code 交互式驱动）
 | Snakemake 层 | `pipeline/rules/*.smk` | CC | 每次新脚本 integrated |
 | 工具卡片层 | `agents/skills/*.yaml` | CC | 每次新脚本 integrated |
 | 状态追踪层 | `agents/registry.yaml` | 双方 | 脚本 ready 或 integrated 时 |
-| 运行记录层 | `agents/provenance/*.json` | CC (`/mgx-learn` 或 `batch_provenance_backfill.py`) | 每次实际运行后 |
+| 运行记录层 | `agents/provenance/*.json` | 管线脚本（原 CC /mgx-learn，或 batch_provenance_backfill.py） | 每次实际运行后 |
 | CC 技能层 | `.claude/skills/*.md` | CC | 架构演进时修改 |
 | 自动挖掘层 | `mining/*.py` + `mining/m4/` | 主代理+子代理 | 周增量 cron / 策展批次 / 数据集编排 / 疾病指纹比对 |
 | 挖掘数据层 | `mining/*.sqlite` + `mining/snapshots/` | mining 脚本 | cron 周一 / 策展批次（详见 `mining/README.md`，含 scBaseCount 式循环操作手册） |
@@ -432,7 +432,7 @@ pipeline/
 ├── config/
 │   └── config.yaml             运行时参数（每次分析前编辑）
 ├── profiles/
-│   ├── auto/                   当前机器自动生成（/mgx-tune）
+│   ├── auto/                   当前机器自动生成（原 /mgx-tune，现主代理执行）
 │   ├── local_16c/              16核预设
 │   ├── local_48c/              48核预设（本机）
 │   ├── local_96c/              96核预设
@@ -467,7 +467,7 @@ snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::rule_name"
 
 当脚本作者在 `agents/registry.yaml` 中将某脚本状态更新为 `ready`，或直接告知 CC "XX 脚本 ready 了"时，CC 执行以下固定流程：
 
-### Step 1 — 调用 /mgx-integrate
+### Step 1 — 集成新步骤（原 /mgx-integrate，现由主代理执行）
 读取脚本 → 提取路径/依赖 → 生成工具卡片 → 写 Snakemake rule → 更新 registry
 
 ### Step 2 — 调用 /mgx-review
