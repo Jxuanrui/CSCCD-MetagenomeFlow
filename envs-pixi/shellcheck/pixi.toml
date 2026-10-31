@@ -1,0 +1,13 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/shellcheck.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "shellcheck"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+shellcheck = { version = "==0.11.0", build = "ha770c72_1" }
