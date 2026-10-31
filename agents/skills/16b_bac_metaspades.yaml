@@ -1,0 +1,68 @@
+id: 16b_bac_metaspades
+script: scripts/16b_bac_metaspades.sh
+tool: metaspades + quast
+tool_version: 3.15.5 (SPAdes) / 5.0.2 (QUAST)
+conda_env: envs/assembly
+description: metaSPAdes assembly cross-check against the MEGAHIT assembly (16) with
+  QUAST side-by-side metrics. Verification layer; results are not consumed downstream.
+dimension: bacteria
+category: assembly
+rule_type: per_sample
+inputs:
+- name: r1
+  path_pattern: '{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz'
+  required: true
+- name: r2
+  path_pattern: '{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz'
+  required: true
+- name: megahit_contigs
+  path_pattern: '{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa'
+  required: false
+  description: Optional. When present, QUAST reports both assemblies side-by-side;
+    otherwise only metaSPAdes is evaluated.
+outputs:
+- name: contigs
+  path_pattern: '{workdir}/result/assembly_metaspades/{sample}/contigs.fasta'
+  description: metaSPAdes contigs (verification only, not a downstream input).
+- name: quast_report
+  path_pattern: '{workdir}/result/assembly_metaspades/{sample}/quast_report/report.tsv'
+  description: metaQUAST report (--max-ref-number 0, offline); two columns (metaSPAdes,
+    MEGAHIT) when MEGAHIT contigs exist.
+- name: sentinel
+  path_pattern: '{workdir}/result/assembly_metaspades/{sample}/{sample}.metaspades_done.txt'
+  description: Completion marker with contigs/total_bp/ge1k/quast status; 'empty_assembly'
+    on graceful degradation.
+- name: log
+  path_pattern: '{workdir}/result/assembly_metaspades/{sample}/{sample}.spades.log'
+  description: SPAdes log (k-mer iterations, memory usage).
+depends_on:
+- 02_qc_kneaddata
+required_by: []
+params:
+  threads: '{cpus}'
+  mem_gb: 250 (default); metaspades --memory = 0.9x
+  note: Opt-in verification layer, not in rule all; trigger via -R metaspades or a
+    sentinel target
+benchmarks:
+  typical_runtime_min: 180
+  peak_memory_gb: 225
+  note: metaSPAdes is several-fold slower and more memory-hungry than MEGAHIT; varies
+    widely by sample.
+known_issues:
+- description: SPAdes refuses to write into a non-empty existing directory.
+  workaround: Script assembles into _spades_tmp and clears it before the run; only
+    contigs/log/QUAST are kept.
+- description: metaQUAST reference search requires internet (SILVA/NCBI downloads).
+  workaround: 'Runs metaquast.py --max-ref-number 0: skips reference search, still
+    produces the side-by-side assembly report offline.'
+- description: Low-depth samples may yield an empty contigs set.
+  workaround: Script writes an 'empty_assembly' sentinel and exits 0 (verification
+    layer must not block the queue).
+- description: SPAdes 3.15.5 PHRED auto-detection hard-fails (exit 255 'Failed to
+    determine offset') on constant-quality reads — every kneaddata-produced fixture/example
+    sample hits this
+  workaround: Script passes --phred-offset 33 explicitly (fixed 2026-09-19, commit
+    531d27b)
+integration_status: integrated
+integrated_date: '2026-09-19'
+snakemake_rule: pipeline/rules/bacteria_assembly.smk::metaspades

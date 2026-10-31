@@ -1,0 +1,36 @@
+id: "31_bac_pcyc"
+name: "PCyc Phosphorus Cycling Gene Annotation (DIAMOND)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::pcyc"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: hits
+    path_pattern: "{workdir}/result/annotation/pcyc/pcyc_hits.tsv"
+    description: "DIAMOND blastp hits against PCyc DB (BLAST m6 format)"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/assembly"
+db_path: "db/pcyc"
+
+parameters:
+  evalue: "1e-5"
+  max_target_seqs: 1
+  mode: "sensitive"
+
+benchmarks:
+  typical_runtime_min: 10
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "PCyc covers phosphorus mineralization, solubilization, uptake, and transport genes"
+    workaround: "Map sseqid to PCyc gene family categories using DB sequence headers"

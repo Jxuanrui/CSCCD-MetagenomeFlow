@@ -1,0 +1,296 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/vcontact3.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "vcontact3"
+channels = ["https://repo.anaconda.com/pkgs/main", "conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+_openmp_mutex = { version = "==5.1", build = "52_gnu", channel = "https://repo.anaconda.com/pkgs/main" }
+ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
+font-ttf-dejavu-sans-mono = { version = "==2.37", build = "hab24e00_0" }
+font-ttf-inconsolata = { version = "==3.000", build = "h77eed37_0" }
+font-ttf-source-code-pro = { version = "==2.038", build = "h77eed37_0" }
+font-ttf-ubuntu = { version = "==0.83", build = "h77eed37_3" }
+libglvnd = { version = "==1.7.0", build = "ha4b6fd6_3" }
+libopentelemetry-cpp-headers = { version = "==1.27.0", build = "ha770c72_0" }
+libzlib = { version = "==1.3.2", build = "h25fd6f3_2" }
+nlohmann_json = { version = "==3.12.0", build = "h54a6638_1" }
+python_abi = { version = "==3.11", build = "6_cp311" }
+tzdata = { version = "==2026b", build = "he532380_0", channel = "https://repo.anaconda.com/pkgs/main" }
+fonts-conda-forge = { version = "==1", build = "hc364b38_1" }
+libegl = { version = "==1.7.0", build = "ha4b6fd6_3" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+libopengl = { version = "==1.7.0", build = "ha4b6fd6_3" }
+zlib = { version = "==1.3.2", build = "h25fd6f3_2" }
+zstd = { version = "==1.5.7", build = "hb78ec9c_6" }
+aws-c-common = { version = "==0.13.1", build = "hb03c661_0" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+c-ares = { version = "==1.34.6", build = "hb03c661_0" }
+fonts-conda-ecosystem = { version = "==1", build = "0" }
+keyutils = { version = "==1.6.3", build = "hb9d3cd8_0" }
+ld_impl_linux-64 = { version = "==2.45.1", build = "default_hbd61a6d_102" }
+libaec = { version = "==1.1.6", build = "hb3d0152_0", channel = "https://repo.anaconda.com/pkgs/main" }
+libbrotlicommon = { version = "==1.2.0", build = "hb03c661_1" }
+libdeflate = { version = "==1.25", build = "h17f619e_0" }
+libexpat = { version = "==2.8.1", build = "hecca717_0" }
+libffi = { version = "==3.5.2", build = "h3435931_0" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran5 = { version = "==15.2.0", build = "h68bc16d_19" }
+libiconv = { version = "==1.18", build = "h3b78370_2" }
+libjpeg-turbo = { version = "==3.1.4.1", build = "hb03c661_0" }
+liblzma = { version = "==5.8.3", build = "hb03c661_0" }
+libnsl = { version = "==2.0.1", build = "hb9d3cd8_1" }
+libntlm = { version = "==1.8", build = "hb9d3cd8_0" }
+libpciaccess = { version = "==0.19", build = "hb03c661_0" }
+libpng = { version = "==1.6.58", build = "h421ea60_0" }
+libsqlite = { version = "==3.53.2", build = "h0c1763c_0" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libutf8proc = { version = "==2.11.3", build = "hfe17d71_0" }
+libuuid = { version = "==2.42.1", build = "h5347b49_0" }
+libwebp-base = { version = "==1.6.0", build = "hd42ef1d_0" }
+libxcrypt = { version = "==4.5.2", build = "h47b2149_0", channel = "https://repo.anaconda.com/pkgs/main" }
+lmdb = { version = "==0.9.35", build = "h25c0377_0" }
+ncurses = { version = "==6.6", build = "hdb14827_0" }
+openssl = { version = "==3.6.2", build = "h35e630c_0" }
+pthread-stubs = { version = "==0.4", build = "hb9d3cd8_1002" }
+xorg-libice = { version = "==1.1.2", build = "hb9d3cd8_0" }
+xorg-libxau = { version = "==1.0.12", build = "hb03c661_1" }
+xorg-libxdmcp = { version = "==1.1.5", build = "hb03c661_1" }
+xorg-libxshmfence = { version = "==1.3.3", build = "hb9d3cd8_0" }
+xorg-xextproto = { version = "==7.3.0", build = "hb9d3cd8_1004" }
+yaml = { version = "==0.2.5", build = "h280c20c_3" }
+aws-c-cal = { version = "==0.9.14", build = "h8e43964_1" }
+aws-c-compression = { version = "==0.3.2", build = "h16e98cb_1" }
+aws-c-sdkutils = { version = "==0.2.4", build = "h16e98cb_5" }
+aws-checksums = { version = "==0.2.10", build = "h16e98cb_1" }
+gflags = { version = "==2.2.2", build = "h5888daf_1005" }
+graphite2 = { version = "==1.3.15", build = "hecca717_0" }
+icu = { version = "==78.3", build = "h33c6efd_0" }
+lerc = { version = "==4.1.0", build = "hdb68285_0" }
+libabseil = { version = "==20260107.1", build = "cxx17_h7b12aa8_0" }
+libasprintf = { version = "==0.25.1", build = "h3f43e3d_1" }
+libbrotlidec = { version = "==1.2.0", build = "hb03c661_1" }
+libbrotlienc = { version = "==1.2.0", build = "hb03c661_1" }
+libcups = { version = "==2.4.15", build = "hbe4054b_0", channel = "https://repo.anaconda.com/pkgs/main" }
+libdrm = { version = "==2.4.127", build = "hb03c661_0" }
+libedit = { version = "==3.1.20250104", build = "pl5321h7949ede_0" }
+libev = { version = "==4.33", build = "hd590300_2" }
+libevent = { version = "==2.1.12", build = "hf998b51_1" }
+libfreetype6 = { version = "==2.14.3", build = "h73754d4_0" }
+libgettextpo = { version = "==0.25.1", build = "h3f43e3d_1" }
+libgfortran = { version = "==15.2.0", build = "h69a702a_19" }
+libkrb5 = { version = "==1.22.1", build = "h6d2bf13_0", channel = "https://repo.anaconda.com/pkgs/main" }
+libssh2 = { version = "==1.11.1", build = "hcf80075_0" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libxcb = { version = "==1.17.0", build = "h8a09558_0" }
+lz4-c = { version = "==1.10.0", build = "h5888daf_1" }
+mysql-common = { version = "==9.3.0", build = "h266115a_0" }
+pcre2 = { version = "==10.46", build = "h1321c63_0" }
+pixman = { version = "==0.46.4", build = "h54a6638_1" }
+readline = { version = "==8.3", build = "h853b02a_0" }
+s2n = { version = "==1.7.3", build = "hc5a330e_0" }
+snappy = { version = "==1.2.2", build = "h03e3b7b_1" }
+spirv-tools = { version = "==2025.5", build = "hb700be7_0" }
+wayland = { version = "==1.25.0", build = "hd6090a7_0" }
+xorg-libsm = { version = "==1.2.6", build = "he73a12e_0" }
+zlib-ng = { version = "==2.3.3", build = "hceb46e0_1" }
+aws-c-io = { version = "==0.26.3", build = "h955231c_3" }
+blosc = { version = "==1.21.6", build = "he440d0b_1" }
+brotli-bin = { version = "==1.2.0", build = "hb03c661_1" }
+c-blosc2 = { version = "==3.1.2", build = "hc31b594_0" }
+glog = { version = "==0.7.1", build = "hbabe93e_0" }
+gmp = { version = "==6.3.0", build = "hac33072_2" }
+krb5 = { version = "==1.22.2", build = "ha1258a1_0" }
+libcrc32c = { version = "==1.1.2", build = "h9c3ff4c_0" }
+libfreetype = { version = "==2.14.3", build = "ha770c72_0" }
+libglib = { version = "==2.86.3", build = "h8b17d9a_0", channel = "https://repo.anaconda.com/pkgs/main" }
+libnghttp2 = { version = "==1.68.1", build = "h877daf1_0" }
+libopenblas = { version = "==0.3.33", build = "pthreads_h94d23a6_0" }
+libprotobuf = { version = "==6.33.5", build = "h6eeba95_1" }
+libre2-11 = { version = "==2025.11.05", build = "h0dc7533_1" }
+libthrift = { version = "==0.22.0", build = "h7d032f7_2" }
+libtiff = { version = "==4.7.1", build = "h9d88235_1" }
+libxml2-16 = { version = "==2.15.3", build = "hca6bf5a_0" }
+mysql-libs = { version = "==9.3.0", build = "he0572af_0" }
+qhull = { version = "==2020.2", build = "h434a139_5" }
+sqlite = { version = "==3.53.2", build = "hbc0de68_0" }
+xcb-util = { version = "==0.4.1", build = "h4f16b4b_2" }
+xcb-util-keysyms = { version = "==0.4.1", build = "hb711507_0" }
+xcb-util-renderutil = { version = "==0.3.10", build = "hb711507_0" }
+xcb-util-wm = { version = "==0.4.2", build = "hb711507_0" }
+xorg-libx11 = { version = "==1.8.13", build = "he1eb515_0" }
+aws-c-event-stream = { version = "==0.7.1", build = "h9be7a74_1" }
+aws-c-http = { version = "==0.11.0", build = "hcbcd92d_1" }
+brotli = { version = "==1.2.0", build = "hed03a55_1" }
+cyrus-sasl = { version = "==2.1.28", build = "hac629b4_1" }
+fontconfig = { version = "==2.18.1", build = "h27c8c51_0" }
+freetype = { version = "==2.14.3", build = "ha770c72_0" }
+lcms2 = { version = "==2.19.1", build = "h0c24ade_1" }
+libblas = { version = "==3.11.0", build = "8_h4a7cf45_openblas" }
+libcurl = { version = "==8.20.0", build = "hcf29cc6_0" }
+libglx = { version = "==1.7.0", build = "ha4b6fd6_3" }
+libxml2 = { version = "==2.15.3", build = "h49c6c72_0" }
+mpfr = { version = "==4.2.2", build = "he0a73b1_0" }
+openblas = { version = "==0.3.33", build = "pthreads_h6ec200e_0" }
+openjpeg = { version = "==2.5.4", build = "h55fea9a_0" }
+orc = { version = "==2.3.0", build = "h21090e2_0" }
+re2 = { version = "==2025.11.05", build = "h5301d42_1" }
+tk = { version = "==8.6.15", build = "h54e0aa7_0", channel = "https://repo.anaconda.com/pkgs/main" }
+xcb-util-image = { version = "==0.4.0", build = "hb711507_2" }
+xkeyboard-config = { version = "==2.47", build = "hb03c661_0" }
+xorg-libxext = { version = "==1.3.7", build = "hb03c661_0" }
+xorg-libxrender = { version = "==0.9.12", build = "hb9d3cd8_0" }
+aria2 = { version = "==1.37.0", build = "h4b33fff_4" }
+aws-c-auth = { version = "==0.10.3", build = "h3aafcba_1" }
+aws-c-mqtt = { version = "==0.15.2", build = "h8af55cf_3" }
+azure-core-cpp = { version = "==1.16.2", build = "h206d751_0" }
+cairo = { version = "==1.18.4", build = "he90730b_1" }
+gawk = { version = "==5.4.0", build = "h0a3468a_0" }
+hdf5 = { version = "==1.14.6", build = "nompi_h19486de_110" }
+libcblas = { version = "==3.11.0", build = "8_h0358290_openblas" }
+libgl = { version = "==1.7.0", build = "ha4b6fd6_3" }
+libgrpc = { version = "==1.78.1", build = "h1d1128b_0" }
+liblapack = { version = "==3.11.0", build = "8_h47877c9_openblas" }
+libllvm21 = { version = "==21.1.8", build = "hf7376ad_0" }
+libxkbcommon = { version = "==1.13.2", build = "hca5e8e5_0" }
+libxslt = { version = "==1.1.43", build = "h711ed8c_1" }
+openldap = { version = "==2.6.13", build = "hbde042b_0" }
+prometheus-cpp = { version = "==1.3.0", build = "ha5d0236_0" }
+python = { version = "==3.11.15", build = "hd63d673_0_cpython" }
+xcb-util-cursor = { version = "==0.1.6", build = "hb03c661_0" }
+xorg-libxrandr = { version = "==1.5.5", build = "hb03c661_0" }
+archspec = { version = "==0.2.5", build = "pyhd8ed1ab_0" }
+array-api-compat = { version = "==1.14.0", build = "pyhc364b38_0" }
+aws-c-s3 = { version = "==0.12.3", build = "h00bea6e_2" }
+azure-identity-cpp = { version = "==1.13.3", build = "hed0cdb0_1" }
+azure-storage-common-cpp = { version = "==12.13.0", build = "ha7a2c86_0" }
+"backports.zstd" = { version = "==1.5.0", build = "py311h6b1f9c4_0" }
+brotli-python = { version = "==1.2.0", build = "py311h66f275b_1" }
+cached-property = { version = "==2.0.1", build = "py311h06a4308_0", channel = "https://repo.anaconda.com/pkgs/main" }
+certifi = { version = "==2026.5.20", build = "pyhd8ed1ab_0" }
+charset-normalizer = { version = "==3.4.7", build = "pyhd8ed1ab_0" }
+click = { version = "==8.4.1", build = "pyhc90fa1f_0" }
+cloudpickle = { version = "==3.1.2", build = "pyhcf101f3_1" }
+colorama = { version = "==0.4.6", build = "pyhd8ed1ab_1" }
+cycler = { version = "==0.12.1", build = "pyhcf101f3_2" }
+decorator = { version = "==5.3.1", build = "pyhd8ed1ab_0" }
+dill = { version = "==0.4.1", build = "pyhcf101f3_0" }
+fsspec = { version = "==2026.4.0", build = "pyhd8ed1ab_0" }
+harfbuzz = { version = "==12.3.2", build = "h6083320_0" }
+hpack = { version = "==4.1.0", build = "pyhd8ed1ab_0" }
+hyperframe = { version = "==6.1.0", build = "pyhd8ed1ab_0" }
+idna = { version = "==3.18", build = "py311h06a4308_0", channel = "https://repo.anaconda.com/pkgs/main" }
+iniconfig = { version = "==2.3.0", build = "pyhd8ed1ab_0" }
+kiwisolver = { version = "==1.5.0", build = "py311h724c32c_0" }
+liblapacke = { version = "==3.11.0", build = "8_h6ae95b6_openblas" }
+libopentelemetry-cpp = { version = "==1.27.0", build = "h9692893_0" }
+libpq = { version = "==17.10", build = "hd5a49e9_0" }
+locket = { version = "==1.0.0", build = "pyhd8ed1ab_0" }
+lxml = { version = "==6.1.1", build = "py311h8840267_0" }
+lz4 = { version = "==4.4.5", build = "py311h1c460e0_1" }
+markupsafe = { version = "==3.0.3", build = "py311h3778330_1" }
+mesalib = { version = "==25.1.9", build = "h57bcd07_1" }
+mmseqs2 = { version = "==18.8cc5c", build = "hd6d6fdc_0", channel = "bioconda" }
+msgpack-python = { version = "==1.1.2", build = "py311hdf67eae_1" }
+munkres = { version = "==1.1.4", build = "pyhd8ed1ab_1" }
+narwhals = { version = "==2.22.1", build = "pyhcf101f3_0" }
+natsort = { version = "==8.4.0", build = "pyhcf101f3_2" }
+numpy = { version = "==1.26.4", build = "py311h64a7726_0" }
+packaging = { version = "==26.2", build = "pyhc364b38_0" }
+pillow = { version = "==12.2.0", build = "py311hf88fc01_0" }
+pluggy = { version = "==1.6.0", build = "pyhf9edf01_1" }
+ply = { version = "==3.11", build = "pyhd8ed1ab_3" }
+psutil = { version = "==7.2.2", build = "py311haee01d2_0" }
+py-cpuinfo = { version = "==9.0.0", build = "pyhd8ed1ab_1" }
+pygments = { version = "==2.20.0", build = "pyhd8ed1ab_0" }
+pyparsing = { version = "==3.3.2", build = "pyhcf101f3_0" }
+pyqt6-sip = { version = "==13.11.1", build = "py311h47b2149_0", channel = "https://repo.anaconda.com/pkgs/main" }
+pysocks = { version = "==1.7.1", build = "pyha55dd90_7" }
+pyyaml = { version = "==6.0.3", build = "py311h3778330_1" }
+setuptools = { version = "==82.0.1", build = "pyh332efcf_0" }
+six = { version = "==1.17.0", build = "pyhe01879c_1" }
+sortedcontainers = { version = "==2.4.0", build = "pyhd8ed1ab_1" }
+tblib = { version = "==3.2.2", build = "pyhcf101f3_0" }
+threadpoolctl = { version = "==3.6.0", build = "pyhecae5ae_0" }
+tomli = { version = "==2.4.1", build = "pyhcf101f3_0" }
+toolz = { version = "==1.1.0", build = "pyhd8ed1ab_1" }
+tornado = { version = "==6.5.6", build = "py311h49ec1c0_0" }
+tqdm = { version = "==4.68.1", build = "pyh8f84b5b_0" }
+typing_extensions = { version = "==4.15.0", build = "pyhcf101f3_0" }
+unicodedata2 = { version = "==17.0.1", build = "py311h49ec1c0_0" }
+xyzservices = { version = "==2026.3.0", build = "pyhd8ed1ab_0" }
+zict = { version = "==3.0.0", build = "pyhd8ed1ab_1" }
+zipp = { version = "==4.1.0", build = "pyhcf101f3_0" }
+aws-crt-cpp = { version = "==0.38.3", build = "h7b0d4b4_2" }
+azure-storage-blobs-cpp = { version = "==12.17.0", build = "hf824e48_1" }
+biopython = { version = "==1.87", build = "py311h49ec1c0_0" }
+blas-devel = { version = "==3.11.0", build = "8_h1ea3ea9_openblas" }
+contourpy = { version = "==1.3.3", build = "py311h724c32c_4" }
+cytoolz = { version = "==1.1.0", build = "py311h49ec1c0_2" }
+exceptiongroup = { version = "==1.3.1", build = "pyhd8ed1ab_0" }
+fastcluster = { version = "==1.2.6", build = "py311h7db5c69_5" }
+fonttools = { version = "==4.63.0", build = "py311h3778330_0" }
+h2 = { version = "==4.3.0", build = "pyhcf101f3_0" }
+h5py = { version = "==3.16.0", build = "nompi_py311h0b2f468_102" }
+importlib-metadata = { version = "==9.0.0", build = "pyhcf101f3_0" }
+jinja2 = { version = "==3.1.6", build = "pyhcf101f3_1" }
+joblib = { version = "==1.5.3", build = "pyhd8ed1ab_0" }
+libgoogle-cloud = { version = "==3.5.0", build = "h8d2ee43_1" }
+partd = { version = "==1.4.2", build = "pyhd8ed1ab_0" }
+patsy = { version = "==1.0.2", build = "pyhcf101f3_0" }
+pyrodigal = { version = "==3.7.1", build = "py311h26ae33e_1", channel = "bioconda" }
+python-dateutil = { version = "==2.9.0post0", build = "py311h06a4308_2", channel = "https://repo.anaconda.com/pkgs/main" }
+qtbase = { version = "==6.11.0", build = "ha82b782_2", channel = "https://repo.anaconda.com/pkgs/main" }
+scipy = { version = "==1.17.1", build = "py311hbe70eeb_1" }
+sip = { version = "==6.15.3", build = "py311h1ddb823_0" }
+typing-extensions = { version = "==4.15.0", build = "h396c80c_0" }
+wheel = { version = "==0.47.0", build = "pyhd8ed1ab_0" }
+aws-sdk-cpp = { version = "==1.11.747", build = "h5a171d8_5" }
+azure-storage-files-datalake-cpp = { version = "==12.15.0", build = "h1e5b466_0" }
+blas = { version = "==2.308", build = "openblas" }
+bokeh = { version = "==3.9.0", build = "pyhd8ed1ab_0" }
+dask-core = { version = "==2026.3.0", build = "pyhc364b38_0" }
+libgoogle-cloud-storage = { version = "==3.5.0", build = "hdbdcf42_1" }
+matplotlib-base = { version = "==3.10.9", build = "py311h0f3be63_0" }
+networkit = { version = "==11.0", build = "py311hfdbb021_2" }
+pandas = { version = "==3.0.3", build = "py311h8032f78_0" }
+pip = { version = "==26.1.2", build = "pyh8b19718_0" }
+pyrodigal-gv = { version = "==0.3.2", build = "pyh7e72e81_0", channel = "bioconda" }
+pytest = { version = "==9.0.3", build = "pyhc364b38_1" }
+qtsvg = { version = "==6.11.0", build = "h6af1df9_0", channel = "https://repo.anaconda.com/pkgs/main" }
+scikit-learn = { version = "==1.9.0", build = "np2py311ha15b03d_0" }
+urllib3 = { version = "==2.7.0", build = "pyhd8ed1ab_0" }
+biom-format = { version = "==2.1.17", build = "py311haee01d2_1" }
+distributed = { version = "==2026.3.0", build = "pyhc364b38_0" }
+libarrow = { version = "==24.0.0", build = "h61d77b5_4_cpu" }
+nomkl = { version = "==3.0", build = "0", channel = "https://repo.anaconda.com/pkgs/main" }
+qtdeclarative = { version = "==6.11.0", build = "h69798bf_0", channel = "https://repo.anaconda.com/pkgs/main" }
+requests = { version = "==2.34.2", build = "pyhcf101f3_0" }
+seaborn-base = { version = "==0.13.2", build = "pyhd8ed1ab_3" }
+statsmodels = { version = "==0.14.6", build = "py311h0372a8f_0" }
+upsetplot = { version = "==0.9.0", build = "pyhd8ed1ab_1" }
+libarrow-compute = { version = "==24.0.0", build = "h53684a4_4_cpu" }
+libparquet = { version = "==24.0.0", build = "h7376487_4_cpu" }
+numexpr = { version = "==2.14.1", build = "py311h3143de2_102" }
+qttools = { version = "==6.11.0", build = "h50cdde4_0", channel = "https://repo.anaconda.com/pkgs/main" }
+qtwayland = { version = "==6.11.0", build = "h9a62c7d_0", channel = "https://repo.anaconda.com/pkgs/main" }
+qtwebchannel = { version = "==6.11.0", build = "h27b496b_0", channel = "https://repo.anaconda.com/pkgs/main" }
+qtwebsockets = { version = "==6.11.0", build = "h8bda742_0", channel = "https://repo.anaconda.com/pkgs/main" }
+scikit-bio = { version = "==0.7.3", build = "py311h0372a8f_0" }
+seaborn = { version = "==0.13.2", build = "hd8ed1ab_3" }
+libarrow-acero = { version = "==24.0.0", build = "h635bf11_4_cpu" }
+pyarrow-core = { version = "==24.0.0", build = "py311h66caee6_0_cpu" }
+pyqt = { version = "==6.11.0", build = "py311h0eb9b55_0", channel = "https://repo.anaconda.com/pkgs/main" }
+pytables = { version = "==3.11.1", build = "py311h144bb87_3" }
+ete3 = { version = "==3.1.3", build = "pyhd8ed1ab_0" }
+libarrow-dataset = { version = "==24.0.0", build = "h635bf11_4_cpu" }
+libarrow-substrait = { version = "==24.0.0", build = "hb4dd7c2_4_cpu" }
+pyarrow = { version = "==24.0.0", build = "py311h38be061_0" }
+dask = { version = "==2026.3.0", build = "pyhc364b38_0" }
+swifter = { version = "==1.4.0", build = "pyhd8ed1ab_1" }
+vcontact3 = { version = "==3.1.6", build = "pyhdfd78af_0", channel = "bioconda" }

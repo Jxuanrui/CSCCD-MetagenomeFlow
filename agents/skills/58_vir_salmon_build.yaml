@@ -1,0 +1,38 @@
+id: "58_vir_salmon_build"
+script: "scripts/58_vir_salmon_build.sh"
+tool: "Salmon"
+tool_version: "0.14.1"
+conda_env: "envs/assembly"
+description: "Build standard Salmon index from vOTU contigs only (decision D, review P0-1 2026-10-13: no CDS in index)."
+dimension: "virome"
+category: "quantification"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+
+outputs:
+  - name: "index_info"
+    path_pattern: "{workdir}/result/virus/salmon/index/info.json"
+    description: "Salmon index JSON (confirms index ready)."
+
+depends_on:
+  - "56_vir_votu_gen"
+required_by:
+  - "59_vir_salmon_quant"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_salmon_build"
+notes: "2026-10-13 rework: index contains vOTU contigs only. Previous gentrome (CDS+contig) let Salmon EM split gene-region reads between gene and contig targets; dropping gene rows in 60 lost 35-77% of reads per vOTU. Salmon 0.14.1 decoy-aware index segfaults at quant, so standard index (no -d)."

@@ -1,0 +1,40 @@
+id: "39_bac_coverm_quant"
+name: "CoverM MAG Quantification"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::coverm_quant"
+
+inputs:
+  - name: mags
+    path_pattern: "{workdir}/result/binning/drep/dereplicated_genomes/*.fa"
+    required: true
+    description: "Dereplicated MAGs from dRep (step 38)"
+  - name: r1
+    path_pattern: "{workdir}/temp/qc/kneaddata/{sample}/{sample}_1_kneaddata.fastq.gz"
+    required: true
+  - name: r2
+    path_pattern: "{workdir}/temp/qc/kneaddata/{sample}/{sample}_2_kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: tsv
+    path_pattern: "{workdir}/result/binning/coverm_quant/{sample}.tsv"
+    description: "Per-sample MAG abundance (relative_abundance, RPKM, TPM, count)"
+
+depends_on:
+  - "38_bac_drep"
+
+conda_env: "envs/coverm"
+
+parameters:
+  metrics: "relative_abundance rpkm tpm count covered_bases"
+  aligner: "minimap2-sr"
+
+benchmarks:
+  typical_runtime_min: 15
+  peak_memory_gb: 4
+
+known_issues:
+  - description: "Output is per-sample; need to merge across samples for abundance matrix"
+    workaround: "Use humann_join_tables or custom merge: for f in result/binning/coverm_quant/*.tsv; do ..."

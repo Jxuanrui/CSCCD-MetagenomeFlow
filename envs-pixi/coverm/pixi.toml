@@ -1,0 +1,62 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/coverm.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "coverm"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[system-requirements]
+libc = "2.34"
+
+[dependencies]
+ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
+kernel-headers_linux-64 = { version = "==5.14.0", build = "he073ed8_3" }
+libgomp = { version = "==15.2.0", build = "he0feb66_19" }
+python_abi = { version = "==3.12", build = "8_cp312" }
+tzdata = { version = "==2025c", build = "hc9c84f9_1" }
+_openmp_mutex = { version = "==4.5", build = "20_gnu" }
+sysroot_linux-64 = { version = "==2.34", build = "h087de78_3" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+isa-l = { version = "==2.31.1", build = "hb9d3cd8_1" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran5 = { version = "==15.2.0", build = "h68bc16d_19" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+starcode = { version = "==1.4", build = "h7b50bb2_7", channel = "bioconda" }
+c-ares = { version = "==1.11.0", build = "h470a237_1", channel = "bioconda" }
+libdeflate = { version = "==1.0", build = "h14c3975_1", channel = "bioconda" }
+libev = { version = "==4.33", build = "hd590300_2" }
+libgfortran = { version = "==15.2.0", build = "h69a702a_19" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libxcrypt = { version = "==4.4.36", build = "hd590300_1" }
+libzlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+openssl = { version = "==1.1.1w", build = "hd590300_0" }
+xz = { version = "==5.2.6", build = "h166bdaf_0" }
+k8 = { version = "==1.2", build = "h6618dc6_3", channel = "bioconda" }
+libopenblas = { version = "==0.3.33", build = "pthreads_h94d23a6_0" }
+libssh2 = { version = "==1.10.0", build = "haa6b8db_3" }
+ncurses = { version = "==6.1", build = "hf484d3e_1002" }
+perl = { version = "==5.32.1", build = "7_hd590300_perl5" }
+tk = { version = "==8.6.13", build = "noxft_h4845f30_101" }
+zlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+bwa = { version = "==0.7.18", build = "he4a0461_1", channel = "bioconda" }
+dashing = { version = "==1.0", build = "h40c17d1_2", channel = "bioconda" }
+libblas = { version = "==3.11.0", build = "8_h4a7cf45_openblas" }
+libedit = { version = "==3.1.20191231", build = "h46ee950_2" }
+libnghttp2 = { version = "==1.41.0", build = "hab1572f_1" }
+minimap2 = { version = "==2.28", build = "he4a0461_3", channel = "bioconda" }
+openblas = { version = "==0.3.33", build = "pthreads_h6ec200e_0" }
+strobealign = { version = "==0.14.0", build = "h43eeafb_0", channel = "bioconda" }
+krb5 = { version = "==1.17.2", build = "h926e7f8_0" }
+libcblas = { version = "==3.11.0", build = "8_h0358290_openblas" }
+gsl = { version = "==2.7", build = "he838d99_0" }
+libcurl = { version = "==7.71.1", build = "hcdd3856_8" }
+curl = { version = "==7.71.1", build = "he644dc0_8" }
+fastani = { version = "==1.34", build = "h4dfc31f_4", channel = "bioconda" }
+htslib = { version = "==1.9", build = "ha228f0b_7", channel = "bioconda" }
+samtools = { version = "==1.9", build = "h10a08f8_12", channel = "bioconda" }
+coverm = { version = "==0.7.0", build = "h07ea13f_1", channel = "bioconda" }

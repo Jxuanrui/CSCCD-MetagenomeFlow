@@ -1,0 +1,36 @@
+benchmarks:
+  peak_memory_gb: 32
+  typical_runtime_min: 90
+conda_env: envs/gtdbtk
+db_path: db/gtdbtk
+depends_on:
+- 38_bac_drep
+dimension: bacteria
+id: 40_bac_gtdbtk
+inputs:
+- description: Dereplicated MAGs from dRep (step 38)
+  name: mags
+  path_pattern: '{workdir}/result/binning/drep/dereplicated_genomes/*.fa'
+  required: true
+integration_status: integrated
+known_issues:
+- description: GTDBTK_DATA_PATH may point to wrong directory; script auto-sets to
+    db/gtdbtk/ if unset
+  workaround: 'Verify GTDB-Tk DB with: conda run -p envs/gtdbtk checkm2 check_setup'
+name: GTDB-Tk MAG Taxonomic Classification
+outputs:
+- description: Bacterial taxonomic classification summary
+  name: bac120
+  path_pattern: '{workdir}/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv'
+- description: Archaeal taxonomic classification summary
+  name: ar53
+  path_pattern: '{workdir}/result/binning/gtdbtk/classify/gtdbtk.ar53.summary.tsv'
+- description: Multi-sequence alignment for phylogenetic tree
+  name: msa
+  path_pattern: '{workdir}/result/binning/gtdbtk/align/gtdbtk.bac120.user_msa.fasta.gz'
+parameters:
+  skip_ani_screen: true
+rule_type: aggregate
+snakemake_rule: pipeline/rules/bacteria_binning.smk::gtdbtk
+tool: GTDB-Tk
+tool_version: 2.5.2

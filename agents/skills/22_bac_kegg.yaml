@@ -1,0 +1,32 @@
+benchmarks:
+  peak_memory_gb: 16
+  typical_runtime_min: 60
+conda_env: envs/assembly
+db_path: db/kegg
+depends_on:
+- 18_bac_cdhit
+dimension: bacteria
+id: 22_bac_kegg
+inputs:
+- description: Non-redundant protein sequences from CD-HIT (step 18)
+  name: protein_nr
+  path_pattern: '{workdir}/result/assembly/cdhit/protein_nr.fa'
+  required: true
+integration_status: integrated
+known_issues:
+- description: KEGG DB is license-restricted (48G); ensure db/kegg/*.dmnd built from
+    authorized copy
+  workaround: Script auto-discovers first .dmnd file in db/kegg/
+name: KEGG KO Pathway Annotation (DIAMOND)
+outputs:
+- description: DIAMOND blastp hits against KEGG protein DB (BLAST m6 format)
+  name: hits
+  path_pattern: '{workdir}/result/annotation/kegg/kegg_diamond.tsv'
+parameters:
+  evalue: 1e-5
+  max_target_seqs: 1
+  mode: sensitive
+  outfmt: 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue
+    bitscore
+rule_type: aggregate
+snakemake_rule: pipeline/rules/bacteria_annotation.smk::kegg

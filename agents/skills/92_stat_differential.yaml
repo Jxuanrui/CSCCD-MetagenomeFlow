@@ -1,0 +1,42 @@
+id: "92_stat_differential"
+script: "scripts/92_stat_differential.sh"
+tool: "Rscript"
+tool_version: "ALDEx2, Maaslin2, MicrobiomeStat, ANCOMBC, phyloseq, tidyverse, UpSetR, DESeq2, ggrepel, ggtext"
+conda_env: "envs/r_stat"
+description: "Run multi-method differential abundance testing (LEfSe/Wilcoxon/DESeq2/Maaslin2/ANCOM-BC2) and generate consensus taxa summaries + Nature-style DESeq2 volcano plots."
+dimension: "statistics"
+category: "differential_abundance"
+rule_type: "aggregate"
+
+inputs:
+  - name: "diversity_sentinel"
+    path_pattern: "{workdir}/result/stat/diversity_alpha_summary.tsv"
+    required: true
+
+outputs:
+  - name: "diff_summary"
+    path_pattern: "{workdir}/result/stat/differential_summary.tsv"
+    description: "Differential abundance summary sentinel."
+  - name: "deseq2_volcano_plots"
+    path_pattern: "{workdir}/result/stat/{dimension}/differential/volcano_deseq2.pdf"
+    description: "Nature-style volcano plot per dimension (2026-07-16: wired to scripts/R/plot_differential.R, gated on ggplot2/ggrepel/ggtext availability)."
+
+depends_on:
+  - "91_stat_diversity"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-08"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_differential"
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"

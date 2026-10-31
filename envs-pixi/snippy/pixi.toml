@@ -1,0 +1,251 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/snippy.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "snippy"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
+ld_impl_linux-64 = { version = "==2.45.1", build = "bootstrap_ha15bf96_2" }
+libgomp = { version = "==15.2.0", build = "he0feb66_19" }
+perl = { version = "==5.22.0.1", build = "0" }
+python_abi = { version = "==3.7", build = "4_cp37m" }
+_openmp_mutex = { version = "==4.5", build = "20_gnu" }
+parallel = { version = "==20170422", build = "pl5.22.0_0", channel = "bioconda" }
+perl-app-cpanminus = { version = "==1.7043", build = "pl5.22.0_0", channel = "bioconda" }
+perl-dbi = { version = "==1.641", build = "pl5.22.0_0", channel = "bioconda" }
+perl-digest-hmac = { version = "==1.03", build = "pl5.22.0_1", channel = "bioconda" }
+perl-file-sort = { version = "==1.01", build = "pl5.22.0_1", channel = "bioconda" }
+perl-html-tagset = { version = "==3.20", build = "pl5.22.0_1", channel = "bioconda" }
+perl-http-date = { version = "==6.02", build = "pl5.22.0_1", channel = "bioconda" }
+perl-io-html = { version = "==1.001", build = "pl5.22.0_1", channel = "bioconda" }
+perl-io-string = { version = "==1.08", build = "pl5.22.0_1", channel = "bioconda" }
+perl-lwp-mediatypes = { version = "==6.02", build = "pl5.22.0_1", channel = "bioconda" }
+perl-test-leaktrace = { version = "==0.16", build = "pl5.22.0_0", channel = "bioconda" }
+perl-threaded = { version = "==5.32.1", build = "hdfd78af_1", channel = "bioconda" }
+perl-tie-ixhash = { version = "==1.23", build = "pl5.22.0_1", channel = "bioconda" }
+perl-time-piece = { version = "==1.27", build = "pl5.22.0_0", channel = "bioconda" }
+perl-uri = { version = "==1.71", build = "pl5.22.0_1", channel = "bioconda" }
+perl-yaml = { version = "==1.24", build = "pl522_1", channel = "bioconda" }
+samclip = { version = "==0.4.0", build = "hdfd78af_1", channel = "bioconda" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+perl-aceperl = { version = "==1.92", build = "0", channel = "bioconda" }
+perl-algorithm-munkres = { version = "==0.08", build = "0", channel = "bioconda" }
+perl-appconfig = { version = "==1.71", build = "0", channel = "bioconda" }
+perl-class-inspector = { version = "==1.28", build = "0", channel = "bioconda" }
+perl-class-method-modifiers = { version = "==2.11", build = "1", channel = "bioconda" }
+perl-clone = { version = "==0.38", build = "0", channel = "bioconda" }
+perl-common-sense = { version = "==3.74", build = "0", channel = "bioconda" }
+perl-convert-binary-c = { version = "==0.78", build = "0", channel = "bioconda" }
+perl-convert-binhex = { version = "==1.125", build = "0", channel = "bioconda" }
+perl-crypt-rc4 = { version = "==2.02", build = "0", channel = "bioconda" }
+perl-dbd-sqlite = { version = "==1.50", build = "1", channel = "bioconda" }
+perl-digest-perl-md5 = { version = "==1.9", build = "0", channel = "bioconda" }
+perl-email-date-format = { version = "==1.005", build = "0", channel = "bioconda" }
+perl-error = { version = "==0.17024", build = "0", channel = "bioconda" }
+perl-exporter-tiny = { version = "==0.042", build = "1", channel = "bioconda" }
+perl-file-listing = { version = "==6.04", build = "0", channel = "bioconda" }
+perl-file-slurp-tiny = { version = "==0.004", build = "0", channel = "bioconda" }
+perl-file-which = { version = "==1.20", build = "0", channel = "bioconda" }
+perl-font-afm = { version = "==1.20", build = "0", channel = "bioconda" }
+perl-graph = { version = "==0.9704", build = "0", channel = "bioconda" }
+perl-html-entities-numbered = { version = "==0.04", build = "0", channel = "bioconda" }
+perl-html-parser = { version = "==3.72", build = "pl5.22.0_1", channel = "bioconda" }
+perl-image-size = { version = "==3.300", build = "0", channel = "bioconda" }
+perl-io-sessiondata = { version = "==1.03", build = "0", channel = "bioconda" }
+perl-io-stringy = { version = "==2.111", build = "0", channel = "bioconda" }
+perl-io-tty = { version = "==1.12", build = "0", channel = "bioconda" }
+perl-jcode = { version = "==2.07", build = "0", channel = "bioconda" }
+perl-math-derivative = { version = "==0.04", build = "0", channel = "bioconda" }
+perl-math-random = { version = "==0.72", build = "0", channel = "bioconda" }
+perl-mime-types = { version = "==2.12", build = "0", channel = "bioconda" }
+perl-mldbm = { version = "==2.05", build = "0", channel = "bioconda" }
+perl-module-runtime = { version = "==0.014", build = "1", channel = "bioconda" }
+perl-ntlm = { version = "==1.09", build = "1", channel = "bioconda" }
+perl-ole-storage_lite = { version = "==0.19", build = "0", channel = "bioconda" }
+perl-parse-recdescent = { version = "==1.967013", build = "0", channel = "bioconda" }
+perl-postscript = { version = "==0.06", build = "0", channel = "bioconda" }
+perl-role-tiny = { version = "==2.000001", build = "1", channel = "bioconda" }
+perl-set-scalar = { version = "==1.29", build = "0", channel = "bioconda" }
+perl-sort-naturally = { version = "==1.03", build = "0", channel = "bioconda" }
+perl-sub-exporter-progressive = { version = "==0.001011", build = "1", channel = "bioconda" }
+perl-svg = { version = "==2.64", build = "0", channel = "bioconda" }
+perl-task-weaken = { version = "==1.04", build = "0", channel = "bioconda" }
+perl-test-pod = { version = "==1.51", build = "0", channel = "bioconda" }
+perl-timedate = { version = "==2.30", build = "0", channel = "bioconda" }
+perl-unicode-map = { version = "==0.112", build = "0", channel = "bioconda" }
+perl-www-robotrules = { version = "==6.02", build = "0", channel = "bioconda" }
+perl-xml-namespacesupport = { version = "==1.11", build = "0", channel = "bioconda" }
+perl-xml-regexp = { version = "==0.04", build = "0", channel = "bioconda" }
+perl-xml-sax-base = { version = "==1.08", build = "0", channel = "bioconda" }
+perl-xml-writer = { version = "==0.625", build = "0", channel = "bioconda" }
+perl-xml-xpathengine = { version = "==0.14", build = "0", channel = "bioconda" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+fribidi = { version = "==1.0.16", build = "hb03c661_0" }
+libdb = { version = "==6.1.26", build = "0", channel = "bioconda" }
+libexpat = { version = "==2.8.1", build = "hecca717_0" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran5 = { version = "==15.2.0", build = "h68bc16d_19" }
+libiconv = { version = "==1.18", build = "h3b78370_2" }
+libltdl = { version = "==2.4.3a", build = "h5888daf_0" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libuuid = { version = "==2.42.1", build = "h5347b49_0" }
+perl-cgi = { version = "==4.22", build = "3", channel = "bioconda" }
+perl-devel-globaldestruction = { version = "==0.13", build = "1", channel = "bioconda" }
+perl-encode-locale = { version = "==1.05", build = "pl5.22.0_4", channel = "bioconda" }
+perl-ipc-run = { version = "==0.94", build = "0", channel = "bioconda" }
+perl-json-xs = { version = "==2.34", build = "0", channel = "bioconda" }
+perl-list-moreutils = { version = "==0.428", build = "pl5.22.0_0", channel = "bioconda" }
+perl-mailtools = { version = "==2.14", build = "0", channel = "bioconda" }
+perl-math-cdf = { version = "==0.1", build = "3", channel = "bioconda" }
+perl-math-spline = { version = "==0.02", build = "0", channel = "bioconda" }
+perl-pdf-api2 = { version = "==2.025", build = "2", channel = "bioconda" }
+perl-spreadsheet-writeexcel = { version = "==2.40", build = "0", channel = "bioconda" }
+perl-tree-dag_node = { version = "==1.29", build = "0", channel = "bioconda" }
+perl-type-tiny = { version = "==1.000005", build = "0", channel = "bioconda" }
+perl-xml-filter-buffertext = { version = "==1.01", build = "0", channel = "bioconda" }
+perl-xml-sax = { version = "==0.99", build = "0", channel = "bioconda" }
+pthread-stubs = { version = "==0.4", build = "hb9d3cd8_1002" }
+tidyp = { version = "==1.04", build = "h7b50bb2_9", channel = "bioconda" }
+xorg-libice = { version = "==1.1.2", build = "hb9d3cd8_0" }
+xorg-libxau = { version = "==1.0.12", build = "hb03c661_1" }
+xorg-libxdmcp = { version = "==1.1.5", build = "hb03c661_1" }
+alsa-lib = { version = "==1.2.3.2", build = "h166bdaf_0" }
+c-ares = { version = "==1.11.0", build = "h470a237_1", channel = "bioconda" }
+expat = { version = "==2.8.1", build = "hecca717_0" }
+gettext-tools = { version = "==0.25.1", build = "h3f43e3d_1" }
+giflib = { version = "==5.2.2", build = "hd590300_0" }
+graphite2 = { version = "==1.3.15", build = "hecca717_0" }
+jpeg = { version = "==9e", build = "h0b41bf4_3" }
+libasprintf = { version = "==0.25.1", build = "h3f43e3d_1" }
+libdeflate = { version = "==1.0", build = "h14c3975_1", channel = "bioconda" }
+libev = { version = "==4.33", build = "hd590300_2" }
+libgettextpo = { version = "==0.25.1", build = "h3f43e3d_1" }
+libgfortran = { version = "==15.2.0", build = "h69a702a_19" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libtool = { version = "==2.5.4", build = "h5888daf_0" }
+libwebp-base = { version = "==1.2.0", build = "h7f98852_2" }
+libxcb = { version = "==1.17.0", build = "h8a09558_0" }
+libzlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+openssl = { version = "==1.1.1w", build = "hd590300_0" }
+perl-db-file = { version = "==1.835", build = "5", channel = "bioconda" }
+perl-html-tidy = { version = "==1.56", build = "1", channel = "bioconda" }
+perl-http-message = { version = "==6.11", build = "0", channel = "bioconda" }
+perl-json = { version = "==2.90", build = "1", channel = "bioconda" }
+perl-lwp-simple = { version = "==6.15", build = "3", channel = "bioconda" }
+perl-mime-lite = { version = "==3.030", build = "0", channel = "bioconda" }
+perl-mime-tools = { version = "==5.507", build = "0", channel = "bioconda" }
+perl-moo = { version = "==2.001000", build = "1", channel = "bioconda" }
+perl-spreadsheet-parseexcel = { version = "==0.65", build = "0", channel = "bioconda" }
+perl-statistics-descriptive = { version = "==3.0612", build = "0", channel = "bioconda" }
+perl-xml-sax-writer = { version = "==0.56", build = "0", channel = "bioconda" }
+pixman = { version = "==0.46.4", build = "h54a6638_1" }
+xorg-libsm = { version = "==1.2.6", build = "he73a12e_0" }
+xz = { version = "==5.2.6", build = "h166bdaf_0" }
+bwa = { version = "==0.7.18", build = "he4a0461_1", channel = "bioconda" }
+icu = { version = "==67.1", build = "he1b5a44_0" }
+libasprintf-devel = { version = "==0.25.1", build = "h3f43e3d_1" }
+libffi = { version = "==3.2.1", build = "he1b5a44_1007" }
+libgettextpo-devel = { version = "==0.25.1", build = "h3f43e3d_1" }
+libopenblas = { version = "==0.3.33", build = "pthreads_h94d23a6_0" }
+libpng = { version = "==1.6.43", build = "h2797004_0" }
+libssh2 = { version = "==1.10.0", build = "haa6b8db_3" }
+ncurses = { version = "==6.1", build = "hf484d3e_1002" }
+pcre = { version = "==8.45", build = "h9c3ff4c_0" }
+perl-array-compare = { version = "==2.11", build = "0", channel = "bioconda" }
+perl-http-cookies = { version = "==6.01", build = "0", channel = "bioconda" }
+perl-http-daemon = { version = "==6.01", build = "0", channel = "bioconda" }
+perl-http-negotiate = { version = "==6.01", build = "0", channel = "bioconda" }
+perl-lwp-protocol-https = { version = "==6.06", build = "2", channel = "bioconda" }
+perl-svg-graph = { version = "==0.02", build = "0", channel = "bioconda" }
+tk = { version = "==8.6.13", build = "noxft_h4845f30_101" }
+xorg-libx11 = { version = "==1.8.13", build = "he1eb515_0" }
+zlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+zstd = { version = "==1.5.6", build = "ha6fb4c9_0" }
+freetype = { version = "==2.12.1", build = "h267a509_2" }
+gettext = { version = "==0.25.1", build = "h3f43e3d_1" }
+k8 = { version = "==0.2.5", build = "hdcf5f25_4", channel = "bioconda" }
+libblas = { version = "==3.11.0", build = "8_h4a7cf45_openblas" }
+libedit = { version = "==3.1.20191231", build = "h46ee950_2" }
+libnghttp2 = { version = "==1.41.0", build = "hab1572f_1" }
+libtiff = { version = "==4.2.0", build = "hf544144_3" }
+libxml2 = { version = "==2.9.10", build = "h68273f3_2" }
+perl-net-ssleay = { version = "==1.74", build = "0", channel = "bioconda" }
+readline = { version = "==8.0", build = "h46ee950_1" }
+seqtk = { version = "==1.4", build = "he4a0461_2", channel = "bioconda" }
+snp-dists = { version = "==0.8.2", build = "he4a0461_4", channel = "bioconda" }
+snp-sites = { version = "==2.5.1", build = "he4a0461_5", channel = "bioconda" }
+vt = { version = "==2015.11.10", build = "he941832_3", channel = "bioconda" }
+xorg-libxext = { version = "==1.3.7", build = "hb03c661_0" }
+xorg-libxfixes = { version = "==6.0.2", build = "hb03c661_0" }
+xorg-libxrender = { version = "==0.9.12", build = "hb9d3cd8_0" }
+xorg-libxt = { version = "==1.3.1", build = "hb9d3cd8_0" }
+fontconfig = { version = "==2.14.2", build = "h14ed4e7_0" }
+krb5 = { version = "==1.17.2", build = "h926e7f8_0" }
+lcms2 = { version = "==2.12", build = "hddcbb42_0" }
+libcblas = { version = "==3.11.0", build = "8_h0358290_openblas" }
+libglib = { version = "==2.66.3", build = "hbe7bbb4_0" }
+libwebp = { version = "==1.2.0", build = "h3452ae3_0" }
+libxslt = { version = "==1.1.33", build = "hf705e74_1" }
+minimap2 = { version = "==2.28", build = "he4a0461_3", channel = "bioconda" }
+perl-io-socket-ssl = { version = "==2.024", build = "0", channel = "bioconda" }
+perl-xml-libxml = { version = "==2.0124", build = "0", channel = "bioconda" }
+sqlite = { version = "==3.32.3", build = "hcee41ef_1" }
+xorg-libxi = { version = "==1.8.3", build = "hb03c661_0" }
+xorg-libxpm = { version = "==3.5.19", build = "hb03c661_0" }
+cairo = { version = "==1.16.0", build = "h9f066cc_1006" }
+gsl = { version = "==2.5", build = "h294904e_1" }
+libcurl = { version = "==7.71.1", build = "hcdd3856_8" }
+libgd = { version = "==2.3.0", build = "h6e6070c_0" }
+perl-image-info = { version = "==1.38", build = "0", channel = "bioconda" }
+perl-net-http = { version = "==6.09", build = "0", channel = "bioconda" }
+perl-xml-libxslt = { version = "==1.94", build = "0", channel = "bioconda" }
+python = { version = "==3.7.8", build = "h6f2ec95_1_cpython" }
+xorg-libxtst = { version = "==1.2.5", build = "hb9d3cd8_3" }
+curl = { version = "==7.71.1", build = "he644dc0_8" }
+emboss = { version = "==6.6.0", build = "h6debe1e_0", channel = "bioconda" }
+harfbuzz = { version = "==2.7.2", build = "ha5b49bf_1" }
+perl-gd = { version = "==2.56", build = "pl522h470a237_9", channel = "bioconda" }
+perl-libwww-perl = { version = "==6.15", build = "0", channel = "bioconda" }
+perl-template-toolkit = { version = "==2.26", build = "0", channel = "bioconda" }
+setuptools = { version = "==69.0.3", build = "pyhd8ed1ab_0" }
+vcflib = { version = "==1.0.0_rc3", build = "py37hc088bd4_0", channel = "bioconda" }
+wheel = { version = "==0.42.0", build = "pyhd8ed1ab_0" }
+htslib = { version = "==1.9", build = "ha228f0b_7", channel = "bioconda" }
+openjdk = { version = "==11.0.8", build = "hacce0ff_0" }
+pango = { version = "==1.42.4", build = "h69149e4_5" }
+perl-html-tree = { version = "==5.03", build = "0", channel = "bioconda" }
+perl-xml-parser = { version = "==2.44", build = "4", channel = "bioconda" }
+pip = { version = "==24.0", build = "pyhd8ed1ab_0" }
+bcftools = { version = "==1.9", build = "h68d8f2e_9", channel = "bioconda" }
+freebayes = { version = "==1.3.2", build = "py37h26878c9_2", channel = "bioconda" }
+graphviz = { version = "==2.42.3", build = "h0511662_0" }
+perl-html-element-extended = { version = "==1.18", build = "0", channel = "bioconda" }
+perl-html-formatter = { version = "==2.14", build = "0", channel = "bioconda" }
+perl-html-treebuilder-xpath = { version = "==0.14", build = "0", channel = "bioconda" }
+perl-libxml-perl = { version = "==0.08", build = "0", channel = "bioconda" }
+perl-soap-lite = { version = "==1.19", build = "0", channel = "bioconda" }
+perl-xml-sax-expat = { version = "==0.51", build = "0", channel = "bioconda" }
+perl-xml-xpath = { version = "==1.33", build = "0", channel = "bioconda" }
+samtools = { version = "==1.9", build = "h10a08f8_12", channel = "bioconda" }
+snpeff = { version = "==5.3.0a", build = "hdfd78af_0", channel = "bioconda" }
+perl-data-stag = { version = "==0.14", build = "0", channel = "bioconda" }
+perl-html-tableextract = { version = "==2.13", build = "0", channel = "bioconda" }
+perl-xml-dom = { version = "==1.45", build = "0", channel = "bioconda" }
+perl-xml-simple = { version = "==2.22", build = "0", channel = "bioconda" }
+perl-xml-twig = { version = "==3.49", build = "0", channel = "bioconda" }
+perl-bio-phylo = { version = "==0.58", build = "0", channel = "bioconda" }
+perl-graphviz = { version = "==2.20", build = "1", channel = "bioconda" }
+perl-xml-dom-xpath = { version = "==0.14", build = "0", channel = "bioconda" }
+perl-bio-asn1-entrezgene = { version = "==1.72", build = "1", channel = "bioconda" }
+perl-bio-featureio = { version = "==1.6.905", build = "0", channel = "bioconda" }
+perl-bio-samtools = { version = "==1.43", build = "0", channel = "bioconda" }
+perl-bioperl-core = { version = "==1.6.924", build = "pl5.22.0_2", channel = "bioconda" }
+perl-bioperl-run = { version = "==1.006900", build = "2", channel = "bioconda" }
+perl-bioperl = { version = "==1.6.924", build = "pl5.22.0_7", channel = "bioconda" }
+snippy = { version = "==4.0.2", build = "0", channel = "bioconda" }

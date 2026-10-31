@@ -1,0 +1,126 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/semibin.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "semibin"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+ca-certificates = { version = "==2026.5.20", build = "hbd8a1cb_0" }
+ld_impl_linux-64 = { version = "==2.45.1", build = "bootstrap_ha15bf96_2" }
+libgfortran4 = { version = "==7.5.0", build = "h14aa051_20" }
+llvm-openmp = { version = "==22.1.6", build = "h4922eb0_0" }
+mpi = { version = "==1.0", build = "openmpi" }
+_openmp_mutex = { version = "==4.5", build = "7_kmp_llvm" }
+libgfortran-ng = { version = "==7.5.0", build = "h14aa051_20" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+bzip2 = { version = "==1.0.8", build = "hda65f42_9" }
+libexpat = { version = "==2.8.1", build = "hecca717_0" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran5 = { version = "==15.2.0", build = "h68bc16d_19" }
+libiconv = { version = "==1.18", build = "h3b78370_2" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libuuid = { version = "==2.42.1", build = "h5347b49_0" }
+prodigal = { version = "==2.6.3", build = "h7b50bb2_10", channel = "bioconda" }
+pthread-stubs = { version = "==0.4", build = "hb9d3cd8_1002" }
+xorg-libice = { version = "==1.1.2", build = "hb9d3cd8_0" }
+xorg-libxau = { version = "==1.0.12", build = "hb03c661_1" }
+xorg-libxdmcp = { version = "==1.1.5", build = "hb03c661_1" }
+yaml = { version = "==0.2.5", build = "h280c20c_3" }
+c-ares = { version = "==1.11.0", build = "h470a237_1", channel = "bioconda" }
+expat = { version = "==2.8.1", build = "hecca717_0" }
+gawk = { version = "==5.1.0", build = "h7f98852_0" }
+gettext-tools = { version = "==0.25.1", build = "h3f43e3d_1" }
+libasprintf = { version = "==0.25.1", build = "h3f43e3d_1" }
+libdeflate = { version = "==1.0", build = "h14c3975_1", channel = "bioconda" }
+libev = { version = "==4.33", build = "hd590300_2" }
+libgettextpo = { version = "==0.25.1", build = "h3f43e3d_1" }
+libstdcxx-ng = { version = "==15.2.0", build = "hdf11a46_19" }
+libunistring = { version = "==0.9.10", build = "h7f98852_0" }
+libxcb = { version = "==1.17.0", build = "h8a09558_0" }
+libxcrypt = { version = "==4.4.36", build = "hd590300_1" }
+libzlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+ninja = { version = "==1.13.2", build = "h171cf75_0" }
+openssl = { version = "==1.1.1w", build = "hd590300_0" }
+pixman = { version = "==0.46.4", build = "h54a6638_1" }
+sleef = { version = "==3.9.0", build = "ha0421bc_0" }
+xorg-libsm = { version = "==1.2.6", build = "he73a12e_0" }
+xz = { version = "==5.2.6", build = "h166bdaf_0" }
+bedtools = { version = "==2.31.1", build = "hf5e1c6e_2", channel = "bioconda" }
+gmp = { version = "==6.3.0", build = "hac33072_2" }
+icu = { version = "==67.1", build = "he1b5a44_0" }
+libasprintf-devel = { version = "==0.25.1", build = "h3f43e3d_1" }
+libffi = { version = "==3.2.1", build = "he1b5a44_1007" }
+libgettextpo-devel = { version = "==0.25.1", build = "h3f43e3d_1" }
+libidn2 = { version = "==2.3.8", build = "hfac485b_1" }
+libpng = { version = "==1.6.43", build = "h2797004_0" }
+libssh2 = { version = "==1.10.0", build = "haa6b8db_3" }
+ncurses = { version = "==6.1", build = "hf484d3e_1002" }
+pcre = { version = "==8.45", build = "h9c3ff4c_0" }
+perl = { version = "==5.32.1", build = "7_hd590300_perl5" }
+tbb = { version = "==2021.7.0", build = "h924138e_0" }
+tk = { version = "==8.6.13", build = "noxft_h4845f30_101" }
+xorg-libx11 = { version = "==1.8.13", build = "he1eb515_0" }
+zlib = { version = "==1.2.13", build = "h4ab18f5_6" }
+fraggenescan = { version = "==1.32", build = "h7b50bb2_1", channel = "bioconda" }
+freetype = { version = "==2.12.1", build = "h267a509_2" }
+gettext = { version = "==0.25.1", build = "h3f43e3d_1" }
+libedit = { version = "==3.1.20191231", build = "h46ee950_2" }
+libnghttp2 = { version = "==1.41.0", build = "hab1572f_1" }
+libprotobuf = { version = "==3.18.3", build = "h6239696_0" }
+libxml2 = { version = "==2.9.10", build = "h68273f3_2" }
+mkl = { version = "==2021.4.0", build = "h8d4b97c_729" }
+openmpi = { version = "==4.1.6", build = "hc5af2df_101" }
+readline = { version = "==8.0", build = "h46ee950_1" }
+wget = { version = "==1.20.3", build = "ha56f1ee_1" }
+xorg-libxext = { version = "==1.3.7", build = "hb03c661_0" }
+xorg-libxrender = { version = "==0.9.12", build = "hb9d3cd8_0" }
+fontconfig = { version = "==2.14.2", build = "h14ed4e7_0" }
+krb5 = { version = "==1.17.2", build = "h926e7f8_0" }
+libblas = { version = "==3.9.0", build = "12_linux64_mkl" }
+libglib = { version = "==2.66.3", build = "hbe7bbb4_0" }
+mmseqs2 = { version = "==13.45111", build = "pl5321hf1761c0_2", channel = "bioconda" }
+sqlite = { version = "==3.32.3", build = "hcee41ef_1" }
+cairo = { version = "==1.16.0", build = "h9f066cc_1006" }
+libcblas = { version = "==3.9.0", build = "12_linux64_mkl" }
+libcurl = { version = "==7.71.1", build = "hcdd3856_8" }
+liblapack = { version = "==3.9.0", build = "12_linux64_mkl" }
+python = { version = "==3.6.10", build = "h8356626_1011_cpython" }
+curl = { version = "==7.71.1", build = "he644dc0_8" }
+dataclasses = { version = "==0.8", build = "pyh787bdff_2" }
+gsl = { version = "==2.7", build = "he838d99_0" }
+pycparser = { version = "==2.21", build = "pyhd8ed1ab_0" }
+python_abi = { version = "==3.6", build = "2_cp36m" }
+pytz = { version = "==2023.3.post1", build = "pyhd8ed1ab_0" }
+requests = { version = "==2.13.0", build = "py36_0" }
+six = { version = "==1.16.0", build = "pyh6c4a22f_0" }
+texttable = { version = "==1.7.0", build = "pyhd8ed1ab_0" }
+threadpoolctl = { version = "==3.1.0", build = "pyh8a188c0_0" }
+tqdm = { version = "==4.7.2", build = "py36_0", channel = "bioconda" }
+typing_extensions = { version = "==4.1.1", build = "pyha770c72_0" }
+wheel = { version = "==0.37.1", build = "pyhd8ed1ab_0" }
+cffi = { version = "==1.14.4", build = "py36h211aa47_0" }
+future = { version = "==0.18.2", build = "py36h5fab9bb_3" }
+hmmer = { version = "==3.4", build = "hb6cb901_4", channel = "bioconda" }
+htslib = { version = "==1.9", build = "ha228f0b_7", channel = "bioconda" }
+humanfriendly = { version = "==10.0", build = "py36h5fab9bb_0" }
+numpy = { version = "==1.19.5", build = "py36hfc0c790_2" }
+pycairo = { version = "==1.20.1", build = "py36h726f1de_0" }
+python-dateutil = { version = "==2.8.2", build = "pyhd8ed1ab_0" }
+pyyaml = { version = "==5.4.1", build = "py36h8f6f2f9_1" }
+setuptools = { version = "==58.0.4", build = "py36h5fab9bb_2" }
+coloredlogs = { version = "==15.0.1", build = "py36h5fab9bb_1" }
+joblib = { version = "==1.2.0", build = "pyhd8ed1ab_0" }
+numexpr = { version = "==2.7.3", build = "py36h0cdc3f0_0" }
+pandas = { version = "==1.1.5", build = "py36h284efc9_0" }
+pip = { version = "==21.3.1", build = "pyhd8ed1ab_0" }
+python-igraph = { version = "==0.8.3", build = "py36h76a8ce2_2" }
+pytorch = { version = "==1.9.1", build = "cpu_py36ha8b20dc_3" }
+samtools = { version = "==1.9", build = "h10a08f8_12", channel = "bioconda" }
+scipy = { version = "==1.5.3", build = "py36h81d768a_1" }
+scikit-learn = { version = "==0.24.2", build = "py36hc89565f_1" }
+semibin = { version = "==1.5.0", build = "pyh7cba7a3_0", channel = "bioconda" }
