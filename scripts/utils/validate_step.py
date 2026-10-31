@@ -132,7 +132,7 @@ VALIDATION_RULES = {
     "21_bac_eggnog": [
         ("annotations_exist", lambda w, s: os.path.isfile(f"{w}/result/annotation/eggnog/eggnog.emapper.annotations"),
          "eggNOG annotation table exists"),
-        ("annotations_nonempty", lambda w, s: count_tsv_data_rows(f"{w}/result/annotation/eggnog/eggnog.emapper.annotations", skip_header=False) > 100000,
+        ("annotations_nonempty", lambda w, s: count_tsv_data_rows(f"{w}/result/annotation/eggnog/eggnog.emapper.annotations", skip_header=False) > 100000,  # applicability: expect ~886K eggNOG hits for 1M-protein catalog; smaller inputs may have fewer
          "eggNOG annotations substantial (>100K; expect ~886K hits)"),
         ("id_provenance", lambda w, s: _eggnog_id_provenance(w),
          "every eggNOG query ID is from protein_nr.fa (identity consistency, P3-8)"),
@@ -146,7 +146,7 @@ VALIDATION_RULES = {
          "protein catalog ≤ nucleotide catalog (expected: seqkit translate filters empty)"),
     ],
     "20_bac_salmon_quant": [
-        ("quant_files", lambda w, s: all(os.path.isfile(f"{w}/result/assembly/salmon/{sid}/quant.sf") for sid in ['Sample1','Sample2','Sample3','Sample4','Sample10','Sample11']),
+        ("quant_files", lambda w, s: all(os.path.isfile(f"{w}/result/assembly/salmon/{sid}/quant.sf") for sid in _get_samples(w)),
          "all 6 sample quant.sf files exist"),
         ("quant_rows_consistent", lambda w, s: _salmon_rows_consistent(w),
          "all samples have same transcript count"),
@@ -193,7 +193,7 @@ VALIDATION_RULES = {
     "22_bac_kegg": [
         ("diamond_tsv_exists", lambda w, s: os.path.isfile(f"{w}/result/annotation/kegg/kegg_diamond.tsv"),
          "KEGG diamond result table exists"),
-        ("diamond_rows", lambda w, s: count_tsv_data_rows(f"{w}/result/annotation/kegg/kegg_diamond.tsv", skip_header=False) > 1000,
+        ("diamond_rows", lambda w, s: count_tsv_data_rows(f"{w}/result/annotation/kegg/kegg_diamond.tsv", skip_header=False) > 1000,  # applicability: expect ~900K for 1M-protein catalog; smaller catalogs may legitimately have fewer
          "KEGG hits present (>1000; expect ~900K for 1M-protein catalog)"),
         ("diamond_cols", lambda w, s: _first_ncols_ok(f"{w}/result/annotation/kegg/kegg_diamond.tsv", 12),
          "KEGG rows have 12 diamond outfmt-6 columns"),
@@ -330,12 +330,27 @@ def _salmon_rows_consistent(w):
     """All salmon quant.sf files should have the same number of transcripts."""
     try:
         counts = set()
-        for sid in ['Sample1','Sample2','Sample3','Sample4','Sample10','Sample11']:
+        for sid in _get_samples(w):
             n = count_tsv_data_rows(f"{w}/result/assembly/salmon/{sid}/quant.sf", skip_header=True)
             counts.add(n)
         return len(counts) == 1 and counts.pop() > 0
     except Exception:
         return False
+
+
+def _get_samples(w):
+    """Dynamically load sample IDs from metadata.csv or samples.txt."""
+    import csv as _csv
+    meta = os.path.join(w, "metadata.csv")
+    if os.path.isfile(meta):
+        with open(meta) as f:
+            r = _csv.DictReader(f)
+            col = "sample_id" if "sample_id" in r.fieldnames else r.fieldnames[0]
+            return [row[col] for row in r]
+    samples_txt = os.path.join(w, "samples.txt")
+    if os.path.isfile(samples_txt):
+        return [l.strip() for l in open(samples_txt) if l.strip()]
+    return []
 
 def _first_ncols_ok(path, ncols):
     """First data line of a TSV has exactly ncols tab-separated columns."""
@@ -373,7 +388,12 @@ def _dastool_ids_consistent(w, s):
 
 def validate(step_id, sample, workdir, repo):
     """Run validation checks for a step. Returns (passed, results)."""
-    rules = VALIDATION_RULES.get(step_id, VALIDATION_RULES["_default"])
+    rules = VALIDATION_RULES.get(step_id)
+    if rules is None:
+        # Supervisor 18th B1: unknown step -> UNVERIFIED, not PASS
+        # (an empty _default that returns PASS is a false positive for AI consumers)
+        return False, [{"check": "_rules", "passed": False,
+                        "description": "no validation rules registered for this step"}], "UNVERIFIED"
     results = []
     all_passed = True
 
@@ -391,7 +411,7 @@ def validate(step_id, sample, workdir, repo):
         if not passed:
             all_passed = False
 
-    return all_passed, results
+    return all_passed, results, "PASS" if all_passed else "FAIL"
 
 
 def main():
@@ -405,11 +425,12 @@ def main():
     workdir = os.path.abspath(args.workdir)
     repo = os.path.abspath(args.repo) if args.repo else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    passed, results = validate(args.step_id, args.sample, workdir, repo)
+    passed, results, verdict_str = validate(args.step_id, args.sample, workdir, repo)
 
     # Output JSON verdict
     verdict = {
         "step_id": args.step_id,
+        "verdict_type": verdict_str,
         "sample": args.sample,
         "workdir": workdir,
         "timestamp": __import__("time").strftime("%Y-%m-%dT%H:%M:%S%z"),
