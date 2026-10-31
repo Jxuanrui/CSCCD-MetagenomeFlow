@@ -9,10 +9,10 @@ Developed by the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cere
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
 [![Conda](https://img.shields.io/badge/conda%20envs-57-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-180-blue)]()
+[![Scripts](https://img.shields.io/badge/scripts-182-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-**180 scripts · 143 Snakemake rules · 57 conda envs · ~1.2 TB databases**
+**182 scripts · 143 Snakemake rules · 57 conda envs · ~1.2 TB databases**
 
 ---
 
@@ -55,6 +55,7 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 
 > Details: `git log v1.1.4-baseline..HEAD` (private dev history)
 
+- **v1.5.0 (2026-10-30)** — AI-Assistant Reliability: three-state validation (PASS/FAIL/UNVERIFIED), dynamic sample loading, pipeline status recovery, AMR report fusion (24c), MCP scope disclosure, interactive dashboard, 113-chapter tutorial with sanitized export, benchmark data for 11 skill cards.
 - **v1.4.1 (2026-09-30 — 2026-10-01)** — Integrity & governance hardening (internal fixes). Addendum — new CLI surface (96-input governance): script 96 gains --combination B/V/F/BV/BF/VF/BVF with shared BVF sample pools, per-block relative-abundance prefiltering, bacteria domain filter (k__Bacteria species rows only), virus input via 98c TPM columns, protocol-pinned 98d fungi source, a **user-visible resume behavior change** (mismatched combination/sample_set/fungi_method or pre-governance sentinels now error instead of silently reusing old results — re-run with --force), cross-cohort loader dimensional alignment (97 mirrors 96's bacteria regime + zero-fill fail-hard gate at 100% feature absence, filter counts stamped into metrics) (all internal fixes, no interface changes): antiSMASH chain triple-defect fix (empty-chunk binning, region-GBK flatten contract for 28b, short-contig prefilter) with permanent CI regression guards for all three failure-semantics defenses (T-11/T-22/T-24); cross-cohort validation chain rebuilt (nine defects: direction pinning, role-aware in-sample/external split, T-11 failure semantics, dual-arm reporting with uncorrected primary + MMUPHin sensitivity, meta-analysis delta-method SE, duplicate-ID guard, external-validation metrics with sample-name alignment); 98c fail-fast on missing vOTU identity map (was: silent 100% evidence drop); repository hygiene (CCMetagen retired end-to-end, 946 tracked run-artifacts untracked, 1.66 GiB dangling objects reclaimed, E-5 archival batch with RAG rebuild); engineering governance (supervisor review channel with 20+ gate audits, three-gate pre-commit hook with self-healing install, pip-only package inventory v3, PYTHONNOUSERSITE isolation, absolute database freeze with mechanical guards); RAG benchmark governance (two-tier release standard, baseline v2, freshness clause).
 
 - **v1.4.0 (2026-09)** — Evidence & interpretation layer + ML validity: Phase 2 evidence layer closed (taxonomy cross-validation, virome host/detection/AMG evidence contracts, cross-domain edge contract, DA consensus views); antiSMASH chunked execution adopted in production script 28; Phase 3 opened with subject-aware CV, reproducible split manifests and full metrics panel (PR-AUC/sensitivity/specificity); production write guard for Project01; global rename to CSCCD-MetagenomeFlow; supervisor review channel + user governance rules (path hygiene, DB freeze, doc sync).
@@ -252,6 +253,22 @@ Server registration lives in a local `.mcp.json` (not shipped — paths are mach
 
 Every integrated script has a machine-readable skill card (`agents/skills/`) declaring inputs, outputs, dependencies, and known issues, so any MCP-capable coding assistant can discover and invoke the pipeline correctly. Production runs can optionally be logged to `agents/provenance/` as machine-readable JSON for reproducibility.
 
+### Pipeline Validation (v1.5.0)
+
+A three-state step validator (`scripts/utils/validate_step.py`) checks output correctness — not just exit codes — after each pipeline step:
+
+| Verdict | Meaning | AI Agent Behavior |
+|---------|---------|-------------------|
+| **PASS** | Output files exist, format validated, counts consistent | Proceed to downstream |
+| **FAIL** | Output missing, empty, or inconsistent | Block downstream, report error |
+| **UNVERIFIED** | No validation rules registered for this step | Warn user, proceed with caution label |
+
+Sample IDs are loaded dynamically from `metadata.csv` (no hardcoded project-specific names), making the validator portable across projects. Scale thresholds carry applicability annotations to prevent false rejections of small datasets.
+
+**Status Recovery** (`scripts/utils/pipeline_status.py`): After a session interruption, reads the event log (`logs/run_events.jsonl`) to identify which steps succeeded, failed, or may still be running — enabling AI assistants to resume without re-running completed work.
+
+**AMR Report Fusion** (optional, `scripts/24c_bac_amr_harmonize.sh`): Harmonizes AMRFinderPlus + RGI/CARD outputs into a unified format with no-loss reconciliation proof. Snakemake target: `snakemake amr_harmonize`.
+
 ### Auto-Mining Subsystem (`mining/`)
 
 An agent-driven gut-metagenome mining loop in the spirit of scBaseCount (Arc Institute): weekly seqout-based discovery maintains a growing sample index (two SQLite layers); AI curation maps metadata to ontologies (diseases to MONDO, body sites to UBERON); external resources (MGnify, AGP, iMSMS) can be bridged into the index; and disease signatures can be compared against BugSigDB over precomputed profiles with zero local compute. `mining/README.md` carries the operation manual and migration runbook.
@@ -262,7 +279,7 @@ An agent-driven gut-metagenome mining loop in the spirit of scBaseCount (Arc Ins
 
 ```
 CSCCD-MetagenomeFlow/
-├── scripts/                  180 scripts (157 sh + 7 py + 16 R) + scripts/utils/ helpers
+├── scripts/                  182 scripts (157 sh + 7 py + 16 R) + scripts/utils/ helpers
 ├── pipeline/                 Snakefile, config, hardware profiles, 11 rule files
 ├── agents/                   registry.yaml, skill cards, optional run provenance records
 ├── docs/                     experience docs (RAG source), tool references
