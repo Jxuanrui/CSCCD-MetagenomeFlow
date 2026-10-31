@@ -92,6 +92,30 @@ extract_table_preview() {
     echo "- Failed sentinels detected: $(find "${STAT_DIR}" -type f -name '*.FAILED' | wc -l | awk '{print $1}')"
     echo
 
+    echo "## Validation Coverage"
+    echo
+    echo "- Validation rules registered: $(grep -c '^    "' scripts/utils/validate_step.py || echo 0) step groups"
+    echo "- Steps with PASS: $(find "${STAT_DIR}" -name "*.json" -exec grep -l '"PASS"' {} \; 2>/dev/null | wc -l)"
+    echo "- Steps with FAIL: $(find "${STAT_DIR}" -name "*.json" -exec grep -l '"FAIL"' {} \; 2>/dev/null | wc -l)"
+    echo "- Steps UNVERIFIED (no rules): see scripts/utils/VALIDATION_INTEGRATION.md"
+    echo "- Full validation log: logs/validation_log.jsonl (if present)"
+    echo
+
+    echo "## Artifact Index"
+    echo
+    echo "| Domain | Key Files |"
+    echo "|---|---|"
+    for domain_dir in "${STAT_DIR}"/../*/; do
+        domain=$(basename "$domain_dir")
+        # Skip non-result dirs
+        case "$domain" in
+            logs|temp|visualization|opt_bench|report) continue ;;
+        esac
+        n_files=$(find "$domain_dir" -type f 2>/dev/null | wc -l)
+        echo "| $domain | $n_files files |"
+    done
+    echo
+
     echo "## Diversity"
     echo
     if [ -f "${STAT_DIR}/diversity_alpha_summary.tsv" ]; then

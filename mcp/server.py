@@ -100,6 +100,10 @@ def _get_collections(collection_name):
 
     collections = []
     if collection_name == "all":
+        # Supervisor 18th C2: 'all' currently covers experience + literature only.
+        # The other three (skill_design/mechanism/signature) are supported as
+        # individually-named collections but NOT included in 'all' by default.
+        # Expanding requires retrieval-quality evaluation, not just list growth.
         for name in ["experience_kb", "literature_kb"]:
             try:
                 collections.append(_CLIENT.get_collection(name))
@@ -107,6 +111,9 @@ def _get_collections(collection_name):
                 if name == "experience_kb":
                     raise
                 warn(f"collection not available: {name}")
+        if len(collections) < 2:
+            warn(f"'all' returned {len(collections)}/2 default collections; "
+                 f"skill_design/mechanism/signature not included by default")
         return collections
     return [_CLIENT.get_collection(collection_name)]
 
@@ -280,7 +287,7 @@ async def main():
                 name="meta-server_rag_search",
                 description=(
                     "Hybrid BM25+dense retrieval over the CSCCD-MetagenomeFlow RAG knowledge "
-                    "base(s): experience_kb, literature_kb, skill_design_kb, mechanism_kb, signature_kb, or all."
+                    "base(s): experience_kb, literature_kb, skill_design_kb, mechanismism_kb, signature_kb, or all (NOTE: all=experience+literature only by default; other three must be queried by name)."
                 ),
                 inputSchema={
                     "type": "object",
@@ -297,7 +304,7 @@ async def main():
                         },
                         "collection": {
                             "type": "string",
-                            "enum": ["experience_kb", "literature_kb", "skill_design_kb", "mechanism_kb", "signature_kb", "all"],
+                            "enum": ["experience_kb", "literature_kb", "skill_design_kb", "mechanism_kb", "signature_kb", "all"], "description": "all = experience_kb + literature_kb only (skill_design/mechanism/signature query by name)",
                             "default": "experience_kb",
                             "description": "Knowledge base collection to search.",
                         },
