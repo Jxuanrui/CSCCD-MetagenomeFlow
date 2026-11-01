@@ -1,0 +1,36 @@
+id: "31b_bac_scyc"
+script: "scripts/31b_bac_scyc.sh"
+tool: "DIAMOND blastp"
+tool_version: "2.x"
+conda_env: "envs/assembly"
+description: "Aggregate sulfur cycling gene annotation against the SCyc database."
+dimension: "bacteria"
+category: "annotation"
+rule_type: "aggregate"
+
+inputs:
+  - name: "protein_nr"
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)."
+
+outputs:
+  - name: "hits"
+    path_pattern: "{workdir}/result/annotation/scyc/scyc_hits.tsv"
+    description: "DIAMOND blastp best hits against the SCyc database."
+
+depends_on:
+  - "18_bac_cdhit"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::bac_scyc"

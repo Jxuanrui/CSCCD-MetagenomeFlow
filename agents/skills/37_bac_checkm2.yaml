@@ -1,0 +1,32 @@
+benchmarks:
+  peak_memory_gb: 8
+  typical_runtime_min: 30
+conda_env: envs/checkm2
+depends_on:
+- 36_bac_dastool
+dimension: bacteria
+id: 37_bac_checkm2
+inputs:
+- description: All DAS_Tool bins across samples
+  name: bins
+  path_pattern: '{workdir}/result/binning/dastool/*/bins/*.fa'
+  required: true
+integration_status: integrated
+known_issues:
+- description: CheckM2 requires DIAMOND DB (uniref100.KO.1.dmnd) in db/checkm2/
+  workaround: Download from https://zenodo.org/records/... and place in db/checkm2/
+name: CheckM2 MAG Quality Assessment
+outputs:
+- description: CheckM2 quality report (completeness, contamination, etc.)
+  name: report
+  path_pattern: '{workdir}/result/binning/checkm2/quality_report.tsv'
+- description: MAGs filtered at completeness>=50%, contamination<=10%
+  name: filtered
+  path_pattern: '{workdir}/result/binning/checkm2/checkm2_filtered/filtered_report.tsv'
+parameters:
+  completeness_min: 50
+  contamination_max: 10
+rule_type: aggregate
+snakemake_rule: pipeline/rules/bacteria_binning.smk::checkm2
+tool: CheckM2
+tool_version: 1.0.1 (pip)

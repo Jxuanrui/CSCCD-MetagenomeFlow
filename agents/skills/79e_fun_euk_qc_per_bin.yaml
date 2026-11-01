@@ -1,0 +1,74 @@
+id: "79e_fun_euk_qc_per_bin"
+script: "scripts/79e_fun_euk_qc_per_bin.sh"
+tool: "busco"
+tool_version: "6.1.0"
+conda_env: "envs/busco"
+description: "Per-bin BUSCO lineage completeness assessment for eukaryotic MAGs. Produces dRep-style one-genome-per-file MAGs for cross-domain analysis. Shares BUSCO lineage cache with 79b."
+dimension: "fungi"
+category: "binning"
+rule_type: "per_sample"
+
+inputs:
+  - name: "metabat2_bins"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/metabat2/bin.*.fa"
+    required: true
+    description: "MetaBAT2 output bins from 79d"
+
+outputs:
+  - name: "euk_mags_summary"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/euk_mags/{sample}.euk_mags_summary.tsv"
+    description: "Per-bin QC summary: bin_name, lineage, completeness, contamination, num_contigs, total_length"
+  - name: "per_bin_busco"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/euk_mags/bin.*/busco/run_*/full_table.tsv"
+    description: "BUSCO full results per bin"
+  - name: "bin_fastas"
+    path_pattern: "{workdir}/result/fungi/veba_qc/{sample}/euk_mags/bin.*.fa"
+    description: "Symlinks to MetaBAT2 bins (dRep-style structure)"
+
+depends_on:
+  - "79d_fun_metabat2"
+required_by:
+  - "79f_fun_metaeuk_per_bin"
+
+params:
+  sample: "{sample}"
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  force: "false"
+
+benchmarks:
+  typical_runtime_min: 5-15 per bin
+  typical_input_size_mb: 2-10 per bin
+  peak_memory_gb: 4
+
+workflow:
+  - stage: "Iterate over bins"
+    description: "For each bin.*.fa in metabat2/ directory"
+  - stage: "Run BUSCO"
+    description: "BUSCO auto-lineage mode per bin"
+  - stage: "Extract metrics"
+    description: "Parse short_summary.txt for completeness/contamination"
+  - stage: "Generate summary"
+    description: "Aggregate all bin QC metrics into euk_mags_summary.tsv"
+
+validation:
+  test_samples: ["Sample4"]
+  success_cases:
+    - sample: "Sample4"
+      bin: "bin.1"
+      lineage: "saccharomycetaceae_odb12.2"
+      completeness: 63.8
+      contamination: 0.0
+      contigs: 2000
+      length_mb: 8.2
+      notes: "Real eukaryotic MAG with decent completeness"
+
+performance_notes:
+  - "BUSCO lineage databases cached at db/busco_downloads/"
+  - "First run downloads lineage (~2GB), subsequent runs use cache"
+  - "Sample4 bin.1: ~10 min with cached lineage"
+
+integration_status: "integrated"
+integrated_date: "2026-08-06"
+snakemake_rule: "pipeline/rules/mycobiome.smk::fun_euk_qc_per_bin"

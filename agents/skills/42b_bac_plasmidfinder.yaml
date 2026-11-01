@@ -1,0 +1,67 @@
+id: "42b_bac_plasmidfinder"
+name: "PlasmidFinder Plasmid Identification"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::bac_plasmidfinder"
+
+description: |
+  Plasmid identification and classification based on replicon sequence alignment.
+  Identifies plasmid origin in assembled contigs, covering Enterobacteriaceae and Gram+ bacteria.
+  Complements 42_bac_mge.sh by providing replicon type and incompatibility group information.
+
+inputs:
+  - name: assembled_contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+    description: "Assembled contigs from MEGAHIT"
+
+outputs:
+  - name: results_tab
+    path_pattern: "{workdir}/result/mge/plasmidfinder/{sample}/results_tab.tsv"
+    description: "Plasmid hits: replicon type, coverage, identity, contig ID"
+  - name: hit_sequences
+    path_pattern: "{workdir}/result/mge/plasmidfinder/{sample}/Hit_in_genome_seq.fsa"
+    description: "FASTA sequences of contigs with plasmid hits"
+
+depends_on:
+  - "16_bac_megahit"
+
+conda_env: "envs/plasmidfinder"
+
+databases:
+  - name: PlasmidFinder_DB
+    path: "conda built-in (envs/plasmidfinder/share/plasmidfinder-2.1.6/database/)"
+    size: "~50MB"
+    note: "Auto-detected by script, includes enterobacteriaceae and gram_positive libraries"
+
+parameters:
+  min_coverage: 0.60
+  min_identity: 0.95
+  method: "blastn"
+
+benchmarks:
+  typical_runtime_min: 5
+  peak_memory_gb: 2
+
+known_issues:
+  - description: "PlasmidFinder may miss novel plasmid types not in the reference database"
+    workaround: "Combine with mobileOG (42_bac_mge.sh) for gene-level plasmid annotation"
+  - description: "Short contigs (<1kb) may have incomplete replicon coverage"
+    workaround: "Filter results by coverage ≥60% (default threshold)"
+
+scientific_context: |
+  PlasmidFinder identifies plasmids at the contig level using replicon sequences.
+  - Replicon typing: Determines plasmid incompatibility group (Inc group)
+  - Coverage ≥60% ensures reliable plasmid identification
+  - Identity ≥95% is PlasmidFinder official recommendation
+
+  Relationship with mobileOG:
+  - mobileOG (in 42_bac_mge.sh): gene-level classification of plasmid genes
+  - PlasmidFinder: contig-level identification of complete plasmids with replicon types
+  - Together: complete plasmid landscape (which genes + which plasmid types)
+
+references:
+  - "Carattoli et al. 2014 AAC (PlasmidFinder method)"
+  - "Roer et al. 2017 AAC (updated database)"
+  - "https://bitbucket.org/genomicepidemiology/plasmidfinder"

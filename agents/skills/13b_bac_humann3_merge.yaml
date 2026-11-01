@@ -1,0 +1,48 @@
+id: "13b_bac_humann3_merge"
+script: "scripts/13b_bac_humann3_merge.sh"
+tool: "humann_join_tables"
+tool_version: "HUMAnN3 utility"
+conda_env: "envs/humann4"
+description: "Merge per-sample HUMAnN3 unstratified relative-abundance tables into project-level pathway and gene-family matrices."
+dimension: "bacteria"
+category: "functional"
+rule_type: "aggregate"
+
+inputs:
+  - name: "pathabundance_relab"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_pathabundance_relab.tsv"
+    required: true
+  - name: "pathabundance_unstratified"
+    path_pattern: "{workdir}/result/humann3/{sample}/unstratified/{sample}_pathabundance_relab_unstratified.tsv"
+    required: true
+  - name: "genefamilies_unstratified"
+    path_pattern: "{workdir}/result/humann3/{sample}/unstratified/{sample}_genefamilies_relab_unstratified.tsv"
+    required: true
+
+outputs:
+  - name: "pathabundance_relab"
+    path_pattern: "{workdir}/result/humann3/merged/pathabundance_relab.tsv"
+    description: "Merged unstratified MetaCyc pathway relative-abundance matrix."
+  - name: "genefamilies_relab"
+    path_pattern: "{workdir}/result/humann3/merged/genefamilies_relab.tsv"
+    description: "Merged unstratified gene-family relative-abundance matrix."
+
+depends_on:
+  - "13_bac_humann3"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/bacteria_taxonomy.smk::humann3_merge"

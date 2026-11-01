@@ -1,0 +1,39 @@
+id: "68_vir_iphop"
+script: "scripts/68_vir_iphop.sh"
+tool: "iPHoP"
+tool_version: "3+"
+conda_env: "envs/iphop"
+description: "Virus-host association prediction (iPHoP, GTDB R226 reference)."
+dimension: "virome"
+category: "host_prediction"
+rule_type: "aggregate"
+
+inputs:
+  - name: "votu_fasta"
+    path_pattern: "{workdir}/result/virus/votu/contigs/virus.fasta"
+    required: true
+
+outputs:
+  - name: "host_tsv"
+    path_pattern: "{workdir}/result/virus/iphop/iphop_host_prediction.tsv"
+    description: "Host predictions with confidence scores."
+
+depends_on:
+  - "56_vir_votu_gen"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - "iPHoP database (~279 GB for Jun_2025 Pub+RefSeq) must be pre-downloaded."
+  - "If no DB, script exits gracefully with empty result."
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_iphop"

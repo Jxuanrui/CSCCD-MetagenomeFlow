@@ -1,0 +1,41 @@
+id: "80_fun_prodigal"
+script: "scripts/80_fun_prodigal.sh"
+tool: "Prodigal"
+tool_version: "2.6.3"
+conda_env: "envs/assembly"
+description: "Predict protein-coding genes on fungal contigs in meta mode."
+dimension: "mycobiome"
+category: "gene_prediction"
+rule_type: "per_sample"
+
+inputs:
+  - name: "contigs"
+    path_pattern: "{workdir}/result/fungi/assembly/{sample}/{sample}.contigs.fa"
+    required: true
+
+outputs:
+  - name: "faa"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.faa"
+    description: "Predicted protein sequences."
+  - name: "fna"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.fna"
+    description: "Predicted CDS nucleotide sequences."
+  - name: "gff"
+    path_pattern: "{workdir}/result/fungi/prodigal/{sample}/{sample}.gff"
+    description: "Gene coordinates in GFF format."
+
+depends_on:
+  - "78_fun_megahit"
+
+params:
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_prodigal"
+

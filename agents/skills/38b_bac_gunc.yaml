@@ -1,0 +1,47 @@
+id: "38b_bac_gunc"
+script: "scripts/38b_bac_gunc.sh"
+tool: "GUNC"
+tool_version: "1.0.3"
+conda_env: "envs/gunc"
+description: "Second-pass MAG quality assessment via GUNC: detects chimeric / cross-lineage bins from lineage-homogeneity against the reference taxonomy, catching mis-binning that CheckM2's single completeness/contamination metrics miss. Complements CheckM2 (the standard MAG-QC pairing CheckM2 + GUNC)."
+dimension: "bacteria"
+category: "binning"
+rule_type: "aggregate"
+
+inputs:
+  - name: "mags"
+    path_pattern: "{workdir}/result/binning/drep/dereplicated_genomes/*.fa"
+    required: true
+    description: "Dereplicated MAGs from dRep (step 38)"
+
+outputs:
+  - name: "gunc_profile"
+    path_pattern: "{workdir}/result/binning/gunc/GUNC.progenomes_2.1.maxCSS_level.tsv"
+    description: "Per-MAG GUNC result: maxCSS level, contamination score, and pass/fail verdict."
+  - name: "gunc_detailed"
+    path_pattern: "{workdir}/result/binning/gunc/GUNC.*.tsv"
+    description: "Additional per-taxlevel and detailed output tables."
+
+depends_on:
+  - "38_bac_drep"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - description: "Requires the GUNC progenomes2.1 DiamondDB (~10 GB, gunc_db_progenomes2.1.dmnd), not bundled with the conda package."
+    workaround: "envs/gunc/bin/gunc download_db db/gunc -db progenomes then gunzip. The bundled downloader ran at ~78 KB/s; aria2c -x16 from https://swifter.embl.de/~fullam/gunc/ reached ~9 MB/s (md5 bc93a855e0760aad5c4e5f2d0e26da46)."
+  - description: "The conda resolver installs GUNC 1.0.3 (Python 3.6); its bundled downloader uses `with requests.get(...)`, which fails with the default requests 2.13.0 ('AttributeError: __enter__')."
+    workaround: "Upgrade requests in the env: conda install -p envs/gunc -c conda-forge 'requests>=2.20'."
+  - description: "Not wired into rule all (optional second-pass QC): run by requesting a result/binning/gunc/GUNC.*.tsv target, or step-by-step via scripts/38b_bac_gunc.sh."
+
+integration_status: "integrated"
+integrated_date: "2026-09-15"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::gunc"

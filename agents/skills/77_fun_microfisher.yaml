@@ -1,0 +1,40 @@
+id: "77_fun_microfisher"
+script: "scripts/77_fun_microfisher.sh"
+tool: "MicroFisher-style profile"
+tool_version: "~"
+conda_env: "envs/assembly"
+description: "Fungal-only taxonomic abundance table derived from Kraken2 report hierarchy."
+dimension: "mycobiome"
+category: "classification"
+rule_type: "per_sample"
+
+inputs:
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "fungal_profile"
+    path_pattern: "{workdir}/result/fungi/microfisher/{sample}/{sample}_fungal_profile.tsv"
+    description: "Filtered fungal abundance table with phylum/genus/species levels."
+
+depends_on:
+  - "02_qc_kneaddata"
+  - "71_fun_kraken2_fungi"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "mycobiome.smk::fun_microfisher"
+

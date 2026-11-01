@@ -1,0 +1,42 @@
+id: "63_vir_coverm_quant"
+script: "scripts/63_vir_coverm_quant.sh"
+tool: "CoverM"
+tool_version: "0.7+"
+conda_env: "envs/coverm"
+description: "vMAG abundance quantification (CoverM genome, relative_abundance/rpkm/tpm/count/covered_bases)."
+dimension: "virome"
+category: "quantification"
+rule_type: "per_sample"
+
+inputs:
+  - name: "filtered_vmags"
+    path_pattern: "{workdir}/result/virus/vmag/vmag_filtered/*.fasta"
+    required: true
+  - name: "kneaddata_r1"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz"
+    required: true
+  - name: "kneaddata_r2"
+    path_pattern: "{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz"
+    required: true
+
+outputs:
+  - name: "quant_tsv"
+    path_pattern: "{workdir}/result/virus/coverm_quant/{sample}.tsv"
+    description: "vMAG per-sample abundance (minimap2-sr + multiple metrics)."
+
+depends_on:
+  - "02_qc_kneaddata"
+  - "62_vir_checkv_mag"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-07"
+snakemake_rule: "virome.smk::vir_coverm_quant"

@@ -1,0 +1,47 @@
+id: "98b_bac_integration_tables"
+script: "scripts/98b_bac_integration_tables.sh"
+tool: "Python"
+tool_version: "3"
+conda_env: "envs/assembly"
+description: "Integrate bacterial quantification and annotation outputs into pathway, function, and gene-level summary tables."
+dimension: "bacteria"
+category: "integration"
+rule_type: "aggregate"
+
+inputs:
+  - name: "eggnog_dir"
+    path_pattern: "{workdir}/result/annotation/eggnog/"
+    required: true
+  - name: "kegg_dir"
+    path_pattern: "{workdir}/result/annotation/kegg/"
+    required: true
+  - name: "salmon_dir"
+    path_pattern: "{workdir}/result/assembly/salmon/"
+    required: true
+
+outputs:
+  - name: "integration_done"
+    path_pattern: "{workdir}/result/integration/bacteria/.done"
+    description: "Sentinel marking bacterial integration table generation complete."
+
+depends_on:
+  - "21_bac_eggnog"
+  - "22_bac_kegg"
+  - "20_bac_salmon_quant"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+
+benchmarks:
+  typical_runtime_min: ~
+  typical_input_size_gb: ~
+  peak_memory_gb: ~
+
+known_issues: []
+
+integration_status: "integrated"
+integrated_date: "2026-06-16"
+snakemake_rule: "pipeline/rules/statistics.smk::bac_integration_tables"
