@@ -68,7 +68,13 @@ extract_table_preview() {
     local file="$1"
     local max_lines="${2:-5}"
     if [ -f "${file}" ]; then
-        awk -v max_lines="${max_lines}" 'NR<=max_lines {print}' "${file}"
+        # S-4: truncate cells >80 chars to 77 + ellipsis for readability
+        awk -v max_lines="${max_lines}" 'NR<=max_lines {
+            n=split($0, cells, "\t")
+            for(i=1;i<=n;i++) { if(length(cells[i])>80) cells[i]=substr(cells[i],1,77)"..." }
+            out=cells[1]; for(i=2;i<=n;i++) out=out"\t"cells[i]
+            print out
+        }' "${file}"
     fi
 }
 
@@ -79,11 +85,28 @@ extract_table_preview() {
     echo "- Workdir: ${WORKDIR}"
     echo "- Repo: ${REPO}"
     echo
-    echo "> **统计功效与口径披露（必读）**：本项目 n=6（3v3）为流程演示设计——"
-    echo "> 置换空间 C(6,3)=20 限制 p 值分辨率、n=3/组统计功效不足，"
-    echo "> LEfSe/SIAMCAT/网络组间比较受小样本设计限制；全部组间结论仅具探索性，"
-    echo "> 详见 \`docs/08_statistics/POWER_DISCLOSURE.md\`（三概念分开表述版）。"''
-
+    # M-1 (supervisor 19th): dynamic sample-size disclosure from metadata.csv
+    META_CSV="${WORKDIR}/metadata.csv"
+    if [ -f "${META_CSV}" ]; then
+        N_TOTAL=$(awk -F',' 'NR>1 && NF>=2 {n++} END {print n+0}' "${META_CSV}" 2>/dev/null)
+        GROUP_COL=$(head -1 "${META_CSV}" | tr ',' '\n' | grep -n "^group$\|^condition$" | head -1 | cut -d: -f1)
+        if [ -n "${GROUP_COL}" ] && [ "${N_TOTAL}" -gt 0 ]; then
+            N_GROUPS=$(awk -F',' -v col="${GROUP_COL}" 'NR>1 {print $col}' "${META_CSV}" | sort -u | wc -l)
+            if [ "${N_GROUPS}" -eq 2 ]; then
+                G1=$(awk -F',' -v col="${GROUP_COL}" 'NR>1 {print $col}' "${META_CSV}" | sort | uniq -c | head -1 | awk '{print $1}')
+                G2=$((N_TOTAL - G1))
+                echo "> **统计功效与口径披露（必读）**：本项目 n=${N_TOTAL}（${G1}v${G2}）——"
+                echo "> 置换空间 C(${N_TOTAL},${G1}) 限制 p 值分辨率，组间结论请结合样本量评估；"
+                echo "> 详见 \`docs/08_statistics/POWER_DISCLOSURE.md\`。"
+            else
+                echo "> **统计功效与口径披露（必读）**：本项目 n=${N_TOTAL}（${N_GROUPS} 组）——"
+                echo "> 组间结论请结合样本量评估；详见 \`docs/08_statistics/POWER_DISCLOSURE.md\`。"
+            fi
+        fi
+    else
+        echo "> **统计功效披露**：未找到 metadata.csv，无法计算样本量；请参考 \`docs/08_statistics/POWER_DISCLOSURE.md\`。"
+    fi
+    echo
     echo
 
     echo "## QC Summary"
@@ -204,6 +227,24 @@ extract_table_preview() {
     echo
 
     echo "## Warnings"
+
+    echo
+    echo "## Downstream Tool Guide (S-4b)"
+    echo
+    echo "| Table | Format | Ready for |"
+    echo "|---|---|---|"
+    echo "| 98b gene TPM | counts | DESeq2, edgeR, limma |"
+    echo "| 98b gene relab | relative | LEfSe, MaAsLin2 |"
+    echo "| 98b gene CLR | transformed | ANCOM-BC2, ALDEx2 |"
+    echo "| 98c vOTU TPM | counts | DESeq2, edgeR |"
+    echo "| 98c vOTU relab | relative | LEfSe |"
+    echo "| 98d MAG relab | relative | MaAsLin2, SIAMCAT (n>=10) |"
+    echo "| 91 alpha diversity | per-sample | group comparison (Wilcoxon) |"
+    echo "| 91 beta diversity | distance | PERMANOVA, ANOSIM |"
+    echo "| 93 network summary | per-network | topology comparison |"
+    echo ""
+    echo "> Note: SIAMCAT requires n>=10; see POWER_DISCLOSURE.md for sample-size constraints."
+    echo
     echo
     FAILED_FILES="$(find "${STAT_DIR}" -type f -name '*.FAILED' | sort || true)"
     if [ -n "${FAILED_FILES}" ]; then

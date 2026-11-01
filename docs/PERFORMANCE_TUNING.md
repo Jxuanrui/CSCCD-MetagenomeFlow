@@ -16,7 +16,8 @@
 samples: "Sample1,Sample2,Sample3"
 workdir: "/path/to/project"
 cpus: 12              # 保留 4 核给系统
-memory_mb: 51200      # 50GB (保留 14GB 给系统)
+# NOTE: memory_mb is NOT a recognized config key — resource control is via profiles only
+# memory_mb: 51200  (phantom key, not implemented)
 ```
 
 **Snakemake 启动**:
@@ -34,7 +35,7 @@ snakemake -s pipeline/Snakefile --profile profiles/local_16c -j 2
 1. 禁用内存消耗最大的步骤:
    ```yaml
    # 跳过真菌组装（节省 ~30GB/样本）
-   skip_fungi_assembly: true
+   # skip_fungi_assembly: true  (phantom key — use kingdoms: ["bacteria","virome"] to exclude fungi)
    ```
 
 2. 减少 HUMAnN 数据库大小:
@@ -53,7 +54,7 @@ snakemake -s pipeline/Snakefile --profile profiles/local_16c -j 2
 ```yaml
 # pipeline/config/config.yaml
 cpus: 40              # 保留 8 核给系统
-memory_mb: 163840     # 160GB (保留 32GB 给系统)
+# memory_mb: 163840  (phantom key, not implemented)
 ```
 
 **Snakemake 启动**:

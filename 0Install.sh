@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+
+# S-3 (supervisor 19th): download integrity check helper
+mgx_verify() {
+    local file="$1" expected="$2"
+    [ -z "$expected" ] && return 0
+    local actual
+    actual=$(sha256sum "$file" 2>/dev/null | cut -d' ' -f1)
+    if [ "$actual" != "$expected" ]; then
+        echo "[WARN] checksum mismatch: $file (expected ${expected:0:16}..., got ${actual:0:16}...)"
+        return 1
+    fi
+}
+
 # ==============================================================================
 # CSCCD-MetagenomeFlow 软件和数据库安装脚本
 # 版本: 1.0
@@ -2060,6 +2073,17 @@ VIRUS_PROJ="$HOME/Course/Virus_Apptainer_pipline"
 # ==============================================================================
 # §16 状态：shellcheck [✓] | pre-commit hook [✓] | Test_CI_fixture [✓] | run_ci_checks.sh [✓]
 # ==============================================================================
+
+# ============================================================================
+# ⚠️  以下 §17-§19 为安装过程历史存档（非可执行代码）
+#
+# 这些工具的实际安装方式：
+#   方式 A (conda):  逐个通过 conda create 安装（见各 § 的原始命令）
+#   方式 B (pixi):   cd envs-pixi/<env_name> && pixi install --frozen
+#                    （53 个锁定环境，覆盖以下大部分工具）
+#
+# 本存档保留用于追溯安装参数与版本选择，不代表运行此段即可安装。
+# ============================================================================
 
 # --- §17.1 sylph 快速物种分类器（minhash sketch，GTDB-R220）[✓ 已完成] ---
 # 用途：与 MetaPhlAn4/Kraken2 并列的第三个细菌分类工具，速度更快（官方数据

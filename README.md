@@ -9,10 +9,10 @@ Developed by the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cere
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
 [![Conda](https://img.shields.io/badge/conda%20envs-57-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-182-blue)]()
+[![Scripts](https://img.shields.io/badge/scripts-172-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-**182 scripts · 143 Snakemake rules · 57 conda envs · ~1.2 TB databases**
+**172 scripts · 144 Snakemake rules · 57 conda envs · ~1.2 TB databases**
 
 ---
 
@@ -255,7 +255,7 @@ Every integrated script has a machine-readable skill card (`agents/skills/`) dec
 
 ### Pipeline Validation (v1.5.0)
 
-A three-state step validator (`scripts/utils/validate_step.py`) checks output correctness — not just exit codes — after each pipeline step:
+A three-state step validator (`scripts/utils/validate_step.py`) provides per-step output correctness rules — invoke manually or via agent after each step:
 
 | Verdict | Meaning | AI Agent Behavior |
 |---------|---------|-------------------|
@@ -279,7 +279,7 @@ An agent-driven gut-metagenome mining loop in the spirit of scBaseCount (Arc Ins
 
 ```
 CSCCD-MetagenomeFlow/
-├── scripts/                  182 scripts (157 sh + 7 py + 16 R) + scripts/utils/ helpers
+├── scripts/                  172 scripts (152 sh + 4 py + 16 R) + scripts/utils/ helpers
 ├── pipeline/                 Snakefile, config, hardware profiles, 11 rule files
 ├── agents/                   registry.yaml, skill cards, optional run provenance records
 ├── docs/                     experience docs (RAG source), tool references

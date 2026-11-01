@@ -40,7 +40,7 @@ cp /path/to/your/*.fastq.gz Project/MyAnalysis/data/
 
 ```yaml
 # 样本列表（逗号分隔，无空格）
-samples: "Sample1,Sample2,Sample3"
+samplesheet: "samplesheet.csv"  # CSV file with sample metadata; see Tutorial P2 for format
 
 # 工作目录（绝对路径）
 workdir: "${PROJ_DIR}/Project/MyAnalysis"
@@ -50,9 +50,9 @@ cpus: 16
 ```
 
 **硬件配置推荐**:
-- 16 核 / 64GB 内存: `cpus: 16`, profile `auto` 或 `local_16c`
-- 48 核 / 192GB 内存: `cpus: 48`, profile `48c`
-- 96 核 / 512GB 内存: `cpus: 96`, profile `96c`
+- 16 核 / 64GB 内存: `cpus: 16`, profile `pipeline/profiles/auto` 或 `pipeline/profiles/local_16c`
+- 48 核 / 192GB 内存: `cpus: 48`, profile `pipeline/profiles/48c`
+- 96 核 / 512GB 内存: `cpus: 96`, profile `pipeline/profiles/96c`
 
 ---
 
@@ -116,4 +116,4 @@ Project/MyAnalysis/result/
 - 📖 详细分析流程: [docs/PROJECT_MAP.md](PROJECT_MAP.md)
 - 🛠️ 参数调优: [docs/PERFORMANCE_TUNING.md](PERFORMANCE_TUNING.md)
 - ❓ 遇到问题: [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-- 🤖 使用技能: `README.md` 中的 22 个 `/mgx-*` 技能
+- 🤖 使用技能: `agents/skills/` 中的机器可读技能卡（YAML 格式，含输入/输出/依赖声明）
