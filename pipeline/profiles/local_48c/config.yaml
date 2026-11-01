@@ -1,0 +1,6 @@
+# Profile: local_48c — 48-core server (this machine)
+# Total cores: 48 | threads_per_job=16 → 2 concurrent (strict) / 3 concurrent (fastp/I/O-bound)
+# fastp caps at 16 useful threads; use --cores 48 to allow 3 fastp slots simultaneously
+cores: 48
+rerun-incomplete: true
+printshellcmds: false

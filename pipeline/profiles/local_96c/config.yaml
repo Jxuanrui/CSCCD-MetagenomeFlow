@@ -1,0 +1,6 @@
+# Profile: local_96c — 96-core server
+# Total thread budget: 92 (reserve 4 for OS)
+# Effective concurrency: 92 / 16 = 5 jobs
+cores: 92
+rerun-incomplete: true
+printshellcmds: false
