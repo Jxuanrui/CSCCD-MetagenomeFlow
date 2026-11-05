@@ -3,7 +3,8 @@
 #               root .shellcheckrc (disable=SC1091); standalone twin of
 #               scripts/tests/level1/run_shellcheck_all.sh, which needs the
 #               gitignored envs/shellcheck env.
-#   consistency registry/scripts/skills/rules cross-check, requires issues=0.
+#   consistency registry/scripts/skills/rules cross-check, requires issues=0;
+#               plus README count-token drift gate (badge sync + git diff).
 # Level 2 (sampled integration tests) and level 3 (Snakemake DAG dry-run) stay
 # local-only: they depend on Project/Test_CI_fixture data, which is gitignored.
 # Alternatively, translate
@@ -52,3 +53,7 @@ jobs:
         run: |
           python3 scripts/utils/check_consistency.py | tee /tmp/consistency.log
           tail -n 1 /tmp/consistency.log | grep -q 'issues=0$'
+      - name: README count tokens in sync with live repo (expect no diff)
+        run: |
+          python3 scripts/utils/check_consistency.py --update-readme-badges >/dev/null
+          git diff --exit-code -- README.md

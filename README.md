@@ -8,11 +8,11 @@ Developed by the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cere
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
-[![Conda](https://img.shields.io/badge/conda%20envs-57-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-172-blue)]()
+[![Conda](https://img.shields.io/badge/conda%20envs-59-orange)](https://github.com/conda-forge/miniforge)
+[![Scripts](https://img.shields.io/badge/scripts-181-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-**172 scripts · 144 Snakemake rules · 57 conda envs · ~1.2 TB databases**
+**181 scripts · 144 Snakemake rules · 59 conda envs · ~1.2 TB databases**
 
 ---
 
@@ -104,16 +104,16 @@ Zero-database demo path: `bash mcp/vis/build_gallery.sh` renders the full figure
 **Step-by-step** — debugging, fine-grained control:
 
 ```bash
-bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/CSCCD-MetagenomeFlow
-bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/project -r ~/Course/CSCCD-MetagenomeFlow
+bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/project -r /path/to/CSCCD-MetagenomeFlow
+bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/project -r /path/to/CSCCD-MetagenomeFlow
 ```
 
 **Bash pipeline** — lightweight, checkpointed:
 
 ```bash
-bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16
-bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 --from metaphlan4   # resume
-bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 --force              # re-run
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r /path/to/CSCCD-MetagenomeFlow -t 16
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r /path/to/CSCCD-MetagenomeFlow -t 16 --from metaphlan4   # resume
+bash scripts/00_pipeline_bacteria.sh -i samplesheet.csv -r /path/to/CSCCD-MetagenomeFlow -t 16 --force              # re-run
 ```
 
 **Snakemake** — production, large cohorts:
