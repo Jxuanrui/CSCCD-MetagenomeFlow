@@ -1,0 +1,8 @@
+# Profile: local_256c — 256-core server (node20)
+# Total thread budget: 252 (reserve 4 for OS)
+# Effective concurrency: 252 / 16 = 15 jobs
+# Memory caveat: kraken2-class rules load the full DB in RAM; if concurrent heavy jobs
+#   OOM, lower cores here (threads_per_job stays 16 in config.yaml).
+cores: 252
+rerun-incomplete: true
+printshellcmds: false

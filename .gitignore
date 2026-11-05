@@ -144,3 +144,5 @@ mining/m4/annotations_cache.jsonl
 .claude/supervisor_relays.local.json
 tools/
 Project/Project_demo/feishu_notes/
+.claude/settings.local.json
+.transfer/

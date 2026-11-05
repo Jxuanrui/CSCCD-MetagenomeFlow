@@ -19,12 +19,12 @@ CSCCD-MetagenomeFlow 支持三种运行模式，按需选择：
 
 ```bash
 # 1. 激活项目环境
-source ~/Course/CSCCD-MetagenomeFlow/scripts/activate.sh
+source /data/admin-user/Project/CSCCD_MetagenomeFlow/scripts/activate.sh
 
 # 2. 单步运行示例（质控 → 去宿主 → 物种分类）
-bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
-bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
-bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Course/CSCCD-MetagenomeFlow
+bash scripts/01_qc_fastp.sh       -s SAMPLE_ID -t 16 -w /path/to/workdir -r /data/admin-user/Project/CSCCD_MetagenomeFlow
+bash scripts/02_qc_kneaddata.sh   -s SAMPLE_ID -t 16 -w /path/to/workdir -r /data/admin-user/Project/CSCCD_MetagenomeFlow
+bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/workdir -r /data/admin-user/Project/CSCCD_MetagenomeFlow
 ```
 
 ### 模式二：Bash 一站式流程（轻量 Pipeline）
@@ -34,15 +34,15 @@ bash scripts/11_bac_metaphlan4.sh -s SAMPLE_ID -t 16 -w /path/to/workdir -r ~/Co
 ```bash
 # 运行完整细菌流程
 bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16
+     -i samplesheet.csv -r /data/admin-user/Project/CSCCD_MetagenomeFlow -t 16
 
 # 断点续跑（从 metaphlan4 步骤开始）
 bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 --from metaphlan4
+     -i samplesheet.csv -r /data/admin-user/Project/CSCCD_MetagenomeFlow -t 16 --from metaphlan4
 
 # 多样本并行（需要 rush）
 bash scripts/00_pipeline_bacteria.sh \
-     -i samplesheet.csv -r ~/Course/CSCCD-MetagenomeFlow -t 16 -j 2
+     -i samplesheet.csv -r /data/admin-user/Project/CSCCD_MetagenomeFlow -t 16 -j 2
 ```
 
 ### 模式三：Snakemake Pipeline（生产级，推荐）
@@ -369,10 +369,10 @@ snakemake -s pipeline/Snakefile --profile pipeline/profiles/local_96c
 | 资料 | 路径 | 适用场景 |
 |------|------|---------|
 | EasyMetagenome | GitHub 重新下载（原 `Reference/EasyMetagenome.zip` 已于 2026-09-21 清理）| 宏基因组全流程，MetaPhlAn4/HUMAnN4/组装/Binning/统计 |
-| Metagenomics_Apptainer_pipline | `~/Course/Metagenomics_Apptainer_pipline/` | Centrifuger 分类、宏基因组组装、功能注释 |
-| Binning_Apptainer_pipline | `~/Course/Binning_Apptainer_pipline/` | MAG 挖掘、Binning、CheckM2、dRep |
-| Virus_Apptainer_pipline | `~/Course/Virus_Apptainer_pipline/` | 宏病毒组全流程（geNomad/VirSorter2/CheckV/iPHoP） |
-| WGS 单菌分析资料 | `~/Course/CSCCD-MetagenomeFlow/Reference/WGS_prokaryote.pipeline.v0.7.sh` | 单菌/分离株 WGS：组装、MLST、泛基因组、系统发育树、变异检测 |
+| Metagenomics_Apptainer_pipline | `~/Course/Metagenomics_Apptainer_pipline/`（仅旧服务器存在，2026-11-05 确认不迁） | Centrifuger 分类、宏基因组组装、功能注释 |
+| Binning_Apptainer_pipline | `~/Course/Binning_Apptainer_pipline/`（仅旧服务器存在，2026-11-05 确认不迁） | MAG 挖掘、Binning、CheckM2、dRep |
+| Virus_Apptainer_pipline | `~/Course/Virus_Apptainer_pipline/`（仅旧服务器存在，2026-11-05 确认不迁） | 宏病毒组全流程（geNomad/VirSorter2/CheckV/iPHoP） |
+| WGS 单菌分析资料 | `/data/admin-user/Project/CSCCD_MetagenomeFlow/Reference/WGS_prokaryote.pipeline.v0.7.sh` | 单菌/分离株 WGS：组装、MLST、泛基因组、系统发育树、变异检测 |
 
 ### Step 2 — 网络检索最新实践
 **每次编写脚本前必须检索**（使用 WebSearch 工具）：
@@ -502,14 +502,14 @@ git commit -m "feat: integrate <script_id> into Snakemake pipeline + skill libra
 ```bash
 # 本地多队列（3个医院数据）
 bash scripts/97_stat_crosscohort.sh \
-  -w Project/Hospital_A -r ~/Course/CSCCD-MetagenomeFlow \
+  -w Project/Hospital_A -r /data/admin-user/Project/CSCCD_MetagenomeFlow \
   -m metadata.csv -g Group \
   --source local --cohorts "Hospital_A,Hospital_B,Hospital_C" \
   --train-cohort Hospital_A --meta-analysis
 
 # 单队列（框架测试）
 bash scripts/97_stat_crosscohort.sh \
-  -w Project/Project_example -r ~/Course/CSCCD-MetagenomeFlow \
+  -w Project/Project_example -r /data/admin-user/Project/CSCCD_MetagenomeFlow \
   -m metadata.csv -g Group --source local
 ```
 

@@ -1,0 +1,65 @@
+# db 迁移对账清单（2026-11-05，质量审核第21次 P1 要求固化）
+# 口径澄清（终结 57/58/59 三口径争议）：
+#   远端子目录 58 个（2026-11-04 远端 ls 采集；此前文档口头'57 库'系执行者误数，特此更正）
+#   本地 db/ 可见目录 58/58，零缺失，无隐藏项
+#   .transfer/done/ 内 db_* 标记 59 个 = 58 个 db_<name> 批次 + 1 个 db_files（根散文件批）
+#   字节抽检：gtdbtk+vogdb 181,422,520,359 B / 85,486 文件，两侧一致（2026-11-05 16:18）
+
+amrfinder
+antismash
+antismash8
+bacmet
+bakta
+busco_downloads
+card
+ccyc
+centrifuger
+cgf
+checkm
+checkm2
+checkv
+dbcan3
+defense-finder
+dram_db
+eggnog
+eukfinder_db
+fungi
+funomic
+genomad
+gtdbtk
+gunc
+gut_fungi_db
+humann4
+ICEberg
+integrall
+iphop
+ISfinder
+kegg
+kneaddata
+kraken2
+mcyc
+merops
+metaeuk_db
+metaphlan4
+metax
+mobileog
+mvirdb
+ncyc
+pcyc
+pfam
+phabox2_db
+phagcn3_db
+pharokka
+phi
+phold
+sarg
+scyc
+sylph
+tcdb
+transposase-db
+uniprot_sprot
+vcontact3
+vfdb
+vibrant
+virsorter2
+vogdb
