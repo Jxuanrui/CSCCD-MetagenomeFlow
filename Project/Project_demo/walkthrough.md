@@ -2171,7 +2171,7 @@ prokka --outdir result/binning/prokka/{mag} \
 # 全部完成后合并各 MAG 的 .tsv 为 prokka_summary.tsv
 ```
 
-**执行结果**（2026-10-15 实测，成功，批日志耗时 20,778 秒 = 5.8h）：**128/128 MAG 注释成功、失败 0**；合并表 `prokka_summary.tsv` 307,798 条 CDS 注释行；128 个 MAG 全部用上 GTDB-Tk 属名（batch.log 计数 128）。产出目录 ~3.5G（每 MAG gff/faa/ffn/gbk/tsv）。
+**执行结果**（2026-10-15 实测，成功，批日志耗时 20,778 秒 = 5.8h）：**128/128 MAG 注释成功、失败 0**；合并表 `prokka_summary.tsv` 307,798 行，其中 **CDS 296,989 条**（与各 `*.faa` header 数一致）+ tRNA/rRNA/repeat 等非 CDS 特征 10,682 行 + 混入的重复表头 127 行——**引用 CDS 数请用 296,989，勿用 307,798**；128 个 MAG 全部用上 GTDB-Tk 属名（batch.log 计数 128）。产出目录 ~3.5G（每 MAG gff/faa/ffn/gbk/tsv）。
 
 **⚠️ 注意事项**：
 - **首跑即炸（2026-10-15 01:34，exit 1、1 秒）**：`MAG_FILTER` 在 `set -u` 下未初始化（不传 `-m` 即触发 unbound variable）。修复：预初始化 `MAG_FILTER=""`（commit 639b750；同日 43/43b 的"-t 声明未注册"同属首跑接口缺陷家族，36f8b29）。此后 P0 防线 ①（mgx_parse 预初始化全部带值选项）从源头消灭此类。
@@ -2225,12 +2225,12 @@ roary -p 16 -e --mafft -i 95 -cd 99 \
 # 有专门检测，写 FAILED 哨兵（此为设计内路径，非脚本缺陷）
 ```
 
-**执行结果**（2026-10-15 实测，exit 0，22,572 秒 = 6.3h）：Roary 聚出 **280,555 簇 > --group_limit 50,000**，按官方语义提前退出（"Multifastas not created"），写 FAILED 哨兵（`summary_statistics.txt` 记 WARNING + INPUT_GFFS=128）。**原因定性：128 个 MAG 是跨属多物种集合（81 属），泛基因组分析对象错位**——Roary 适用于同种近缘基因组组，本结果不代表污染（哨兵文案已注明）。
+**执行结果**（2026-10-15 实测，exit 0，22,572 秒 = 6.3h）：Roary 聚出 **280,554 簇 > --group_limit 50,000**，按官方语义提前退出（"Multifastas not created"），写 FAILED 哨兵（`summary_statistics.txt` 记 WARNING + INPUT_GFFS=128）。**簇表实际已生成**：`result/wgs/pangenome_1792049455/gene_presence_absence.csv`（280,554 簇），核心/软核心基因组为 0（跨 81 属无共有基因）。**原因定性：128 个 MAG 是跨属多物种集合（81 属），泛基因组分析对象错位**——Roary 适用于同种近缘基因组组，本结果不代表污染（哨兵文案已注明）。
 
 **执行点评**（主代理起草）：
 - **运算时间**：22,572 秒（绝大部分耗在聚类到达 5 万簇上限前的 CD-HIT/BLAST 全比对）。
 - **输出文件**：summary_statistics.txt（WARNING 哨兵）、roary.log、presence_absence_matrix.txt（NA）。
-- **后续使用**：无（预期空产出）；如需真正泛基因组，应对单物种内多 MAG 子集单独运行（按 40 的属标签过滤后重跑）。
+- **后续使用**：簇表可查（280,554 簇），但核心基因组为 0、Multi-FASTA 未生成，不能用于核心基因分析；如需真正泛基因组，应对单物种内多 MAG 子集单独运行（按 40 的属标签过滤后重跑）。
 - **加速空间**：提高 `--group_limit` 可跑完但产出无解释意义，不建议。
 - **内存/硬盘**：温和。
 
