@@ -966,7 +966,7 @@ cd-hit-est \
 **执行点评**编写方：
 - **运算时间**：1510 秒（16 线程，200 万基因规模处于 CD-HIT 舒适区）；合并/过滤两步合计占比小。
 - **输出文件**：nucleotide_nr.fa（899MB）+ protein_nr.fa（384MB）+ .clstr（112MB）；中间合并文件（all_genes*.fna）已清理。
-- **后续使用**：整个目录级注释链的根输入——19 建 Salmon 索引（核酸）、21-31e 蛋白目录级注释链（15 步，含 31e）（蛋白）；NR 目录是 CP1 关口的核对对象。
+- **后续使用**：整个目录级注释链的根输入——19 建 Salmon 索引（核酸）、21-31e 蛋白目录级注释链（15 步，含 31e）（蛋白）；NR 目录是 CP1 阶段检查点的核对对象。
 - **加速空间**：有——`--tool mmseqs`（MMseqs2 Linclust，O(n) 线性，同阈值语义）在 200 万基因上预计 5–15 分钟；>500 万基因规模时为推荐后端。演示采用 cdhit 后端（同行认可度优先）。
 - **内存/硬盘**：`-M 0` 不限内存，实际峰值未计量（2M 序列 95% 聚类典型 10–30G）；磁盘净增约 1.4G（含 clstr）。
 
@@ -1296,7 +1296,7 @@ antismash chunk_XX.fa \
 # 执行失败/平铺不完整绝不伪装成功），touch antismash_done.txt
 ```
 
-**执行结果**（2026-10-14 至 10-16 实测，6/6 成功，-t 8 插空负载（W3-C 排程），16,771–27,940 秒/样本，合计约 40.6 小时）：
+**执行结果**（2026-10-14 至 10-16 实测，6/6 成功，-t 8 插空负载（排期批次-C 排程），16,771–27,940 秒/样本，合计约 40.6 小时）：
 
 | 样本 | 耗时 | BGC regions | chunks |
 |---|---|---|---|
@@ -1310,7 +1310,7 @@ antismash chunk_XX.fa \
 合计 **1,778** 个 BGC region。每 chunk 含完整 gbk/json/zip/index.html；region GBK 平铺至样本层满足 28b 的 maxdepth-1 消费契约。
 
 **执行点评**编写方：
-- **运算时间**：16,771–27,940 秒/样本（8 线程）——注释链总耗时之最；-t 8 系 W3-C 插空排程决定（避开主线 16t），满线程可显著缩短。
+- **运算时间**：16,771–27,940 秒/样本（8 线程）——注释链总耗时之最；-t 8 系 排期批次-C 插空排程决定（避开主线 16t），满线程可显著缩短。
 - **输出文件**：每样本 antismash_done.txt 哨兵 + 平铺 region GBK（234–373 个）+ 24 个 chunk 目录 + _chunks/ 输入分块；单样本数百 MB 量级。
 - **后续使用**：region GBK 供 28b 新颖度评分；BGC 类型分布供次级代谢分析（RiPP/terpene/NRP 等由 json 可提）。
 - **加速空间**：大——chunk 级并行（rush/多进程跑 chunk_XX）或样本级并行；chunked 模式当前为 chunk 串行（resume 为 backlog 项 T-23，重跑须重建全部分块）。
@@ -1547,7 +1547,7 @@ mmseqs easy-search \
 
 ---
 
-## 31e · FeGenie 铁代谢基因预测（per-sample .faa，HMM GA 阈值，W3-C 插空）
+## 31e · FeGenie 铁代谢基因预测（per-sample .faa，HMM GA 阈值，排期批次-C 插空）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 全部 6 个样本执行 31e 铁代谢预测步骤（FeGenie，threads 8，per-sample prodigal 模式），完成后汇报各样本命中数与类别分布。」
@@ -1565,7 +1565,7 @@ FeGenie.py \
 # 主结果: FeGenie-geneSummary.csv（基因 ID + 功能分类 + HMM 得分，GA 阈值）
 ```
 
-**执行结果**（2026-10-14 实测，6/6 成功，-t 8（W3-C 插空排程），269–326 秒/样本，合计约 30 分钟）：
+**执行结果**（2026-10-14 实测，6/6 成功，-t 8（排期批次-C 插空排程），269–326 秒/样本，合计约 30 分钟）：
 
 | 样本 | 耗时 | 铁代谢基因命中 |
 |---|---|---|
@@ -1869,12 +1869,12 @@ checkm2 predict \
 awk -F'\t' 'NR==1 || ($2>=50 && $3<=10)' quality_report.tsv > filtered_report.tsv
 ```
 
-**执行结果**（两次实测：10-13 首跑 981s（重组装前原 bins，即 W1 原始基线）；10-14 `--force` 重跑 1042s（36b 重组装后正式版），16 线程）：
+**执行结果**（两次实测：10-13 首跑 981s（重组装前原 bins，即 排期批次 原始基线）；10-14 `--force` 重跑 1042s（36b 重组装后正式版），16 线程）：
 
 | 口径 | 输入 bins | 通过（comp≥50/cont≤10） | 淘汰 |
 |---|---|---|---|
 | 正式版（重组装后，10-14） | 353 | **269** | 84 |
-| W1 原始基线（重组装前，10-13） | 353 | 269 | 84 |
+| 排期批次 原始基线（重组装前，10-13） | 353 | 269 | 84 |
 
 产出：`result/binning/checkm2/quality_report.tsv`（353 行 + 表头，含 Completeness_Model_Used/Translation_Table_Used 等 12 列）+ `checkm2_filtered/filtered_report.tsv`（269）+ `drep_input/`（269 个 MAG 副本）。Neural Network (Specific Model) 为主预测模型。
 
@@ -1908,12 +1908,12 @@ dRep dereplicate \
     --genomeInfo checkm2_genomeInfo.csv
 ```
 
-**执行结果**（两次实测：10-13 首跑 96s（W1 基线）；10-14 `--force` 79s 正式版，16 线程）：
+**执行结果**（两次实测：10-13 首跑 96s（排期批次 基线）；10-14 `--force` 79s 正式版，16 线程）：
 
 | 口径 | 输入 | 参与聚类 | 代表 MAGs |
 |---|---|---|---|
 | 正式版（重组装后） | 269 | 233 | **128** |
-| W1 基线（重组装前） | 269 | 234 | 127 |
+| 排期批次 基线（重组装前） | 269 | 234 | 127 |
 
 正式版 128 代表 = **HQ 96（comp≥90/cont≤5）+ MQ 32**（全部达 MIMAG medium，病毒段复核 核真）。聚类构成：78 单例 + 19×2 + 16×3 + 7×4 + 7×5 + 1×6（233 个基因组归 128 簇）。
 
@@ -1950,18 +1950,18 @@ timeout --signal=TERM --kill-after=60 21600 \
         --detailed_output
 ```
 
-**执行结果**（两次实测：10-13 首跑 1475s（W1 基线，127 MAGs）；10-14 `--force` 1510s 正式版，16 线程）：
+**执行结果**（两次实测：10-13 首跑 1475s（排期批次 基线，127 MAGs）；10-14 `--force` 1510s 正式版，16 线程）：
 
 | 口径 | MAGs | GUNC pass | GUNC fail |
 |---|---|---|---|
 | 正式版（128 代表） | 128 | **81** | **47** |
-| W1 基线（127 代表） | 127 | — | — |
+| 排期批次 基线（127 代表） | 127 | — | — |
 
 fail 组 CSS（clade separation score）中位数 0.57、范围 0.46–1.0（嵌合/跨谱系污染信号）。主结果表：`result/binning/gunc/GUNC.progenomes_2.1.maxCSS_level.tsv`。
 
 **⚠️ 注意事项（GUNC 披露，决策）**：
 - **全量保留，不做二次过滤**：47 个 fail MAG 不从 128 代表集中剔除——演示定位为如实记录 GUNC 信号；**下游消费 GUNC 一律以汇总 TSV 为准**（per-MAG 判读回溯 `GUNC.*.tsv`）。
-- gunc_output 目录曾混入 16 个 W1 陈旧文件（计数 144≠128），P1 修复后 `--force` 前清空旧产物（commit 002e3ae）；对已存旧产物不追溯，以汇总 TSV 为唯一事实源。
+- gunc_output 目录曾混入 16 个 排期批次 陈旧文件（计数 144≠128），P1 修复后 `--force` 前清空旧产物（commit 002e3ae）；对已存旧产物不追溯，以汇总 TSV 为唯一事实源。
 
 **执行点评**编写方：
 - **运算时间**：1475–1510 秒/轮（16 线程 diamond vs progenomes2.1 全库，128 MAGs ~25 分钟）。
@@ -1972,12 +1972,12 @@ fail 组 CSS（clade separation score）中位数 0.57、范围 0.46–1.0（嵌
 
 ---
 
-## ⚠️ W1 基线对照（病毒段复核 决策 A：重组装前后对照）
+## ⚠️ 排期批次 基线对照（病毒段复核 决策 A：重组装前后对照）
 
-病毒段复核 关口 C1 要求的原始基线（重组装前口径）由影子工作目录重建（`/tmp/lane_w1_baseline.sh`：
+病毒段复核 阶段检查点 C1 要求的原始基线（重组装前口径）由影子工作目录重建（`/tmp/lane_w1_baseline.sh`：
 symlink dastool bins 进隔离 workdir 跑 37/38/38b，现行路径零接触；产物归档于 2026-10-15）：
 
-| 指标 | W1 基线（重组装前） | 正式版（重组装后） |
+| 指标 | 排期批次 基线（重组装前） | 正式版（重组装后） |
 |---|---|---|
 | CheckM2 过滤（50/10） | 269 | 269 |
 | dRep 代表 | **127** | **128** |
@@ -2257,7 +2257,7 @@ snippy-clean_full_aln core.full.aln > core.clean.aln
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 全部 6 个样本执行 42 MGE 注释（ISfinder/ICEberg/integrall/transposase/mobileOG，threads 8），完成后汇报各样本各工具命中数。」
 
-**核心执行命令**（摘自 `scripts/42_bac_mge.sh`；W3-C 插空泳道 -t 8）：
+**核心执行命令**（摘自 `scripts/42_bac_mge.sh`；排期批次-C 插空泳道 -t 8）：
 
 ```bash
 # 1) ISfinder：蛋白级 mmseqs（--min-seq-id 0.9 -e 1e-5）
@@ -2308,7 +2308,7 @@ plasmidfinder.py \
     -x -q
 ```
 
-**执行结果**（2026-10-14 实测，6/6 成功，513–895 秒/样本；W3-C 插空 -t 8）：
+**执行结果**（2026-10-14 实测，6/6 成功，513–895 秒/样本；排期批次-C 插空 -t 8）：
 
 | 样本 | 耗时 | replicon 命中 |
 |---|---|---|
@@ -2434,7 +2434,7 @@ conda run --prefix envs/cobrapy python3 scripts/43c_fba_simulate.py \
 | Sample2__76 | 9.104111 |
 | Sample2__137 | 7.724565 |
 
-每 MAG 产出四件：`_growth_rate.txt`（上表）、`_flux_distribution.tsv`（全反应通量）、`_essential_genes.tsv`（例 Sample3__bin.019_sub 10 个必需基因）、`_substrate_utilization.tsv`（自动检出碳源逐一单测，例 8 项）。至此 GEM 链收官（2026-10-18 05:36，NOTES W4-C 收官记录）。
+每 MAG 产出四件：`_growth_rate.txt`（上表）、`_flux_distribution.tsv`（全反应通量）、`_essential_genes.tsv`（例 Sample3__bin.019_sub 10 个必需基因）、`_substrate_utilization.tsv`（自动检出碳源逐一单测，例 8 项）。至此 GEM 链收官（2026-10-18 05:36，NOTES 排期批次-C 收官记录）。
 
 **⚠️ 注意事项**：
 - 10-15 首轮 10 连空跑（exit 1、0–1 秒）系 43/43b `-t` 未注册事故连带（见 43 章）；本轮为修复后正式执行。
@@ -2733,7 +2733,7 @@ tail -n +2 quant.sf | awk '{print $1"\t"$2"\t"$4"\t"$5}' > report.tsv
 - 注释表 `vOTU_table_ann.txt`（哨兵，16 列含 lineage）：annotated **2,513**（真分类）/ source_truly_unclassified **15** / source_missing **94**（代表 contig 无 geNomad 行，旧代码会把后两类混标 Unclassified）。
 - length 抽查 3/3 与 virus.fasta 实长一致（旧版曾出现 66 bp 假 vOTU）。
 
-**⚠️ 注意事项（三轮整改史——质量复核 病毒段复核关口全过程）**：
+**⚠️ 注意事项（三轮整改史——质量复核 病毒段复核阶段检查点全过程）**：
 - **第一轮打回（2026-10-13，supervisor_20261013_cp_audit）**：60 号五缺陷定性 FAIL：① 病毒基因 ID 跨样本重名（k127_124496_1 同现于两样本索引）② 重名致 305 行基因（22 个 contig）无法归属，仅 stderr 警告后 exit 0 ③ length 列语义错（出现 66 bp"vOTU"）④ report.tsv 无表头却跳首行，每样本静默丢一条 ⑤ contig 级与基因级 TPM 混加，vOTU 间不可比。**冻结令**：votu_table.tsv 不得作为统计输入。
 - **第二轮整改（7b2e9ab + d08d034，决策 D/E/B/A 落地）**：D=vOTU 丰度只用 contig 级（一条 vOTU 一个数）；E=基因 ID 加样本前缀（后又随 58 混合索引废除而整体消失——基因行归零是更彻底的解）；length 改代表实长；join 失败硬退出；首行按内容判表头。V2 泳道重跑（54 H3+H10→58→59×6→60）产出上表终态。
 - **第三轮三审（2026-10-14，supervisor_20261014_v2_audit）**：**有条件通过**——六条验收证据全核真（基因行 0 / ΣTPM=10⁶ / NumReads 三对照回升 / join 3062-0-2622 / annotated 2,513 / length 抽查 3/3），另揪出 91/92 列名与 93 样本列三处下游隐患（当日修复）。**分级解冻**：votu_table.tsv 对 98c/98g 即时解冻；93/91/92/94/96 待修复复验后解冻。
@@ -3382,7 +3382,7 @@ bash scripts/91_stat_diversity.sh \
   alpha/beta/PCoA/PERMANOVA 表、boxplot/pcoa_scatter 双格式图、phyloseq RDS）+ 顶层
   `diversity_status.tsv`（细菌/病毒全 OK、真菌 1 条 FAILED）。
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：48s（16 线程，6 样本 ×2 维度纯统计；首跑 22s exit 1 是 gate v1 把 GROUP_COL
   预初始化清空的编排层参数家族事故，af66706 修复后一次通过）。
 - **输出文件**：丰度/多样性表 + SVG/PDF 图 + RDS，路径规范 ✓；哨兵 `diversity_alpha_summary.tsv` ✓。
@@ -3434,7 +3434,7 @@ fi
 - 产出：`result/stat/{bacteria,virus}/differential/`（wilcox/deseq2/maaslin2/ancombc2 结果表 +
   volcano_deseq2 火山图 PDF）。
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：125s（MaAsLin2 拟合占大头，细菌 2521 + 病毒 2521 输入特征）。
 - **输出文件**：五法结果表 + 火山图 + 顶层 summary/status 双表；哨兵治理改造后可信 ✓。
 - **后续使用**：DESeq2 结果是 94 火山图与 98 报告 Differential 节的直接输入；LEfSe 出图走 99b。
@@ -3496,7 +3496,7 @@ setTimeLimit(elapsed = as.integer(Sys.getenv("NETCOMI_TIMEOUT", "7200")))   # 2h
   `result/integration/fungi/funomic_species_count.tsv`（FunOMIC 检测计数，6 样本 ×11,941 taxa）
   → 真菌网络可建（POWER_DISCLOSURE §四：两源不可互相印证）。
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：网络本体 85s；NetCoMi 组间比较在本数据规模下不可行（25.3h 仍未完成，已被
   熔断/终止策略取代）——这是本步最重要的"预期管理"数字。
 - **输出文件**：5 目录 ×（nodes/edges.tsv + network 图 SVG/PDF/TIFF）+ summary/status 双表；
@@ -3533,7 +3533,7 @@ bash scripts/94_stat_visualization.sh \
 - **披露（POWER_DISCLOSURE §一）**：所有按组着色的图在 3v3 下仅作组成/分布展示，不承载
   组间显著性声明——图内不添加 p 值标记。
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：41s（MicrobiotaProcess/ggplot2 渲染，真菌跳过）。
 - **输出文件**：约 30 张 SVG/PDF，全部落在各维度 `composition|diversity|differential/` 下 ✓。
 - **后续使用**：即取即用的论文插图层；出版主题由 `scripts/R/pub_theme.R` 统一（Arial/7pt 基准）。
@@ -3579,9 +3579,9 @@ bash scripts/96_stat_functional.sh \
 - 产出：`result/stat/bacteria/functional/pathway/`（maaslin3_results.tsv、maaslin3_raw/ 全套
   拟合产物、figures/volcano.{svg,pdf,tiff}、`bacteria_functional_pathway_done.txt` 哨兵）。
 - 96 家族其余子模块（96b 通路活性、96c 功能冗余、96 functional_permanova/network/integrated）
-  未列入本演示 W6 排程，无产物（与 98 报告 ML 节 Missing 口径一致）。
+  未列入本演示 排期批次 排程，无产物（与 98 报告 ML 节 Missing 口径一致）。
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：17s（874 特征 ×6 样本）。
 - **输出文件**：结果表 + 拟合残差 RDS + 火山图三格式；SKIPPED 兜底哨兵设计完备 ✓。
 - **后续使用**：显著通路表（本跑为空）本应供 94/sankey 与 98 报告功能节引用。
@@ -3591,7 +3591,7 @@ bash scripts/96_stat_functional.sh \
 
 ---
 
-## 96d · SIAMCAT 机器学习 —— SKIPPED-by-guard（输入治理守卫拒绝执行）
+## 96d · SIAMCAT 机器学习（输入治理守卫硬拒绝，exit 1）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「（本项目被守卫拒绝，属预期终态）如队列 ≥10 样本/组可执行：
@@ -3614,7 +3614,7 @@ n=6 下 10 折交叉验证不具证据力，**不做也不应做**——与 3v3 
 
 ---
 
-## 98a · 跨维度整合概览（98b–98g 八步，全部 exit 0）
+## 98a · 跨维度整合概览（98b–98g 六个整合步骤，全部 exit 0）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 依次执行 98 系八步整合（98b 细菌表、98c 病毒表+MGE、98d MAG+真菌表、
@@ -3646,7 +3646,7 @@ bash scripts/98g_cross_domain_correlation.sh -t 16 -w Project/Project_demo -r . 
 | 98f | `result/cross_domain/orthogroup/orthogroup_table.tsv`：**348,008 条蛋白 → 正交组（OG）映射**（MMseqs2 cluster.tsv + 全序列 fasta 存档） |
 | 98g | `result/cross_domain/correlation/`：跨域网络 **17,157 节点 / 121,695 边**（相关边 107,168 + 宿主预测边 14,527，212 连通分量） |
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：单步最长 88s（98b），八步串行 ~5.5 分钟——纯表联接/轻量聚类，无重计算。
 - **输出文件**：四目录（integration/{bacteria,virus,fungi} + cross_domain/{cluster,orthogroup,
   correlation}）全数落位，行数与上游产物对账一致 ✓。
@@ -3673,7 +3673,7 @@ bash scripts/99a_core_microbiome.sh \
 bash scripts/99a_core_microbiome.sh \
   -i Project/Project_demo/result/virus/votu/votu_table.tsv \
   -m Project/Project_demo/metadata.csv -d virus -o Project/Project_demo/result/stat/core_microbiome/virus
-# 质量复核 终稿复核 计划联审 W0 整改：显式确定性分组映射（treat→case），不依赖因子首水平
+# 质量复核 终稿复核 计划共同评审 排期批次 整改：显式确定性分组映射（treat→case），不依赖因子首水平
 for (cand in c("case", "treat", "treatment", "disease")) if (cand %in% group_values) { case_label <- cand; break }
 ```
 
@@ -3686,14 +3686,14 @@ for (cand in c("case", "treat", "treatment", "disease")) if (cand %in% group_val
 
 - **整改史（两处）**：① `_tpm` join 修复——病毒表列名 `Sample1_tpm` 对元数据 `Sample1` 交集
   为 0（与 93 同根因家族）；② case 映射修复——旧实现取因子首水平，在 `control` 排序靠前时
-  case/control 会**静默对调**；终稿复核 联审 W0 决策显式候选链映射（treat→case）。
+  case/control 会**静默对调**；终稿复核 共同评审 排期批次 决策显式候选链映射（treat→case）。
 - **离账重跑事故（NOTES 2026-10-17 条目）**：修复版于 10-17 06:34:02 手动重跑未走泳道、无事件
-  记录，产物随即被当轮 98 报告引用——第 9 轮审核以 mtime 抓出并补记（e93c4ca）；10-18 08:37
+  记录，产物随即被当轮 98 报告引用——轮复核以 mtime 抓出并补记（e93c4ca）；10-18 08:37
   带账重跑双维度，事件流完整（此即终版报告时间戳 08:39 的直接前置）。
 - 产出：每维度 `core_microbiome_{global,case,control}.csv` + summary.txt + 三图
   （丰度条图/流行度曲线/Venn）。
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：2s/维度。
 - **输出文件**：三层清单 + Venn 校验行（43+97+54=194 ✓ / 266+1133+334=1733 ✓）。
 - **后续使用**：核心清单是 98 报告与后续机制解读的"常驻菌群"基线；Venn 特有集仅为假设生成。
@@ -3730,7 +3730,7 @@ bash scripts/99b_lefse.sh \
   两种诚实呈现。
 - 产出：`result/stat/lefse/bacteria/lefse_results.tsv`（94 已联动渲染 `lefse_barplot.pdf`）。
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：3s。
 - **输出文件**：结果表 + 联动条图；列设计（wilcoxon_validated/lda_fallback）自带防过度解读
   护栏 ✓。
@@ -3754,9 +3754,9 @@ bash scripts/98_stat_report.sh -w Project/Project_demo -r . --force
 ```
 
 **执行结果**（终版 **`result/stat/report/report_20261106_035440.md`**，2026-11-06 03:54:40
-实测 exit 0 / 1s，96 行；前序版本 10-17 06:31/06:34 两版）：
+实测 exit 0 / 1s，143 行；前序版本 10-17 06:31/06:34 两版）：
 
-- **披露 banner 置顶（质量复核 9/10 轮审核要求，POWER_DISCLOSURE 前置引用）**：
+- **披露 banner 置顶（质量复核 9/10 轮复核要求，POWER_DISCLOSURE 前置引用）**：
   > **统计功效与口径披露（必读）**：本项目 n=6（3v3）为流程演示设计——置换检验 p 值下限
   > ≈0.05、LEfSe/SIAMCAT/网络组间比较受小样本限制，全部组间结论仅具探索性。详见
   > `docs/08_statistics/POWER_DISCLOSURE.md`。
@@ -3764,9 +3764,9 @@ bash scripts/98_stat_report.sh -w Project/Project_demo -r . --force
   Differential（六行 summary 表）、Networks（5/5 网络表）、Batch/ML/Cross-cohort
   （如实 "Missing"，对应 95a 不执行 / SIAMCAT 守卫拒绝 / 97 跨队列不适用）。
 - 终版时间点的前置链：10-18 08:37 99a 带账重跑（双维度 exit 0）→ 08:39 报告再生成——
-  报告与产物新鲜度对齐（第 9 轮审核 mtime 教训的闭环）。
+  报告与产物新鲜度对齐（轮复核 mtime 教训的闭环）。
 
-**执行点评**（编写方，统计段关口由质量复核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：1s（纯文件聚合，无计算）。
 - **输出文件**：单文件快照，时间戳防覆盖 ✓；banner 首次把 POWER_DISCLOSURE 从"旁置文档"
   提升为报告正文必读层。
@@ -3803,7 +3803,7 @@ bash scripts/24c_bac_amr_harmonize.sh -t 16 \
 - **加速空间**：无需加速
 - **内存硬盘**：极轻（<1MB 临时文件）
 
-**⚠️ 已知限制**（优化门禁 披露）：
+**⚠️ 已知限制**（优化质量检查 披露）：
 1. AMRFinderPlus protein-only 模式需补 Contig id/Start/Stop/Strand 四列占位值（0/0/0/+），非实测坐标
 2. hAMRonization 设计内跳过 Type=VIRULENCE 行（AMR 专注工具）
 3. 跨工具 ID 格式不同：AMRFinderPlus 短蛋白 ID vs RGI 完整 prodigal 描述串
@@ -3813,7 +3813,7 @@ bash scripts/24c_bac_amr_harmonize.sh -t 16 \
 
 ---
 
-## 优化基准对照：galah vs dRep（优化门禁 隔离评估）
+## 优化基准对照：galah vs dRep（优化质量检查 隔离评估）
 
 **执行结果**（2026-10-21 优化轮，隔离目录 `result/opt_bench/galah_vs_drep/`）：
 | 指标 | galah | dRep（现有） |
@@ -3826,7 +3826,7 @@ bash scripts/24c_bac_amr_harmonize.sh -t 16 \
 
 ---
 
-## 优化原型：MICOM 群落代谢建模（优化门禁 研究型可选）
+## 优化原型：MICOM 群落代谢建模（优化质量检查 研究型可选）
 
 **执行结果**（2026-10-21 优化轮，隔离目录 `result/opt_bench/micom_prototype/`）：
 - 10 物种个体 FBA：9/10 成功（Escherichia carveme 模型已知缺失）

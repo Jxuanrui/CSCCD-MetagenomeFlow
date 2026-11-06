@@ -3766,7 +3766,7 @@ bash scripts/98_stat_report.sh -w Project/Project_demo -r . --force
 # 产出：result/stat/report/report_$(date -u +%Y%m%d_%H%M%S).md
 ```
 
-**执行结果**（终版 **`result/stat/report/report_20261018_083900.md`**，2026-10-18 08:39:01
+**执行结果**（终版 **`result/stat/report/report_20261106_035440.md`**，2026-10-18 08:39:01
 实测 exit 0 / 1s，96 行；前序版本 10-17 06:31/06:34 两版）：
 
 - **披露 banner 置顶（质量审核 9/10 轮审核要求，POWER_DISCLOSURE 前置引用）**：
