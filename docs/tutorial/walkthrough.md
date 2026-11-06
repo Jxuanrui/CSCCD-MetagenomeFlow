@@ -3,7 +3,7 @@
 > **启动本项目（复制给 AI 助手）**：
 > 「请继续执行 CSCCD-MetagenomeFlow 演示项目 Project_demo 的下一步骤（模式一、
 > `MGX_MONITOR=1` 开启监控），完成后用 `run_monitor.py --text` 采集监控快照，
-> 同步更新 walkthrough.md 的执行结果，并请质量审核对本步结果做点评。」
+> 同步更新 walkthrough.md 的执行结果，并请质量复核对本步结果做点评。」
 
 | 事项 | 内容 |
 |---|---|
@@ -53,7 +53,7 @@ fastp \
 
 产出：`result/fastp/<样本>/`（清洁 reads 双端 ~4.4–5.6G/样本 + JSON/HTML 报告）；监控事件 12 条（6 开始 + 6 终态 ✓）全部成对落盘。
 
-**质量审核点评**（执行方按五维度起草，预处理段关口由质量审核复核）：
+**质量复核**编写方：
 - **运算时间**：442–493 秒/样本（16 线程、62G 真实数据、三线并行负载下）；纯 IO 密集，6 样本串行约 47 分钟。
 - **输出文件**：每样本清洁 reads 双端（4.4–5.6G）+ JSON/HTML 报告，合计约 30G，路径规范 ✓。
 - **后续使用**：清洁 reads 直接供 02 去宿主；fastp JSON 是 MultiQC（00_multiqc_report.sh）的输入，勿删。
@@ -95,7 +95,7 @@ kneaddata \
 
 计时：Sample<N> 131min、Sample<N> 143min、Sample<N> 159min、Sample<N> 129min、Sample<N> 171min、Sample<N> 121min（合计 14.3 小时）。产出：`result/kneaddata/<样本>/`（清洁 reads 双端 + orphan + 污染 reads + log/stats）。
 
-**执行点评**（执行方起草）：（执行方按五维度起草，预处理段关口由质量审核复核；HEAD: 050f1c6）:
+**执行点评**编写方：编写方:
 - **运算时间**：121–171 分钟/样本（16 线程，bowtie2 --very-sensitive-local 比对 ~42M reads vs 人基因组）；串行合计 14.3 小时。
 - **输出文件**：每样本 4 个主要文件（clean paired ×2 + orphan + stats），~8–12G/样本。
 - **后续使用**：清洁 reads 供 02b 配对修复 → 三界分析链；stats 是 MultiQC 输入。
@@ -134,7 +134,7 @@ seqkit pair \
 
 产出：新增 `_1.kneaddata.fastq.gz` / `_2.kneaddata.fastq.gz`（严格配对新文件）；`_kneaddata_raw` 原件保留（是 02 的哨兵，不可删）；哨兵 `.pair_repair_done.txt` ✓。磁盘额外增 ~58G。
 
-**执行点评**（执行方起草）：（执行方按五维度起草，预处理段关口由质量审核复核；HEAD: 050f1c6）:
+**执行点评**编写方：编写方:
 - **运算时间**：338–471 秒/样本（IO 密集：读写 4–5G 压缩 fastq），合计 ~39 分钟。
 - **输出文件**：新增配对文件（raw 保留作哨兵，磁盘额外 ~58G）；哨兵 6/6 落位。配对前后 reads 数完全一致（零丢失）。
 - **后续使用**：严格配对的清洁 reads 供三界分析链首步（11 metaphlan4 / 14 kraken2 等）；不配对修复则下游 bwa/metaphlan 会因 R1/R2 顺序错位而崩溃（v1.1.4 教训）。
@@ -170,7 +170,7 @@ metaphlan temp/metaphlan4/{sample}/{sample}_merged.fastq.gz \
 
 **执行结果**：6/6 成功，7380–10299 秒/样本（2.0–2.9h）。
 
-**执行点评**（执行方起草）：运算时间合理（bowtie2 比对全库索引为瓶颈）；产出标准 MetaPhlAn4 格式。
+**执行点评**编写方：运算时间合理（bowtie2 比对全库索引为瓶颈）；产出标准 MetaPhlAn4 格式。
 
 ---
 
@@ -191,7 +191,7 @@ merge_metaphlan_tables.py ${PROFILE_LIST} \
 
 **执行结果**：4 秒完成。产出：属级 TSV + 种级 CSV。
 
-**执行点评**（执行方起草）：秒级完成，无性能问题。
+**执行点评**编写方：秒级完成，无性能问题。
 
 ---
 
@@ -225,7 +225,7 @@ strainphlan \
 
 **执行结果**：3857 秒（64 分钟）。检测到 50 个可分析 clades，其中 7 个在全部 6 个样本中出现。
 
-**执行点评**（执行方起草）：默认只做检测（--print_clades_only），要得到菌株系统发育树需带 `-c <clade_id>` 再跑一次。本段演示到此为止。
+**执行点评**编写方：默认只做检测（--print_clades_only），要得到菌株系统发育树需带 `-c <clade_id>` 再跑一次。本段演示到此为止。
 
 ---
 
@@ -258,7 +258,7 @@ humann \
 - **必须用绝对路径 -w**——相对路径 + cd 嵌套导致首次运行全失败（详见 `.claude/reviews/incident_20261005_humann_relpath.md`）。
 - HUMAnN 双泳道加速 = 48.2h ÷ 25.4h ≈ 1.9×（仅 HUMAnN 步骤；全段墙钟 63.5h 含三线并行间隔）。
 
-**执行点评**（执行方起草）：运算时间是最长步骤（瓶颈待 HUMAnN log 分阶段计时确认；脚本注释认为最大性能收益点是 bowtie2-build custom ChocoPhlAn DB，非 DIAMOND）；按脚本注释 `--speed-mode balanced` 可提速约 5–10×（standard 8–15h → balanced 1–2h/样本，代价：unstratified 社区通路精度损失 <5%，<1% 丰度物种的 stratified 通路丢失）。
+**执行点评**编写方：运算时间是最长步骤（瓶颈待 HUMAnN log 分阶段计时确认；脚本注释认为最大性能收益点是 bowtie2-build custom ChocoPhlAn DB，非 DIAMOND）；按脚本注释 `--speed-mode balanced` 可提速约 5–10×（standard 8–15h → balanced 1–2h/样本，代价：unstratified 社区通路精度损失 <5%，<1% 丰度物种的 stratified 通路丢失）。
 
 ---
 
@@ -282,7 +282,7 @@ sed -i 's/_Abundance-RPKs//g' result/humann3/merged/genefamilies_relab.tsv
 
 **执行结果**：15 秒完成。pathabundance 524 行、genefamilies 995,738 行。
 
-**执行点评**（执行方起草）：合并表只包含**非分层数据**（无 `|` 分层行）。
+**执行点评**编写方：合并表只包含**非分层数据**（无 `|` 分层行）。
 
 ---
 
@@ -315,7 +315,7 @@ bracken \
 
 **执行结果**：6/6 成功，380–585 秒/样本。
 
-**执行点评**（执行方起草）：速度极快（k-mer 直接匹配，无比对）；数据库 77GB 常驻内存是 IO 瓶颈。
+**执行点评**编写方：速度极快（k-mer 直接匹配，无比对）；数据库 77GB 常驻内存是 IO 瓶颈。
 
 ---
 
@@ -336,7 +336,7 @@ combine_bracken_outputs.py \
 
 **执行结果**：9 秒完成。门级 26 行、属级 414 行、种级 1055 行（含表头）。
 
-**执行点评**（执行方起草）：三个层级均产出标准 TSV 矩阵（行=物种，列=样本）。
+**执行点评**编写方：三个层级均产出标准 TSV 矩阵（行=物种，列=样本）。
 
 ---
 
@@ -365,7 +365,7 @@ sylph-tax taxprof result/sylph/{sample}/{sample}.sylph_profile.tsv \
 
 **执行结果**：6/6 成功，228–338 秒/样本。
 
-**执行点评**（执行方起草）：速度最快（MinHash sketch 比对，GTDB-R220 全库 110k+ 基因组）；内存仅需 ~15GB。
+**执行点评**编写方：速度最快（MinHash sketch 比对，GTDB-R220 全库 110k+ 基因组）；内存仅需 ~15GB。
 
 ---
 
@@ -385,7 +385,7 @@ sylph-tax merge ${SYLPHMPA_FILE_LIST} \
 
 **执行结果**：5 秒完成。1859 行 × 7 列。
 
-**执行点评**（执行方起草）：秒级完成，无性能问题。
+**执行点评**编写方：秒级完成，无性能问题。
 
 ---
 
@@ -396,7 +396,7 @@ sylph-tax merge ${SYLPHMPA_FILE_LIST} \
 
 ---
 
-## ⚠️ 三界段空产出披露（质量审核 P0-5，2026-10-09）
+## ⚠️ 三界段空产出披露（质量复核 整改项，2026-10-09）
 
 ### 真菌 MetaPhlAn4（72）空产出
 5/6 样本的真核生物分类群 = 0（仅 UNCLASSIFIED 100.0%）。**这不是错误**——肠道
@@ -451,14 +451,14 @@ megahit -1 result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz \
 4905–7304 秒/样本（1.4–2.0h），六样本串行合计约 10.2 小时；合计 contigs 约 1.2G。
 
 **⚠️ 注意事项**：
-- **重复启动事故（2026-10-07）**：LANE-V 与 LANE-F 的启动脚本各被执行一遍，Sample<N> 的 megahit 被同时启动两次（run_events.jsonl 03:24:07 / 03:24:31 两条启动记录）；两进程共用同一输出目录且 51 号传了 `--force`，中间文件互相覆盖导致 SIGSEGV（exit 245，信号 -11），浪费约 12 分钟；10-08 以完全相同参数干净重跑成功。详见 `.claude/reviews/incident_20261007_megahit_dup_launch.md`，并由此建立防重复启动规程（NOTES.md 质量审核 P0-3）与组装器互斥纪律（P0-6：全局同一时刻只允许一个 megahit/metaSPAdes 运行）。
+- **重复启动事故（2026-10-07）**：LANE-V 与 LANE-F 的启动脚本各被执行一遍，Sample<N> 的 megahit 被同时启动两次（run_events.jsonl 03:24:07 / 03:24:31 两条启动记录）；两进程共用同一输出目录且 51 号传了 `--force`，中间文件互相覆盖导致 SIGSEGV（exit 245，信号 -11），浪费约 12 分钟；10-08 以完全相同参数干净重跑成功。详见 `.claude/reviews/incident_20261007_megahit_dup_launch.md`，并由此建立防重复启动规程（NOTES.md 质量复核 整改项）与组装器互斥纪律（整改项：全局同一时刻只允许一个 megahit/metaSPAdes 运行）。
 - **必须用绝对路径 -w**（13 步 HUMAnN 相对路径事故的教训延续；51 起病毒/真菌泳道监控事件中 `-w` 全部为绝对路径）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：4905–7304 秒/样本（16 线程 meta-large），串行合计约 10.2 小时。
 - **输出文件**：每样本 1 个 contigs.fa（153–239M，2.3–3.8 万条 ≥1.5kb contigs），路径规范；_megahit_tmp 中间文件已删。
 - **后续使用**：contigs 供 52 geNomad 与 53 VirSorter2 病毒鉴定（双工具交叉验证）。
-- **加速空间**：多样本并行受组装器互斥纪律限制（P0-6），不可同时跑两个组装器；单样本 16 线程已接近收益拐点。
+- **加速空间**：多样本并行受组装器互斥纪律限制（整改项），不可同时跑两个组装器；单样本 16 线程已接近收益拐点。
 - **内存/硬盘**：megahit 峰值内存约 15G（事故档案实测 14.9G / 755G 机器）；磁盘净增约 1.2G。
 
 ---
@@ -494,7 +494,7 @@ genomad end-to-end \
 
 产出：`result/virus/genomad/<样本>/<样本>.contigs_summary/`（virus/plasmid summary + 分类注释）。
 
-**执行点评**（执行方起草）：`--sensitivity 7.5` 为推荐区间（4.2–7.5）上限，灵敏度最高也最耗时；`--splits 4` 分块降内存，`--cleanup` 删中间文件。检出病毒 contigs 占组装总量约 2–4%，量级合理。与 53 VirSorter2 结果取并集（cat + rmdup）构成候选池供 54 号质检；最终病毒判定以**双工具交集为主结果**（严格），**并集仅作敏感性分析**（2026-10-11 用户approve口径；并集敏感性产物待补做）。
+**执行点评**编写方：`--sensitivity 7.5` 为推荐区间（4.2–7.5）上限，灵敏度最高也最耗时；`--splits 4` 分块降内存，`--cleanup` 删中间文件。检出病毒 contigs 占组装总量约 2–4%，量级合理。与 53 VirSorter2 结果取并集（cat + rmdup）构成候选池供 54 号质检；最终病毒判定以**双工具交集为主结果**（严格），**并集仅作敏感性分析**（2026-10-11 决策口径；并集敏感性产物待补做）。
 
 ---
 
@@ -535,9 +535,9 @@ env -i \
 | Sample<N> | 3,534 | 3,589 | 20030s |
 
 **⚠️ 注意事项**：
-- **首轮 6 连败**（2026-10-09 06:37）：全部 exit 1、3–4 秒即退——宿主机 miniforge3 的 PATH 泄入 SIF 容器触发 pkg_resources 报错。修复（commit 2270c3b）：`env -i` 清空环境仅传 HOME/PATH/APPTAINER_CACHEDIR。修复验证含 3 次 Sample<N> 短测试（0–3 秒），正式重跑当日全部成功。质量审核 C1 已更正失败事件构成（virsorter2 ×6 非 ×2）。
+- **首轮 6 连败**（2026-10-09 06:37）：全部 exit 1、3–4 秒即退——宿主机 miniforge3 的 PATH 泄入 SIF 容器触发 pkg_resources 报错。修复（commit 2270c3b）：`env -i` 清空环境仅传 HOME/PATH/APPTAINER_CACHEDIR。修复验证含 3 次 Sample<N> 短测试（0–3 秒），正式重跑当日全部成功。质量复核 C1 已更正失败事件构成（virsorter2 ×6 非 ×2）。
 
-**执行点评**（执行方起草）：病毒链最耗时步骤（比 51 组装本身更慢），瓶颈在跨 5 个病毒组（dsDNAphage/ssDNA/RNA/NCLDV/lavidaviridae）的 hallmark 搜索与评分；单样本内 16 线程已并行，样本级再并行需考虑 CPU 配额。产出 final-viral-boundary/score/combined.fa，与 52 geNomad 交叉验证。
+**执行点评**编写方：病毒链最耗时步骤（比 51 组装本身更慢），瓶颈在跨 5 个病毒组（dsDNAphage/ssDNA/RNA/NCLDV/lavidaviridae）的 hallmark 搜索与评分；单样本内 16 线程已并行，样本级再并行需考虑 CPU 配额。产出 final-viral-boundary/score/combined.fa，与 52 geNomad 交叉验证。
 
 ---
 
@@ -585,7 +585,7 @@ bracken \
 - Sample<N> 在 10-07 重复启动事故中被同时启动两次（两条记录均 exit 0），`output.gz` 经 `gzip -t` 核实完整。
 - 真菌信号仅 Sample<N> 显著（Fungi clade 0.67%，bracken 种级 S. cerevisiae fraction 0.98%），其余 5 样本接近零——与上文"三界段空产出披露"的四方法交叉验证一致。
 
-**执行点评**（执行方起草）：k-mer 直接匹配速度极快（77G 库常驻内存为 IO 瓶颈）；产出 report + output.gz + bracken×3 层级；后续可用于提取真菌 reads（78 号实际用了全量 reads，见 78 章披露）；多样本可并行；内存需容纳 77G 数据库。
+**执行点评**编写方：k-mer 直接匹配速度极快（77G 库常驻内存为 IO 瓶颈）；产出 report + output.gz + bracken×3 层级；后续可用于提取真菌 reads（78 号实际用了全量 reads，见 78 章披露）；多样本可并行；内存需容纳 77G 数据库。
 
 ---
 
@@ -614,7 +614,7 @@ metaphlan temp/fungi/metaphlan4/{sample}/{sample}.mapout \
 
 **执行结果**（2026-10-07 实测，6/6 成功，78–99 秒/样本——mapout 复用免比对所以秒级）：5/6 样本仅 `UNCLASSIFIED 100.0%`（真核分类群 = 0，肠道宏基因组真菌载量低于检出阈值的**预期空产出**，非错误）；仅 Sample<N> 检出 8 个真核分类群（k__Eukaryota → s__Saccharomyces_cerevisiae → t__EUK4932，0.7096%）。详见上文"三界段空产出披露"。
 
-**执行点评**（执行方起草）：`--ignore_bacteria --ignore_archaea` 只保留真核；复用 11 步 mapout 是本步快的关键（否则需 2h+/样本 重新比对）。空产出样本的 profile 文件仍正常落盘（UNCLASSIFIED 行），供 72b 合并。
+**执行点评**编写方：`--ignore_bacteria --ignore_archaea` 只保留真核；复用 11 步 mapout 是本步快的关键（否则需 2h+/样本 重新比对）。空产出样本的 profile 文件仍正常落盘（UNCLASSIFIED 行），供 72b 合并。
 
 ---
 
@@ -636,7 +636,7 @@ merge_metaphlan_tables.py ${PROFILE_LIST} \
 
 **执行结果**（2026-10-11 实测，3 秒完成）：taxonomy.tsv 9 个数据行（UNCLASSIFIED + Sample<N> 的 8 个真核层级，其余 5 样本全 0）× 6 样本；taxonomy_species.tsv / taxonomy_genus.tsv 各 1 个数据行；taxonomy_species.csv 仅 1 行数据（Saccharomyces cerevisiae，仅 Sample<N> 非零）。
 
-**执行点评**（执行方起草）：秒级完成；矩阵绝大部分为 0（5/6 样本无真核信号），统计分析需按披露口径注明真菌维度功效受限。
+**执行点评**编写方：秒级完成；矩阵绝大部分为 0（5/6 样本无真核信号），统计分析需按披露口径注明真菌维度功效受限。
 
 ---
 
@@ -660,7 +660,7 @@ FUNGI_PATTERN="g__(Candida|Aspergillus|Saccharomyces|Malassezia|Cryptococcus|Pic
 
 **执行结果**（2026-10-09 实测，6/6 成功，每样本 0–1 秒）：5/6 样本 0 数据行（仅表头，预期空产出）；Sample<N> 提取到 **184 条**真菌分层通路（全部 S. cerevisiae，文件 185 行含表头），与上文披露一致。
 
-**执行点评**（执行方起草）：过滤键是 `g__<属名>.`（ChocoPhlAn stratified 行的命名格式）而非 `|k__Eukaryota`——原始过滤条件曾写错，脚本注释已记录修正。ChocoPhlAn 仅覆盖约 70+ 种临床常见肠道真菌；全谱真菌定量需 75 FunOMIC（本演示未运行，classification 文件缺失时自动跳过）。
+**执行点评**编写方：过滤键是 `g__<属名>.`（ChocoPhlAn stratified 行的命名格式）而非 `|k__Eukaryota`——原始过滤条件曾写错，脚本注释已记录修正。ChocoPhlAn 仅覆盖约 70+ 种临床常见肠道真菌；全谱真菌定量需 75 FunOMIC（本演示未运行，classification 文件缺失时自动跳过）。
 
 ---
 
@@ -702,7 +702,7 @@ python $REPO/db/gut_fungi_db/GPA.py -i step5_fungi.sam -o {sample}.rc -s 0.95
 
 产出：`result/fungi/phf_profiler/<样本>/<样本>.rc`（cluster<TAB>value，**无表头行**）+ `.rc.cmd.log`。
 
-**执行点评**（执行方起草）：五次 bowtie2 `--fast` 过滤链设计合理（真菌基因集 → 去人 → 去细菌 → 去 rRNA → -k 1000 重比对），Singular（唯一比对）直接计数 + Escrow（多重比对）按比例分配是 Cell 187 原方法；tmp 目录用后即删；`.rc` 无表头这一格式约定后来在 74f 踩坑（见下章）。Sample<N> 簇数（72）与其 S. cerevisiae 信号一致。
+**执行点评**编写方：五次 bowtie2 `--fast` 过滤链设计合理（真菌基因集 → 去人 → 去细菌 → 去 rRNA → -k 1000 重比对），Singular（唯一比对）直接计数 + Escrow（多重比对）按比例分配是 Cell 187 原方法；tmp 目录用后即删；`.rc` 无表头这一格式约定后来在 74f 踩坑（见下章）。Sample<N> 簇数（72）与其 S. cerevisiae 信号一致。
 
 ---
 
@@ -728,9 +728,9 @@ PY
 **执行结果**（2026-10-09 实测）：首次运行 0 秒产出（后确认数据损坏）；修复后 `--force` 重跑 1 秒完成。merged_abundance.tsv = **91 簇 × 6 样本**；merged_abundance_with_taxonomy.tsv 追加 7 级分类列（Phylum→species）。
 
 **⚠️ 注意事项**：
-- **表头误判 bug（质量审核 P0 抓出，commit 351952d 修复）**：旧代码把 `.rc` 第一行**数据**当表头跳过，导致每个样本的最高丰度簇被丢掉（例：Sample<N> c86 S. cerevisiae 92.57% → 0）。修复：`.rc` 按无表头格式解析全部行；修复后 `--force` 重跑，矩阵恢复。内联修复无独立事故档案（NOTES.md 事故索引有录）。
+- **表头误判 bug（质量复核 整改项 抓出，commit 351952d 修复）**：旧代码把 `.rc` 第一行**数据**当表头跳过，导致每个样本的最高丰度簇被丢掉（例：Sample<N> c86 S. cerevisiae 92.57% → 0）。修复：`.rc` 按无表头格式解析全部行；修复后 `--force` 重跑，矩阵恢复。内联修复无独立事故档案（NOTES.md 事故索引有录）。
 
-**执行点评**（执行方起草）：秒级完成；教训——自定义文本格式必须显式定义并文档化表头约定，读取端/写入端应有一对一致性测试覆盖。
+**执行点评**编写方：秒级完成；教训——自定义文本格式必须显式定义并文档化表头约定，读取端/写入端应有一对一致性测试覆盖。
 
 ---
 
@@ -768,7 +768,7 @@ megahit \
 **⚠️ 注意事项**：
 - **输入口径披露**：本步用**全部清洁 reads（全群落）**组装，非仅真菌 reads——脚本内提示可先用 71/72 提取真菌 reads 提高纯度，但本次演示未提取。所谓"真菌组装"实为全群落 meta-sensitive 组装（contigs 4.6–6.2 万条，多于 51 号的 meta-large + 1.5kb 组合）。科学口径见 NOTES.md"真菌功能注释科学口径披露"。
 
-**执行点评**（执行方起草）：meta-sensitive + 1kb 下限是为低丰度真菌覆盖付出的代价（更慢、更多短 contig）；下游 79 Eukfinder 从中筛真核 contig；受组装器互斥纪律约束不可与其他 megahit 并行；`-m 0.9` 为内存比例上限，实际峰值远低于此。
+**执行点评**编写方：meta-sensitive + 1kb 下限是为低丰度真菌覆盖付出的代价（更慢、更多短 contig）；下游 79 Eukfinder 从中筛真核 contig；受组装器互斥纪律约束不可与其他 megahit 并行；`-m 0.9` 为内存比例上限，实际峰值远低于此。
 
 ---
 
@@ -805,7 +805,7 @@ eukfinder long_seqs \
 
 产出：`Eukfinder_results/<样本>.{Euk,Bact,Arch,EUnk,Unk}.fasta` 五分组（细菌占绝对多数，如 Sample<N> Bact 40,911 / Sample<N> Bact 31,857）。Centrifuge DB 为自建 EukDB（4 个 .cf，`db/eukfinder_db/centrifuge_db/`），PLAST 蛋白级分类已启用。
 
-**执行点评**（执行方起草）：真菌链最耗时步骤（Centrifuge 全库 k-mer 分类每条 contig）；Sample<N> 的 3,270 条真核 contig 与其 S. cerevisiae 强信号一致，其余样本 11–50 条为噪声水平；下游 79b 只消费 `.Euk.fasta`；多样本并行可线性提速（非组装器）。
+**执行点评**编写方：真菌链最耗时步骤（Centrifuge 全库 k-mer 分类每条 contig）；Sample<N> 的 3,270 条真核 contig 与其 S. cerevisiae 强信号一致，其余样本 11–50 条为噪声水平；下游 79b 只消费 `.Euk.fasta`；多样本并行可线性提速（非组装器）。
 
 ---
 
@@ -841,19 +841,10 @@ sample    lineage                    complete_pct  duplicated_pct  missing_pct
 Sample<N>   saccharomycetaceae_odb12.2  75.2          0.5             14.7
 ```
 
-**执行点评**（执行方起草）：空结果与上游信号一致（5 样本真核 contig 本就只有 11–50 条）；Sample<N> 完整度 75.2% / 重复 0.5%，佐证其 S. cerevisiae contig 集已接近基因组级组装质量。empty.flag（跑了没货）与 summary.tsv（有货）双标志设计正确区分了"未运行"与"预期空产出"，是低深度样本处理的正确姿势。
+**执行点评**编写方：空结果与上游信号一致（5 样本真核 contig 本就只有 11–50 条）；Sample<N> 完整度 75.2% / 重复 0.5%，佐证其 S. cerevisiae contig 集已接近基因组级组装质量。empty.flag（跑了没货）与 summary.tsv（有货）双标志设计正确区分了"未运行"与"预期空产出"，是低深度样本处理的正确姿势。
 
 ---
 
-（后续步骤章节随执行增量添加，格式同上：启动提示词 → 核心命令 → 执行结果 → 质量审核点评）
-
-<!-- ======== 以下章节为 CP3 收尾批次补写（2026-10-18，五路取证草稿单人合稿）======== -->
-
-<!-- 批次①片段：步骤 16-31e（细菌组装/基因目录/目录级注释链）。
-     证据来源：scripts/NN_*.sh 源码（参数逐条核实）、Project/Project_demo/result/ 产物计数、
-     logs/run_events.jsonl 事件流（16-31e 全部 exit 0，无失败记录）。
-     拼接位置：15d 之后、⚠️ 三界段空产出披露章节之前。
-     另：24b_bac_card_summary 未在演示中执行（无事件、无产物），章节留白待补，特此记录。 -->
 
 ## 16 · MEGAHIT 细菌从头组装（meta-large 预设，≥500 bp contigs，通用目录口径）
 
@@ -879,20 +870,20 @@ megahit \
 
 | 样本 | 耗时 | contigs（≥500bp） | 总碱基 (bp) | N50 | 文件大小 |
 |---|---|---|---|---|---|
-| Sample<N> | 5583s | 110,328 | 274,422,780 | 7,589 | 267M |
-| Sample<N> | 4606s | 91,223 | 233,544,095 | 9,986 | 227M |
-| Sample<N> | 7266s | 151,240 | 327,405,081 | 5,336 | 319M |
-| Sample<N> | 6513s | 103,211 | 305,791,075 | 11,354 | 296M |
-| Sample<N> | 5608s | 108,879 | 223,081,556 | 4,852 | 218M |
-| Sample<N> | 6523s | 131,738 | 287,583,301 | 5,681 | 280M |
+| Sample<N> | 5583s | 110,328 | 274,422,780 | 7,638 | 267M |
+| Sample<N> | 4606s | 91,223 | 233,544,095 | 10,086 | 227M |
+| Sample<N> | 7266s | 151,240 | 327,405,081 | 5,378 | 319M |
+| Sample<N> | 6513s | 103,211 | 305,791,075 | 11,433 | 296M |
+| Sample<N> | 5608s | 108,879 | 223,081,556 | 4,902 | 218M |
+| Sample<N> | 6523s | 131,738 | 287,583,301 | 5,723 | 280M |
 
 k 值阶梯以 megahit.log 实录为准：`k list: 27,37,...,127`（meta-large 按读长自动截断，非脚本头注释里的 21–141 通版阶梯）。脚本内置 kneaddata trailing-garbage 检测（gzip -t 不过则静默重压缩后再组装）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：4606–7266 秒/样本（16 线程、-m 0.9），串行合计 36,099 秒 ≈ 10.0 小时；为细菌泳道第一瓶颈。
 - **输出文件**：每样本 1 个 `{sample}.contigs.fa`（218–319M，合计约 1.6G）+ megahit.log；_megahit_tmp 中间目录已删。
 - **后续使用**：contigs 双向分流——供 17 Prodigal 基因预测（目录链）与 28 antiSMASH（BGC 链，自行预过滤 ≥1000bp）、32+ 分箱链（binning 推荐更长 contig，本目录口径取 500）。
-- **加速空间**：受组装器互斥纪律（P0-6）限制，同一时刻只允许一个 megahit/metaSPAdes 运行，样本级并行不可用；16 线程已近收益拐点。16b metaSPAdes 为叶子步骤无下游，演示中不执行（用户批准）。
+- **加速空间**：受组装器互斥纪律（整改项）限制，同一时刻只允许一个 megahit/metaSPAdes 运行，样本级并行不可用；16 线程已近收益拐点。16b metaSPAdes 为叶子步骤无下游，演示中不执行（用户批准）。
 - **内存/硬盘**：-m 0.9 上限 90% 可用内存；maxRSS 未计量（ENG-6 遗留项），参照 51 章事故档案 megahit 峰值约 15G 量级；磁盘净增约 1.6G。
 
 ---
@@ -927,7 +918,7 @@ prodigal \
 
 六样本合计预测基因 **2,014,354** 条（18 号合并输入的真实基数）。完整率 49.6–60.0%，宏基因组 contig 截断效应下属正常区间。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：1012–1775 秒/样本（单线程，CPU 密集），合计 8857 秒 ≈ 2.5 小时。
 - **输出文件**：每样本 faa（蛋白，95–141M）/fna（核苷酸）/gff（坐标，含 partial 标记）三件套，路径规范。
 - **后续使用**：fna 供 18 CD-HIT 跨样本去冗余；faa 供 31e FeGenie（per-sample 模式）；gff 留作基因坐标溯源。
@@ -970,12 +961,12 @@ cd-hit-est \
 | 去冗余率（对合并基数） | 50.6% |
 | 聚类信息 | nucleotide_nr.fa.clstr 112MB |
 
-> ⚠️ **双口径差异 43 条（质量审核终审 2026-10-15 要求注明）**：核酸目录 995,242 vs 蛋白目录 995,199，差 43 条。来源：Step 4 的 `seqkit translate --trim` 会把终止密码子裁掉，43 条基因翻译后为空序列，被 `seqkit seq -m 1` 过滤。下游两条消费链口径不同——19/20 Salmon 定量用核酸口径（995,242 行 quant.sf），21-31d 全部目录级注释用蛋白口径（995,199）。做注释×丰度 join 时以蛋白口径为准，差 43 条属设计内行为而非数据丢失。
+> ⚠️ **双口径差异 43 条（质量复核 2026-10-15 要求注明）**：核酸目录 995,242 vs 蛋白目录 995,199，差 43 条。来源：Step 4 的 `seqkit translate --trim` 会把终止密码子裁掉，43 条基因翻译后为空序列，被 `seqkit seq -m 1` 过滤。下游两条消费链口径不同——19/20 Salmon 定量用核酸口径（995,242 行 quant.sf），21-31d 全部目录级注释用蛋白口径（995,199）。做注释×丰度 join 时以蛋白口径为准，差 43 条属设计内行为而非数据丢失。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：1510 秒（16 线程，200 万基因规模处于 CD-HIT 舒适区）；合并/过滤两步合计占比小。
 - **输出文件**：nucleotide_nr.fa（899MB）+ protein_nr.fa（384MB）+ .clstr（112MB）；中间合并文件（all_genes*.fna）已清理。
-- **后续使用**：整个目录级注释链的根输入——19 建 Salmon 索引（核酸）、21-31e 蛋白目录级注释链（15 步，含 31e）（蛋白）；NR 目录是 CP1 关口的核对对象。
+- **后续使用**：整个目录级注释链的根输入——19 建 Salmon 索引（核酸）、21-31e 蛋白目录级注释链（15 步，含 31e）（蛋白）；NR 目录是 CP1 阶段检查点的核对对象。
 - **加速空间**：有——`--tool mmseqs`（MMseqs2 Linclust，O(n) 线性，同阈值语义）在 200 万基因上预计 5–15 分钟；>500 万基因规模时为推荐后端。演示采用 cdhit 后端（同行认可度优先）。
 - **内存/硬盘**：`-M 0` 不限内存，实际峰值未计量（2M 序列 95% 聚类典型 10–30G）；磁盘净增约 1.4G（含 clstr）。
 
@@ -994,12 +985,12 @@ salmon index \
     -i result/assembly/salmon/index \
     -p 16
 # 唯一副本高危步骤之一：--force 时先 mgx_force_backup 备份旧索引再重建
-# （质量审核终审 P0 防线：备份钩子挂 19/37/38/38b/54 五步）
+# （质量复核 整改项：备份钩子挂 19/37/38/38b/54 五步）
 ```
 
 **执行结果**（2026-10-12 实测，1/1 成功）：索引构建 944 秒（≈15.7 分钟）；索引目录 15G（hash.bin 11.4G 为主），info.json 哨兵齐备。995,242 条目标转录本， Salmon 自动选择 word size。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：944 秒（16 线程），一次性成本，供全部样本的 20 号复用。
 - **输出文件**：`result/assembly/salmon/index/`（15G，含 info.json/versionInfo.json/duplicate_clusters.tsv 等）；duplicate_clusters 哨兵检查通过（近冗余转录本由 Salmon 内部去重机制处理）。
 - **后续使用**：20 号每样本定量的唯一索引输入；基因 ID 即 NR 目录 ID，注释 join 零映射成本。
@@ -1040,7 +1031,7 @@ salmon quant \
 
 比对率 70.3–76.6%，符合肠道宏基因组对样本内组装目录的预期区间（跨样本目录含约 1/3 非本样本基因）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：207–317 秒/样本（16 线程），合计 1547 秒 ≈ 26 分钟——得益于 19 号的选择性比对索引，是全链性价比最高的定量步骤。
 - **输出文件**：每样本 `quant.sf`（Name/Length/TPM/NumReads）+ aux_info/lib_format_counts/logs；多样本合并由下游消费方按需 quantmerge 或直接逐样本 join（integration 段直接消费 quant.sf）。
 - **后续使用**：TPM 列是 `result/integration/bacteria/gene_annotation_matrix.tsv`（995,242 行基因 × TPM_6样本 + 全部注释列）的丰度来源；各循环/ARG/CAZyme 丰度表（arg_abundance.tsv 等 16 张）均由本步 TPM 与注释 join 而来。
@@ -1080,9 +1071,9 @@ emapper.py \
 | KEGG KO 注释（KEGG_ko ≠ "-"） | 456,884 | 45.9% |
 | 主注释表体积 | **302MB**（316,961,023 字节） | — |
 
-`eggnog.emapper.annotations` 单表 302MB 为目录级注释链最大文本产物；另有 seed_orthologs 77MB、hits 208MB。NOTES.md 执行进度索引记录本步 **validate PASS**（质量审核核证）。
+`eggnog.emapper.annotations` 单表 302MB 为目录级注释链最大文本产物；另有 seed_orthologs 77MB、hits 208MB。NOTES.md 执行进度索引记录本步 **validate PASS**（质量复核核证）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：5029 秒（16 线程 + --dbmem 注释库全内存加载），一次性聚合步骤。
 - **输出文件**：annotations/seed_orthologs/hits 三件套（合计约 590MB）；temp_dir 已清理。
 - **后续使用**：COG/KEGG_KO/EC/GO 列直接进 gene_annotation_matrix.tsv；CAZy 列与 25 dbCAN 交叉印证。
@@ -1113,7 +1104,7 @@ diamond blastp \
 
 **执行结果**（2026-10-12 实测，1/1 成功，16,606 秒 ≈ 4.6 小时）：命中 **903,807** 条（每 query 至多 1 条，unique query 数亦为 903,807，占蛋白目录 90.8%）；输出 70MB。NOTES.md 记录本步与 21 号同批 **validate PASS**。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：16,606 秒——注释链中最重的 diamond 搜索（48G 库 + --sensitive），约为 21 号 eggNOG 的 3.3 倍。
 - **输出文件**：kegg_diamond.tsv（m6 12 列，70MB），单文件无中间产物。
 - **后续使用**：sseqid 解析 KO 号后进 gene_annotation_matrix 的 KEGG_KO 列；与 21 号 eggNOG 的 KO 列（456,884）口径不同——本步仅相似度阈值（evalue 1e-5 + best hit），eggNOG 走直系同源推断，两者差异属方法论互补而非矛盾。
@@ -1142,7 +1133,7 @@ amrfinder \
 
 **执行结果**（2026-10-13 实测，1/1 成功，618 秒 ≈ 10 分钟）：命中 **363** 条（含 --plus 的应激/毒力/点突变元素），输出 90KB。NCBI 推荐严格阈值（ident 0.9 / coverage 0.6）下量级克制，与 24 号 RGI 的宽松口径形成层次。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：618 秒（16 线程，库小搜索快）。
 - **输出文件**：amrfinder_results.tsv（90KB，含 element_type/gene_symbol/HMM 族等列）。
 - **后续使用**：gene_annotation_matrix 的 ARG_AMRFinder 列与 arg_abundance.tsv 的严格口径来源。
@@ -1181,7 +1172,7 @@ rgi main \
 
 > ⚠️ **列位注意**：脚本内置摘要 awk 取 `$24=="Strict"` 计数，但 RGI 6.x 输出中第 24 列实为 Nudged、Cut_Off 在第 6 列，故运行时屏显 "Perfect: 0 | Strict: 0"；上表为按第 6 列重计的真实分布。消费 rgi_results.txt 时以 Cut_Off 列为准。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：409 秒（DIAMOND 后端；BLAST 后端会慢两个数量级）。
 - **输出文件**：rgi_results.txt（84MB）+ rgi_results.json（**5.5GB**，含比对可视化详情）+ localDB/。
 - **后续使用**：Perfect+Strict 进 gene_annotation_matrix 的 ARG_CARD 列；Loose 层供敏感性分析（默认不进主表）。24b 汇总步骤未在演示中执行（无事件无产物，章节留白）。
@@ -1210,10 +1201,10 @@ run_dbcan \
 
 **执行结果**（2026-10-13 实测，1/1 成功，199 秒）：overview.txt **35,891** 条 CAZyme 注释（占蛋白目录 3.6%），`#ofTools=1`（DIAMOND 列有值，HMMER/eCAMI 列全 "-"）；diamond.out 2.8MB；uniInput（384MB，工具回写的输入副本）残留于结果目录。
 
-> ⚠️ **单工具披露（NOTES.md 待披露清单落实项）**：脚本头注释宣称 dbCAN3 三工具投票（HMMER+DIAMOND+eCAMI），实际命令固定 `--tools diamond` 单工具——overview.txt 的 #ofTools 列实证为 1。质量审核 2026-10-13 approve C：保持单工具 + 文档披露，不改代码。消费 CAZy 结论时应知晓无 HMMER 交叉投票层（与 21 号 eggNOG 的 CAZy 列互为参照可部分弥补）。
-> ⚠️ **--force 语义修复史实**：原 25:57-59 存在无条件哨兵跳过（先于 FORCE 判断），--force 会被架空；commit `7b2e9ab`（2026-10-13 质量审核 P0 整改）删除该块，现哨兵跳过受 `FORCE -eq 0` 约束。本轮实际运行（07:30）发生在修复提交（08:11）之前，为正常首轮运行未受影响。
+> ⚠️ **单工具披露（NOTES.md 待披露清单落实项）**：脚本头注释宣称 dbCAN3 三工具投票（HMMER+DIAMOND+eCAMI），实际命令固定 `--tools diamond` 单工具——overview.txt 的 #ofTools 列实证为 1。质量复核 2026-10-13 决策 C：保持单工具 + 文档披露，不改代码。消费 CAZy 结论时应知晓无 HMMER 交叉投票层（与 21 号 eggNOG 的 CAZy 列互为参照可部分弥补）。
+> ⚠️ **--force 语义修复史实**：原 25:57-59 存在无条件哨兵跳过（先于 FORCE 判断），--force 会被架空；commit `7b2e9ab`（2026-10-13 质量复核 整改项）删除该块，现哨兵跳过受 `FORCE -eq 0` 约束。本轮实际运行（07:30）发生在修复提交（08:11）之前，为正常首轮运行未受影响。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：199 秒（单工具的代价优势；若开三工具投票，HMMER 层预计增加小时级耗时）。
 - **输出文件**：overview.txt（1.3MB）+ diamond.out + uniInput（384MB 残留中间件，可安全清除）。
 - **后续使用**：CAZyme 列进 gene_annotation_matrix 与 cazyme_abundance.tsv；GH/GT/CE/PL/CBM 家族分布供碳水化合物代谢分析。
@@ -1244,7 +1235,7 @@ diamond blastp \
 
 **执行结果**（2026-10-13 实测，1/1 成功，65 秒）：命中 **163,039** 条（unique query 同数，占蛋白目录 16.4%），输出 12MB。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：65 秒（库小、线程足）。
 - **输出文件**：vfdb_hits.tsv（12MB，m6 12 列）。
 - **后续使用**：VFDB 列进 gene_annotation_matrix 与 vfdb_abundance.tsv。
@@ -1275,7 +1266,7 @@ diamond blastp \
 
 **执行结果**（2026-10-13 实测，1/1 成功，37 秒）：命中 **69,760** 条（占蛋白目录 7.0%），输出 4.8MB。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：37 秒——注释链最快步骤。
 - **输出文件**：bacmet_hits.tsv（4.8MB）。
 - **后续使用**：BacMet 列进 gene_annotation_matrix（重金属/消毒剂抗性维度，与 ARG 双抗联动分析）。
@@ -1305,7 +1296,7 @@ antismash chunk_XX.fa \
 # 执行失败/平铺不完整绝不伪装成功），touch antismash_done.txt
 ```
 
-**执行结果**（2026-10-14 至 10-16 实测，6/6 成功，-t 8 插空负载（W3-C 排程），16,771–27,940 秒/样本，合计约 40.6 小时）：
+**执行结果**（2026-10-14 至 10-16 实测，6/6 成功，-t 8 插空负载（排期批次-C 排程），16,771–27,940 秒/样本，合计约 40.6 小时）：
 
 | 样本 | 耗时 | BGC regions | chunks |
 |---|---|---|---|
@@ -1318,8 +1309,8 @@ antismash chunk_XX.fa \
 
 合计 **1,778** 个 BGC region。每 chunk 含完整 gbk/json/zip/index.html；region GBK 平铺至样本层满足 28b 的 maxdepth-1 消费契约。
 
-**执行点评**（执行方起草）：
-- **运算时间**：16,771–27,940 秒/样本（8 线程）——注释链总耗时之最；-t 8 系 W3-C 插空排程决定（避开主线 16t），满线程可显著缩短。
+**执行点评**编写方：
+- **运算时间**：16,771–27,940 秒/样本（8 线程）——注释链总耗时之最；-t 8 系 排期批次-C 插空排程决定（避开主线 16t），满线程可显著缩短。
 - **输出文件**：每样本 antismash_done.txt 哨兵 + 平铺 region GBK（234–373 个）+ 24 个 chunk 目录 + _chunks/ 输入分块；单样本数百 MB 量级。
 - **后续使用**：region GBK 供 28b 新颖度评分；BGC 类型分布供次级代谢分析（RiPP/terpene/NRP 等由 json 可提）。
 - **加速空间**：大——chunk 级并行（rush/多进程跑 chunk_XX）或样本级并行；chunked 模式当前为 chunk 串行（resume 为 backlog 项 T-23，重跑须重建全部分块）。
@@ -1351,7 +1342,7 @@ antismash chunk_XX.fa \
 | Sample<N> | 234 | 82 | 30 |
 | Sample<N> | 291 | 147 | 52 |
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：11–14 秒/样本（纯表解析，无搜索）。
 - **输出文件**：每样本 `{sample}.bgc_novelty.tsv`（10 列，含 best_mibig_cluster/organism/product/hit_fraction/novelty_score）。
 - **后续使用**：novelty 排序筛选候选新 BGC（≥0.9 层优先），供后续靶向挖掘/人工核验。
@@ -1380,7 +1371,7 @@ defense-finder run \
 
 > ⚠️ **空产出定性（全短样本策略 §10.2：空产出继续 + 如实记录）**：42,181 条单基因 HMM 命中未能组装成任何多基因防御系统——unordered 模式下 MacSyFinder 仍要求系统成员基因在同一"replicon"（此处整目录蛋白被视作单一无名 replicon）内按模型配置聚集计数，NR 目录打散了原基因组邻接关系，多基因系统（如 CRISPR-Cas 完整级联、限制修饰系统对）的共定位证据已不可恢复。此为方法学结构性限制而非生物学"无防御系统"结论；如需防御系统分析，应对 33-36 号产出的 MAG（有连续坐标）重跑 DefenseFinder。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：1272 秒（16 workers，HMM 搜索本身正常完成）。
 - **输出文件**：systems/genes 空表 + hmmer.tsv（42,181 行单基因证据，保留供 MAG 层比对参照）。
 - **后续使用**：gene_annotation_matrix 的 Defense_system 列为空值来源即此；MAG 层重跑（ordered-replicon 模式）是拿到系统级结论的正道。
@@ -1411,7 +1402,7 @@ diamond blastp \
 
 **执行结果**（2026-10-13 实测，1/1 成功，225 秒）：命中 **113,187** 条（占蛋白目录 11.4%），输出 9.2MB。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：225 秒。
 - **输出文件**：ncyc_hits.tsv（9.2MB）。
 - **后续使用**：NCyc_gene 列进 gene_annotation_matrix 与 ncyc_abundance.tsv（氮循环各通路基因丰度）。
@@ -1442,7 +1433,7 @@ diamond blastp \
 
 **执行结果**（2026-10-13 实测，1/1 成功，1008 秒）：命中 **303,587** 条（占蛋白目录 30.5%——三循环中最高，磷代谢基因家族庞大所致），输出 25MB。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：1008 秒（库规模大于 NCyc 约 4.5 倍耗时）。
 - **输出文件**：pcyc_hits.tsv（25MB）。
 - **后续使用**：PCyc_gene 列进 gene_annotation_matrix 与 pcyc_abundance.tsv。
@@ -1475,7 +1466,7 @@ diamond blastp \
 
 **执行结果**（2026-10-13 实测，1/1 成功，7371 秒 ≈ 2.0 小时）：命中 **112,795** 条（占蛋白目录 11.3%），输出 8.7MB。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：7371 秒——同构 diamond 步骤中最慢（--more-sensitive 双重敏感模式代价；命中量与 NCyc 相当，耗时为其 33 倍，灵敏度档位差异所致）。
 - **输出文件**：scyc_hits.tsv（8.7MB）。
 - **后续使用**：SCyc_gene 列进 gene_annotation_matrix 与 scyc_abundance.tsv（提示语：结合 Salmon TPM 计算硫循环基因丰度，integration 段已落实）。
@@ -1516,7 +1507,7 @@ hmmscan \
 
 > 口径提示：hmmscan tblout 每行=一个 query×HMM 命中（一蛋白可命中多家族），脚本屏显"蛋白命中数"实为行数口径；真实蛋白覆盖以 unique query 711,526 为准。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：58,238 秒（8 进程 × 2 线程的并行已生效，但 hmmscan 对 2 万+ HMM 全库扫描本质昂贵）；比 31b SCyc 还慢 8 倍。
 - **输出文件**：pfam_hits.tblout（基因级）+ pfam_hits.domtblout（域坐标级）；temp/pfam_split 已清理。
 - **后续使用**：pfam_evidence.tsv 与 gene_annotation_matrix 的结构域层；与 21 号 eggNOG 的 PFAM 列交叉（eggNOG 只给家族名，本步给分值/覆盖率/域边界）。
@@ -1547,7 +1538,7 @@ mmseqs easy-search \
 
 **执行结果**（2026-10-14 实测，1/1 成功，857 秒 ≈ 14 分钟）：命中 **554,865** 条（占蛋白目录 55.7%），输出 41MB、13 列（含 qcov 覆盖率列）。紧随 31c 完成（02:04 → 02:18）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：857 秒——MMseqs2 预建索引 + easy-search 的速度优势 vs 同规模 diamond 步骤明显。
 - **输出文件**：sprot_hits.tsv（41MB）；temp/uniprot_sprot 已清理。
 - **后续使用**：识别 eggNOG（885,624）未覆盖但 Swiss-Prot 有高置信描述的基因（人工审核库的功能命名兜底层）；脚本提示语即此交叉用法。
@@ -1556,7 +1547,7 @@ mmseqs easy-search \
 
 ---
 
-## 31e · FeGenie 铁代谢基因预测（per-sample .faa，HMM GA 阈值，W3-C 插空）
+## 31e · FeGenie 铁代谢基因预测（per-sample .faa，HMM GA 阈值，排期批次-C 插空）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 全部 6 个样本执行 31e 铁代谢预测步骤（FeGenie，threads 8，per-sample prodigal 模式），完成后汇报各样本命中数与类别分布。」
@@ -1574,7 +1565,7 @@ FeGenie.py \
 # 主结果: FeGenie-geneSummary.csv（基因 ID + 功能分类 + HMM 得分，GA 阈值）
 ```
 
-**执行结果**（2026-10-14 实测，6/6 成功，-t 8（W3-C 插空排程），269–326 秒/样本，合计约 30 分钟）：
+**执行结果**（2026-10-14 实测，6/6 成功，-t 8（排期批次-C 插空排程），269–326 秒/样本，合计约 30 分钟）：
 
 | 样本 | 耗时 | 铁代谢基因命中 |
 |---|---|---|
@@ -1587,7 +1578,7 @@ FeGenie.py \
 
 合计 **13,415** 条，覆盖铁载体合成/转运、血红素、铁储存（ferritin）、调控（Fur）、磁小体等类别。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：269–326 秒/样本（8 线程 HMM 搜索，env 内嵌 iron HMM 集）。
 - **输出文件**：每样本 FeGenie-geneSummary.csv + 各类别明细表 + 样本级 summary。
 - **后续使用**：Iron 列进 gene_annotation_matrix 与 iron_abundance.tsv；与 eggNOG KO（如 K02013 铁转运）、Pfam（PF01032 FecA）三层互证可细分亚型。
@@ -1635,7 +1626,7 @@ coverm contig \
 
 产出：`result/binning/coverm/<样本>/`（depth.txt + 排序 BAM），合计约 35G。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：470–659 秒/样本（16 线程，瓶颈在 minimap2 比对 4–5G 清洁 reads 回 9–15 万条 contigs）。
 - **输出文件**：每样本 depth.txt（contig 级平均深度+方差，metabat 格式）+ 排序 BAM（5.1–6.8G）。
 - **后续使用**：depth.txt 是 33/34/35 三个 binner 的共同输入（abundance 信号）；BAM 为 SemiBin2 自监督模式的备用输入（本演示生产口径走 `--depth-metabat2` 预训练模型，未用 BAM）。
@@ -1674,7 +1665,7 @@ metabat2 \
 
 六个样本合计 584 bins（目录 ~976M）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：381–754 秒/样本（16 线程，tetranucleotide 频率计算为 CPU 密集）。
 - **输出文件**：每样本 `bin.*.fa` + contig2bin 表（tsv，供 36 DAS_Tool 消费）。
 - **后续使用**：三路 binner 之一，进 36 DAS_Tool 整合；`-m 1500` 只对 ≥1.5kb contig 分箱（与 16 号组装下限一致）。
@@ -1717,7 +1708,7 @@ run_MaxBin.pl \
 
 六个样本合计 497 bins（目录 ~1.7G）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：946–2210 秒/样本（16 线程 EM 迭代 ≤50 轮，三 binner 中最慢）。
 - **输出文件**：每样本 `bin.*.fasta` + `.maxbin2.tsv` contig2bin 表。
 - **后续使用**：三路 binner 之一，进 36 DAS_Tool 整合。
@@ -1757,7 +1748,7 @@ SemiBin2 single_easy_bin \
 
 六个样本合计 626 bins（目录 ~566M）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：290–549 秒/样本（16 线程）——预训练模型免自监督训练，比 34 MaxBin2 快 2–4×。
 - **输出文件**：每样本 `output_bins/*.fa.gz` + `.semibin2.tsv` contig2bin 表。
 - **后续使用**：三路 binner 之一，进 36 DAS_Tool 整合；最终 353 MAG 中 SemiBin2 来源占 193（55%），是主力 binner。
@@ -1800,7 +1791,7 @@ env -u R_LIBS_USER conda run --prefix envs/dastool --no-capture-output \
 
 **合计 353 MAGs**（semibin2 193 + maxbin2 103 + metabat2 57；目录 ~1.7G）。汇总表（`*_DASTool_summary.tsv`）抽查：多数入选 bin SCG completeness 98–100、redundancy 0–2。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：107–192 秒/样本（SCG HMM 搜索 + 贪心择优，轻量）。
 - **输出文件**：`{sample}_DASTool_contig2bin.tsv` + `{sample}_DASTool_bins/*.fa` + summary/proteins 中间件。
 - **后续使用**：353 bins 是 36b 重组装与 37 CheckM2 的输入；33b QuickBin 刻意不入 ensemble（2026-09-16 四样本对照实验显示加入第 4 个 binner 对高质量 MAG 恢复净有害，见脚本注释）。
@@ -1831,7 +1822,7 @@ metaWRAP reassemble_bins \
 # 两变体皆缺才回退原始 bin；哨兵记 N_INPUT/N_REASSEMBLED/N_FALLBACK/FALLBACK_BINS
 ```
 
-**执行结果**（2026-10-13/14 实测，6/6 成功，R 泳道严格串行——组装器互斥纪律 P0-6）：
+**执行结果**（2026-10-13/14 实测，6/6 成功，R 泳道严格串行——组装器互斥纪律 整改项）：
 
 | 样本 | 耗时 | 输入 bins | 真重组装 | 回退 |
 |---|---|---|---|---|
@@ -1842,13 +1833,13 @@ metaWRAP reassemble_bins \
 | Sample<N> | 20,635s（5.7h） | 74 | 73 | 1 |
 | Sample<N> | 22,624s（6.3h） | 59 | 59 | 0 |
 
-**352/353 真重组装**；唯一回退 H10 `semibin2_271`（CP2-MAG 字节级比对确认其与 DAS_Tool 原件逐字节一致）。串行合计约 31.7 小时。产出：`result/binning/reassembly/<样本>/reassembled_bins/*.fa`（与输入 bin 集一一对应，~873M）。
+**352/353 真重组装**；唯一回退 H10 `semibin2_271`（病毒段复核 字节级比对确认其与 DAS_Tool 原件逐字节一致）。串行合计约 31.7 小时。产出：`result/binning/reassembly/<样本>/reassembled_bins/*.fa`（与输入 bin 集一一对应，~873M）。
 
 **⚠️ 注意事项**：
-- **静默回退风险**（NOTES.md 待披露项）：metaWRAP 失败时回退原始 bin 且 exit 0——CP2-MAG 逐样本核对哨兵 N_FALLBACK 兜底；H1–H4 为 0（四审 P1-5），H10 的 1 例回退身份由字节比对确认（该哨兵产生于 P2 修复前，无 FALLBACK_BINS 行；此后哨兵已记 FALLBACK_BINS，commit 002e3ae）。
+- **静默回退风险**（NOTES.md 待披露项）：metaWRAP 失败时回退原始 bin 且 exit 0——病毒段复核 逐样本核对哨兵 N_FALLBACK 兜底；H1–H4 为 0（四审 P1-5），H10 的 1 例回退身份由字节比对确认（该哨兵产生于 P2 修复前，无 FALLBACK_BINS 行；此后哨兵已记 FALLBACK_BINS，commit 002e3ae）。
 - 组装器互斥：同一时刻全局只允许一个 megahit/metaSPAdes/SPAdes 系进程，故六样本串行。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：3.4–6.3 小时/样本（每 bin 一次 SPAdes 精细组装，串行合计 31.7h，MAG 链最耗时环节之一）。
 - **输出文件**：`reassembled_bins/`（353 个 bin：352 重组装 + 1 回退），哨兵 `.reassembly_done.txt` 记录回退明细。
 - **后续使用**：37 CheckM2 优先消费本目录（无 reassembly 时回退读 DAS_Tool 原件，脚本对旧项目状态兼容）。
@@ -1878,20 +1869,20 @@ checkm2 predict \
 awk -F'\t' 'NR==1 || ($2>=50 && $3<=10)' quality_report.tsv > filtered_report.tsv
 ```
 
-**执行结果**（两次实测：10-13 首跑 981s（重组装前原 bins，即 W1 原始基线）；10-14 `--force` 重跑 1042s（36b 重组装后正式版），16 线程）：
+**执行结果**（两次实测：10-13 首跑 981s（重组装前原 bins，即 排期批次 原始基线）；10-14 `--force` 重跑 1042s（36b 重组装后正式版），16 线程）：
 
 | 口径 | 输入 bins | 通过（comp≥50/cont≤10） | 淘汰 |
 |---|---|---|---|
 | 正式版（重组装后，10-14） | 353 | **269** | 84 |
-| W1 原始基线（重组装前，10-13） | 353 | 269 | 84 |
+| 排期批次 原始基线（重组装前，10-13） | 353 | 269 | 84 |
 
 产出：`result/binning/checkm2/quality_report.tsv`（353 行 + 表头，含 Completeness_Model_Used/Translation_Table_Used 等 12 列）+ `checkm2_filtered/filtered_report.tsv`（269）+ `drep_input/`（269 个 MAG 副本）。Neural Network (Specific Model) 为主预测模型。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：981–1042 秒/轮（16 线程 DIAMOND uniref100 KO 检索 + NN 推理，353 bins）。
 - **输出文件**：quality_report（全量）、filtered_report + drep_input（269）。
 - **后续使用**：269 个过滤 MAG 供 38 dRep 去冗余；filtered_report 的 comp/cont 亦被 38 复用为 genomeInfo（免 dRep 内部重跑 CheckM1）。
-- **加速空间**：单轮 17 分钟已很快；`--force` 有备份钩子（mgx_force_backup，质量审核 P0 防线 ④）。
+- **加速空间**：单轮 17 分钟已很快；`--force` 有备份钩子（mgx_force_backup，质量复核 整改项 ④）。
 - **内存/硬盘**：CheckM2 数据库（uniref100 KO dmnd）常驻；checkm2 目录 ~1.1G（含 protein_files/diamond_output 中间件）。
 
 ---
@@ -1917,20 +1908,20 @@ dRep dereplicate \
     --genomeInfo checkm2_genomeInfo.csv
 ```
 
-**执行结果**（两次实测：10-13 首跑 96s（W1 基线）；10-14 `--force` 79s 正式版，16 线程）：
+**执行结果**（两次实测：10-13 首跑 96s（排期批次 基线）；10-14 `--force` 79s 正式版，16 线程）：
 
 | 口径 | 输入 | 参与聚类 | 代表 MAGs |
 |---|---|---|---|
 | 正式版（重组装后） | 269 | 233 | **128** |
-| W1 基线（重组装前） | 269 | 234 | 127 |
+| 排期批次 基线（重组装前） | 269 | 234 | 127 |
 
-正式版 128 代表 = **HQ 96（comp≥90/cont≤5）+ MQ 32**（全部达 MIMAG medium，CP2-MAG 核真）。聚类构成：78 单例 + 19×2 + 16×3 + 7×4 + 7×5 + 1×6（233 个基因组归 128 簇）。
+正式版 128 代表 = **HQ 96（comp≥90/cont≤5）+ MQ 32**（全部达 MIMAG medium，病毒段复核 核真）。聚类构成：78 单例 + 19×2 + 16×3 + 7×4 + 7×5 + 1×6（233 个基因组归 128 簇）。
 
 **⚠️ 注意事项（NOTES.md 待披露项落实）**：
 - **实际质量门槛为 comp≥75 / cont<25，非 ≥50/≤10**：dRep 对 genomeInfo 施加内建默认过滤，269 个（50/10 口径）MAG 中 36 个被挡在聚类之外（以 filtered_report 重算 comp≥75/cont<25 恰为 233，与 Cdb.csv 行数吻合）。即 38 的有效输入比 37 的过滤产出更严。
 - dRep 拒绝写入已有人口的工作目录——脚本先行 `rm -rf` 输出目录（Project01 三次陈旧 MAG 计数假成功的教训）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：79–96 秒（skani 二级聚类远快于 fastANI）。
 - **输出文件**：`dereplicated_genomes/`（128 .fa，~352M）、`data_tables/Cdb.csv`（233 行聚类表）。
 - **后续使用**：128 代表是 38b GUNC、39/39b–d 定量与菌株分析、40 GTDB-Tk、41 系注释、43 GEM 链的统一 MAG 集。
@@ -1959,20 +1950,20 @@ timeout --signal=TERM --kill-after=60 21600 \
         --detailed_output
 ```
 
-**执行结果**（两次实测：10-13 首跑 1475s（W1 基线，127 MAGs）；10-14 `--force` 1510s 正式版，16 线程）：
+**执行结果**（两次实测：10-13 首跑 1475s（排期批次 基线，127 MAGs）；10-14 `--force` 1510s 正式版，16 线程）：
 
 | 口径 | MAGs | GUNC pass | GUNC fail |
 |---|---|---|---|
 | 正式版（128 代表） | 128 | **81** | **47** |
-| W1 基线（127 代表） | 127 | — | — |
+| 排期批次 基线（127 代表） | 127 | — | — |
 
 fail 组 CSS（clade separation score）中位数 0.57、范围 0.46–1.0（嵌合/跨谱系污染信号）。主结果表：`result/binning/gunc/GUNC.progenomes_2.1.maxCSS_level.tsv`。
 
-**⚠️ 注意事项（GUNC 披露，approve #2）**：
+**⚠️ 注意事项（GUNC 披露，决策）**：
 - **全量保留，不做二次过滤**：47 个 fail MAG 不从 128 代表集中剔除——演示定位为如实记录 GUNC 信号；**下游消费 GUNC 一律以汇总 TSV 为准**（per-MAG 判读回溯 `GUNC.*.tsv`）。
-- gunc_output 目录曾混入 16 个 W1 陈旧文件（计数 144≠128），P1 修复后 `--force` 前清空旧产物（commit 002e3ae）；对已存旧产物不追溯，以汇总 TSV 为唯一事实源。
+- gunc_output 目录曾混入 16 个 排期批次 陈旧文件（计数 144≠128），P1 修复后 `--force` 前清空旧产物（commit 002e3ae）；对已存旧产物不追溯，以汇总 TSV 为唯一事实源。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：1475–1510 秒/轮（16 线程 diamond vs progenomes2.1 全库，128 MAGs ~25 分钟）。
 - **输出文件**：`GUNC.progenomes_2.1.maxCSS_level.tsv`（主表，128 行）+ 各 taxlevel 明细。
 - **后续使用**：与 37 CheckM2 互补的嵌合层；统计/解读时按上表披露口径标注 47 个嵌合信号 MAG。
@@ -1981,12 +1972,12 @@ fail 组 CSS（clade separation score）中位数 0.57、范围 0.46–1.0（嵌
 
 ---
 
-## ⚠️ W1 基线对照（CP2-MAG approve A：重组装前后对照）
+## ⚠️ 排期批次 基线对照（病毒段复核 决策 A：重组装前后对照）
 
-CP2-MAG 关口 C1 要求的原始基线（重组装前口径）由影子工作目录重建（`/tmp/lane_w1_baseline.sh`：
+病毒段复核 阶段检查点 C1 要求的原始基线（重组装前口径）由影子工作目录重建（`/tmp/lane_w1_baseline.sh`：
 symlink dastool bins 进隔离 workdir 跑 37/38/38b，现行路径零接触；产物归档于 2026-10-15）：
 
-| 指标 | W1 基线（重组装前） | 正式版（重组装后） |
+| 指标 | 排期批次 基线（重组装前） | 正式版（重组装后） |
 |---|---|---|
 | CheckM2 过滤（50/10） | 269 | 269 |
 | dRep 代表 | **127** | **128** |
@@ -2020,7 +2011,7 @@ coverm genome \
 
 **执行结果**（2026-10-16 实测，6/6 成功，542–734 秒/样本）：每样本 128 个 MAG ×5 种度量（Relative Abundance/RPKM/TPM/Read Count/Covered Bases）+ 1 行 unmapped（合计 129 数据行 × 6 样本）。产出：`result/binning/coverm_quant/<样本>.tsv`（六文件合计 ~64K）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：542–734 秒/样本（reads 比对回 330M 合并参考为瓶颈）。
 - **输出文件**：每样本一个宽表（行=MAG，列=5 度量）。
 - **后续使用**：MAG 相对丰度矩阵直接供差异分析与 98 系统计；TPM 列可用于跨样本归一。
@@ -2051,7 +2042,7 @@ coverm make \
 
 **执行结果**（2026-10-16 实测，6/6 成功，486–656 秒/样本）：合并参考 `combined_mags.fa` 330M + `combined_mags.stb` 1.8M（跨样本共享只建一次）；每样本 `{sample}.sorted.bam(+.bai)`，目录合计 ~42G。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：486–656 秒/样本（比对回 128 基因组合并参考）。
 - **输出文件**：合并参考 + .stb + 六样本排序索引 BAM。
 - **后续使用**：39c inStrain profile 的直接输入；.stb 使 profile 结果能按 MAG 聚合。
@@ -2090,7 +2081,7 @@ inStrain profile \
 
 产出：每样本 `output/{sample}_{genome_info,scaffold_info,SNVs,linkage,mapping_info}.tsv(.gz)`（目录合计 ~28G）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：3.2–4.5 小时/样本（逐 scaffold 逐位点扫描 128 基因组，inStrain 链最耗时步骤）。
 - **输出文件**：genome_info（覆盖度/微多样性/popANI 就绪统计）、SNV 表（0.71–1.43M 位点/样本）、linkage 连锁表。
 - **后续使用**：39d 跨样本 compare 的输入；`_genome_info.tsv` 亦用于按 MAG 过滤有效覆盖。
@@ -2118,7 +2109,7 @@ inStrain compare \
 
 **执行结果**（2026-10-17 实测，成功，7399 秒 = 2.06h）：6 样本 → 15 个样本对；comparisonsTable 237,170 行（scaffold 级），genomeWide 长表 1,920 行（= 128 基因组 × 15 对），汇总矩阵 `strain_comparison_summary.tsv` 128 基因组。**全 15 对样本均判同株（popANI≥0.99999）的基因组数 = 0**（全跨样本共存 MAG 均存在菌株替换/漂移，如 Sample<N>__maxbin2_bin.021_sub 最小 popANI 0.9948）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：7399 秒（两两 profile 重建比对，15 对组合）。
 - **输出文件**：comparisonsTable / genomeWide / strain_clusters（751 行）/ summary 宽矩阵（~97M 合计）。
 - **后续使用**：同株判定列（all_same_strain）与 min_popANI 可直接进统计段做 treat/control 菌株更替分析。
@@ -2145,7 +2136,7 @@ gtdbtk classify --genome_dir result/binning/drep/dereplicated_genomes \
 
 **执行结果**（2026-10-15 实测，成功，3054 秒 = 51 分钟，16 线程）：**128/128 MAGs 全部获分类**（`gtdbtk.bac120.summary.tsv`，无古菌命中）。分类深度：全部止步属级——**128 个 MAG 无一获得种级指派（s__ 空）**，可作"潜在新种候选集"解读口径；distinct 属 81 个。门级构成：Bacillota_A 77、Bacteroidota 17、Actinomycetota 10、Bacillota 8、Bacillota_C 7、Pseudomonadota 6、Fusobacteriota 1、Desulfobacterota 1。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：3054 秒（identify 的 marker 检索为主；genomeInfo 无关，128 MAGs 规模友好）。
 - **输出文件**：`classify/gtdbtk.bac120.summary.tsv`（128 行）+ MSA/树文件（目录 ~781M）。
 - **后续使用**：属名喂 41 Prokka `--genus`（全部 128 个 MAG 命中）；分类列供 98 系按门/属聚合。
@@ -2171,13 +2162,13 @@ prokka --outdir result/binning/prokka/{mag} \
 # 全部完成后合并各 MAG 的 .tsv 为 prokka_summary.tsv
 ```
 
-**执行结果**（2026-10-15 实测，成功，批日志耗时 20,778 秒 = 5.8h）：**128/128 MAG 注释成功、失败 0**；合并表 `prokka_summary.tsv` 307,798 条 CDS 注释行；128 个 MAG 全部用上 GTDB-Tk 属名（batch.log 计数 128）。产出目录 ~3.5G（每 MAG gff/faa/ffn/gbk/tsv）。
+**执行结果**（2026-10-15 实测，成功，批日志耗时 20,778 秒 = 5.8h）：**128/128 MAG 注释成功、失败 0**；合并表 `prokka_summary.tsv` 307,798 行，其中 **CDS 296,989 条**（与各 `*.faa` header 数一致）+ tRNA/rRNA/repeat 等非 CDS 特征 10,682 行 + 混入的重复表头 127 行——**引用 CDS 数请用 296,989，勿用 307,798**；128 个 MAG 全部用上 GTDB-Tk 属名（batch.log 计数 128）。产出目录 ~3.5G（每 MAG gff/faa/ffn/gbk/tsv）。
 
 **⚠️ 注意事项**：
-- **首跑即炸（2026-10-15 01:34，exit 1、1 秒）**：`MAG_FILTER` 在 `set -u` 下未初始化（不传 `-m` 即触发 unbound variable）。修复：预初始化 `MAG_FILTER=""`（commit 639b750；同日 43/43b 的"-t 声明未注册"同属首跑接口缺陷家族，36f8b29）。此后 P0 防线 ①（mgx_parse 预初始化全部带值选项）从源头消灭此类。
+- **首跑即炸（2026-10-15 01:34，exit 1、1 秒）**：`MAG_FILTER` 在 `set -u` 下未初始化（不传 `-m` 即触发 unbound variable）。修复：预初始化 `MAG_FILTER=""`（commit 639b750；同日 43/43b 的"-t 声明未注册"同属首跑接口缺陷家族，36f8b29）。此后 整改项 ①（mgx_parse 预初始化全部带值选项）从源头消灭此类。
 - `--force` 会清空整个 prokka 输出目录重建（防上一轮孤儿目录残留）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：20,778 秒/128 MAGs ≈ 2.7 分钟/MAG（16 线程，`--rfam` 的 Infernal 扫描占大头）。
 - **输出文件**：每 MAG 七件套 + prokka_summary.tsv + prokka_done.txt。
 - **后续使用**：gff 供 41c Roary；faa/ffn 供后续功能查询；`--genus` 使 locus 命名带分类语义。
@@ -2201,7 +2192,7 @@ mlst --nopath --quiet --threads 16 \
 
 **执行结果**（2026-10-15 实测，成功，102 秒）：128 MAGs 全部扫描，**scheme 与 ST 全部为 "-"（0 个 MAG 命中任何 MLST 方案）**——GTDB 门级构成以 Bacillota_A 等肠道共生菌为主，多数种不在 PubMLST 病原 scheme 覆盖内，属宏基因组 MAG 集的**预期空产出**（非错误）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：102 秒（blast 同源扫描，极快）。
 - **输出文件**：`result/wgs/mlst/mlst.tsv`（128 行全 "-"）+ mlst_raw.txt。
 - **后续使用**：无下游消费（空产出）；如实成章记录。
@@ -2225,12 +2216,12 @@ roary -p 16 -e --mafft -i 95 -cd 99 \
 # 有专门检测，写 FAILED 哨兵（此为设计内路径，非脚本缺陷）
 ```
 
-**执行结果**（2026-10-15 实测，exit 0，22,572 秒 = 6.3h）：Roary 聚出 **280,555 簇 > --group_limit 50,000**，按官方语义提前退出（"Multifastas not created"），写 FAILED 哨兵（`summary_statistics.txt` 记 WARNING + INPUT_GFFS=128）。**原因定性：128 个 MAG 是跨属多物种集合（81 属），泛基因组分析对象错位**——Roary 适用于同种近缘基因组组，本结果不代表污染（哨兵文案已注明）。
+**执行结果**（2026-10-15 实测，exit 0，22,572 秒 = 6.3h）：Roary 聚出 **280,554 簇 > --group_limit 50,000**，按官方语义提前退出（"Multifastas not created"），写 FAILED 哨兵（`summary_statistics.txt` 记 WARNING + INPUT_GFFS=128）。**簇表实际已生成**：`result/wgs/pangenome_1792049455/gene_presence_absence.csv`（280,554 簇），核心/软核心基因组为 0（跨 81 属无共有基因）。**原因定性：128 个 MAG 是跨属多物种集合（81 属），泛基因组分析对象错位**——Roary 适用于同种近缘基因组组，本结果不代表污染（哨兵文案已注明）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：22,572 秒（绝大部分耗在聚类到达 5 万簇上限前的 CD-HIT/BLAST 全比对）。
 - **输出文件**：summary_statistics.txt（WARNING 哨兵）、roary.log、presence_absence_matrix.txt（NA）。
-- **后续使用**：无（预期空产出）；如需真正泛基因组，应对单物种内多 MAG 子集单独运行（按 40 的属标签过滤后重跑）。
+- **后续使用**：簇表可查（280,554 簇），但核心基因组为 0、Multi-FASTA 未生成，不能用于核心基因分析；如需真正泛基因组，应对单物种内多 MAG 子集单独运行（按 40 的属标签过滤后重跑）。
 - **加速空间**：提高 `--group_limit` 可跑完但产出无解释意义，不建议。
 - **内存/硬盘**：温和。
 
@@ -2252,7 +2243,7 @@ snippy-clean_full_aln core.full.aln > core.clean.aln
 
 **执行结果**（2026-10-15 实测，成功，2050 秒 = 34 分钟）：参考 = 最大 MAG `Sample<N>__metabat2_bin.120`（4.56Mb）；**128/128 MAG 单独比对全部成功，核心 SNP 总数 = 0**（core.tsv 仅表头）。这是宏基因组场景的**预期结果**：跨样本独立组装的 MAG 本质是不同基因组（81 属集合），core 区域无共同多态位点——脚本对 snippy-core 尾部 snp-sites "No SNPs" 非零退出有专门豁免（core.full.aln/core.tab 齐全即算成功，见脚本注释）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：2050 秒（128 次 minimap2 比对为主）。
 - **输出文件**：core.tsv（空表头）、core.full.aln、core.clean.aln、summary.txt、每 MAG snps.tab 子目录。
 - **后续使用**：无统计意义（预期空产出）；菌株级差异请用 39d popANI 口径。
@@ -2266,7 +2257,7 @@ snippy-clean_full_aln core.full.aln > core.clean.aln
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 全部 6 个样本执行 42 MGE 注释（ISfinder/ICEberg/integrall/transposase/mobileOG，threads 8），完成后汇报各样本各工具命中数。」
 
-**核心执行命令**（摘自 `scripts/42_bac_mge.sh`；W3-C 插空泳道 -t 8）：
+**核心执行命令**（摘自 `scripts/42_bac_mge.sh`；排期批次-C 插空泳道 -t 8）：
 
 ```bash
 # 1) ISfinder：蛋白级 mmseqs（--min-seq-id 0.9 -e 1e-5）
@@ -2291,7 +2282,7 @@ mmseqs easy-search --threads 8 --max-accept 1 -e 1e-5 --min-seq-id 0.9 \
 
 mobileOG NR 级（六样本共享一份）：**65,291** 条命中。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：1,176–2,738 秒/样本（8 线程插空负载；contig/基因级 blastn 与蛋白级比对混合负载）。
 - **输出文件**：`result/mge/{isfinder,iceberg,integrall,transposase}/<样本>/*_hits.tsv` + `mobileog/mobileog_nr_hits.tsv`（~150M）。
 - **后续使用**：结合 Salmon TPM 与 mobileOG 层级可量化各 MGE 类型丰度（脚本尾注提示）；integrall 命中为基因级计数（25–37 万行/样本），统计时需先按基因去重/按 contig 聚合。
@@ -2317,7 +2308,7 @@ plasmidfinder.py \
     -x -q
 ```
 
-**执行结果**（2026-10-14 实测，6/6 成功，513–895 秒/样本；W3-C 插空 -t 8）：
+**执行结果**（2026-10-14 实测，6/6 成功，513–895 秒/样本；排期批次-C 插空 -t 8）：
 
 | 样本 | 耗时 | replicon 命中 |
 |---|---|---|
@@ -2330,7 +2321,7 @@ plasmidfinder.py \
 
 命中 4–25 条/样本（Sample<N> 最多，与其全链微生物负载最高的样本特征一致）。产出：`results_tab.tsv`（replicon 类型 + 不相容群）+ 命中 contig 序列。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：513–895 秒/样本（对全 contig 集做短序列库 blastn）。
 - **输出文件**：每样本 results_tab.tsv + Hit_in_genome_seq.fsa。
 - **后续使用**：与 26/27 AMR 结果关联（质粒携带耐药基因定位）；与 42 mobileOG 质粒基因维度互补（基因为何、质粒为何型）。
@@ -2368,7 +2359,7 @@ Sample<N>__bin.019_sub（100/0）、Sample<N>__bin.009、Sample<N>__92、Sample<
 - **首跑接口事故（2026-10-15）**：43/43b 的 `-t` 声明未注册进解析表，首次实跑即"未知参数"退出（commit 36f8b29 修复）；43c 因此连带 10 连空跑（run_events 00:56 十条 exit=1、0–1 秒）。
 - **stdin 挂起教训（2026-10-15）**：gapseq find 读 stdin，泳道 nohup 管道令其挂起——一度误诊"挂起 80 分钟"（实为漏看 tblastn/parallel 阶段进程）；修复为 `< /dev/null`，并确立"判挂起前必须按进程树 PPID 链全量枚举"规程（NOTES.md）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：6.2–8.6 小时/MAG（find 的全通路 homology 搜索为主；gapseq 无线程控制，-t 仅接口占位）。
 - **输出文件**：`result/gem/gapseq/<MAG>/`（本演示实际只含 log + Pathways/Reactions tbl）。
 - **后续使用**：43c 优先找 gapseq XML，缺失时回退 carveme——本链全部走了回退分支。
@@ -2403,8 +2394,8 @@ conda run --prefix envs/carveme carve \
 
 **⚠️ 注意事项（副作用披露）**：CarveMe 把内部 diamond 比对中间表写到了输入 FASTA 同目录——`drep/dereplicated_genomes/` 下因此混入 10 个 `<MAG>.tsv`（47KB 级，2026-10-18 04:12 起）。不影响下游按 `*.fa` 消费，但该目录已非纯 MAG 目录；建议后续泳道输出隔离或在 43b 内显式 `--tmp`。
 
-**执行点评**（执行方起草）：
-- **运算时间**：~10.4 分钟/MAG（vs gapseq 6–8.6h，BiGG universe carve 是数量级更快的路径；NOTES approve按此估算全量 128 需 2–4 天）。
+**执行点评**编写方：
+- **运算时间**：~10.4 分钟/MAG（vs gapseq 6–8.6h，BiGG universe carve 是数量级更快的路径；NOTES 决策按此估算全量 128 需 2–4 天）。
 - **输出文件**：9 个 SBML + failed_mags.txt 清单。
 - **后续使用**：43c FBA 的实际模型来源（find_sbml_model 优先 gapseq、回退 carveme）。
 - **加速空间**：MAG 间可并行；solver 失败不可预测，重试或换 gapfill=none 是备选。
@@ -2443,12 +2434,12 @@ conda run --prefix envs/cobrapy python3 scripts/43c_fba_simulate.py \
 | Sample<N>__76 | 9.104111 |
 | Sample<N>__137 | 7.724565 |
 
-每 MAG 产出四件：`_growth_rate.txt`（上表）、`_flux_distribution.tsv`（全反应通量）、`_essential_genes.tsv`（例 Sample<N>__bin.019_sub 10 个必需基因）、`_substrate_utilization.tsv`（自动检出碳源逐一单测，例 8 项）。至此 GEM 链收官（2026-10-18 05:36，NOTES W4-C 收官记录）。
+每 MAG 产出四件：`_growth_rate.txt`（上表）、`_flux_distribution.tsv`（全反应通量）、`_essential_genes.tsv`（例 Sample<N>__bin.019_sub 10 个必需基因）、`_substrate_utilization.tsv`（自动检出碳源逐一单测，例 8 项）。至此 GEM 链收官（2026-10-18 05:36，NOTES 排期批次-C 收官记录）。
 
 **⚠️ 注意事项**：
 - 10-15 首轮 10 连空跑（exit 1、0–1 秒）系 43/43b `-t` 未注册事故连带（见 43 章）；本轮为修复后正式执行。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：6–14 秒/MAG（LP 求解 + 单基因敲除批量 LP；线程参数作用于敲除并行）。
 - **输出文件**：每 MAG 四表 + fba_batch.log + fba_done.txt。
 - **后续使用**：生长速率/必需基因/底物谱可进入 MAG 功能解读与群落代谢讨论；9/10 口径须与 Sample<N>__bin.025_sub 缺席披露同引。
@@ -2468,7 +2459,7 @@ comm -12 \
     <(grep '^>' "${GENOMAD_VIRUS}" | sed 's/^>//; s/ .*//; s/|.*//' | sort -u) \
     <(grep '^>' "${VS2_VIRUS}"  | sed 's/^>//; s/||.*//' | sort -u) \
     > common_ids.txt
-# 用 awk 按基础 ID 抽取（seqkit grep 匹配完整 ID 会静默丢弃全部 |provirus 条目，P0-2）
+# 用 awk 按基础 ID 抽取（seqkit grep 匹配完整 ID 会静默丢弃全部 |provirus 条目，整改项）
 awk 'NR==FNR{k[$1];next} /^>/{id=substr($1,2);sub(/\|.*/,"",id);p=(id in k)} p' \
     common_ids.txt "${GENOMAD_VIRUS}" > virus_contigs.fasta
 # CheckV end-to-end（conda env: checkv，CheckV 1.0.3）
@@ -2489,13 +2480,13 @@ checkv end_to_end virus_contigs.fasta ${OUTDIR} -d ${REPO}/db/checkv -t ${CPUS}
 合计交集 3,948 个基础 ID → 3,951 条 FASTA 条目（3 条多前病毒 contig 各贡献 2 段 provirus）；并集合计 22,140。CheckV 产出 quality_summary.tsv（3,951 行）、viruses.fna（3,711）、proviruses.fna（241）。首跑耗时 238–379 秒/样本。
 
 **⚠️ 注意事项（三轮整改史，保留真实过程）**：
-- **判定口径（2026-10-11 用户approve）**：52 章原披露"并集敏感性产物待补做"即在本步落实——**交集做主结果**（严格，双工具共同判定）、**并集仅作敏感性分析**（`viruses_union_sensitivity.fna`）。前病毒按基础 contig ID 匹配保留 provirus 区域序列（质量审核 P0-1 方案 A；seqkit grep 曾静默丢弃全部前病毒条目，改 awk 实现，commit 3268f0b）。
+- **判定口径（2026-10-11 决策）**：52 章原披露"并集敏感性产物待补做"即在本步落实——**交集做主结果**（严格，双工具共同判定）、**并集仅作敏感性分析**（`viruses_union_sensitivity.fna`）。前病毒按基础 contig ID 匹配保留 provirus 区域序列（质量复核 整改项 方案 A；seqkit grep 曾静默丢弃全部前病毒条目，改 awk 实现，commit 3268f0b）。
 - **第一轮（commit 193c7b2，10-12）**：并集敏感性输出首次落地，但实现有缺陷。
-- **第二轮（commit 7b2e9ab，10-13，质量审核 P0-3 + approve B）**：修复"**重复表头只丢表头、不丢序列行**"的 bug——旧实现 `awk '!/^>/{print;next} !seen[$1]++{print}'` 会把被跳过记录的序列行拼进上一条记录，FASTA 结构损坏；同时去重键从完整 ID 改为基础 ID（与交集同一规则，同 contig 的 provirus 变体与原序列合并）。
-- **第三轮（commit d08d034，10-13 复审 P0）**：发现基础 ID 去重在"同一 contig 带多段 provirus"时会把交集里两段都保留的 provirus 在并集里合并掉一条，**并集不再 ⊇ 交集**（实测 Sample<N>=2 条、Sample<N>=1 条多前病毒）。改为条件逻辑：先统计交集内多前病毒 contig 数（`union_multi_provirus_contigs`），>0 则自动切换完整 ID 去重并把 `union_dedup_key=full` 写入 call_stats 审计，=0 则仍用 base 键。10-14 V3 泳道对 H1/H2/H4/H11 四样本 `--force` 补齐（首样本一次 exit=127 环境瞬时失败，1 分钟后重跑成功）。
+- **第二轮（commit 7b2e9ab，10-13，质量复核 整改项 + 决策 B）**：修复"**重复表头只丢表头、不丢序列行**"的 bug——旧实现 `awk '!/^>/{print;next} !seen[$1]++{print}'` 会把被跳过记录的序列行拼进上一条记录，FASTA 结构损坏；同时去重键从完整 ID 改为基础 ID（与交集同一规则，同 contig 的 provirus 变体与原序列合并）。
+- **第三轮（commit d08d034，10-13 复审 整改项）**：发现基础 ID 去重在"同一 contig 带多段 provirus"时会把交集里两段都保留的 provirus 在并集里合并掉一条，**并集不再 ⊇ 交集**（实测 Sample<N>=2 条、Sample<N>=1 条多前病毒）。改为条件逻辑：先统计交集内多前病毒 contig 数（`union_multi_provirus_contigs`），>0 则自动切换完整 ID 去重并把 `union_dedup_key=full` 写入 call_stats 审计，=0 则仍用 base 键。10-14 V3 泳道对 H1/H2/H4/H11 四样本 `--force` 补齐（首样本一次 exit=127 环境瞬时失败，1 分钟后重跑成功）。
 - 另有 CheckV 断点续跑陷阱防御：输入 FASTA 比 tmp/ 新时自动清空旧中间结果（曾致 contamination.py KeyError）；`--force` 走 mgx_force_backup 备份旧产物（f7f6edb）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：238–379 秒/样本（16 线程），整改期共 6 轮重跑（10-11×2、10-12×2、10-13×2、10-14×1 批）。
 - **输出文件**：每样本 quality_summary.tsv（14 列 MIUVIG 口径）、viruses.fna、proviruses.fna+bed、viruses_union_sensitivity.fna、call_stats.tsv（审计：工具计数/交集数/去重键/多前病毒数）。
 - **后续使用**：quality_summary 供 54b 过滤；交集病毒集供 55 基因预测与 56 vOTU 聚类；并集敏感性 FASTA 留作审稿人质询时的稳健性对照（不进主链）。
@@ -2538,10 +2529,10 @@ seqkit grep -f viruses_filtered.ids virus_contigs.fasta -o viruses_filtered.fna
 
 **⚠️ 注意事项**：本步是 MIUVIG 质控门在病毒宇宙的强制接入点（T-15 整改，commit 5e243f1）——历史上 Snakemake 曾把未过滤的 viruses.fna 直喂 55/56，54b 形同虚设；现 55/56 均只认 `viruses_filtered.fna`，缺失即硬退出（56 的旧回退链 viruses.fna→virus_contigs.fasta 已删除）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：2–3 秒/样本，可忽略。
 - **输出文件**：viruses_filtered.fna（3,062 条，即下游全链的病毒宇宙）+ .ids + .stats。
-- **后续使用**：55 基因预测、56 vOTU 聚类的唯一入口；质量审核 CP2 链路计数闭合验证 3,951→3,062→46,300（基因）即引用本步数字。
+- **后续使用**：55 基因预测、56 vOTU 聚类的唯一入口；质量复核 病毒段复核 链路计数闭合验证 3,951→3,062→46,300（基因）即引用本步数字。
 - **加速空间**：不适用。
 - **内存/硬盘**：忽略不计。
 
@@ -2573,14 +2564,14 @@ prodigal -i result/virus/checkv/{sample}/viruses_filtered.fna \
 | Sample<N> | 380 | 5,732 | 22s |
 | Sample<N> | 595 | 8,076 | 42s |
 
-合计 46,300 个基因（质量审核 CP2 闭合链第三环）。
+合计 46,300 个基因（质量复核 病毒段复核 闭合链第三环）。
 
 **⚠️ 注意事项（真实失败史）**：
 - **首轮 6 连败**（10-11 03:37）：紧跟 54 重跑后立即启动，0–1 秒全部 exit 1——当时 54b 尚未首跑（成功在当日 05:15），输入 viruses_filtered.fna 不存在与秒退一致；05:15 先补 54b 后 55 全部成功。
 - **假成功事件（事故 #13，10-12 08:45）**：54 带 `--force` 重跑后，55 未带 `--force`，哨兵命中走跳过分支照记 ✓，实为旧产物——由此立红线"**上游 --force 重跑后，下游一律 --force**"（10-13），10-12 09:39 与 10-13 08:20 两轮带 --force 重跑为终态。
 - 命名披露：标题中的 gv 为历史命名，实际未用密码表 15（meta_gv 属未来候选，未经 benchmark 不得切换）；`-p meta` 即遗传密码 11 的宏基因组模式（Prodigal 2.6.3）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：22–53 秒/样本，病毒链最轻步骤。
 - **输出文件**：每样本 .faa/.fna/.gff 三件套；0 条通过 contig 的样本写空哨兵优雅退出（T-15）。
 - **后续使用**：曾供 58 旧版构建基因级索引（整改后 58 已不消费，见 58 章）；现主要为基因目录口径披露保留。
@@ -2611,7 +2602,7 @@ vclust cluster   -i ani.tsv -o clusters.tsv --out-repr --ids ani.ids.tsv \
 - votu_id_map.tsv 是 T-16 建立**canonical 身份映射**：下游（分类/丰度/功能/宿主/网络）一律经此表 join，禁止再用字符串截断（如剥 `_<数字>` 后缀会把 k127_1717 截成 k127）自行推导身份。
 - 样本前缀 `SAMPLE__` 双下划线是 57 号 safe-ID 方案与 60 号基因行判定的锚点。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：18 秒（prefilter 先剔除明显不相似对，3 千条规模 align 很快）。
 - **输出文件**：virus.fasta（成员全集）、vclust/clusters.tsv（3,062 行映射）、votu_id_map.tsv、votu_representatives.tsv。
 - **后续使用**：病毒链下半场（58–72 全部注释/定量步骤）的唯一序列输入。
@@ -2641,7 +2632,7 @@ genomad end-to-end --cleanup --threads ${CPUS} --sensitivity 4.2 --splits 4 \
 
 **⚠️ 注意事项**：灵敏度取 4.2（默认，复查场景），**低于** 52 章样本级鉴定用的 7.5——此处只做代表序列的复核注释，不再承担高灵敏召回职责。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：28–251 秒。
 - **输出文件**：votu/genomad/virus_taxonomy.tsv（列名 taxonomy，10-14 三审后 91/92 的 R 代码已兼容此列名）。
 - **后续使用**：60 号分类注释 join 的唯一来源。
@@ -2658,7 +2649,7 @@ genomad end-to-end --cleanup --threads ${CPUS} --sensitivity 4.2 --splits 4 \
 **核心执行命令**（摘自 `scripts/58_vir_salmon_build.sh` 终版）：
 
 ```bash
-# 索引只含 vOTU contigs（approve D + 质量审核 2026-10-13 复审 P0-1）；
+# 索引只含 vOTU contigs（决策 D + 质量复核 2026-10-13 复审 整改项）；
 # 不传 -d（Salmon 0.14.1 与 decoy-aware 索引在 quant 时有 segfault 兼容问题，统一标准索引）
 salmon index -t result/virus/votu/contigs/virus.fasta \
              -i result/virus/salmon/index -p ${CPUS} --keepDuplicates
@@ -2667,12 +2658,12 @@ salmon index -t result/virus/votu/contigs/virus.fasta \
 **执行结果**（终态实测）：标准索引 621M，3,062 条 target（=vOTU 成员全集）；构建 36–58 秒。decoys.txt 保留（phase1_tierA_golden 基线 sha256 引用此文件，标准索引本身不消费）。
 
 **⚠️ 注意事项（索引策略整改史——病毒链最重要的定量层修正）**：
-- **旧策略（10-12 首版）**：gentrome = 55 号全部 CDS（.fna，加 `样本|` 前缀，approve E）+ vOTU contigs，同放索引，声称"同时支持基因级和 contig 级定量"。
-- **问题实证（质量审核 10-13 复审 P0-1）**：Salmon EM 会把落在基因区的 reads **分摊给基因和 contig 两条 target**；60 号按approve D 只取 contig 级行时，分摊给基因的那部分 reads 一并丢失——**单条 vOTU 实测损失 35–77% reads**。三对照（Sample<N> 样本 reads 对 Sample<N> 来源 contig，取 Sample<N>/quant.sf）：`k127_45051` NumReads 420.99→**1,614.48**（+283%）、`k127_59936` 2,597.61→**3,995.86**（+54%）、`k127_224456` 1,511.06→**2,553.89**（+69%）；修复前后基线分别归档 `logs/evidence/vir_numreads_prefix_20261013.txt` 与 `vir_numreads_surviving_quant_sf_20261014.tsv`（10-14 复核一致）。注意 Sample<N> 自身 quant.sf 对同名 contig 是另一定量，数值不同属预期（质量审核四审曾因此误判证据链断裂，实为跨样本混淆）。
+- **旧策略（10-12 首版）**：gentrome = 55 号全部 CDS（.fna，加 `样本|` 前缀，决策 E）+ vOTU contigs，同放索引，声称"同时支持基因级和 contig 级定量"。
+- **问题实证（质量复核 10-13 复审 整改项）**：Salmon EM 会把落在基因区的 reads **分摊给基因和 contig 两条 target**；60 号按决策 D 只取 contig 级行时，分摊给基因的那部分 reads 一并丢失——**单条 vOTU 实测损失 35–77% reads**。三对照（Sample<N> 样本 reads 对 Sample<N> 来源 contig，取 Sample<N>/quant.sf）：`k127_45051` NumReads 420.99→**1,614.48**（+283%）、`k127_59936` 2,597.61→**3,995.86**（+54%）、`k127_224456` 1,511.06→**2,553.89**（+69%）；修复前后基线分别归档 `logs/evidence/vir_numreads_prefix_20261013.txt` 与 `vir_numreads_surviving_quant_sf_20261014.tsv`（10-14 复核一致）。注意 Sample<N> 自身 quant.sf 对同名 contig 是另一定量，数值不同属预期（质量复核曾因此误判证据链断裂，实为跨样本混淆）。
 - **新策略（commit d08d034，10-13）**：索引只放 vOTU contigs；基因级病毒定量无下游消费方，CDS 收集与 gentrome 拼接整体移除（基因 ID 样本前缀逻辑随之删除——索引中已无基因行）。58→59 不再产生基因级定量。
-- 教训沉淀：Project01 冻结基线用的正是混合索引，已发布结论带同源偏差（系统性偏低且 vOTU 间不可比），按approve不重跑、偏差写入论文方法部分（Project01/NOTES_VIRUS_QUANT_BIAS.md）。
+- 教训沉淀：Project01 冻结基线用的正是混合索引，已发布结论带同源偏差（系统性偏低且 vOTU 间不可比），按决策不重跑、偏差写入论文方法部分（Project01/NOTES_VIRUS_QUANT_BIAS.md）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：36–58 秒。
 - **输出文件**：result/virus/salmon/index/（621M，info.json 哨兵；--keepDuplicates 保留重复序列）。
 - **后续使用**：59 号六样本定量共用此单一索引。
@@ -2709,16 +2700,16 @@ tail -n +2 quant.sf | awk '{print $1"\t"$2"\t"$4"\t"$5}' > report.tsv
 
 **⚠️ 注意事项**：3–7% 的 reads 比对到病毒索引属肠道宏基因组预期量级（病毒 reads 占比低 + 交集严格判定 + 3,062 条 target 宇宙有限）；**不可**与 20 号细菌全基因目录 70%+ 的比对率直接类比（索引规模与冗余度不同）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：172–328 秒/样本（10-12 旧索引首跑 172–247 秒，10-13 终版略慢因索引 target 语义变化，量级相同）。
 - **输出文件**：每样本 quant.sf（Name/Length/EffectiveLength/TPM/NumReads）+ report.tsv（无表头四列）+ aux_info。
 - **后续使用**：60 号丰度矩阵的唯一来源；Sample<N> quant 与 votu_table H10_count 逐位一致是 60 号聚合无损的交叉验证。
-- **加速空间**：样本级可并行（非组装器，不受 P0-6 互斥限制）。
+- **加速空间**：样本级可并行（非组装器，不受 整改项 互斥限制）。
 - **内存/硬盘**：每样本输出 <10M；内存 <8G。
 
 ---
 
-## 60 · vOTU 丰度矩阵 + 分类注释汇总（contig 级 TPM，approve D；五缺陷三轮整改）
+## 60 · vOTU 丰度矩阵 + 分类注释汇总（contig 级 TPM，决策 D；五缺陷三轮整改）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 执行 60 vOTU 丰度表生成（contig 级 TPM 聚合 + geNomad 注释 join），完成后核对 join 闭合与六样本 ΣTPM=10⁶。」
@@ -2728,7 +2719,7 @@ tail -n +2 quant.sf | awk '{print $1"\t"$2"\t"$4"\t"$5}' > report.tsv
 ```bash
 # 第 1 段：六样本 report.tsv 合并为 contig 级原始矩阵（首行按"第 2 列是否数值"判表头，
 # 不再无条件跳首行——旧实现每样本静默丢一条）
-# 第 2 段：经 votu_id_map.tsv 把 contig 级 TPM 聚合到 canonical vOTU（approve D）：
+# 第 2 段：经 votu_id_map.tsv 把 contig 级 TPM 聚合到 canonical vOTU（决策 D）：
 #   基因行（"|" 在任何 __ 之前）按设计跳过；contig 级行 join 失败 → 非零退出（拒绝静默丢弃）
 #   length 列 = 代表 contig 自身实长（从 virus.fasta 数碱基，非"第一条归入行"）
 # 第 3 段：taxonomy 列按表头名取（列名 taxonomy），代表关系只用完整 ID；
@@ -2742,13 +2733,13 @@ tail -n +2 quant.sf | awk '{print $1"\t"$2"\t"$4"\t"$5}' > report.tsv
 - 注释表 `vOTU_table_ann.txt`（哨兵，16 列含 lineage）：annotated **2,513**（真分类）/ source_truly_unclassified **15** / source_missing **94**（代表 contig 无 geNomad 行，旧代码会把后两类混标 Unclassified）。
 - length 抽查 3/3 与 virus.fasta 实长一致（旧版曾出现 66 bp 假 vOTU）。
 
-**⚠️ 注意事项（三轮整改史——质量审核 CP2-病毒关口全过程）**：
+**⚠️ 注意事项（三轮整改史——质量复核 病毒段复核阶段检查点全过程）**：
 - **第一轮打回（2026-10-13，supervisor_20261013_cp_audit）**：60 号五缺陷定性 FAIL：① 病毒基因 ID 跨样本重名（k127_124496_1 同现于两样本索引）② 重名致 305 行基因（22 个 contig）无法归属，仅 stderr 警告后 exit 0 ③ length 列语义错（出现 66 bp"vOTU"）④ report.tsv 无表头却跳首行，每样本静默丢一条 ⑤ contig 级与基因级 TPM 混加，vOTU 间不可比。**冻结令**：votu_table.tsv 不得作为统计输入。
-- **第二轮整改（7b2e9ab + d08d034，用户approve D/E/B/A 落地）**：D=vOTU 丰度只用 contig 级（一条 vOTU 一个数）；E=基因 ID 加样本前缀（后又随 58 混合索引废除而整体消失——基因行归零是更彻底的解）；length 改代表实长；join 失败硬退出；首行按内容判表头。V2 泳道重跑（54 H3+H10→58→59×6→60）产出上表终态。
+- **第二轮整改（7b2e9ab + d08d034，决策 D/E/B/A 落地）**：D=vOTU 丰度只用 contig 级（一条 vOTU 一个数）；E=基因 ID 加样本前缀（后又随 58 混合索引废除而整体消失——基因行归零是更彻底的解）；length 改代表实长；join 失败硬退出；首行按内容判表头。V2 泳道重跑（54 H3+H10→58→59×6→60）产出上表终态。
 - **第三轮三审（2026-10-14，supervisor_20261014_v2_audit）**：**有条件通过**——六条验收证据全核真（基因行 0 / ΣTPM=10⁶ / NumReads 三对照回升 / join 3062-0-2622 / annotated 2,513 / length 抽查 3/3），另揪出 91/92 列名与 93 样本列三处下游隐患（当日修复）。**分级解冻**：votu_table.tsv 对 98c/98g 即时解冻；93/91/92/94/96 待修复复验后解冻。
 - 披露：ann 表的 source_missing 94 行是"join 证据缺失"而非"确认无分类"，统计引用时按 Unclassified 处理须注明。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：约 1 秒（纯文本聚合）。
 - **输出文件**：table/vOTU_table.txt（中间）、votu_table.tsv（canonical，消费者 98c/98g/93/96）、vOTU_table_ann.txt（带 lineage）、votu_join_stats.tsv（闭合审计）。
 - **后续使用**：病毒维度全部统计（多样性/差异/网络/核心微生物组）的唯一丰度正源。
@@ -2759,11 +2750,11 @@ tail -n +2 quant.sf | awk '{print $1"\t"$2"\t"$4"\t"$5}' > report.tsv
 
 ## 61 · vMAG 分箱（vRhyme）——决定不执行
 
-**决策记录（NOTES"决定不执行"，2026-10-13）**：61 vRhyme vMAG 分箱与下游 62（CheckV-MAG）/63（coverm 定量）**不执行**，依据 Project01 先例——同等深度的宏基因组样本 vMAG 产出为 0（肠道病毒 contig 平均 ~4–6 kb，远低于 vMAG 组装要求）。71_vir_dram（DRAM-v）依赖 vMAG 产物，同样未跑。事件流无 61 记录、result/virus/ 无 vmag/ 目录，与决策一致。step_checklist 中 61 行状态滞后未同步（已知清单失真项，CP3 终版重建时修正）。
+**决策记录（NOTES"决定不执行"，2026-10-13）**：61 vRhyme vMAG 分箱与下游 62（CheckV-MAG）/63（coverm 定量）**不执行**，依据 Project01 先例——同等深度的宏基因组样本 vMAG 产出为 0（肠道病毒 contig 平均 ~4–6 kb，远低于 vMAG 组装要求）。71_vir_dram（DRAM-v）依赖 vMAG 产物，同样未跑。事件流无 61 记录、result/virus/ 无 vmag/ 目录，与决策一致。step_checklist 中 61 行状态滞后未同步（已知清单失真项，终稿复核 终版重建时修正）。
 
 **若执行的命令形态**（`scripts/61_vir_vmag.sh`，仅供教程完整性）：`vRhyme` 基于 coverm make 生成的跨样本 BAM（minimap2-sr）+ 蛋白特征分箱，产出 bins/vMAG/ 与 bins/pseudo/。
 
-**执行点评**（执行方起草）：跳过是演示项目"空产出如实成章记录"纪律的正面应用——先例数据已证明产出为零的步骤不消耗机时，把预算留给 64–72 注释链与统计段。
+**执行点评**编写方：跳过是演示项目"空产出如实成章记录"纪律的正面应用——先例数据已证明产出为零的步骤不消耗机时，把预算留给 64–72 注释链与统计段。
 
 ---
 
@@ -2793,10 +2784,10 @@ pharokka.py -i result/virus/votu/contigs/virus.fasta \
 耗时构成：phanotate 两轮（fasta+tabular）占约 5.5h，是绝对瓶颈。
 
 **⚠️ 注意事项**：
-- **试批先行验证（质量审核 10-14 三审放行条件）**：全量 6 小时投入前，先抽 55 条跑通并核对"输入 ID 集合 == GFF sequence-region 集合"，确认无静默丢序列后再放行 64–72 全链（V3 泳道）。
+- **试批先行验证（质量复核 10-14 三审放行条件）**：全量 6 小时投入前，先抽 55 条跑通并核对"输入 ID 集合 == GFF sequence-region 集合"，确认无静默丢序列后再放行 64–72 全链（V3 泳道）。
 - `--skip_extra_annotations --skip_mash` 跳过 tRNA 之外的可选注释与 mash 距离，换取全量可控时长；ARG（card）注释保留。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：21,658 秒（~6.0h），病毒注释链最长单步。
 - **输出文件**：pharokka.gbk（65 号输入）、phanotate.faa/.ffn（66/69 号输入）、pharokka.gff、pharokka_cds_final_merged_output.tsv（55,565 行）、pharokka_cds_functions.tsv。
 - **后续使用**：四审依赖修正后明确——65/66 真实依赖本步产物；67/67b/68/69/70/72 仅依赖 virus.fasta（与本步无依赖，可并行）。
@@ -2822,7 +2813,7 @@ phold run -i result/virus/pharokka/pharokka.gbk \
 
 **⚠️ 注意事项**：脚本内置孤儿进程防御——检测到已有 phold run 写同一输出目录时等待复用而非抢占（-f 会删除正在生成的目录）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：40,493 秒（11.2h）；ProstT5 3di 编码 + 远程同源搜索双重开销。
 - **输出文件**：vOTU_phold.tsv（哨兵）、vOTU_per_cds_predictions.tsv、vOTU_3di.fasta。
 - **后续使用**：与 64 的 PHROG 互补——PHROG 无命中的"暗物质"ORF 由此获得结构域级功能线索。
@@ -2847,7 +2838,7 @@ hmmsearch -E 1e-5 --cpu ${CPUS} \
 
 **执行结果**（2026-10-14 21:02–21:52 实测，**3,018 秒 ≈ 50 分钟**）：**44,924 条 HMM 命中**（E<1e-5），vog_annot.tsv 44,923 行功能注释（含 tail length tape measure protein 等经典噬菌体功能类）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：3,018 秒。
 - **输出文件**：vog_hits.tsv（hmmsearch 原始 tblout）、vog_annot.tsv（VOG 编号→蛋白→功能描述）。
 - **后续使用**：与 PHROG（64）/PHOLD（65）构成三库功能注释交叉；VOGDB 覆盖跨界病毒（含 RNA 病毒），是 PHROG 的互补证据。
@@ -2872,7 +2863,7 @@ bacphlip -i result/virus/votu/contigs/virus.fasta --multi_fasta -f
 
 **⚠️ 注意事项**：BACPHLIP 随机森林基于 HMM 特征，对 <10 kb contig 精度有限；结论应与 67b（PhaStyle）、72（PhaGCN3 附带生活方式信号）三票并排，2/3 一致方视为稳健，分歧且概率接近 0.5 者值得人工复核。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：4,385 秒（逐条序列 HMM 扫描为主要开销）。
 - **输出文件**：bacphlip_results.tsv（3,063 行含表头：Virulent/Temperate 概率）。
 - **后续使用**：生活方式第一票；溶原比例是肠道温和噬菌体生态学的关键读出。
@@ -2902,7 +2893,7 @@ python _phastyle_driver.py --fastain virus.fasta --out phastyle_results.tsv \
 
 **⚠️ 注意事项**：模型权重 ~80MB 首次从 HuggingFace 下载（HF_HOME 缓存），huggingface.co 不可达时自动回退 hf-mirror.com 镜像；推理线程 torch.set_num_threads 封顶 8，-t 传更大值无效。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：6,469 秒（CPU 按总碱基线性扩展；GPU 环境同脚本自动加速）。
 - **输出文件**：phastyle_results.tsv（3,062 行：label + temperate/virulent 概率）+ sentinel。
 - **后续使用**：生活方式第三票验证层（同 15e/16b 定位，不阻塞主队列）。
@@ -2924,11 +2915,11 @@ iphop predict --fa_file result/virus/votu/contigs/virus.fasta \
               --out_dir result/virus/iphop --num_threads ${CPUS}
 ```
 
-**执行结果**（2026-10-15 02:02–16:26 实测，**51,815 秒 ≈ 14.4 小时**，V3 链压轴）：Host_prediction_to_genus_m90.csv **2,714 行**（3,062 vOTU 中 88.7% 获属级宿主，m90 口径），**194 个宿主属**。Top5：*Faecalibacterium* 265、*Bacteroides* 253、*Blautia_A* 192、*Phocaeicola* 159、*Escherichia* 101——与肠道群落优势菌谱一致。
+**执行结果**（2026-10-15 02:02–16:26 实测，**51,815 秒 ≈ 14.4 小时**，V3 链压轴）：Host_prediction_to_genus_m90.csv **2,714 行**（占 3,062 个 vOTU 的 **88.7% 行数**；按唯一 vOTU 去重则为 **2,222 个 / 72.6%**——两个口径都在用，引用时须注明），**194 个宿主属**。Top5（按行计数，同一 vOTU 可有多条候选）：*Faecalibacterium* 265、*Bacteroides* 253、*Blautia_A* 192、*Phocaeicola* 159、*Escherichia* 101——与肠道群落优势菌谱一致。
 
 **⚠️ 注意事项**：错峰纪律（用户 2026-10-14 批准放宽后的保留项）——高内存互斥现仅约束 **gtdbtk 与 iphop** 两步（755G 内存实测仅用 20G，瓶颈在核不在内存）；V3 泳道把 iphop 排在链尾（68 最后）即为此设计。失败时 touch 哨兵降级为 WARN 不阻塞（验证层语义）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：51,815 秒（14.4h）——病毒注释链乃至全链最重单步。
 - **输出文件**：Host_prediction_to_genus_m90.csv（哨兵）+ 到基因组级预测 + 各工具明细（blast/RaFAH 等）。
 - **后续使用**：病毒-宿主互作网络、温和噬菌体-宿主共丰度分析的宿主侧标签。
@@ -2955,7 +2946,7 @@ vcontact3 run --nucleotide result/virus/votu/contigs/virus.fasta \
 
 **⚠️ 注意事项**：输出含 networks/part1.cyjs 与 .graphml（Cytoscape 可直接导入）；completeness/performance_metrics.csv 供网络质量自查。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：917 秒（蛋白聚类+网络嵌入为主）。
 - **输出文件**：exports/final_assignments.csv（哨兵）、networks/、completeness/。
 - **后续使用**：与 57 geNomad、72 PhaGCN3 三路分类互证；网络簇（含参考基因组的 cluster 归属）是 contig 级分类最有力的上下文证据。
@@ -2983,9 +2974,9 @@ cp predict/final_prediction/final_prediction_summary.tsv phabox2_summary.tsv
 
 **执行结果**（2026-10-15 实测）：phabox2_summary.tsv **3,062 行**——每 vOTU 一行集成 PhaMer（识别）、PhaGCN（谱系）、PhaTYO（生活方式）、CHERRY（宿主）四模块输出（如 `k127_100252`：virus / Caudoviricetes / temperate / 含宿主 lineage）。终跑 673 秒 ≈ 11 分钟。
 
-**⚠️ 注意事项（整改史）**：首跑 9 秒 exit 1（10-15 01:27:33）——宿主 `~/.local` 的 **numpy 2.2.6 遮蔽环境内 numpy 1.26.4**，pyarrow ABI 断裂致 ImportError。这是 53 号 SIF 容器宿主 Python 污染的**同根因二次发生**（间隔 6 天），点修教训催生制度修：commit 2e6f6cc 先在本步调用点加 `PYTHONNOUSERSITE=1`，f7f6edb（质量审核终审 P0-2）进一步下沉到公共层 `mgx_conda`——所有 conda 调用点级隔离用户站点包，该家族问题就此终结。
+**⚠️ 注意事项（整改史）**：首跑 9 秒 exit 1（10-15 01:27:33）——宿主 `~/.local` 的 **numpy 2.2.6 遮蔽环境内 numpy 1.26.4**，pyarrow ABI 断裂致 ImportError。这是 53 号 SIF 容器宿主 Python 污染的**同根因二次发生**（间隔 6 天），点修教训催生制度修：commit 2e6f6cc 先在本步调用点加 `PYTHONNOUSERSITE=1`，f7f6edb（质量复核 整改项）进一步下沉到公共层 `mgx_conda`——所有 conda 调用点级隔离用户站点包，该家族问题就此终结。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：673 秒（修复后；含失败首跑共两次尝试）。
 - **输出文件**：phabox2_summary.tsv（哨兵）+ predict/ 原始目录。
 - **后续使用**：与 69（网络）、72（PhaGCN3）、67/67b（生活方式）、68（宿主）逐模块互证的一致性面板。
@@ -2994,7 +2985,7 @@ cp predict/final_prediction/final_prediction_summary.tsv phabox2_summary.tsv
 
 ---
 
-## 72 · PhaGCN3 图卷积分类预测（PyTorch CPU 线程特性披露）
+## 72c · PhaGCN3 图卷积分类预测（PyTorch CPU 线程特性披露）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 执行 72 PhaGCN3 分类预测（threads 16），完成后汇报预测行数。」
@@ -3015,7 +3006,7 @@ conda run --prefix envs/phagcn3 python run_Speed_up.py --contigs virus.fasta --o
 
 **⚠️ 注意事项（PyTorch 26 核特性披露）**：环境内 torch 2.3.1 在未设环境变量时默认 `torch.get_num_threads()=48`（=cpu_count，无视 -t 声明）；实测运行期其 python 进程占用约 **26 核**（超过 -t 16 声明值）——CPU 版 PyTorch 的 intra-op 线程池与底层 BLAS 线程叠加的已知特性。本脚本已用 OMP/MKL/TORCH_NUM_THREADS 环境变量夹紧声明值；**排程时按实际观测核数预留预算，勿按 -t 名义值**。另：稀疏矩阵重写版 network_compute.py 是对本仓库 3 千 contig 规模的必要适配（上游密集实现在此规模即 OOM）。
 
-**执行点评**（执行方起草）：
+**执行点评**编写方：
 - **运算时间**：2,025 秒（diamond+MCL 蛋白聚类 + GCN 训练/推理）。
 - **输出文件**：phagcn3_prediction.tsv（contig/prediction/score/full_path 四列族）。
 - **后续使用**：与 57 geNomad、69 vConTACT3 构成三路分类互证；与 67/67b 的生活方式输出联合判读。
@@ -3024,9 +3015,6 @@ conda run --prefix envs/phagcn3 python run_Speed_up.py --contigs virus.fasta --o
 
 ---
 
-**批次③补写说明**：本片段覆盖步骤 54/54b/55/56/57/58/59/60/61/64/65/66/67/67b/68/69/70/72（62/63/71_vir_dram 因 61 决定不执行而连带跳过，已并入 61 章披露）。V3 注释链总账：2026-10-14 03:46（64 启动）→ 2026-10-15 16:26（68 收官）≈ 36.7 小时。三轮整改史实来源：`Project/Project_demo/NOTES.md`（复审跟踪/事故索引/approve表）、`.claude/reviews/supervisor_20261013_cp_audit.md`（第一轮打回）、`supervisor_20261013_full_review_excerpt.md`（P0-3）、`supervisor_20261014_v2_audit.md`（第三轮有条件通过）；commit 7b2e9ab / d08d034 / 2e6f6cc / f7f6edb；数字均自 `result/virus/` 与 `logs/run_events.jsonl` 现值复核。
-
-<!-- 批次④草稿片段：步骤 75-86（真菌链后段）。插入位置：79b 章末分隔线之后、"（后续步骤章节随执行增量添加…）"收尾行之前。 -->
 
 > **74 号无章节说明**：74 blast_gutdb 已废弃，不设教程章节——2026-10-12 该步 /tmp 泳道孤儿循环空转、4 样本产出全 0 字节再证 gut 数据库无效，循环+脚本+产物（8.3GB）整树清除（NOTES.md 事故索引 2026-10-12 条目）；依赖它的 74a_fun_gut_db_build 随之不再排期（step_checklist.md:96）。74e/74f（PHF 定量）不受影响，见前两章。
 
@@ -3069,7 +3057,7 @@ diamond blastx \
 - **分支口径**：官方 FunOMIC 分类器未安装，本步结果是 DIAMOND blastx 对 FunOMIC.P 蛋白 marker 库的**宽松单命中普查**（evalue 1e-5、无 identity 下限；实测头部命中 pident 低至 46–56%、比对长度 36–50 aa）。检出行数≠真菌 reads 数，更≠丰度。
 - **输入为全量清洁 reads**（未按 71/72 先提取真菌 reads），全群落背景命中占大头——这正是 75b 聚合后出现 11,941 个"物种"的口径根源，见下章披露。
 
-**执行点评**（执行方起草）：回退分支设计让"工具未装"降级为可运行的近似方案而非硬失败，代价是口径放宽必须显式披露；blastx 对 340 万蛋白库 + 6.7–9.9h/样本是本链仅次于 83 号的耗时项，根因是 reads 级 blastx（六线程亿级比对）而非库规模本身；多样本理论可并行（非组装器），本次按泳道串行。
+**执行点评**编写方：回退分支设计让"工具未装"降级为可运行的近似方案而非硬失败，代价是口径放宽必须显式披露；blastx 对 340 万蛋白库 + 6.7–9.9h/样本是本链仅次于 83 号的耗时项，根因是 reads 级 blastx（六线程亿级比对）而非库规模本身；多样本理论可并行（非组装器），本次按泳道串行。
 
 ---
 
@@ -3091,11 +3079,11 @@ write_matrix(count_tsv, "species", species_rows, samples, matrix, int)      # �
 
 **执行结果**（2026-10-15 实测，111 秒完成）：`result/integration/fungi/` 下三矩阵均为 **11,941 物种行 × 6 样本**——`funomic_species_count.tsv` / `normalized/funomic_species_relab.tsv` / `normalized/funomic_species_clr.tsv`。
 
-**⚠️ 注意事项（检测计数口径披露，P0 级）**：
+**⚠️ 注意事项（检测计数口径披露，整改项 级）**：
 - **11,941 taxa 是宽松口径下的基因组编码普查数**：≥1 条 read 命中即计入，无 identity/coverage 门槛。其中 4,306 个"物种"在全部 6 样本同时出现、且计数量级相当（如 Aspergillus zonatus 每样本 1.2–1.8M 行、Pecoramyces sp. 0.8–1.2M 行）——真实真菌信号应如 Sample<N> 的 S. cerevisiae 般样本间悬殊，六样本均匀的"背景高原"是全群落 reads 非特异命中的签名。
 - 该矩阵只可作方法学演示，**不得直接当真菌丰度表用于统计**；严肃分类结论以 71/72/74e（Kraken2/MetaPhlAn/PHF）为准。
 
-**执行点评**（执行方起草）：聚合逻辑本身正确（外连接补 0、relab 列内归一、CLR 加伪计数），问题出在上游口径被原样继承并放大——"能算出 11,941 行"恰恰证明宽松命中的噪声底有多厚；CLR 对计数矩阵的零膨胀结构（4011 个物种仅出现于单样本）也偏脆弱，若复用此模板建议先做行过滤。
+**执行点评**编写方：聚合逻辑本身正确（外连接补 0、relab 列内归一、CLR 加伪计数），问题出在上游口径被原样继承并放大——"能算出 11,941 行"恰恰证明宽松命中的噪声底有多厚；CLR 对计数矩阵的零膨胀结构（4011 个物种仅出现于单样本）也偏脆弱，若复用此模板建议先做行过滤。
 
 ---
 
@@ -3130,7 +3118,7 @@ Sample<N> 种级首位 S. cerevisiae（taxid 4932）258,022 reads，其次近缘
 
 **⚠️ 注意事项**：5/6 样本真菌 reads 仅 8–29 条，属"三界段空产出披露"的设计内近零信号（Sample<N> 唯一有分类数据：MetaPhlAn 口径 0.71% S. cerevisiae）；本步数字与 71 章同源（同一 report 的另一种切法），不是独立验证。
 
-**执行点评**（执行方起草）：复用 71 report 免重跑是正确取舍（Kraken2 全库要 6–8 分钟/样本而 awk 只要 1 秒）；谱系栈按缩进深度重建的实现值得复用；产出 P/G/S 三级宽表可直接进 98 系汇总。它做的是"提取"而非"检测"，解读时应引用 71 章口径说明。
+**执行点评**编写方：复用 71 report 免重跑是正确取舍（Kraken2 全库要 6–8 分钟/样本而 awk 只要 1 秒）；谱系栈按缩进深度重建的实现值得复用；产出 P/G/S 三级宽表可直接进 98 系汇总。它做的是"提取"而非"检测"，解读时应引用 71 章口径说明。
 
 ---
 
@@ -3167,7 +3155,7 @@ prodigal \
 - **输入是 78 号的全群落 contigs**（全部清洁 reads 组装产物），不是 79 号筛出的 `.Euk.fasta`（3,270/11–50 条）——若用后者，基因数会少三个数量级且以 Sample<N> 为主。
 - **Prodigal 是原核基因预测器**（-p meta，标准遗传密码）：不建模内含子/可变剪接，真核基因会被切碎或多段预测。因此本步及下游 81–86 的"真菌注释"实为**以细菌基因为主体的全群落注释**，目录名 fungi/ 只代表链路归属。
 
-**执行点评**（执行方起草）：以 26 万条/样本的基因体量换 15–29 分钟/样本的单线程速度，性价比高；faa/fna/gff 三件套齐全，faa 是 81–86 全部注释步骤的唯一输入源；口径披露比结果本身更重要——这是真菌链里最容易被误读的一步。
+**执行点评**编写方：以 26 万条/样本的基因体量换 15–29 分钟/样本的单线程速度，性价比高；faa/fna/gff 三件套齐全，faa 是 81–86 全部注释步骤的唯一输入源；口径披露比结果本身更重要——这是真菌链里最容易被误读的一步。
 
 ---
 
@@ -3193,7 +3181,7 @@ metaeuk easy-predict {sample}.contigs.fa $DB {sample} tmp_{sample} \
 - **MetaEuk 本体本次未运行**：MMseqs2 库 `db/metaeuk_db/fungi_refseq_mmseqs` 与 `envs/metaeuk` 均已就绪，但泳道未传 `--method metaeuk`。80b 实为 80 的重复计算 + 命名兼容层（`_metaeuk.faa` 后缀），下游 81–86 消费的是 80 号的 `result/fungi/prodigal/*/*.faa`，本步产物无下游消费者。
 - 若补跑真 MetaEuk 分支，预期基因数会显著少于 Prodigal（内含子感知 + 蛋白同源锚定），且 Sample<N> 占比升高——那才是更贴真科学口径的真菌基因集。
 
-**执行点评**（执行方起草）：双方法包装器把"真核工具"留成选项而非默认，演示里就成了干跑重复；教训——默认值即文档：想让 MetaEuk 被用，应把 `--method metaeuk` 设为默认或在泳道里显式传参；重复计算 15–29 分钟/样本的代价尚小，真正损失的是口径对照机会。
+**执行点评**编写方：双方法包装器把"真核工具"留成选项而非默认，演示里就成了干跑重复；教训——默认值即文档：想让 MetaEuk 被用，应把 `--method metaeuk` 设为默认或在泳道里显式传参；重复计算 15–29 分钟/样本的代价尚小，真正损失的是口径对照机会。
 
 ---
 
@@ -3221,7 +3209,7 @@ conda run --prefix $REPO/envs/eggnog emapper.py \
 
 **⚠️ 注意事项**：注释对象是 80 号 Prodigal 全群落基因集（见 80 章口径披露），"真菌功能注释"实为全群落功能普查；--dbmem 全库入内存（eggnog_proteins.dmnd），峰值内存按 60G+ 预算。
 
-**执行点评**（执行方起草）：先合并后注释省了六次数据库装载；91.5% 注释率对 meta 基因预测集偏乐观（宽松 e-value 传导），做通路定量时建议再按 bitscore/COG 类别过滤；T-20 的 `SAMPLE__raw` 规范 ID 让六样本同 ID 基因（k141_ 重名）冲突在源头消解，映射表是后续 98 系 join 的关键资产。
+**执行点评**编写方：先合并后注释省了六次数据库装载；91.5% 注释率对 meta 基因预测集偏乐观（宽松 e-value 传导），做通路定量时建议再按 bitscore/COG 类别过滤；T-20 的 `SAMPLE__raw` 规范 ID 让六样本同 ID 基因（k141_ 重名）冲突在源头消解，映射表是后续 98 系 join 的关键资产。
 
 ---
 
@@ -3245,7 +3233,7 @@ diamond blastp \
 
 **⚠️ 注意事项**：同样基于全群落蛋白集（80 章口径）；单命中 + evalue 1e-5 是普查口径，未做 KO 特异过滤（部分 sseqid 为非 KO 的 KEGG 蛋白），统计前需按 `K` 编号正则再筛。
 
-**执行点评**（执行方起草）：同为 blastp 单库比对，本步 7.2h 对 84 号 108s 的差距全在库规模（KEGG 全蛋白 vs VFDB setB）；--sensitive 档位是耗时主因，若只要 KO 概览可降 --mid-sensitive；命中表直接带 12 列标准格式，与 21 号（细菌链 eggNOG/KEGG）产物的消费方式一致，98 系可直接复用聚合逻辑。
+**执行点评**编写方：同为 blastp 单库比对，本步 7.2h 对 84 号 108s 的差距全在库规模（KEGG 全蛋白 vs VFDB setB）；--sensitive 档位是耗时主因，若只要 KO 概览可降 --mid-sensitive；命中表直接带 12 列标准格式，与 21 号（细菌链 eggNOG/KEGG）产物的消费方式一致，98 系可直接复用聚合逻辑。
 
 ---
 
@@ -3272,7 +3260,7 @@ run_dbcan result/fungi/dbcan/combined_fungi.faa protein \
 - **耗时口径不同**：25 号 diamond 单工具 199 秒完成；本步 51,226 秒（约 14.2h），HMMER（hmmscan 对 V8 全 HMM 库逐 profile 扫描）阶段占绝对大头（run_dbcan 未输出分阶段计时，库日志仅有 DIAMOND/HMMER 起止标记）。同为"dbCAN 步骤"，199s 与 14.2h 的差异是工具配置差异，不是数据量差异（查询集同为百万级蛋白）。
 - 输入同 为全群落蛋白集（80 章口径）。
 
-**执行点评**（执行方起草）：HMMER 慢但能抓远缘糖苷水解家族，diamond 快但偏保守，双工具 + #ofTools 列让使用者可按严格度自行切片（建议下游只用 #ofTools=2 子集做主结果）；若时间预算紧，可先跑 diamond 再对命中集补 hmmscan；eCAMI 禁用决策正确——百万级蛋白上其内存/时间均不可行。
+**执行点评**编写方：HMMER 慢但能抓远缘糖苷水解家族，diamond 快但偏保守，双工具 + #ofTools 列让使用者可按严格度自行切片（建议下游只用 #ofTools=2 子集做主结果）；若时间预算紧，可先跑 diamond 再对命中集补 hmmscan；eCAMI 禁用决策正确——百万级蛋白上其内存/时间均不可行。
 
 ---
 
@@ -3296,7 +3284,7 @@ diamond blastp \
 
 **⚠️ 注意事项**：宽松口径警报——实测头部命中 pident 可低至 24.8%（e-value 1.95e-23，长比对拉低 e-value）；VFDB setB 为核心库本已收紧，但单命中 + 无 identity 下限仍会产生大量远缘命中，"17.7% 基因是毒力因子"绝不可直接陈述，建议按 pident≥40 且 coverage≥50% 重筛后再谈数量级。库主体为细菌毒力基因，全群落口径下命中也以细菌基因为主。
 
-**执行点评**（执行方起草）：108 秒的单库 blastp 是注释链里最快的重活，说明 82 号的 7.2h 纯粹是库规模问题；阈值后置（先宽松搜、下游按需收紧）在探索阶段合理，但教程必须给出重筛建议，否则 259,460 这个数会被误引。
+**执行点评**编写方：108 秒的单库 blastp 是注释链里最快的重活，说明 82 号的 7.2h 纯粹是库规模问题；阈值后置（先宽松搜、下游按需收紧）在探索阶段合理，但教程必须给出重筛建议，否则 259,460 这个数会被误引。
 
 ---
 
@@ -3322,7 +3310,7 @@ amrfinder \
 
 **⚠️ 注意事项**：脚本头注写"抗真菌药物耐药基因检测（CYP51/FKS 等）"，但 AMRFinderPlus 数据库以原核 AMR 为主，实测 684 行中未见 CYP51/FKS 类真核耐药靶标——"真菌耐药"在本步口径下实质为全群落细菌 AMR 普查（80 章口径的又一次体现）；脚本对 amrfinder 失败有"写空表头 + exit 0"的降级分支，引用结果前应先确认非空壳。
 
-**执行点评**（执行方起草）：ident 0.9 / coverage 0.6 + --plus 是本批注释步骤里唯一带硬阈值的，684 行的量级因此可信度远高于 84 号的 259,460；Sample<N> 检出最多（197）与其群落规模一致而非真菌信号；真正的抗真菌耐药（ERG11/CYP51 突变、FKS1 hot-spot）需要专门的点突变库，超出本工具能力，教程如实记为口径缺口。
+**执行点评**编写方：ident 0.9 / coverage 0.6 + --plus 是本批注释步骤里唯一带硬阈值的，684 行的量级因此可信度远高于 84 号的 259,460；Sample<N> 检出最多（197）与其群落规模一致而非真菌信号；真正的抗真菌耐药（ERG11/CYP51 突变、FKS1 hot-spot）需要专门的点突变库，超出本工具能力，教程如实记为口径缺口。
 
 ---
 
@@ -3346,11 +3334,10 @@ diamond blastp \
 
 **⚠️ 注意事项**：同 84 号的宽松口径（单命中、无 identity 下限，实测命中 pident 低至 48%）；MEROPS 覆盖各界蛋白酶（含真菌分泌蛋白酶家族），全群落口径下细菌丝氨酸蛋白酶占主导；家族聚合（MER→clan/家族）留给 98 系做。
 
-**执行点评**（执行方起草）：六列精简格式够用但丢了 qcov/slen，后续按覆盖率重筛时只能回炉重跑或估算——注释类 blastp 建议一律存 12 列标准格式；392 秒的耗时说明 MEROPS 库规模适中，是真菌链注释段收官的轻量步骤。
+**执行点评**编写方：六列精简格式够用但丢了 qcov/slen，后续按覆盖率重筛时只能回炉重跑或估算——注释类 blastp 建议一律存 12 列标准格式；392 秒的耗时说明 MEROPS 库规模适中，是真菌链注释段收官的轻量步骤。
 
 ---
 
-<!-- 批次⑤片段：统计段 90-99 + GEM 43-43c 章节草稿（2026-10-18 取证自 result/stat/、logs/run_events.jsonl、NOTES.md、docs/08_statistics/POWER_DISCLOSURE.md）。插入位置：79b 章节之后、"后续步骤章节随执行增量添加"收尾行之前。 -->
 
 ## 91 · 多样性统计（microeco alpha/beta + PERMANOVA，细菌/病毒双维度）
 
@@ -3378,7 +3365,7 @@ bash scripts/91_stat_diversity.sh \
 - **病毒分类过滤（整改后新增关卡）**：`[INFO] virus filter: 2521 / 2615 vOTUs have taxonomy;
   dropping 94 unclassified`。修复前 `enrich_virus_taxonomy()` 只认 geNomad 原始表的 `lineage`
   列，而实际列名为 `taxonomy`——注解整段**静默跳过**（`[INFO] geNomad taxonomy not found,
-  skipping virus annotation`），下游 vOTU 全部无 Domain 标签。质量审核三审（2026-10-14）approve修复：
+  skipping virus annotation`），下游 vOTU 全部无 Domain 标签。质量复核（2026-10-14）决策修复：
   列名检查兼容 `taxonomy`，并新增 `filter_unclassified_virus()` 把 94 条无分类 vOTU 显式剔除并留痕。
 - **alpha 多样性**（`result/stat/diversity_alpha_summary.tsv`）：
 
@@ -3395,7 +3382,7 @@ bash scripts/91_stat_diversity.sh \
   alpha/beta/PCoA/PERMANOVA 表、boxplot/pcoa_scatter 双格式图、phyloseq RDS）+ 顶层
   `diversity_status.tsv`（细菌/病毒全 OK、真菌 1 条 FAILED）。
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：48s（16 线程，6 样本 ×2 维度纯统计；首跑 22s exit 1 是 gate v1 把 GROUP_COL
   预初始化清空的编排层参数家族事故，af66706 修复后一次通过）。
 - **输出文件**：丰度/多样性表 + SVG/PDF 图 + RDS，路径规范 ✓；哨兵 `diversity_alpha_summary.tsv` ✓。
@@ -3419,7 +3406,7 @@ bash scripts/91_stat_diversity.sh \
 ```bash
 bash scripts/92_stat_differential.sh \
   -w Project/Project_demo -r . -t 16 -m Project/Project_demo/metadata.csv -g group -d all
-# 哨兵治理（质量审核 5 审 E1 整改）：哨兵须 ≥1 数据行才允许短路重跑
+# 哨兵治理（质量复核 5 审 E1 整改）：哨兵须 ≥1 数据行才允许短路重跑
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ] && [ "$(wc -l < "${SENTINEL}")" -ge 2 ]; then
     echo "[INFO] Existing outputs detected, skipping rerun"; exit 0
 fi
@@ -3439,7 +3426,7 @@ fi
 - 92 内置 LEfSe（microeco 实现，p 校正后）三水平均如实报 "No significant feature found"；
   ANCOM-BC2 在 n=3/组下退化 FAILED（`arguments imply differing number of rows`，记录于
   `differential_status.tsv` 不中断）；病毒 LEfSe SKIPPED（仅配置细菌）；真菌 SKIPPED（RDS 缺失）。
-- **假通过整改史（质量审核 2026-10-16 cp2_review P0，commit 1b9e566）**：首跑（10-16 00:14:18，
+- **假通过整改史（质量复核 2026-10-16 cp2_review 整改项，commit 1b9e566）**：首跑（10-16 00:14:18，
   exit 0 / 仅 6s）发生在 91 的 RDS 生成之前，跑的是空表并写出**仅表头**的
   `differential_summary.tsv` 后 exit 0；旧哨兵只查"文件非空"，表头也算非空，于是后续重跑全部被
   短路。修复：① 哨兵须 ≥1 数据行（`wc -l ≥ 2`）方可短路；② 全部 dimension 失败时脚本
@@ -3447,7 +3434,7 @@ fi
 - 产出：`result/stat/{bacteria,virus}/differential/`（wilcox/deseq2/maaslin2/ancombc2 结果表 +
   volcano_deseq2 火山图 PDF）。
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：125s（MaAsLin2 拟合占大头，细菌 2521 + 病毒 2521 输入特征）。
 - **输出文件**：五法结果表 + 火山图 + 顶层 summary/status 双表；哨兵治理改造后可信 ✓。
 - **后续使用**：DESeq2 结果是 94 火山图与 98 报告 Differential 节的直接输入；LEfSe 出图走 99b。
@@ -3472,7 +3459,7 @@ fi
 corr <- MetaNet::c_net_cal(t(ds$mat), method = "spearman", threads = threads)
 go   <- MetaNet::c_net_build(corr, r_threshold = 0.3, p_threshold = 0.05,
                              use_p_adj = FALSE, delete_single = TRUE)   # 未校正 p 筛边（披露项）
-# NetCoMi 组间比较的治理参数（质量审核 6 审整改）：
+# NetCoMi 组间比较的治理参数（质量复核 6 审整改）：
 perm_space <- choose(length(idx1) + length(idx2), length(idx1))          # C(6,3)=20
 n_perm <- min(as.integer(Sys.getenv("NETCOMI_NPERM", "1000")), perm_space)  # nPerm 封顶
 setTimeLimit(elapsed = as.integer(Sys.getenv("NETCOMI_TIMEOUT", "7200")))   # 2h 墙钟熔断
@@ -3492,10 +3479,10 @@ setTimeLimit(elapsed = as.integer(Sys.getenv("NETCOMI_TIMEOUT", "7200")))   # 2h
 | cross_bac_vir | MetaNet_multi_spearman | 600 | 15,069 | 0.549 | 0.084 |
 | cross_bac_fun | MetaNet_multi_spearman | 600 | 24,789 | 0.352 | 0.138 |
 
-- **_tpm join 整改（质量审核 5 审 E2 / cp2_review，1b9e566）**：病毒表样本列只取 `*_tpm`（P0-B，
+- **_tpm join 整改（质量复核 5 审 E2 / cp2_review，1b9e566）**：病毒表样本列只取 `*_tpm`（整改项-B，
   旧代码把 length/_count/lineage 一并当丰度），且读入后剥 `_tpm` 后缀再对元数据行名——旧代码
   `Sample<N>_tpm` vs 元数据 `Sample<N>` 交集为 0，把失败伪装成"需≥5 样本"的误导性跳过。
-- **NetCoMi 组间比较 = 有界披露（质量审核 6/7 审decision，POWER_DISCLOSURE §二）**：
+- **NetCoMi 组间比较 = 有界披露（质量复核 6/7 审decision，POWER_DISCLOSURE §二）**：
   a) 细菌域：3v3 逐组 SparCC/FastSpar 网络退化，`network/bacteria/group_compare.txt` 为退化
   诊断（"Status: unavailable"，nPerm: 20 (capped at permutation space 20)），非成功比较；
   b) 其余 4 目标：2 小时总预算点终止 = SKIPPED(overall-timeout)；
@@ -3504,12 +3491,12 @@ setTimeLimit(elapsed = as.integer(Sys.getenv("NETCOMI_TIMEOUT", "7200")))   # 2h
   （Matchado et al. 2021, Front Microbiol）。调研存档
   `docs/research/2026-10-17_network_comparison_small_n.md`。
 - 最终态：`NETCOMI_DISABLE=1` build-only 跑出 5/5 网络本体；`network_status.tsv` 中 5 条
-  netcomi_* 均为正式 SKIPPED 终态留痕（质量审核 6 审 P0-1c：SKIPPED 不再冒充 OK）。
+  netcomi_* 均为正式 SKIPPED 终态留痕（质量复核 6 审 整改项-1c：SKIPPED 不再冒充 OK）。
 - **真菌网络双源口径**：91/92 用 metaphlan4 谱（1/6 样本有内容 → 正确拒绝），93 用
   `result/integration/fungi/funomic_species_count.tsv`（FunOMIC 检测计数，6 样本 ×11,941 taxa）
   → 真菌网络可建（POWER_DISCLOSURE §四：两源不可互相印证）。
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：网络本体 85s；NetCoMi 组间比较在本数据规模下不可行（25.3h 仍未完成，已被
   熔断/终止策略取代）——这是本步最重要的"预期管理"数字。
 - **输出文件**：5 目录 ×（nodes/edges.tsv + network 图 SVG/PDF/TIFF）+ summary/status 双表；
@@ -3546,7 +3533,7 @@ bash scripts/94_stat_visualization.sh \
 - **披露（POWER_DISCLOSURE §一）**：所有按组着色的图在 3v3 下仅作组成/分布展示，不承载
   组间显著性声明——图内不添加 p 值标记。
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：41s（MicrobiotaProcess/ggplot2 渲染，真菌跳过）。
 - **输出文件**：约 30 张 SVG/PDF，全部落在各维度 `composition|diversity|differential/` 下 ✓。
 - **后续使用**：即取即用的论文插图层；出版主题由 `scripts/R/pub_theme.R` 统一（Arial/7pt 基准）。
@@ -3592,9 +3579,9 @@ bash scripts/96_stat_functional.sh \
 - 产出：`result/stat/bacteria/functional/pathway/`（maaslin3_results.tsv、maaslin3_raw/ 全套
   拟合产物、figures/volcano.{svg,pdf,tiff}、`bacteria_functional_pathway_done.txt` 哨兵）。
 - 96 家族其余子模块（96b 通路活性、96c 功能冗余、96 functional_permanova/network/integrated）
-  未列入本演示 W6 排程，无产物（与 98 报告 ML 节 Missing 口径一致）。
+  未列入本演示 排期批次 排程，无产物（与 98 报告 ML 节 Missing 口径一致）。
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：17s（874 特征 ×6 样本）。
 - **输出文件**：结果表 + 拟合残差 RDS + 火山图三格式；SKIPPED 兜底哨兵设计完备 ✓。
 - **后续使用**：显著通路表（本跑为空）本应供 94/sankey 与 98 报告功能节引用。
@@ -3604,7 +3591,7 @@ bash scripts/96_stat_functional.sh \
 
 ---
 
-## 96 · SIAMCAT 机器学习 —— **SKIPPED-by-guard（输入治理守卫拒绝执行）**
+## 96d · SIAMCAT 机器学习（输入治理守卫硬拒绝，exit 1）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「（本项目被守卫拒绝，属预期终态）如队列 ≥10 样本/组可执行：
@@ -3627,7 +3614,7 @@ n=6 下 10 折交叉验证不具证据力，**不做也不应做**——与 3v3 
 
 ---
 
-## 98 系 · 跨维度整合（98b/98c/98d/98e–g 八步，全部 exit 0）
+## 98a · 跨维度整合概览（98b–98g 六个整合步骤，全部 exit 0）
 
 **启动本步骤（复制给 AI 助手）**：
 > 「请为 Project_demo 依次执行 98 系八步整合（98b 细菌表、98c 病毒表+MGE、98d MAG+真菌表、
@@ -3659,11 +3646,11 @@ bash scripts/98g_cross_domain_correlation.sh -t 16 -w Project/Project_demo -r . 
 | 98f | `result/cross_domain/orthogroup/orthogroup_table.tsv`：**348,008 条蛋白 → 正交组（OG）映射**（MMseqs2 cluster.tsv + 全序列 fasta 存档） |
 | 98g | `result/cross_domain/correlation/`：跨域网络 **17,157 节点 / 121,695 边**（相关边 107,168 + 宿主预测边 14,527，212 连通分量） |
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：单步最长 88s（98b），八步串行 ~5.5 分钟——纯表联接/轻量聚类，无重计算。
 - **输出文件**：四目录（integration/{bacteria,virus,fungi} + cross_domain/{cluster,orthogroup,
   correlation}）全数落位，行数与上游产物对账一致 ✓。
-- **后续使用**：98c/98g 是 CP2 分级解冻的首批受益者（votu 表对二者即时解冻）；98d_mag 是
+- **后续使用**：98c/98g 是 病毒段复核 分级解冻的首批受益者（votu 表对二者即时解冻）；98d_mag 是
   GEM/MAG 解读的入口表；funomic_species_count 支撑 93 真菌网络。
 - **加速空间**：98f 的 MMseqs2 已 16 线程（74s）；其余步骤瓶颈在 IO。
 - **内存/硬盘**：<8G；cross_domain 存档（fasta+矩阵）~2G。**披露（POWER_DISCLOSURE §二）**：
@@ -3686,7 +3673,7 @@ bash scripts/99a_core_microbiome.sh \
 bash scripts/99a_core_microbiome.sh \
   -i Project/Project_demo/result/virus/votu/votu_table.tsv \
   -m Project/Project_demo/metadata.csv -d virus -o Project/Project_demo/result/stat/core_microbiome/virus
-# 质量审核 CP3 计划联审 W0 整改：显式确定性分组映射（treat→case），不依赖因子首水平
+# 质量复核 终稿复核 计划共同评审 排期批次 整改：显式确定性分组映射（treat→case），不依赖因子首水平
 for (cand in c("case", "treat", "treatment", "disease")) if (cand %in% group_values) { case_label <- cand; break }
 ```
 
@@ -3699,14 +3686,14 @@ for (cand in c("case", "treat", "treatment", "disease")) if (cand %in% group_val
 
 - **整改史（两处）**：① `_tpm` join 修复——病毒表列名 `Sample<N>_tpm` 对元数据 `Sample<N>` 交集
   为 0（与 93 同根因家族）；② case 映射修复——旧实现取因子首水平，在 `control` 排序靠前时
-  case/control 会**静默对调**；CP3 联审 W0 approve显式候选链映射（treat→case）。
+  case/control 会**静默对调**；终稿复核 共同评审 排期批次 决策显式候选链映射（treat→case）。
 - **离账重跑事故（NOTES 2026-10-17 条目）**：修复版于 10-17 06:34:02 手动重跑未走泳道、无事件
-  记录，产物随即被当轮 98 报告引用——第 9 轮审核以 mtime 抓出并补记（e93c4ca）；10-18 08:37
+  记录，产物随即被当轮 98 报告引用——轮复核以 mtime 抓出并补记（e93c4ca）；10-18 08:37
   带账重跑双维度，事件流完整（此即终版报告时间戳 08:39 的直接前置）。
 - 产出：每维度 `core_microbiome_{global,case,control}.csv` + summary.txt + 三图
   （丰度条图/流行度曲线/Venn）。
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：2s/维度。
 - **输出文件**：三层清单 + Venn 校验行（43+97+54=194 ✓ / 266+1133+334=1733 ✓）。
 - **后续使用**：核心清单是 98 报告与后续机制解读的"常驻菌群"基线；Venn 特有集仅为假设生成。
@@ -3743,7 +3730,7 @@ bash scripts/99b_lefse.sh \
   两种诚实呈现。
 - 产出：`result/stat/lefse/bacteria/lefse_results.tsv`（94 已联动渲染 `lefse_barplot.pdf`）。
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：3s。
 - **输出文件**：结果表 + 联动条图；列设计（wilcoxon_validated/lda_fallback）自带防过度解读
   护栏 ✓。
@@ -3766,10 +3753,10 @@ bash scripts/98_stat_report.sh -w Project/Project_demo -r . --force
 # 产出：result/stat/report/report_$(date -u +%Y%m%d_%H%M%S).md
 ```
 
-**执行结果**（终版 **`result/stat/report/report_20261106_035440.md`**，2026-10-18 08:39:01
-实测 exit 0 / 1s，96 行；前序版本 10-17 06:31/06:34 两版）：
+**执行结果**（终版 **`result/stat/report/report_20261106_035440.md`**，2026-11-06 03:54:40
+实测 exit 0 / 1s，143 行；前序版本 10-17 06:31/06:34 两版）：
 
-- **披露 banner 置顶（质量审核 9/10 轮审核要求，POWER_DISCLOSURE 前置引用）**：
+- **披露 banner 置顶（质量复核 9/10 轮复核要求，POWER_DISCLOSURE 前置引用）**：
   > **统计功效与口径披露（必读）**：本项目 n=6（3v3）为流程演示设计——置换检验 p 值下限
   > ≈0.05、LEfSe/SIAMCAT/网络组间比较受小样本限制，全部组间结论仅具探索性。详见
   > `docs/08_statistics/POWER_DISCLOSURE.md`。
@@ -3777,24 +3764,19 @@ bash scripts/98_stat_report.sh -w Project/Project_demo -r . --force
   Differential（六行 summary 表）、Networks（5/5 网络表）、Batch/ML/Cross-cohort
   （如实 "Missing"，对应 95a 不执行 / SIAMCAT 守卫拒绝 / 97 跨队列不适用）。
 - 终版时间点的前置链：10-18 08:37 99a 带账重跑（双维度 exit 0）→ 08:39 报告再生成——
-  报告与产物新鲜度对齐（第 9 轮审核 mtime 教训的闭环）。
+  报告与产物新鲜度对齐（轮复核 mtime 教训的闭环）。
 
-**执行点评**（执行方起草，统计段关口由质量审核复核）：
+**执行点评**（编写方，统计段阶段检查点由质量复核复核）：
 - **运算时间**：1s（纯文件聚合，无计算）。
 - **输出文件**：单文件快照，时间戳防覆盖 ✓；banner 首次把 POWER_DISCLOSURE 从"旁置文档"
   提升为报告正文必读层。
-- **后续使用**：即 CP3 终审与用户阅读的统计段唯一入口；Missing 节保留是诚实性设计而非缺陷。
+- **后续使用**：即 终稿复核 终审与用户阅读的统计段唯一入口；Missing 节保留是诚实性设计而非缺陷。
 - **加速空间**：不适用。
 - **内存/硬盘**：可忽略。**披露（POWER_DISCLOSURE 全文）**：3v3 探索性、C(6,3)=20、网络比较
   每组 25-30 业界门槛三口径在 banner 一句话内全部锚定，正文各表不再重复显著性声明。
 
 ---
 
-<!-- GEM 章节（43/43b/43c）见批次②完整版 -->
-
-<!-- GEM 章节（43/43b/43c）见批次②完整版 -->
-
-<!-- GEM 章节（43/43b/43c）见批次②完整版 -->
 
 ## 24c · AMR 报表融合层（hAMRonization，可选步骤）
 
@@ -3821,7 +3803,7 @@ bash scripts/24c_bac_amr_harmonize.sh -t 16 \
 - **加速空间**：无需加速
 - **内存硬盘**：极轻（<1MB 临时文件）
 
-**⚠️ 已知限制**（GATE-OPT1 披露）：
+**⚠️ 已知限制**（优化质量检查 披露）：
 1. AMRFinderPlus protein-only 模式需补 Contig id/Start/Stop/Strand 四列占位值（0/0/0/+），非实测坐标
 2. hAMRonization 设计内跳过 Type=VIRULENCE 行（AMR 专注工具）
 3. 跨工具 ID 格式不同：AMRFinderPlus 短蛋白 ID vs RGI 完整 prodigal 描述串
@@ -3831,7 +3813,7 @@ bash scripts/24c_bac_amr_harmonize.sh -t 16 \
 
 ---
 
-## 优化基准对照：galah vs dRep（GATE-OPT1 隔离评估）
+## 优化基准对照：galah vs dRep（优化质量检查 隔离评估）
 
 **执行结果**（2026-10-21 优化轮，隔离目录 `result/opt_bench/galah_vs_drep/`）：
 | 指标 | galah | dRep（现有） |
@@ -3844,7 +3826,7 @@ bash scripts/24c_bac_amr_harmonize.sh -t 16 \
 
 ---
 
-## 优化原型：MICOM 群落代谢建模（GATE-OPT2 研究型可选）
+## 优化原型：MICOM 群落代谢建模（优化质量检查 研究型可选）
 
 **执行结果**（2026-10-21 优化轮，隔离目录 `result/opt_bench/micom_prototype/`）：
 - 10 物种个体 FBA：9/10 成功（Escherichia carveme 模型已知缺失）

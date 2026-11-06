@@ -2915,7 +2915,7 @@ iphop predict --fa_file result/virus/votu/contigs/virus.fasta \
               --out_dir result/virus/iphop --num_threads ${CPUS}
 ```
 
-**执行结果**（2026-10-15 02:02–16:26 实测，**51,815 秒 ≈ 14.4 小时**，V3 链压轴）：Host_prediction_to_genus_m90.csv **2,714 行**（3,062 vOTU 中 88.7% 获属级宿主，m90 口径），**194 个宿主属**。Top5：*Faecalibacterium* 265、*Bacteroides* 253、*Blautia_A* 192、*Phocaeicola* 159、*Escherichia* 101——与肠道群落优势菌谱一致。
+**执行结果**（2026-10-15 02:02–16:26 实测，**51,815 秒 ≈ 14.4 小时**，V3 链压轴）：Host_prediction_to_genus_m90.csv **2,714 行**（占 3,062 个 vOTU 的 **88.7% 行数**；按唯一 vOTU 去重则为 **2,222 个 / 72.6%**——两个口径都在用，引用时须注明），**194 个宿主属**。Top5（按行计数，同一 vOTU 可有多条候选）：*Faecalibacterium* 265、*Bacteroides* 253、*Blautia_A* 192、*Phocaeicola* 159、*Escherichia* 101——与肠道群落优势菌谱一致。
 
 **⚠️ 注意事项**：错峰纪律（用户 2026-10-14 批准放宽后的保留项）——高内存互斥现仅约束 **gtdbtk 与 iphop** 两步（755G 内存实测仅用 20G，瓶颈在核不在内存）；V3 泳道把 iphop 排在链尾（68 最后）即为此设计。失败时 touch 哨兵降级为 WARN 不阻塞（验证层语义）。
 
