@@ -130,13 +130,21 @@ if [ -n "${TAG}" ]; then
     echo "[publish] tag ${TAG} -> $(git rev-parse --short "${BRANCH}")"
 fi
 
-# Post-build verification: no excluded paths, no absolute home paths.
+# Post-build verification: no excluded paths, no absolute home paths,
+# no forbidden tokens in shipped text (2026-11-10: per publish-review P0 —
+# the seds above are best-effort; the snapshot is the enforcement point).
 BAD_PATHS="$(git ls-tree -r --name-only "${BRANCH}" | grep -E "${EXCLUDE_RE}" || true)"
 BAD_HOME="$(git grep -l '/home/' "${BRANCH}" -- 2>/dev/null | grep -v 'scripts/utils/publish_public.sh' || true)"
-if [ -n "${BAD_PATHS}" ] || [ -n "${BAD_HOME}" ]; then
+BAD_WORDS="$(git grep -l -i -e 'Harbin' -e '质量审核' -e 'supervisor' -e 'sicoding' \
+                    -e 'REDACTED-CANARY' "${BRANCH}" -- ':!*.pdf' 2>/dev/null || true)"
+# claude/Claude alone have legitimate false positives in shipped text only if
+# someone wrote them literally; the seds neutralize known cases — anything
+# left here is a real leak and must fail the build.
+if [ -n "${BAD_PATHS}" ] || [ -n "${BAD_HOME}" ] || [ -n "${BAD_WORDS}" ]; then
     echo "[ERROR] verification failed:" >&2
     [ -n "${BAD_PATHS}" ] && echo "${BAD_PATHS}" >&2
     [ -n "${BAD_HOME}" ] && echo "${BAD_HOME}" >&2
+    [ -n "${BAD_WORDS}" ] && echo "${BAD_WORDS}" >&2
     exit 1
 fi
 
