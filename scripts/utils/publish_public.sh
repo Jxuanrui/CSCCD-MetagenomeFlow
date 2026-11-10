@@ -63,7 +63,9 @@ sed -i -E 's#/home/[^/]*/Course/(CSCCD-MetagenomeFlow|Maxmetagenome)#~/Course/CS
     pipeline/config/config.yaml pipeline/config/config.test_ci.yaml 2>/dev/null || true
 # Real-cohort sample IDs (docs/comments/example commands only — verified no
 # functional strings) are neutralized to "Sample<N>" in the snapshot.
-echo "${FILES}" | xargs -d '\n' grep -l 'Harbin' 2>/dev/null | xargs -r -d '\n' sed -i 's/Harbin/Sample/g' || true
+# 2026-11-10: digit-bearing IDs only — "Harbin Medical University" (user's
+# README header attribution) must survive; sample names always carry digits.
+echo "${FILES}" | xargs -d '\n' grep -lE 'Harbin[0-9]' 2>/dev/null | xargs -r -d '\n' sed -iE 's/Harbin([0-9])/Sample\1/g' || true
 # Machine-specific repo paths in mined tooling become portable placeholders.
 # 2026-10-19: generalized — any /home/<user>/ prefix becomes ~/ (covers sibling
 # project paths like apptainer kits; /home/user examples normalize harmlessly)
@@ -143,7 +145,7 @@ fi
 # the seds above are best-effort; the snapshot is the enforcement point).
 BAD_PATHS="$(git ls-tree -r --name-only "${BRANCH}" | grep -E "${EXCLUDE_RE}" || true)"
 BAD_HOME="$(git grep -l '/home/' "${BRANCH}" -- 2>/dev/null | grep -v 'scripts/utils/publish_public.sh' || true)"
-BAD_WORDS="$(git grep -l -i -e 'Harbin' -e '质量审核' -e 'supervisor' -e 'sicoding' \
+BAD_WORDS="$(git grep -lE -i -e 'Harbin[0-9]' -e '质量审核' -e 'supervisor' -e 'sicoding' \
                     -e 'REDACTED-CANARY' "${BRANCH}" -- ':!*.pdf' 2>/dev/null || true)"
 # claude/Claude alone have legitimate false positives in shipped text only if
 # someone wrote them literally; the seds neutralize known cases — anything

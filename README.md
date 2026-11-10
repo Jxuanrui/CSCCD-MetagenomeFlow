@@ -1,14 +1,27 @@
-# CSCCD-MetagenomeFlow
-
 <p align="center">
-  <img src="docs/assets/lab_logo.png" width="140" alt="China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases"/>
+  <table border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <td width="220" align="center" valign="middle">
+        <img src="docs/assets/lab_logo.png" width="190" alt="China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases"/>
+      </td>
+      <td align="center" valign="middle">
+        <font size="6"><b>CSCCD</b>&nbsp;<font color="#2E86C1">Lab</font></font><br/>
+        <b>China–Saudi Joint Laboratory for Cardiovascular and Cerebrovascular Diseases</b><br/>
+        <sub>Our Mission — From discovery to <i>clinical translation</i>.</sub>
+        <br/><br/>
+        <sub><b>A MAJOR JOINT INITIATIVE OF</b></sub><br/>
+        <img src="docs/assets/hmu_logo.png" height="50" valign="middle" alt="Harbin Medical University"/>
+        <sub><b>Harbin Medical University</b></sub> &nbsp;×&nbsp;
+        <img src="docs/assets/kaust_logo.png" height="50" valign="middle" alt="King Abdullah University of Science and Technology"/>
+        <sub><b>King Abdullah University of Science and Technology</b></sub>
+      </td>
+    </tr>
+  </table>
 </p>
 
-<p align="center"><img src="docs/figures/header.jpg" alt="CSCCD-MetagenomeFlow banner"></p>
+# CSCCD-MetagenomeFlow
 
 A self-contained metagenomics platform that profiles gut bacteria, viruses, and fungi in parallel — from raw reads to publication-ready statistics — with built-in host-microbe mechanism discovery and an AI-assisted workflow.
-
-Developed by the **China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases**.
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
