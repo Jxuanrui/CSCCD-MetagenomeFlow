@@ -82,7 +82,7 @@ echo "${FILES}" | xargs -d '\n' grep -l -E 'Claude Code|claude mcp|claude -p' 2>
 # sed abort per file, silently disabling this whole pass — `|| true` hid it.
 # Every expression below is verified to parse; the forbidden-token gate at
 # the end of this script is the enforcement point.)
-echo "${FILES}" | xargs -d '\n' grep -l -E '\.claude|Claude|claude|Codex|ZCode|zcode' 2>/dev/null | \
+echo "${FILES}" | xargs -d '\n' grep -l -E '\.claude|CLAUDE|Claude|claude|Codex|ZCode|zcode' 2>/dev/null | \
     xargs -r -d '\n' sed -i -E -e 's#\.claude/skills#本地技能目录#g' -e 's#~/\.claude/skills#~/local/skills#g' \
         -e 's/CLAUDE\.md/内部治理文档/g' -e 's/Claude Code/编程助手/g' -e 's/claude mcp add/mcp add/g' \
         -e 's/scientific-figure-library-claude/MGXPRESERVEFIG/g' \

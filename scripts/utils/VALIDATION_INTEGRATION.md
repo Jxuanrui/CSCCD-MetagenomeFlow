@@ -13,11 +13,11 @@ pipeline script). It is documented in Tutorial.md as an optional manual step.
 | Snakemake rules (production) | ❌ Not integrated | Add `run:` directive or `onsuccess:`/`onerror:` blocks |
 | Individual script (Mode 1) | ❌ Not integrated | Add post-mgx_end validation call in libcommon.sh |
 | Monitor (run_monitor.py) | ❌ Not integrated | Add validation status display alongside exit code |
-| AI Agent workflow | ❌ Not integrated | CLAUDE.md routing matrix should reference validate_step |
+| AI Agent workflow | ❌ Not integrated | 内部治理文档 routing matrix should reference validate_step |
 
 ## Recommended Minimal Integration (for AI Agent workflow)
 
-In `CLAUDE.md` §6 Routing Matrix, add:
+In `内部治理文档` §6 Routing Matrix, add:
 ```
 After any pipeline step completes:
   → python3 scripts/utils/validate_step.py <step_id> <sample> <workdir>
