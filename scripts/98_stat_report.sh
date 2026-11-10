@@ -117,11 +117,18 @@ extract_table_preview() {
 
     echo "## Validation Coverage"
     echo
-    echo "- Validation rules registered: $(grep -c '^    "' scripts/utils/validate_step.py || echo 0) step groups"
-    echo "- Steps with PASS: $(find "${STAT_DIR}" -name "*.json" -exec grep -l '"PASS"' {} \; 2>/dev/null | wc -l)"
-    echo "- Steps with FAIL: $(find "${STAT_DIR}" -name "*.json" -exec grep -l '"FAIL"' {} \; 2>/dev/null | wc -l)"
-    echo "- Steps UNVERIFIED (no rules): see scripts/utils/VALIDATION_INTEGRATION.md"
-    echo "- Full validation log: logs/validation_log.jsonl (if present)"
+    VLOG="${WORKDIR}/logs/validation_log.jsonl"
+    N_RULES=$(grep -c '^    "[0-9]' "${REPO}/scripts/utils/validate_step.py" 2>/dev/null || echo 0)
+    echo "- Validation rules registered: ${N_RULES} step groups (\`scripts/utils/validate_step.py\`)"
+    if [ -f "${VLOG}" ]; then
+        N_PASS=$(grep -c '"verdict": "PASS"' "${VLOG}" 2>/dev/null || echo 0)
+        N_FAIL=$(grep -c '"verdict": "FAIL"' "${VLOG}" 2>/dev/null || echo 0)
+        N_UNV=$(grep -c '"verdict_type": "UNVERIFIED"' "${VLOG}" 2>/dev/null || echo 0)
+        echo "- Validation runs recorded: PASS ${N_PASS} / FAIL ${N_FAIL} / UNVERIFIED ${N_UNV}"
+    else
+        echo "- Validation runs recorded: none (no \`logs/validation_log.jsonl\`; run \`validate_step.py\` to populate)"
+    fi
+    echo "- Steps without rules are reported as UNVERIFIED, never as PASS (see \`scripts/utils/VALIDATION_INTEGRATION.md\`)"
     echo
 
     echo "## Artifact Index"
