@@ -1,6 +1,6 @@
 # AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
 # Source: docs/manifests/envs/genomad.txt
-# ALL packages pinned to name+version+build (supervisor P0-1 standard)
+# ALL packages pinned to name+version+build (review P0-1 standard)
 # NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
 #       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
 

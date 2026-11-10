@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Interface-consistency lint: help text vs MGX_OPTS registry (supervisor final
+"""Interface-consistency lint: help text vs MGX_OPTS registry (review final
 review P0-3, 2026-10-15).
 
 Catches the "option documented in usage but never registered" class (43/43b -t

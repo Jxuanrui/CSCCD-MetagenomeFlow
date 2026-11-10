@@ -1,4 +1,4 @@
-# envs-pixi/ 环境锁定覆盖口径（supervisor 16th review P2-1）
+# envs-pixi/ 环境锁定覆盖口径（review 16th review P2-1）
 
 ## 覆盖率：53/53 适用域全锁（100%）
 

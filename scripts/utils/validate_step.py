@@ -390,7 +390,7 @@ def validate(step_id, sample, workdir, repo):
     """Run validation checks for a step. Returns (passed, results)."""
     rules = VALIDATION_RULES.get(step_id)
     if rules is None:
-        # Supervisor 18th B1: unknown step -> UNVERIFIED, not PASS
+        # review 18th B1: unknown step -> UNVERIFIED, not PASS
         # (an empty _default that returns PASS is a false positive for AI consumers)
         return False, [{"check": "_rules", "passed": False,
                         "description": "no validation rules registered for this step"}], "UNVERIFIED"

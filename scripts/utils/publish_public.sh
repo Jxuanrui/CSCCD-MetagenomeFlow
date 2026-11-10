@@ -91,6 +91,7 @@ if [ -f Project/Project_demo/walkthrough.md ]; then
     sed -e 's/Harbin[0-9]\+/Sample<N>/g' \
         -e 's#/home/[A-Za-z0-9_.-]\+/#~/#g' \
         -e 's/质量审核/质量审核/g' -e 's/主代理/执行方/g' -e 's/子代理/后台任务/g' \
+        -e 's/[Ss]upervisor_[0-9]\{8\}[a-z0-9_]*/review/g' -e 's/，supervisor/，review/g' \
         Project/Project_demo/walkthrough.md > docs/tutorial/walkthrough.md
     echo "[publish] exported sanitized walkthrough to docs/tutorial/"
 fi

@@ -18,14 +18,14 @@ while an outer loop regenerates the file.
 Step events come in start/end pairs since ENG-6 phase 3: mgx_begin writes a
 start event (exit_code=-1, a negative-only "running" marker — real exit codes
 are 0-255 so no genuine failure can collide with it; user-approved 2026-10-02,
-marker corrected same day per supervisor stage-3 P0-1) and the EXIT trap
+marker corrected same day per review stage-3 P0-1) and the EXIT trap
 writes the end event. Each start pairs with the LATEST unmatched end of the
 same (step_id, sample_id) (LIFO: a rerun's end closes its own start);
 unpaired starts render as 运行中 cards whose elapsed
 span carries data-started="<epoch-ms>" for client-side ticking. A step
 killed by SIGKILL/OOM stays 运行中 forever in that jsonl (honest display).
 
---serve starts a real-time SSE dashboard (stdlib only, supervisor P0
+--serve starts a real-time SSE dashboard (stdlib only, review P0
 constraints): ThreadingHTTPServer bound to 127.0.0.1 ONLY (no --host), route
 whitelist GET / and GET /events (else 404), Host header restricted to
 127.0.0.1:<port>/localhost:<port> (else 403), in-memory page, server-side
@@ -76,7 +76,7 @@ BANNER_TEXT = ("仅显示已接入钩子的步骤与管线级终态；Snakefile 
                "（01_metadata_qc，bash 壳但未 source libcommon）与进程被杀/调度器"
                "异常的运行不在其中")
 DEFAULT_INTERVAL = 5
-# ENG-6 phase-3 serve mode (supervisor P0): loopback only, no --host anywhere.
+# ENG-6 phase-3 serve mode (review P0): loopback only, no --host anywhere.
 SERVE_BIND_HOST = "127.0.0.1"
 SERVE_DEFAULT_PORT = 8790
 SSE_MAX_CONNECTIONS = 8
@@ -155,7 +155,7 @@ def summarize_output(pattern: str, workdir: str, sample: str):
     )
     if "{" in resolved or "}" in resolved or "$" in resolved:
         # Unresolved placeholder (e.g. {mag}, ${WORKDIR}) — globbing it would
-        # misleadingly report "0 个文件". Skip counting instead (supervisor P1-4).
+        # misleadingly report "0 个文件". Skip counting instead (review P1-4).
         return resolved, "路径含未解析占位符（不统计）", "—"
     count = 0
     total = 0
@@ -207,7 +207,7 @@ def is_step_start(event: dict) -> bool:
     """Step-level start marker: exit_code < 0 (written as -1 by mgx_begin).
     Negative-only by design: a real $? is always 0-255, so a genuine failure
     exit code (e.g. argparse's 2) can never be misread as "running"
-    (supervisor stage-3 P0-1). Pipeline-level events are excluded — their
+    (review stage-3 P0-1). Pipeline-level events are excluded — their
     start marker stays 2 (Snakefile-controlled, collision-free)."""
     if str(event.get("step_id") or "") == PIPELINE_STEP_ID:
         return False
@@ -219,7 +219,7 @@ def pair_step_starts(step_events: list) -> set:
     """Indices of start events paired with a LATER end event of the same
     (step_id, sample_id). LIFO per key: a rerun's end event closes its OWN
     start (the most recent one), so a SIGKILL'd earlier run stays visible as
-    运行中 instead of stealing the rerun's pairing (supervisor stage-3 P0-3);
+    运行中 instead of stealing the rerun's pairing (review stage-3 P0-3);
     unpaired starts are still-running (or killed) steps.
 
     2026-10-18 (CP3 P0-2 revision): identity-preferred pairing with an
@@ -603,7 +603,7 @@ def render_parts(events: list, repo: Path, workdir: str):
     fail = len(finished) - ok
     total = len(finished) + running_count
     last_ts = str(events[-1].get("ts") or "—") if events else "—"
-    # 口径（supervisor P2-9）: jsonl 只追加不轮转，首尾时间相减会跨越多次
+    # 口径（review P2-9）: jsonl 只追加不轮转，首尾时间相减会跨越多次
     # 运行；改按已记录事件的 duration_sec 求和，标注为"已记录步骤耗时合计"。
     # Start events carry duration_sec=0, so summing all step events is safe.
     try:
@@ -651,7 +651,7 @@ def render_parts(events: list, repo: Path, workdir: str):
 
 
 def render_html(events: list, repo: Path, refresh_sec: int, workdir: str) -> str:
-    # ENG-6 phase-2 (supervisor C3): pipeline-level events are not step cards
+    # ENG-6 phase-2 (review C3): pipeline-level events are not step cards
     # and are excluded from step statistics / recorded-seconds totals.
     stats_html, cards_html, pill = render_parts(events, repo, workdir)
     return f"""<!DOCTYPE html>
@@ -685,7 +685,7 @@ def write_dashboard(events_path: Path, out_path: Path, repo: Path, refresh_sec: 
 
 
 # ==============================================================================
-# --serve: real-time SSE dashboard (supervisor P0 constraints, stdlib only)
+# --serve: real-time SSE dashboard (review P0 constraints, stdlib only)
 # ==============================================================================
 
 SERVE_JS = """<script>
@@ -773,7 +773,7 @@ class _SSEGate:
 
 
 class MonitorHTTPServer(ThreadingHTTPServer):
-    # Supervisor P0: daemon threads so SIGINT exits promptly.
+    # review P0: daemon threads so SIGINT exits promptly.
     daemon_threads = True
 
     def __init__(self, address, handler, state: dict):
@@ -893,7 +893,7 @@ class MonitorHandler(BaseHTTPRequestHandler):
                 else:
                     buf += line  # partial line: buffer until the newline
                 continue
-            # EOF — rotation guard (size check only, supervisor-scoped):
+            # EOF — rotation guard (size check only, review-scoped):
             try:
                 current_size = os.stat(path).st_size
             except OSError:
@@ -914,7 +914,7 @@ class MonitorHandler(BaseHTTPRequestHandler):
 def open_tail(path: Path):
     """Open for tailing in binary mode. Returns (handle, partial) where
     partial is the trailing bytes after the last newline. The handle is
-    positioned at END OF FILE (supervisor stage-4-r3 C1: an earlier version
+    positioned at END OF FILE (review stage-4-r3 C1: an earlier version
     seeked to the partial's start AND returned the same bytes, so the next
     readline re-read them and the duplicated prefix failed JSON parsing)."""
     handle = path.open("rb")
@@ -1059,7 +1059,7 @@ def format_text_event(event: dict, repo: Path, now_ms: int, color: bool) -> str:
 
 def _pipeline_state_text(events: list) -> str:
     """Pipeline state from the last __pipeline__ event (text twin of
-    pipeline_pill; supervisor C3: pipeline events never count as steps)."""
+    pipeline_pill; review C3: pipeline events never count as steps)."""
     pipe = [ev for ev in events
             if str(ev.get("step_id") or "") == PIPELINE_STEP_ID]
     if not pipe:
@@ -1073,7 +1073,7 @@ def _pipeline_state_text(events: list) -> str:
 
 def _flush_stdout() -> None:
     """Force buffered stdout out NOW so a closed pipe raises here (inside a
-    guarded scope) instead of at interpreter-shutdown flush (supervisor P2)."""
+    guarded scope) instead of at interpreter-shutdown flush (review P2)."""
     try:
         sys.stdout.flush()
     except BrokenPipeError:
@@ -1109,7 +1109,7 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
     events = read_events(events_path)
     # Follow start offset = end of the LAST COMPLETE line at snapshot time:
     # never mid-line (a trailing partial line is skipped by read_events and
-    # would otherwise be silently lost — supervisor stage-4-r2 P1), and
+    # would otherwise be silently lost — review stage-4-r2 P1), and
     # taken after the snapshot read so events are neither skipped nor
     # double-printed (residual window: sub-millisecond, documented).
     follow_from = 0
@@ -1122,7 +1122,7 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
             window = ftmp.read(end - window_start)
         idx = window.rfind(b"\n")
         follow_from = window_start + idx + 1 if idx != -1 else 0
-    # Supervisor C3 (phase 2): pipeline-level events are excluded from step
+    # review C3 (phase 2): pipeline-level events are excluded from step
     # statistics and shown as a header state instead (their exit_code=2 start
     # marker must never render as a failed step) — snapshot AND follow.
     steps = [ev for ev in events
@@ -1161,7 +1161,7 @@ def run_text(events_path: Path, repo: Path, workdir: str, follow: bool) -> int:
             if fh is None:
                 # File was deleted mid-follow: wait for (re)creation and
                 # restart from the top with a visible marker. Never call
-                # readline() on the closed handle (supervisor stage-4-r2 P0).
+                # readline() on the closed handle (review stage-4-r2 P0).
                 try:
                     fh = events_path.open("rb")
                     partial = b""

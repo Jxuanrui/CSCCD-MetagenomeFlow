@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# S-3 (supervisor 19th): download integrity check helper
+# S-3 (review 19th): download integrity check helper
 mgx_verify() {
     local file="$1" expected="$2"
     [ -z "$expected" ] && return 0

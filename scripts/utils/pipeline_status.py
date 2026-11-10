@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pipeline status recovery tool (Supervisor 18th D phase).
+"""Pipeline status recovery tool (review 18th D phase).
 
 Reads run_events.jsonl + validation log + product file mtimes to reconstruct
 the current state of a workdir after an interruption. Outputs a JSON summary
@@ -27,7 +27,7 @@ def read_events(workdir):
 
 
 def pair_events(events):
-    """Match start events with their end events (supervisor 18th B logic)."""
+    """Match start events with their end events (review 18th B logic)."""
     paired = {}
     pending = {}
     for e in events:
