@@ -64,7 +64,7 @@ HAS_GENOMAD=false; HAS_VS2=false
 [ -f "${VS2_VIRUS}" ] && [ -s "${VS2_VIRUS}" ] && HAS_VS2=true
 
 if $HAS_GENOMAD && $HAS_VS2; then
-    # 用户approve 2026-10-11：交集做主结果；前病毒按基础 contig ID 匹配（质量审核 P0-1 方案 A）
+    # 用户定案 2026-10-11：交集做主结果；前病毒按基础 contig ID 匹配（质量审核 P0-1 方案 A）
     mkdir -p "${CONTIGS_DIR}"
     # 交集（按基础 ID）：sed 不用 cut（GNU cut 不接受多字符分隔符）
     comm -12 \

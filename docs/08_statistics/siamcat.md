@@ -53,14 +53,14 @@ bash scripts/96_stat_ml_siamcat.sh \
 
 | 维度 | 来源 |
 |------|------|
-| bacteria | `result/metaphlan4/merged/taxonomy.tsv`（WC1R 输入治理：仅保留 k__Bacteria 物种 s__ 终端行；层级/真核/古菌行剔除并计数） |
+| bacteria | `result/metaphlan4/merged/taxonomy.tsv`（输入治理 输入治理：仅保留 k__Bacteria 物种 s__ 终端行；层级/真核/古菌行剔除并计数） |
 | virus | `result/integration/virus/votu_annotation_matrix_relab.tsv` 的 `vOTU_TPM_` 列（98c 产物；块内自行换算相对丰度——RELAB 列 %.4f 会抹掉低丰度信号，不采用） |
 | fungi | `result/integration/fungi/normalized/funomic_species_relab.tsv`（98d 产物；协议用途固定此源，`-M` 仅显式传参时生效并 WARN non-protocol） |
 | all | 细菌+病毒+真菌三块合并（BAC|/VIR|/FUN|，= `--combination BVF`） |
 
 ## 输出
 
-默认 `-d bacteria` 输出到 `result/stat/bacteria/ml/`；`-d virus` / `-d fungi` 分别输出到对应维度的 `ml/` 子目录；`-d all`（=BVF）输出到 `result/stat/ml/`；`--combination BV/BF/VF` 输出到 `result/stat/ml_<组合>/`。三块特征各转 0-1 相对丰度后过滤（per-block，WC1R2）。`--sample-set auto|BVF`：显式 `--combination` 默认 BVF（七组共用三表交集，配对前提）；auto=各组合各自交集（非协议便利）。resume 会核对 manifest 的 **combination / sample_set / fungi_method** 三字段与本次参数，任一不一致时报错要求 `--force`（防旧口径哨兵被静默复用，WC1R2-C2）；**没有 manifest 的旧哨兵（如 WC1R 之前的结果）重跑同样报错，需 `--force` 重建**。显式 `-M` 的非协议结果被协议 resume 拦下时也请用 `--force`。`--repeats N` 外层循环输出 mean±sd 与 n_degenerate。
+默认 `-d bacteria` 输出到 `result/stat/bacteria/ml/`；`-d virus` / `-d fungi` 分别输出到对应维度的 `ml/` 子目录；`-d all`（=BVF）输出到 `result/stat/ml/`；`--combination BV/BF/VF` 输出到 `result/stat/ml_<组合>/`。三块特征各转 0-1 相对丰度后过滤（per-block，输入治理二批）。`--sample-set auto|BVF`：显式 `--combination` 默认 BVF（七组共用三表交集，配对前提）；auto=各组合各自交集（非协议便利）。resume 会核对 manifest 的 **combination / sample_set / fungi_method** 三字段与本次参数，任一不一致时报错要求 `--force`（防旧口径哨兵被静默复用，输入治理二批-C2）；**没有 manifest 的旧哨兵（如 输入治理 之前的结果）重跑同样报错，需 `--force` 重建**。显式 `-M` 的非协议结果被协议 resume 拦下时也请用 `--force`。`--repeats N` 外层循环输出 mean±sd 与 n_degenerate。
 
 | 文件 | 内容 |
 |------|------|

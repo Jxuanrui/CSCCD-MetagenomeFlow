@@ -73,7 +73,7 @@ REPEATS="1"
 COMBINATION=""
 SAMPLE_SET=""
 
-# WC1R2 P0-3 (2026-10-01, user decisions #2/#3): --combination / --sample-set
+# 输入治理二批 P0-3 (2026-10-01, user decisions #2/#3): --combination / --sample-set
 # / -M change DEFAULTS when explicitly passed, and value equality cannot
 # distinguish "explicitly given" from "left at default" (mgx_parse fills the
 # same variables either way). Scan the raw args once, before parsing.
@@ -103,7 +103,7 @@ REPO="$(cd "${REPO}" && pwd)"
 mgx_begin
 
 BACT_TABLE="${WORKDIR}/result/metaphlan4/merged/taxonomy.tsv"
-# WC1R2 P0-1 (2026-10-01, user decision #1): the virus input is the 98c
+# 输入治理二批 P0-1 (2026-10-01, user decision #1): the virus input is the 98c
 # integration product votu_annotation_matrix_relab.tsv, consumed through its
 # vOTU_TPM_<sample> columns (not the raw script-60 votu_table.tsv, which is
 # fully retired, and not the table's vOTU_RELAB_ columns - see
@@ -149,7 +149,7 @@ esac
 COMBO_MULTI=0
 [ "${#COMBINATION}" -gt 1 ] && COMBO_MULTI=1
 
-# WC1R2 P0-3 (user decision #2): sample-set normalization. auto keeps the
+# 输入治理二批 P0-3 (user decision #2): sample-set normalization. auto keeps the
 # per-combination intersection of the selected blocks' input tables (current
 # behavior, non-protocol convenience); an explicitly passed --combination
 # flips the default to BVF, so the seven protocol runs (B/V/F/BV/BF/VF/BVF)
@@ -187,7 +187,7 @@ mkdir -p "${RESULT_DIR}" "${VIZ_ML_DIR}" "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/96_stat_ml_siamcat.log"
 exec > >(tee -a "${LOG_FILE}") 2>&1
 
-# WC1R2 P0-3: sample-set contract line (into the run log; the intersection
+# 输入治理二批 P0-3: sample-set contract line (into the run log; the intersection
 # size follows from the R stage once the tables are read)
 if [ "${SAMPLE_SET}" = "BVF" ]; then
     echo "[INFO] sample_set=BVF: shared sample pool = B-V-F input-table intersection (protocol: explicit --combination defaults to BVF; --sample-set explicitly passed=${SAMPLE_SET_EXPLICIT})"
@@ -235,7 +235,7 @@ if [ ! -f "${METADATA_CSV}" ]; then
     exit 1
 fi
 
-# WC1R2 P0-3 (user decision #3): the FUN| arm is PINNED to the 98d funomic
+# 输入治理二批 P0-3 (user decision #3): the FUN| arm is PINNED to the 98d funomic
 # integration table for protocol use (-d fungi, or any --combination
 # containing F). The old -M auto source switching no longer applies by
 # default; -M takes effect ONLY when explicitly passed, and such a run is
@@ -296,10 +296,10 @@ fi
 export MGX_FUNGI_METHOD="${FUNGI_METHOD}"
 
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
-    # WC1R2-C2 (review): the sentinel alone must not authorize silent
+    # 输入治理二批-C2 (review): the sentinel alone must not authorize silent
     # reuse across input-governance regimes. A completed result produced under
     # a different combination/sample_set must error and demand --force — P01
-    # already carries pre-WC1R sentinels that protocol runs would otherwise
+    # already carries pre-输入治理 sentinels that protocol runs would otherwise
     # silently reuse in the 7-cell comparison.
     RESUME_MANIFEST="$(dirname "${SENTINEL}")/split_manifest.txt"
     RESUME_COMBO="$(grep -oE '^combination=[^[:space:]]*' "${RESUME_MANIFEST}" 2>/dev/null | tail -1 | cut -d= -f2)"
@@ -325,7 +325,7 @@ if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     exit 0
 fi
 
-# WC1R2 P0-3 + B3-PREQ①-R #1/#4: input-table gates, all AFTER the resume
+# 输入治理二批 P0-3 + B3-PREQ①-R #1/#4: input-table gates, all AFTER the resume
 # gate (P2-2). Feature blocks: any combination containing V needs the 98c
 # virus table; any PROTOCOL F arm needs the 98d fungi table (multi-block F
 # is always the pinned 98d arm; single F is pinned unless -M was explicitly
@@ -483,7 +483,7 @@ read_abundance_table <- function(path) {
   mat[rowSums(mat) > 0, , drop = FALSE]
 }
 
-# WC1R2 P0-1 (2026-10-01, user decision #1): virus input = 98c
+# 输入治理二批 P0-1 (2026-10-01, user decision #1): virus input = 98c
 # votu_annotation_matrix_relab.tsv TPM columns. The 98c table interleaves
 # vOTU_TPM_<sample>, vOTU_RELAB_<sample> and ~20 annotation columns
 # (vOTU_length, checkv_completeness, ...); the vOTU_TPM_ block is the
@@ -573,7 +573,7 @@ to_relab <- function(m) {
 # (8 k__Eukaryota + 15 k__Archaea). These supersede the earlier quoted
 # "1625 kept / 743 higher-rank": that derivation used an UNANCHORED "|s__"
 # containment match, which also counted the 839 t__-terminated rows as
-# species (786 + 839 = 1625; 1582 - 839 = 743) - WC1R2 P0-4 correction.
+# species (786 + 839 = 1625; 1582 - 839 = 743) - 输入治理二批 P0-4 correction.
 filter_bac_domain <- function(m) {
   feat <- rownames(m)
   is_bacteria <- startsWith(feat, "k__Bacteria")
@@ -591,7 +591,7 @@ filter_bac_domain <- function(m) {
   m[keep, , drop = FALSE]
 }
 
-# B3-PREQ①-R #4 (2026-09-30, user decision #4) + WC1R2 P0-3 (2026-10-01,
+# B3-PREQ①-R #4 (2026-09-30, user decision #4) + 输入治理二批 P0-3 (2026-10-01,
 # user decision #2): block selection is driven by --combination (letters
 # B/V/F); the SAMPLE POOL is driven by --sample-set. auto = intersection of
 # the selected blocks' input-table columns (recorded in split_manifest.txt);
@@ -613,12 +613,12 @@ load_matrix <- function() {
       src <- bact_table
       filter_bac_domain(read_abundance_table(bact_table))
     } else if (letter == "V") {
-      # WC1R2 P0-1: 98c TPM matrix (full TPM precision (1e-4, ~1e-10 relative); in-block relab conversion
+      # 输入治理二批 P0-1: 98c TPM matrix (full TPM precision (1e-4, ~1e-10 relative); in-block relab conversion
       # below) + metadata defensive assertion
       src <- vir_table
       read_vir_tpm_matrix(vir_table)
     } else {
-      # WC1R2 P0-3 (user decision #3): the FUN| arm is pinned to the 98d
+      # 输入治理二批 P0-3 (user decision #3): the FUN| arm is pinned to the 98d
       # funomic integration table for every protocol run; an explicit -M
       # redirects only a STANDALONE F feature arm (the bash stage already
       # warned non-protocol). Multi-block stacks and BVF pool reads always
@@ -640,7 +640,7 @@ load_matrix <- function() {
   combo_samples <- sort(Reduce(intersect, sample_pools), method = "radix")  # locale-independent (review P1)
   pool_counts <- paste(sprintf("%s=%d", names(sample_pools),
                                vapply(sample_pools, length, integer(1))), collapse = ", ")
-  # WC1R2 P0-3: the protocol pool (BVF) and multi-block stacks must hold >=10
+  # 输入治理二批 P0-3: the protocol pool (BVF) and multi-block stacks must hold >=10
   # samples, and every pool's size is listed so the offending table is
   # identifiable. Single-block auto runs keep the historical >=10 metadata
   # overlap check further below.
@@ -670,7 +670,7 @@ loaded <- load_matrix()
 mat <- loaded$mat
 combo_samples <- loaded$combo_samples
 sample_set <- loaded$sample_set
-# WC1R2 P0-3: sorted intersection -> the SIAMCAT split input order is
+# 输入治理二批 P0-3: sorted intersection -> the SIAMCAT split input order is
 # deterministic and independent of the input tables' column order.
 common <- sort(intersect(colnames(mat), rownames(meta)), method = "radix")  # SIAMCAT input column order, locale-independent (review P1)
 if (length(common) < 10) {
@@ -732,7 +732,7 @@ run_step("check_confounders", {
 })
 
 run_step("normalize_filter_split", {
-  # M-LEAK-01 注释更正（2026-09-30，B-1 审计 + 用户approve #3）：
+  # M-LEAK-01 注释更正（2026-09-30，B-1 审计 + 用户定案 #3）：
   # (1) 上方 :341 的预过滤第二子句是【全队列】平均相对丰度阈值（rowMeans(mat/colSums)），
   #     本行 filter.features(abundance, 1e-04) 与 normalize.features(log.std) 的调用点
   #     也都在 create.data.split 之前——原注释"prevalence only / cutoff 在 SIAMCAT
@@ -909,7 +909,7 @@ for (rep_i in seq_len(repeats)) {
 
 # Split manifest: numerically and format-compatible with the historical
 # single-run layout when --repeats 1 (no longer byte-identical: the manifest
-# gained combination/sample_set/combo_* lines across the WC1R/P0-3 batches);
+# gained combination/sample_set/combo_* lines across the 输入治理/P0-3 batches);
 # records every successful repeat seed when repeats > 1
 # (A-2 section 5: seeds land on disk with the results).
 # B3-PREQ①-R #4: the combination and its shared sample set (the
@@ -984,7 +984,7 @@ degen_notes <- c(
   if (repeats > 1L && n_degen == 0) "NOTE: repeats>1 aggregation auc_mean +/- auc_sd / auc_stderr; n_degenerate=0 for every model in this run")
 writeLines(c("SIAMCAT AUC summary", capture.output(print(auc_df)), degen_notes),
            file.path(result_dir, "siamcat_done.txt"))
-# WC1R2 Q3 persistence: the disclosure notes also land in a PERSISTENT file
+# 输入治理二批 Q3 persistence: the disclosure notes also land in a PERSISTENT file
 # regenerated by every ML run - it does not depend on the siamcat_done.txt
 # sentinel (which 96_ml_visualization.R overwrites with a timestamp) and is
 # immune to resume/rerun flows. The bash stage below keeps re-appending the

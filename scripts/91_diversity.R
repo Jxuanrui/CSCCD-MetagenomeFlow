@@ -191,7 +191,7 @@ build_mt_bacteria <- function(bact_path, meta) {
 }
 
 build_mt_virus <- function(votu_path, meta) {
-  # 质量审核 2026-10-14 P0-A：直接消费 canonical vOTU 行（60 号按approve D 已聚合到
+  # 质量审核 2026-10-14 P0-A：直接消费 canonical vOTU 行（60 号按定案 D 已聚合到
   # 代表 vOTU，一条 vOTU 一个数）。旧的"剥基因后缀 + clusters 重聚合"逻辑
   # 基于已废弃的基因级表语义（raw$gene 在新表为 NULL，且后缀剥离会破坏
   # 含下划线的 contig ID），整段删除。

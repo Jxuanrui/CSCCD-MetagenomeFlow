@@ -266,7 +266,7 @@ mgx_begin() {
         esac
     fi
     SECONDS=0
-    # flock 单实例锁（质量审核 CP3 计划联审 W4，approve #3）：锁键 = (WORKDIR, 脚本名,
+    # flock 单实例锁（质量审核 CP3 计划联审 W4，定案 #3）：锁键 = (WORKDIR, 脚本名,
     # 样本)。按质量审核要求精确到实例级——同脚本不同样本的合法并行不受影响，
     # 同 workdir+step+sample 的重复启动（事故档案 #2 家族）被拒。非阻塞获取
     # 失败即 exit 65；fd 生命周期与进程绑定，正常/异常退出均自动释放。

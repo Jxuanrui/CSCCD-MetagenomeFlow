@@ -8,9 +8,9 @@
 # 输  出: ${WORKDIR}/result/virus/salmon/index/
 #
 # ── 索引策略 ─────────────────────────────────────────────────────
-#   索引只放 vOTU contigs（approve D + 质量审核 2026-10-13 复审 P0-1）。
+#   索引只放 vOTU contigs（定案 D + 质量审核 2026-10-13 复审 P0-1）。
 #   旧策略把 CDS 与 contig 同放索引（gentrome），Salmon EM 会把落在
-#   基因区的 reads 分摊给基因和 contig 两条 target；60 号按approve D 丢
+#   基因区的 reads 分摊给基因和 contig 两条 target；60 号按定案 D 丢
 #   基因行时这部分 reads 一并丢失，单条 vOTU 实测损失 35-77%。
 #   基因级病毒定量无下游消费方，故索引不再包含 CDS。
 #
@@ -53,7 +53,7 @@ fi
 
 mkdir -p "${INDEX_DIR}"
 
-# 索引只含 vOTU contigs（approve D 落实到定量层，质量审核 P0-1）。
+# 索引只含 vOTU contigs（定案 D 落实到定量层，质量审核 P0-1）。
 # 移除旧的 CDS 收集与 gentrome 拼接；基因 ID 样本前缀逻辑随之移除
 # （索引中已无基因行，58→59 不再产生基因级定量）。
 grep '^>' "${VOTU_FA}" | sed 's/^>//' > "${INDEX_DIR}/decoys.txt"  # 保留：phase1_tierA_golden.sha256 引用此文件；标准索引不消费它

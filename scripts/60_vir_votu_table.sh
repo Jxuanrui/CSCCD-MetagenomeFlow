@@ -109,7 +109,7 @@ PYEOF
 rm -f "${OUTDIR}"/_*.tmp
 
 # --- T-16: aggregate CONTIG-level TPM to CANONICAL vOTU identity -------------
-# 用户approve 2026-10-13（D）：vOTU 丰度只用 contig 级行（一条 vOTU 一个数），
+# 用户定案 2026-10-13（D）：vOTU 丰度只用 contig 级行（一条 vOTU 一个数），
 # 基因级行不再计入（旧实现把 contig 级与基因级 TPM 混加，vOTU 间不可比）。
 # length 列取代表 contig 自身序列长度（旧实现取"第一条归入行"导致 66 bp 假 vOTU）。
 # contig 级行无法归属时硬失败（旧实现仅 stderr 警告后 exit 0）。
@@ -171,7 +171,7 @@ with open(src) as fh:
                 except ValueError:
                     pass
         elif is_gene_row:
-            # 基因级行：按approve D 不计入
+            # 基因级行：按定案 D 不计入
             gene_rows += 1
         else:
             # 形如 contig 级 ID 却无法归属：不允许静默丢弃

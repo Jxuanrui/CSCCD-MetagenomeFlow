@@ -43,7 +43,7 @@
 #       colSums before/after correction (consistency evidence).
 #
 # M-97-DIM (2026-10-01, B-3 final blocker fix): the local cohort loader now
-#   applies 96's bacteria input regime (WC1R contract: k__Bacteria
+#   applies 96's bacteria input regime (输入治理 contract: k__Bacteria
 #   s__-terminal rows + 0-1 relative abundance) BEFORE the frozen holdout
 #   normalization - previously it read the raw MetaPhlAn merged table
 #   (0-100 percent, ALL ranks/domains) straight into a model trained on
@@ -52,7 +52,7 @@
 #   filter_bac_domain + to_relab (logic re-implemented: 96 is an inline
 #   heredoc and exports nothing); per-cohort kept/dropped counts are
 #   logged. Sample/feature ordering sorts switched to method="radix"
-#   (locale-independent, review WC1R2 P1 leftover).
+#   (locale-independent, review 输入治理二批 P1 leftover).
 # ==============================================================================
 
 options(stringsAsFactors = FALSE, warn = 1)
@@ -231,7 +231,7 @@ load_local_cohort <- function(cohort_name, parent_dir) {
   abund_mat <- abund_mat[rowSums(abund_mat) > 0, , drop = FALSE]
 
   # M-97-DIM (2026-10-01): align with 96's bacteria input regime. The raw
-  # merged table is 0-100 percent over ALL ranks and domains, while 96 (WC1R)
+  # merged table is 0-100 percent over ALL ranks and domains, while 96 (输入治理)
   # trains on k__Bacteria s__-TERMINAL rows converted to 0-1 relative
   # abundance - feeding the raw matrix into the frozen log.std normalization
   # produced a systematic (~2 log10-unit) offset with zero errors. Same regex
