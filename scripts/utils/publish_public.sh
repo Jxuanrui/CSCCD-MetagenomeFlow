@@ -23,7 +23,7 @@ done
 
 # Files/dirs that must NEVER enter the public snapshot.
 # Project/ carries production cohort metadata + machine-specific sheets.
-EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.zcodeignore|\.omo/|\.codegraph|agents/provenance/|skills/|mining/|Project/|docs/plans/|scripts/tests/|scripts/utils/supervisor_api\.py|scripts/utils/publish_public\.sh)'
+EXCLUDE_RE='^(AGENTS\.md|CLAUDE\.md|\.mcp\.json|\.claude/|\.zcode/|\.zcodeignore|\.omo/|\.codegraph|agents/provenance/|skills/|mining/|tools/|Project/|docs/plans/|scripts/tests/|scripts/utils/supervisor_api\.py|scripts/utils/publish_public\.sh)'
 
 cd "${REPO}"
 
@@ -92,7 +92,7 @@ echo "${FILES}" | xargs -d '\n' grep -l -E '\.claude|CLAUDE|Claude|claude|Codex|
         -e 's/MGXPRESERVEFIG/scientific-figure-library-claude/g' \
         -e 's/Codex/外部执行器/g' -e 's/ZCode 工作区级/工作区级/g' -e 's/ZCode/工作区/g' -e 's/zcode/内部工具/g' || true
 # gitignore: drop the internal relay-config line from the snapshot
-sed -i '/supervisor_relays/d' .gitignore 2>/dev/null || true
+sed -i -e '/supervisor_relays/d' -e '/feishu_notes/d' .gitignore 2>/dev/null || true
 # 2026-10-21: export sanitized tutorial + optimization evidence for public docs.
 # Copy walkthrough (sanitized: no sample IDs, no absolute paths) to docs/tutorial/
 mkdir -p docs/tutorial
@@ -146,7 +146,7 @@ fi
 BAD_PATHS="$(git ls-tree -r --name-only "${BRANCH}" | grep -E "${EXCLUDE_RE}" || true)"
 BAD_HOME="$(git grep -l '/home/' "${BRANCH}" -- 2>/dev/null | grep -v 'scripts/utils/publish_public.sh' || true)"
 BAD_WORDS="$(git grep -lEi -e 'Harbin[0-9]' -e '质量审核' -e 'supervisor' -e 'sicoding' \
-                    -e 'claude' -e 'WC1R' -e 'approve' -e 'ou_[a-f0-9]{32}' -e 'gpt-6' \
+                    -e 'claude' -e 'WC1R' -e 'approve' -e 'ou_[a-f0-9]{32}' -e 'gpt-6' -e 'feishu' -e '飞书' \
                     -e 'REDACTED-CANARY' "${BRANCH}" -- ':!*.pdf' 2>/dev/null || true)"
 # Accepted exception (4th review): the ScientificFigureLibrary release URL in
 # PROJECT_MAP is a functional third-party artifact name containing "claude".
