@@ -140,7 +140,7 @@ mgx_require() {
 # ENG-6/run-monitor: opt-in per-step run-event hook (default OFF; MGX_MONITOR=1
 # enables). mgx_begin writes ONE start event immediately (exit_code=-1 marker,
 # negative-only: a real $? is 0-255 so genuine failure codes can never collide
-# with the marker — supervisor stage-3 P0-1) and registers an EXIT trap that
+# with the marker — review stage-3 P0-1) and registers an EXIT trap that
 # appends ONE end event per script run to ${WORKDIR}/logs/run_events.jsonl —
 # a start/end pair per execution (field set unchanged; user-approved
 # semantics extension 2026-10-02, marker value corrected same day). 7 field names align with
@@ -148,14 +148,14 @@ mgx_require() {
 # duration/workdir->duration_sec) plus one extension field ts (end time).
 # Type note: params here is the raw argv string, NOT write_provenance.py's
 # key-value object — merging the two record families requires conversion
-# (supervisor C1, 2026-10-02).
-# Hard constraints (supervisor-approved):
+# (review C1, 2026-10-02).
+# Hard constraints (review-approved):
 #   - Default OFF: with MGX_MONITOR != 1 the observable behavior of every
 #     sourcing script is byte-identical (no output, no files, same exit
 #     codes) — EXCEPT the pre-existing P2-HYGIENE-01 production guard below,
 #     which scripts acquire by calling mgx_begin at all: newly-hooked scripts
 #     (02_qc_kneaddata ce6495b; six stat scripts 2efc6c7) now exit 60 on
-#     Project01 + --force regardless of MGX_MONITOR (supervisor C1, 2026-10-02).
+#     Project01 + --force regardless of MGX_MONITOR (review C1, 2026-10-02).
 #   - The hook must never alter the caller's exit code and never write to the
 #     caller's stdout: every internal failure is swallowed (2>/dev/null || true).
 #   - The append is a single printf >> redirection, but NFS does not guarantee
@@ -204,7 +204,7 @@ _mgx_emit() {
         case "${_rc_raw}" in
             # Negative marker (step-start = -1): real $? is always 0-255, so a
             # negative value can never collide with a genuine exit code
-            # (supervisor stage-3 P0-1: a real exit 2 was misread as "running").
+            # (review stage-3 P0-1: a real exit 2 was misread as "running").
             -[0-9]*) _rc="-${_rc_raw#-}" ;;
             *) _rc="$(printf '%s' "${_rc_raw}" | tr -cd '0-9' 2>/dev/null || true)" ;;
         esac
@@ -243,7 +243,7 @@ _mgx_emit() {
 
 # 计时开始（先统一转绝对路径：cd 后相对路径嵌套 + Project01 守卫绕过都源于此）
 mgx_begin() {
-    # Normalize WORKDIR/REPO to absolute paths (supervisor incident review E1+E6)
+    # Normalize WORKDIR/REPO to absolute paths (review incident review E1+E6)
     # Fixes: (a) scripts that cd into TEMP_DIR break relative --output paths;
     # (b) Project01 write guard pattern */Project/Project01 fails to match
     # relative paths (security bypass). realpath -m handles nonexistent dirs.
@@ -283,12 +283,12 @@ mgx_begin() {
             exit 65
         fi
     fi
-    # ENG-6/run-monitor: opt-in per-step event emission (supervisor-approved, default OFF)
+    # ENG-6/run-monitor: opt-in per-step event emission (review-approved, default OFF)
     if [ "${MGX_MONITOR:-0}" = "1" ]; then
         _MGX_STARTED_AT="$(date +%FT%T%z 2>/dev/null || printf '')"
         # Start event (exit_code=-1 running marker — negative can never be a
         # real $? (0-255), so genuine failures with exit 2 are not misread as
-        # "running" (supervisor stage-3 P0-1); SECONDS=0 → duration_sec=0).
+        # "running" (review stage-3 P0-1); SECONDS=0 → duration_sec=0).
         # _MGX_ARGV was snapshotted at source time (caller's argv — inside this
         # function $* would be mgx_begin's own empty argument list); the trap
         # below re-snapshots it at EXIT fire-time scope (unchanged).

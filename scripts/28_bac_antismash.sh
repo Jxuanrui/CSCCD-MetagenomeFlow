@@ -116,7 +116,7 @@ PYSPLIT
 # <1000bp yields zero chunk files; without this guard the unexpanded glob
 # literal 'chunk_*.fa' would create a bogus directory and fail with a
 # misleading antismash error. Explicit fail with a clear message instead
-# (semantics per supervisor ruling: fail loudly, keep T-11 intact).
+# (semantics per review ruling: fail loudly, keep T-11 intact).
 if [ "$(find "${CHUNKS_DIR}" -maxdepth 1 -name 'chunk_*.fa' 2>/dev/null | wc -l)" -eq 0 ]; then
     {
         echo "status=FAILED"

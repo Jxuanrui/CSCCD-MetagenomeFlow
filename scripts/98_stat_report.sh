@@ -85,7 +85,7 @@ extract_table_preview() {
     echo "- Workdir: ${WORKDIR}"
     echo "- Repo: ${REPO}"
     echo
-    # M-1 (supervisor 19th): dynamic sample-size disclosure from metadata.csv
+    # M-1 (review 19th): dynamic sample-size disclosure from metadata.csv
     META_CSV="${WORKDIR}/metadata.csv"
     if [ -f "${META_CSV}" ]; then
         N_TOTAL=$(awk -F',' 'NR>1 && NF>=2 {n++} END {print n+0}' "${META_CSV}" 2>/dev/null)

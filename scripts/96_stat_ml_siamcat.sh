@@ -290,13 +290,13 @@ else
     echo "[INFO] Fungi input: METHOD=funomic TABLE=${FUNGI_ABUND_TABLE} (protocol-pinned 98d; -M overrides only when explicitly passed)"
 fi
 
-# P0-1 (supervisor re-review): export the REAL fungi source for the R-side
+# P0-1 (review re-review): export the REAL fungi source for the R-side
 # manifest audit line (previously the env var was exported empty, so every
 # manifest falsely recorded fungi_method=auto).
 export MGX_FUNGI_METHOD="${FUNGI_METHOD}"
 
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
-    # WC1R2-C2 (supervisor): the sentinel alone must not authorize silent
+    # WC1R2-C2 (review): the sentinel alone must not authorize silent
     # reuse across input-governance regimes. A completed result produced under
     # a different combination/sample_set must error and demand --force — P01
     # already carries pre-WC1R sentinels that protocol runs would otherwise
@@ -637,7 +637,7 @@ load_matrix <- function() {
                sprintf("n_features=%d n_samples=%d scale=0-1 (block column sums -> 1)",
                        nrow(blocks[[nm]]), ncol(blocks[[nm]])))
   }
-  combo_samples <- sort(Reduce(intersect, sample_pools), method = "radix")  # locale-independent (supervisor P1)
+  combo_samples <- sort(Reduce(intersect, sample_pools), method = "radix")  # locale-independent (review P1)
   pool_counts <- paste(sprintf("%s=%d", names(sample_pools),
                                vapply(sample_pools, length, integer(1))), collapse = ", ")
   # WC1R2 P0-3: the protocol pool (BVF) and multi-block stacks must hold >=10
@@ -672,14 +672,14 @@ combo_samples <- loaded$combo_samples
 sample_set <- loaded$sample_set
 # WC1R2 P0-3: sorted intersection -> the SIAMCAT split input order is
 # deterministic and independent of the input tables' column order.
-common <- sort(intersect(colnames(mat), rownames(meta)), method = "radix")  # SIAMCAT input column order, locale-independent (supervisor P1)
+common <- sort(intersect(colnames(mat), rownames(meta)), method = "radix")  # SIAMCAT input column order, locale-independent (review P1)
 if (length(common) < 10) {
   cat("[WARN] Only", length(common), "overlapping samples; SIAMCAT requires >=10.",
       "Writing placeholder sentinel and skipping ML.\n")
   writeLines(c(paste0("SKIPPED: only ", length(common), " samples (need >=10 for SIAMCAT)"),
                "Re-run with actual cohort data (>=10 samples per group)."),
              file.path(result_dir, "siamcat_done.txt"))
-  # P0-2 (supervisor re-review): SKIPPED runs must also stamp the regime so
+  # P0-2 (review re-review): SKIPPED runs must also stamp the regime so
   # resume keeps exit-0 semantics (a manifest-less sentinel would now error).
   writeLines(c(paste0("combination=", combination),
                paste0("sample_set=", sample_set),
@@ -1008,7 +1008,7 @@ if [ ${EXIT_CODE} -ne 0 ]; then
     if grep -q "not enough for SIAMCAT to proceed\|No model AUCs generated" "${RUN_LOG}"; then
         echo "[WARN] ${DIMENSION}: sample size too small for SIAMCAT cross-validation, writing skip sentinel"
         echo "SKIPPED: insufficient samples per class for SIAMCAT model training (${DIMENSION}/combo=${COMBINATION})" > "${SENTINEL}"
-        # P0-2 (supervisor re-review): stamp the regime so a SKIPPED sentinel
+        # P0-2 (review re-review): stamp the regime so a SKIPPED sentinel
         # resumes with exit 0 (a manifest-less sentinel would now error).
         printf 'combination=%s\nsample_set=%s\nfungi_method=%s\n' \
             "${COMBINATION}" "${SAMPLE_SET:-auto}" "${FUNGI_METHOD}" \

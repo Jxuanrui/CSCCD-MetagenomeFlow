@@ -2,7 +2,7 @@
 """Convert a conda @EXPLICIT manifest into a fully-pinned pixi.toml.
 
 Every package from the manifest (not just the main tool) is emitted with
-name + version + build pinned, per supervisor standard P0-1.
+name + version + build pinned, per review standard P0-1.
 
 Usage:
     python3 scripts/utils/explicit_to_pixi.py <manifest.txt> [--output <pixi.toml>]
@@ -226,7 +226,7 @@ def render_toml(env_name, source_path, channels, platforms, packages, empty):
     lines = [
         "# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py",
         "# Source: %s" % source_path,
-        "# ALL packages pinned to name+version+build (supervisor P0-1 "
+        "# ALL packages pinned to name+version+build (review P0-1 "
         "standard)",
         "# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com "
         "channels; rewrite them to full",

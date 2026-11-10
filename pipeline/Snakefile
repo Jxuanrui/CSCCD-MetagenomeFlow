@@ -63,7 +63,7 @@ REPO     = config["repo"]
 # Align with Mode 2 Bash pipeline -t parameter
 CPUS     = config.get("threads_per_job", config.get("cpus", 8))
 
-# ENG-6 phase-2 monitor switch (default off; supervisor C1: byte-equivalent when off).
+# ENG-6 phase-2 monitor switch (default off; review C1: byte-equivalent when off).
 # Exported into the process env so every rule's shell subprocess (scripts/*.sh
 # mgx_begin hook) inherits it; equivalent to running `MGX_MONITOR=1 snakemake ...`.
 if config.get("monitor"):
@@ -171,7 +171,7 @@ def _all_targets():
         _e("{workdir}/result/fungi/kraken2/{sample}/{sample}.report", sample=SAMPLES),
         _e("{workdir}/result/fungi/metaphlan4/{sample}/{sample}_profile.txt", sample=SAMPLES),
         _e("{workdir}/result/fungi/humann4/{sample}/{sample}_fungi_pathabundance.tsv", sample=SAMPLES),
-        # 74_fun_blast_gutdb removed from rule all (supervisor 2026-10-12):
+        # 74_fun_blast_gutdb removed from rule all (review 2026-10-12):
         # database built from nucleotide sequences as protein — no biological meaning
         _e("{workdir}/result/fungi/funomic/{sample}/{sample}_classification.tsv", sample=SAMPLES),
         _e("{workdir}/result/fungi/phf_profiler/{sample}/{sample}.rc", sample=SAMPLES),
@@ -271,7 +271,7 @@ rule all:
 # (scripts/utils/run_monitor.py) shows the last pipeline event as a header
 # badge and excludes these events from step statistics.
 #
-# Documented boundaries (supervisor-approved):
+# Documented boundaries (review-approved):
 #   - Load-time failures (e.g. the samplesheet validation above) raise while
 #     the DAG is parsed and do NOT trigger onerror; they remain visible only
 #     in the snakemake log.

@@ -1,7 +1,7 @@
 # 统计功效与口径披露（POWER_DISCLOSURE）
 
 > Project_demo 全链演示项目 · 2026-10-18 定稿 · 本文件为 98 终版报告的前置引用
-> 质量审核第 9/10 轮审核要求落盘（`supervisor_20261016_cp2_review.md` P1、`supervisor_20261018_cp3_plan_review.md` W0）
+> 第 9/10 轮质量审核要求落盘（review P1、review W0）
 
 ## 一、3v3 设计的统计功效上限
 

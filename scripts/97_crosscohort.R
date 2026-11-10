@@ -24,7 +24,7 @@
 #   U-05 the PCoA cohort vector no longer clobbers the per-cohort label list
 #       used by the calibration section.
 #
-# W2 batch (2026-09-30, supervisor W1 review + user decision #2):
+# W2 batch (2026-09-30, review W1 review + user decision #2):
 #   W2-1 (user decision #2) UNCORRECTED is the PRIMARY result
 #       (batch_correction=none); the MMUPHin-corrected matrix is co-reported
 #       as a SENSITIVITY arm (batch_correction=mmuphin). Both arms are rows
@@ -52,7 +52,7 @@
 #   filter_bac_domain + to_relab (logic re-implemented: 96 is an inline
 #   heredoc and exports nothing); per-cohort kept/dropped counts are
 #   logged. Sample/feature ordering sorts switched to method="radix"
-#   (locale-independent, supervisor WC1R2 P1 leftover).
+#   (locale-independent, review WC1R2 P1 leftover).
 # ==============================================================================
 
 options(stringsAsFactors = FALSE, warn = 1)
@@ -252,7 +252,7 @@ load_local_cohort <- function(cohort_name, parent_dir) {
   cs[!is.finite(cs) | cs <= 0] <- 1
   abund_mat <- sweep(abund_mat, 2, cs, "/")
   # Audit line (per cohort): domain-filter counts + relab disclosure.
-  # P1-2 (supervisor): counts also stamped into the metrics table, not stdout-only.
+  # P1-2 (review): counts also stamped into the metrics table, not stdout-only.
   dom_kept <- sum(keep); dom_drop <- sum(!keep)
   dom_drop_domain <- sum(!is_bacteria & startsWith(feat, "k__"))
   dom_drop_unranked <- sum(!startsWith(feat, "k__"))
@@ -635,7 +635,7 @@ for (cohort_name in eval_cohorts) {
       }
 
       # Align predictions and labels BY SAMPLE NAME (never by position);
-      # radix = locale-independent ordering (M-97-DIM batch, supervisor P1)
+      # radix = locale-independent ordering (M-97-DIM batch, review P1)
       common_ids <- sort(intersect(names(pred_vector), names(true_labels)), method = "radix")
       if (length(common_ids) == 0) {
         fail_hard(paste0("align_", cohort_name), "no overlapping sample names between predictions and labels")
@@ -918,7 +918,7 @@ tryCatch({
 
   # Filter to top features
   feature_prevalence <- rowSums(stability_mat)
-  # radix = locale-independent row ordering (M-97-DIM batch, supervisor P1)
+  # radix = locale-independent row ordering (M-97-DIM batch, review P1)
   top_stable_features <- names(sort(feature_prevalence, decreasing = TRUE, method = "radix")[1:min(50, length(feature_prevalence))])
 
   heat_mat <- stability_mat[top_stable_features, , drop = FALSE]

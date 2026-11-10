@@ -100,7 +100,7 @@ def _get_collections(collection_name):
 
     collections = []
     if collection_name == "all":
-        # Supervisor 18th C2: 'all' currently covers experience + literature only.
+        # Review round 18, C2: 'all' currently covers experience + literature only.
         # The other three (skill_design/mechanism/signature) are supported as
         # individually-named collections but NOT included in 'all' by default.
         # Expanding requires retrieval-quality evaluation, not just list growth.

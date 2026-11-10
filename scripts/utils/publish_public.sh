@@ -74,7 +74,7 @@ echo "${FILES}" | xargs -d '\n' grep -l -E '/home/[A-Za-z0-9_.-]+/' 2>/dev/null 
 echo "${FILES}" | xargs -d '\n' grep -l -e '质量审核' -e '主代理' -e '子代理' 2>/dev/null | \
     xargs -r -d '\n' sed -i -e 's/质量审核/质量审核/g' -e 's/主代理/执行方/g' -e 's/子代理/后台任务/g' || true
 echo "${FILES}" | xargs -d '\n' grep -l -E 'supervisor (P0|final|stage|review)|supervisor_[0-9]|，supervisor|, supervisor' 2>/dev/null | \
-    xargs -r -d '\n' sed -i -E 's/supervisor_(19|20)[0-9]{4}[a-z_]*/review/g; s/，supervisor/，review/g; s/, supervisor/, review/g' || true
+    xargs -r -d '\n' sed -i -E 's/[Ss]upervisor_[0-9]{8}[a-z0-9_]*/review/g; s/，supervisor/，review/g; s/, supervisor/, review/g' || true
 echo "${FILES}" | xargs -d '\n' grep -l -E 'Claude Code|claude mcp|claude -p' 2>/dev/null | \
     xargs -r -d '\n' sed -i -E -e 's/Claude Code/MCP 客户端/g' -e 's/claude mcp add/mcp add/g' -e 's/claude -p [^ ]* --agent [a-z]+/cli-review/g' || true
 # 2026-10-19 pass 2: scattered client/tooling mentions in shipped docs.
