@@ -28,7 +28,7 @@ Project/**/localDB/
 # 多层验证产物目录（Project/<program>/<sample>/result/ 结构，二进制产物，不入库；
 # 注意：整目录忽略后 git 无法以 ! 反选其中文件——新增 manifest/报告需 git add -f 显式强制入库）
 # ——2026-09-29 E-4-3 提前处置，质量审核建议
-# A-4 一次性隔离物化产物（sidecar 证据存档，不入库；报告在 .claude/reviews/）
+# A-4 一次性隔离物化产物（sidecar 证据存档，不入库；报告在内部审校存档）
 Project/A4_sidecar_isolated/
 /Project/_archive_*/
 # 从项目目录迁移出的归档数据（二进制，体积大，不入库）
@@ -99,7 +99,7 @@ skills/replications/**/code/adapted/**/*.zip
 # Omo codegraph 符号链接（指向 ~/.omo，机器本地）
 /.codegraph
 
-# Claude Code 运行时文件（session lock，不入库）
+# 编程助手运行时文件（session lock，不入库）
 .claude/scheduled_tasks.lock
 
 # RAG 索引缓存（可通过 mcp/indexer.py / mcp/bm25_index.py 重建，不入库）

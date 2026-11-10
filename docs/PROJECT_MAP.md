@@ -1,6 +1,6 @@
 # CSCCD-MetagenomeFlow Project Map
 
-> 本文件是 CLAUDE.md §14（原 "CSCCD-MetagenomeFlow Project Map"）的完整迁移版本。
+> 本文件是 内部治理文档 §14（原 "CSCCD-MetagenomeFlow Project Map"）的完整迁移版本。
 > **触发时机**：当用户询问"如何启动"、"做什么分析"、"某工具怎么用"、某脚本编号/功能时，CC 读取本文件。
 > 未知工具参数 → WebSearch 获取官方文档，结果缓存至 `docs/tools_ref/`。
 >
@@ -66,7 +66,7 @@ bash scripts/00_pipeline_bacteria.sh \
 
 ```bash
 # 0. 首次使用：检测当前硬件并生成 profiles/auto/
-# 原通过 Claude Code 的 /mgx-tune 执行；现由 ZCode/GLM 主代理执行（CLI 已退役）
+# /mgx-tune 现由编程助手直接执行（原独立 CLI 已退役）
 
 # 1. 编辑运行参数（samplesheet 路径、workdir、threads_per_job）
 vim pipeline/config/config.yaml
@@ -403,12 +403,12 @@ scripts/*.sh          ← 原子执行单元（永远不变，所有模式共用
       └── Mode 3: Snakemake        pipeline/Snakefile
                  DAG 依赖追踪，原生断点续跑，HPC 就绪
 
-agents/               ← Agent Skills 系统（Claude Code 交互式驱动）
+agents/               ← Agent Skills 系统（编程助手交互式驱动）
   registry.yaml       全局脚本状态（not_started/in_progress/ready/integrated）
   skills/*.yaml       工具卡片（输入/输出/依赖/性能/已知问题）
   provenance/*.json   运行轨迹记录（原 /mgx-learn，现由管线脚本自动写入）
 
-.claude/skills/*.md   ← CLI 技能文档（原 /mgx-* 前缀，现 ZCode/GLM 直接读取 agents/skills/*.yaml）
+本地技能目录/*.md   ← CLI 技能文档（原 /mgx-* 前缀，现编程助手直接读取 agents/skills/*.yaml）
 ```
 
 ### 各层文件职责
@@ -420,7 +420,7 @@ agents/               ← Agent Skills 系统（Claude Code 交互式驱动）
 | 工具卡片层 | `agents/skills/*.yaml` | CC | 每次新脚本 integrated |
 | 状态追踪层 | `agents/registry.yaml` | 双方 | 脚本 ready 或 integrated 时 |
 | 运行记录层 | `agents/provenance/*.json` | 管线脚本（原 CC /mgx-learn，或 batch_provenance_backfill.py） | 每次实际运行后 |
-| CC 技能层 | `.claude/skills/*.md` | CC | 架构演进时修改 |
+| 助手技能层 | `本地技能目录/*.md` | CC | 架构演进时修改 |
 | 自动挖掘层 | `mining/*.py` + `mining/m4/` | 主代理+子代理 | 周增量 cron / 策展批次 / 数据集编排 / 疾病指纹比对 |
 | 挖掘数据层 | `mining/*.sqlite` + `mining/snapshots/` | mining 脚本 | cron 周一 / 策展批次（详见 `mining/README.md`，含 scBaseCount 式循环操作手册） |
 
@@ -577,9 +577,9 @@ skills/replications/
 ## 1.10 Graphify 知识图谱技能
 
 **安装**: `pip install graphifyy && graphify install` (已完成 2026-06-12)
-**Skill 文件**: `~/.claude/skills/graphify/SKILL.md`
+**Skill 文件**: `~/local/skills/graphify/SKILL.md`
 
-- **graphify** (`~/.claude/skills/graphify/SKILL.md`) — 将项目文件提炼为知识图谱（NetworkX + Leiden 社区检测）。Trigger: `/graphify`
+- **graphify** (`~/local/skills/graphify/SKILL.md`) — 将项目文件提炼为知识图谱（NetworkX + Leiden 社区检测）。Trigger: `/graphify`
 - When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
 
 常用命令:
@@ -589,9 +589,9 @@ skills/replications/
 - `graphify --mcp`                                  — 启动 MCP stdio 服务（与 RAG MCP 并联）
 - `graphify --update`                               — 增量更新（新脚本集成后使用）
 
-## 1.11 Claude Code 可调用技能完整索引
+## 1.11 编程助手可调用技能完整索引
 
-`.claude/skills/` 下 18 个 `/mgx-*` 技能（不含根目录 `/graphify`，见 §1.10）：
+`本地技能目录/` 下 18 个 `/mgx-*` 技能（不含根目录 `/graphify`，见 §1.10）：
 
 | 技能 | 触发词/场景 | 用途 |
 |------|-----------|------|
@@ -618,7 +618,7 @@ skills/replications/
 | `/mgx-plot-phylotree` | 系统发育树可视化 | 菌株/物种进化树图生成 |
 | `/mgx-plot-volcano` | 火山图可视化 | 差异分析火山图生成（2026-07-16起 `92_stat_differential` 也会自动生成，见该脚本条目） |
 
-> 本索引由 2026-07-16 头脑风暴发现补齐：此前 CLAUDE.md 声称"完整技能索引见 §1.9-1.10"，但那两节实际是文献技能包规范和Graphify，并非技能列表。
+> 本索引由 2026-07-16 头脑风暴发现补齐：此前 内部治理文档 声称"完整技能索引见 §1.9-1.10"，但那两节实际是文献技能包规范和Graphify，并非技能列表。
 
 ## 1.12 ScientificFigureLibrary（图件模板库 MCP，项目级，2026-09-15 新增）
 

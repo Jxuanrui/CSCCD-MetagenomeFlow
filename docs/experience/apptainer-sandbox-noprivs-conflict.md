@@ -65,6 +65,6 @@ grep -q "apptainer exec\|singularity exec\|\.sif" envs/<env_name>/bin/<tool> && 
 
 ## References
 
-- CLAUDE.md §5.6（Known Limitation 记录，含路由规则）
+- 内部治理文档 §5.6（Known Limitation 记录，含路由规则）
 - 脚本：`scripts/53_vir_virsorter2.sh`，wrapper：`envs/virsorter2/bin/virsorter`
 - Apptainer 官方文档关于 setuid 安装模式：https://apptainer.org/docs/admin/main/installation.html#setuid-installation

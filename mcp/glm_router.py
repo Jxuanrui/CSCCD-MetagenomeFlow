@@ -9,7 +9,7 @@ this repo, never logged, never printed.
 Tool: glm_call(model, prompt, system?, temperature?, max_tokens?)
   model: "glm-5.3" (flagship: planning/review/deep coding) or "glm-5.3-flash"
          (high-frequency, cost-sensitive, multimodal-friendly).
-Routing policy lives in CLAUDE.md §5.3; this server is transport only.
+Routing policy lives in the repo governance doc (§5.3); this server is transport only.
 """
 import argparse
 import asyncio
@@ -101,7 +101,7 @@ def main():
                     "Call a configured GLM model. model='glm-5.3' for complex "
                     "planning / review / deep multi-round coding; "
                     "model='glm-5.3-flash' for high-frequency, cost-sensitive "
-                    "or bulk mechanical execution. See CLAUDE.md 5.3 for the "
+                    "or bulk mechanical execution. See the repo governance doc 5.3 for the "
                     "routing policy."
                 ),
                 inputSchema={
