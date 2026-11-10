@@ -65,7 +65,7 @@ sed -i -E 's#/home/[^/]*/Course/(CSCCD-MetagenomeFlow|Maxmetagenome)#~/Course/CS
 # functional strings) are neutralized to "Sample<N>" in the snapshot.
 # 2026-11-10: digit-bearing IDs only — "Harbin Medical University" (user's
 # README header attribution) must survive; sample names always carry digits.
-echo "${FILES}" | xargs -d '\n' grep -lE 'Harbin[0-9]' 2>/dev/null | xargs -r -d '\n' sed -iE 's/Harbin([0-9])/Sample\1/g' || true
+echo "${FILES}" | xargs -d '\n' grep -lE 'Harbin[0-9]' 2>/dev/null | xargs -r -d '\n' sed -i -E 's/Harbin([0-9])/Sample\1/g' || true
 # Machine-specific repo paths in mined tooling become portable placeholders.
 # 2026-10-19: generalized — any /home/<user>/ prefix becomes ~/ (covers sibling
 # project paths like apptainer kits; /home/user examples normalize harmlessly)
