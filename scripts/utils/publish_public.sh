@@ -145,8 +145,20 @@ fi
 # the seds above are best-effort; the snapshot is the enforcement point).
 BAD_PATHS="$(git ls-tree -r --name-only "${BRANCH}" | grep -E "${EXCLUDE_RE}" || true)"
 BAD_HOME="$(git grep -l '/home/' "${BRANCH}" -- 2>/dev/null | grep -v 'scripts/utils/publish_public.sh' || true)"
-BAD_WORDS="$(git grep -lE -i -e 'Harbin[0-9]' -e '质量审核' -e 'supervisor' -e 'sicoding' \
+BAD_WORDS="$(git grep -lEi -e 'Harbin[0-9]' -e '质量审核' -e 'supervisor' -e 'sicoding' \
+                    -e 'claude' -e 'WC1R' -e 'approve' -e 'ou_[a-f0-9]{32}' -e 'gpt-6' \
                     -e 'REDACTED-CANARY' "${BRANCH}" -- ':!*.pdf' 2>/dev/null || true)"
+# Accepted exception (4th review): the ScientificFigureLibrary release URL in
+# PROJECT_MAP is a functional third-party artifact name containing "claude".
+# A flagged file only passes if, after excluding that exact URL, nothing hits.
+if [ -n "${BAD_WORDS}" ]; then
+    BAD_WORDS="$(printf '%s\n' "${BAD_WORDS}" | while IFS= read -r f; do
+        git grep -nEi -e 'Harbin[0-9]' -e '质量审核' -e 'supervisor' -e 'sicoding' -e 'claude' \
+                       -e 'WC1R' -e 'approve' -e 'ou_[a-f0-9]{32}' -e 'gpt-6' -e 'REDACTED-CANARY' \
+            "${BRANCH}" -- "${f}" 2>/dev/null \
+            | grep -v 'scientific-figure-library-claude' | grep -q . && echo "${f}"
+    done)"
+fi
 # claude/Claude alone have legitimate false positives in shipped text only if
 # someone wrote them literally; the seds neutralize known cases — anything
 # left here is a real leak and must fail the build.
