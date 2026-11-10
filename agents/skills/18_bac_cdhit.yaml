@@ -1,0 +1,57 @@
+benchmarks:
+  note: 'Scales with total gene count. For 3M genes on 16 threads: ~15-30 min.'
+  peak_memory_gb: 60
+  typical_runtime_min: 30
+category: assembly
+conda_env: envs/assembly
+depends_on:
+- 17_bac_prodigal
+description: 'Cross-sample gene catalog construction via CD-HIT-EST (95% identity,
+  90% coverage). Aggregate rule: collects all per-sample prodigal .fna files, filters
+  <100bp, clusters, and translates to protein.'
+dimension: bacteria
+id: 18_bac_cdhit
+inputs:
+- name: fna_files
+  note: All per-sample .fna files discovered automatically. All samples must complete
+    prodigal before this step.
+  path_pattern: '{workdir}/result/assembly/prodigal/{sample}/{sample}.fna'
+  required: true
+integrated_date: '2026-06-06'
+integration_status: integrated
+known_issues:
+- description: CD-HIT memory usage can spike for very large gene sets (>5M genes).
+    Monitor with -M 0.
+  workaround: If OOM, use cd-hit-est-2d for two-pass batch clustering.
+- description: seqkit translate warning on sequences with non-standard bases — safe
+    to ignore.
+  workaround: Translated protein sequences are still correct; warnings are non-fatal.
+outputs:
+- description: Non-redundant gene catalog (nucleotide). Input for Salmon index build
+    (script 19).
+  name: nr_fna
+  path_pattern: '{workdir}/result/assembly/cdhit/nucleotide_nr.fa'
+- description: Non-redundant protein sequences. Input for eggNOG (21), KEGG (22),
+    AMRFinder (23), CARD (24), dbCAN (25), VFDB (26), BacMet (27).
+  name: nr_faa
+  path_pattern: '{workdir}/result/assembly/cdhit/protein_nr.fa'
+- description: CD-HIT cluster membership file.
+  name: clstr
+  path_pattern: '{workdir}/result/assembly/cdhit/nucleotide_nr.fa.clstr'
+params:
+  alignment: local (-G 0)
+  clustering: greedy-accurate (-g 1)
+  coverage: '0.9'
+  identity: '0.95'
+  min_gene_len: 100 bp
+  note: Parameters follow MetaHIT/IGC international gene catalog standard
+  strands: both (-r 1)
+required_by:
+- 19_bac_salmon_build
+- 21_bac_eggnog
+- 22_bac_kegg
+rule_type: aggregate
+script: scripts/18_bac_cdhit.sh
+snakemake_rule: pipeline/rules/bacteria_assembly.smk::cdhit
+tool: cd-hit-est
+tool_version: 4.8.1

@@ -1,0 +1,100 @@
+name: "Pathway Activity"
+script_id: "96b_pathway_activity"
+purpose: "通路活性分析"
+category: "functional_analysis"
+dimension: "bacteria"
+description: "整合 HUMAnN3 每样本的分层 pathway abundance 与 pathway coverage 输出，计算通路平均丰度和完整性等级，提取每条通路的主要物种贡献者，并评估通路活性与群落组成之间的相关关系。适用于区分通路是否真正完整活跃、定位功能变化的物种来源、解释差异通路的生态驱动因素，以及为代谢机制和培养验证提供候选通路。当前模块仅支持细菌维度。"
+
+parameters:
+  workdir:
+    type: "path"
+    default: "{workdir}"
+    range: "包含 result/humann3 的项目目录"
+    tuning_advice: "目录内应存在每个样本的 pathabundance 和 pathcoverage 文件；优先使用包含物种分层条目的完整 HUMAnN3 输出。"
+  metadata_file:
+    type: "path"
+    default: "{workdir}/metadata.csv"
+    range: "包含 sample_id，可选 group 的 CSV/TSV"
+    tuning_advice: "样本名必须与 HUMAnN3 文件前缀一致；若存在差异分析结果，保持通路 ID 命名一致以便自动关联。"
+  output_dir:
+    type: "path"
+    default: "{workdir}/result/stat/bacteria/pathway_activity"
+    range: "可写目录"
+    tuning_advice: "建议使用标准目录以便 Snakemake 和后续报告模块自动发现结果。"
+  dimension:
+    type: "string"
+    default: "bacteria"
+    range: ["bacteria"]
+    tuning_advice: "当前仅支持 bacteria；不要将病毒或真菌表强制传入。"
+  min_coverage:
+    type: "float"
+    default: 0.5
+    range: "0.0-0.8"
+    tuning_advice: "用于区分 medium 与 low 完整性；默认 0.5 适合常规分析，强调近完整通路时可提高到 0.6-0.7。高完整性固定按 coverage >= 0.8 判定。"
+  top_n_contributors:
+    type: "integer"
+    default: 5
+    range: ">= 1"
+    tuning_advice: "默认保留每条通路前 5 个贡献物种；群落复杂或需要展示长尾贡献时可增加到 10，样本少时保持 3-5。"
+
+inputs:
+  - name: "humann3_pathabundance"
+    format: "TSV"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_pathabundance.tsv"
+    required: true
+    description: "包含非分层和物种分层通路丰度的 HUMAnN3 输出。"
+  - name: "humann3_pathcoverage"
+    format: "TSV"
+    path_pattern: "{workdir}/result/humann3/{sample}/{sample}_pathcoverage.tsv"
+    required: true
+    description: "HUMAnN3 通路覆盖度/完整性输出。"
+  - name: "metadata"
+    format: "CSV or TSV"
+    path_pattern: "{workdir}/metadata.csv"
+    required: true
+    description: "样本信息及可选表型分组。"
+
+outputs:
+  - name: "pathway_completeness"
+    format: "CSV"
+    path_pattern: "{output_dir}/pathway_completeness_summary.csv"
+    description: "通路平均覆盖度、平均丰度及 high/medium/low 完整性分类。"
+  - name: "top_contributors"
+    format: "CSV"
+    path_pattern: "{output_dir}/pathway_contributors_top5.csv"
+    description: "每条通路贡献最高的物种及贡献比例。"
+  - name: "activity_composition_correlation"
+    format: "CSV"
+    path_pattern: "{output_dir}/pathway_activity_composition_correlation.csv"
+    description: "通路活性与物种组成的相关分析结果。"
+  - name: "visualizations"
+    format: "PDF"
+    path_pattern: "{output_dir}/{heatmap_pathway_species_contribution,scatter_activity_composition,completeness_distribution}.pdf"
+    description: "物种贡献热图、活性-组成散点图和完整性分布图。"
+
+interpretation:
+  typical_ranges:
+    - "mean_coverage >= 0.8 定义为 high completeness；0.5-0.8 为默认 medium；低于 0.5 为 low。"
+    - "高丰度且高完整性的通路通常是优先解释对象；高丰度但低覆盖度可能代表部分反应、注释偏差或跨物种互补。"
+    - "主要贡献物种占比越集中，通路越可能依赖少数类群；贡献分散则提示功能冗余或群落协作。"
+  alerts:
+    - "大量通路 coverage 为 0 或缺失时，应检查 HUMAnN3 pathcoverage 是否生成以及通路 ID 是否可匹配。"
+    - "相关性不等于因果关系，显著的物种-通路关联仍需结合分层丰度和实验验证。"
+    - "若 HUMAnN3 运行时移除了分层结果，将无法可靠识别物种贡献者。"
+
+troubleshooting:
+  - problem: "提示找不到 HUMAnN3 输出或结果文件为空"
+    solution: "确认 workdir/result/humann3 下存在按样本命名的 pathabundance.tsv 和 pathcoverage.tsv，必要时先运行脚本 13 及其合并步骤。"
+  - problem: "pathway_contributors_top5.csv 为空"
+    solution: "检查 pathabundance 是否包含带物种分层符号的条目；若仅有 unstratified 结果，需要重新运行 HUMAnN3 并保留 stratified 输出。"
+  - problem: "完整性几乎全部为 low"
+    solution: "核对 coverage 数值范围和文件版本；可将 min_coverage 暂时降至 0.3 做敏感性分析，但应同时检查测序深度和数据库命中率。"
+
+example_command: "bash scripts/96b_pathway_activity.sh -w /path/to/project -m /path/to/project/metadata.csv -o /path/to/project/result/stat/bacteria/pathway_activity -d bacteria --min-coverage 0.5 --top-n-contributors 5"
+
+references:
+  - "Beghini F, McIver LJ, Blanco-Miguez A, et al. Integrating taxonomic, functional, and strain-level profiling of diverse microbial communities with bioBakery 3. eLife. 2021;10:e65088."
+  - "Franzosa EA, McIver LJ, Rahnavard G, et al. Species-level functional profiling of metagenomes and metatranscriptomes. Nature Methods. 2018;15:962-968."
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"

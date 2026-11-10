@@ -1,0 +1,41 @@
+id: "96_functional_permanova"
+script: "scripts/96_functional_permanova.sh"
+tool: "Rscript"
+tool_version: "vegan (adonis2)"
+conda_env: "envs/r_stat"
+description: "PERMANOVA test on functional composition (bacteria/fungi/virus) against the grouping variable."
+dimension: "statistics"
+category: "functional_differential"
+rule_type: "aggregate"
+
+inputs:
+  - name: "functional_done_sentinels"
+    path_pattern: "{workdir}/result/stat/{dimension}/functional/{func_type}/{dimension}_functional_{func_type}_done.txt"
+    required: true
+
+outputs:
+  - name: "permanova_done_sentinels"
+    path_pattern: "{workdir}/result/stat/{dimension}/functional/{dimension}_permanova_done.txt"
+    description: "One sentinel per dimension (bacteria/fungi/virus)."
+
+depends_on:
+  - "96_stat_functional"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+  group: "group"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-07-16"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_functional_permanova"
+
+known_issues:
+  - description: "Prior to 2026-07-16 this script's input path pointed at an intermediate 96_stat_functional output path that did not match what the renamed/verified 96_stat_functional.sh actually produces."
+    workaround: "Path corrected during the 2026-07-16 Phase 2 integration pass; verified via a full Snakemake dry-run DAG build."

@@ -1,0 +1,41 @@
+id: "25_bac_dbcan"
+name: "dbCAN3 CAZyme Annotation (HMMER + DIAMOND + eCAMI)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "integrated"
+snakemake_rule: "pipeline/rules/bacteria_annotation.smk::dbcan"
+
+inputs:
+  - name: protein_nr
+    path_pattern: "{workdir}/result/assembly/cdhit/protein_nr.fa"
+    required: true
+    description: "Non-redundant protein sequences from CD-HIT (step 18)"
+
+outputs:
+  - name: overview
+    path_pattern: "{workdir}/result/annotation/dbcan/overview.txt"
+    description: "Voted CAZyme results (gene meets ≥2 of 3 tools = high confidence)"
+  - name: hmmer
+    path_pattern: "{workdir}/result/annotation/dbcan/hmmer.out"
+    description: "HMMER HMM profile search results"
+  - name: diamond
+    path_pattern: "{workdir}/result/annotation/dbcan/diamond.out"
+    description: "DIAMOND blastp results against CAZy database"
+
+depends_on:
+  - "18_bac_cdhit"
+
+conda_env: "envs/dbcan"
+db_path: "db/dbcan"
+
+parameters:
+  tools: "all"
+  voting_threshold: 2
+
+benchmarks:
+  typical_runtime_min: 60
+  peak_memory_gb: 16
+
+known_issues:
+  - description: "overview.txt uses voting: gene classified as CAZyme only if ≥2/3 tools agree"
+    workaround: "Use hmmer.out for maximum sensitivity (HMMER alone is most sensitive)"

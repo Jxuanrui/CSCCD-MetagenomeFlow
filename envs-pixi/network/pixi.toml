@@ -1,0 +1,30 @@
+# AUTO-GENERATED from @EXPLICIT manifest by explicit_to_pixi.py
+# Source: docs/manifests/envs/network.txt
+# ALL packages pinned to name+version+build (review P0-1 standard)
+# NOTE: channels named pkgs/* or 'defaults' are repo.anaconda.com channels; rewrite them to full
+#       https://repo.anaconda.com/... URLs if pixi cannot resolve them.
+
+[project]
+name = "network"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+llvm-openmp = { version = "==22.1.6", build = "h4922eb0_0" }
+_openmp_mutex = { version = "==4.5", build = "7_kmp_llvm" }
+libgcc = { version = "==15.2.0", build = "he0feb66_19" }
+libgcc-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran5 = { version = "==15.2.0", build = "h68bc16d_19" }
+libstdcxx = { version = "==15.2.0", build = "h934c35e_19" }
+libgfortran = { version = "==15.2.0", build = "h69a702a_19" }
+libgfortran-ng = { version = "==15.2.0", build = "h69a702a_19" }
+libopenblas = { version = "==0.3.33", build = "openmp_hd680484_0" }
+libblas = { version = "==3.11.0", build = "8_h4a7cf45_openblas" }
+openblas = { version = "==0.3.33", build = "openmp_hd77311e_0" }
+libcblas = { version = "==3.11.0", build = "8_h0358290_openblas" }
+liblapack = { version = "==3.11.0", build = "8_h47877c9_openblas" }
+arpack = { version = "==3.9.1", build = "nompi_hf03ea27_102" }
+gsl = { version = "==2.7", build = "he838d99_0" }
+superlu = { version = "==5.2.2", build = "h00795ac_0" }
+armadillo = { version = "==14.6.3", build = "h7dbe251_0" }
+fastspar = { version = "==1.0.0", build = "h1b620e3_6", channel = "bioconda" }

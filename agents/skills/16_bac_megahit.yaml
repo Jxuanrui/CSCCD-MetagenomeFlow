@@ -1,0 +1,50 @@
+benchmarks:
+  note: Varies widely by sample size. Uses 90% available RAM (-m 0.9).
+  peak_memory_gb: 50
+  typical_runtime_min: 30
+category: assembly
+conda_env: envs/assembly
+depends_on:
+- 02_qc_kneaddata
+description: De novo metagenome assembly with MEGAHIT. Outputs per-sample contigs.fa
+  for downstream gene prediction and MAG binning.
+dimension: bacteria
+id: 16_bac_megahit
+inputs:
+- name: r1
+  path_pattern: '{workdir}/result/qc/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz'
+  required: true
+- name: r2
+  path_pattern: '{workdir}/result/qc/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz'
+  required: true
+integrated_date: '2026-06-06'
+integration_status: integrated
+known_issues:
+- description: MEGAHIT fails if output directory already exists (without --force).
+    Script uses a temp subdir to avoid this.
+  workaround: Script handles this internally via _megahit_tmp subdirectory.
+- description: 'If final.contigs.fa is empty, likely causes: too few reads, memory
+    exhaustion, or --min-contig-len too high.'
+  workaround: Check megahit.log; reduce --min-contig-len or increase RAM.
+outputs:
+- description: Final assembled contigs. Input for scripts 17 (Prodigal), 32 (CoverM
+    depth), 33-35 (binning).
+  name: contigs
+  path_pattern: '{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa'
+- description: MEGAHIT assembly log (k-mer list, memory usage, contig statistics).
+  name: log
+  path_pattern: '{workdir}/result/assembly/megahit/{sample}/{sample}.megahit.log'
+params:
+  memory: '0.9'
+  min_contig_len: '500'
+  note: For MAG recovery workflows, use --min-contig-len 1000 or 1500
+  presets: meta-large
+  threads: '{cpus}'
+required_by:
+- 17_bac_prodigal
+- 32_bac_coverm_depth
+rule_type: per_sample
+script: scripts/16_bac_megahit.sh
+snakemake_rule: pipeline/rules/bacteria_assembly.smk::megahit
+tool: megahit
+tool_version: 1.2.9

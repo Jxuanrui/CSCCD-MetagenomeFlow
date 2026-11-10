@@ -1,0 +1,33 @@
+benchmarks:
+  peak_memory_gb: null
+  typical_runtime_min: 490
+category: classification
+conda_env: envs/assembly
+depends_on:
+- 02_qc_kneaddata
+description: FunOMIC fungal classification with automatic DIAMOND marker fallback
+  when FunOMIC is unavailable.
+dimension: mycobiome
+id: 75_fun_funomics
+inputs:
+- name: kneaddata_r1
+  path_pattern: '{workdir}/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz'
+  required: true
+- name: kneaddata_r2
+  path_pattern: '{workdir}/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz'
+  required: true
+integrated_date: '2026-06-07'
+integration_status: integrated
+outputs:
+- description: FunOMIC or fallback DIAMOND-based fungal classification table.
+  name: classification
+  path_pattern: '{workdir}/result/fungi/funomic/{sample}/{sample}_classification.tsv'
+params:
+  repo: '{repo}'
+  threads: '{cpus}'
+  workdir: '{workdir}'
+rule_type: per_sample
+script: scripts/75_fun_funomics.sh
+snakemake_rule: mycobiome.smk::fun_funomic
+tool: FunOMIC
+tool_version: '~'

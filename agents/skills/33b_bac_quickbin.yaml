@@ -1,0 +1,54 @@
+id: "33b_bac_quickbin"
+script: "scripts/33b_bac_quickbin.sh"
+tool: "QuickBin"
+tool_version: "BBTools 39.81"
+conda_env: "envs/busco"
+description: "QuickBin high-fidelity metagenome binning (BBTools): CPU-only, marker-free; GC-coverage spatial index (BinMap) + hierarchical Oracle similarity cascade, with a small neural network only for ambiguous merges. Published benchmark: recovers more high-fidelity MAGs (>=95% completeness, <=1% contamination) than MetaBAT2/SemiBin2/VAMB/COMEBin and completes all runs. STANDALONE binner: a controlled 4-sample study (2026-09-16) showed that adding it to the DAS_Tool ensemble is net harmful to high-quality MAG recovery, so it is deliberately NOT wired into DAS_Tool."
+dimension: "bacteria"
+category: "binning"
+rule_type: "per_sample"
+
+inputs:
+  - name: "contigs"
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa"
+    required: true
+  - name: "bam"
+    path_pattern: "{workdir}/result/binning/coverm/{sample}/{sample}.bam"
+    required: true
+    description: "Sorted contig BAM from CoverM (step 32); reused directly to avoid a second read mapping."
+
+outputs:
+  - name: "bins"
+    path_pattern: "{workdir}/result/binning/quickbin/{sample}/QUICKBIN_BIN*.fa"
+    description: "One FASTA per bin."
+  - name: "contig2bin"
+    path_pattern: "{workdir}/result/binning/quickbin/{sample}/{sample}.quickbin.tsv"
+    description: "contig-to-bin table derived from the bin FASTAs, for standalone/manual use."
+
+depends_on:
+  - "32_bac_coverm_depth"
+required_by: []
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  mem_gb: "32"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+known_issues:
+  - description: "QuickBin is provided by BBTools, which ships inside envs/busco (BBTools 39.81 + Java 25 + BBMap). No dedicated env or database is required."
+    workaround: "Reuse envs/busco (quickbin.sh). If a cleaner separation is wanted later, create envs/bbtools from bioconda."
+  - description: "The paper recommends mapping with BBMap (ambig=random mateqtag minid=0.9 maxindel=10) to maximise paired-read edge evidence. This wrapper reuses CoverM's minimap2 BAM to avoid a second mapping pass, so edge evidence may be slightly lower."
+    workaround: "For maximum fidelity, map contigs with BBMap first (envs/busco/bin/bbmap.sh) and point reads= at that SAM. Revisit if bin yield underperforms."
+  - description: "Benchmark limitation: QuickBin's prokaryotic MAG yield is lower on PacBio assemblies (optimised for short reads); it also conservatively consolidates host plasmids. This platform's workflow is short-read, so the PacBio limitation does not apply."
+    workaround: "n/a."
+  - description: "Do NOT add QuickBin to the DAS_Tool ensemble. A controlled 4-sample study (Sample1-4, 2026-09-16) compared a 3-binner control against a 4-binner run with identical inputs and DAS_Tool parameters: aggregate delta was -3 bins at >=95%/<=1%, -2 at >=90%/<=5%, +4 bins, +3 at >=50%/<=10%. Only 1/4 samples gained; Sample4 lost 3 high-fidelity bins. QuickBin's candidate bins displace better MetaBAT2/MaxBin2/SemiBin2 bins under DAS_Tool's greedy scoring."
+    workaround: "Use 33b standalone (it is fast, ~40-60 s/sample) and, if integrating, evaluate any 4th binner with a same-script 3-binner control on >=4 samples before wiring it into 36."
+
+integration_status: "integrated"
+integrated_date: "2026-09-15"
+snakemake_rule: "pipeline/rules/bacteria_binning.smk::quickbin"

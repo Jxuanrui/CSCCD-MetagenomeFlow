@@ -1,0 +1,48 @@
+id: "91_stat_diversity"
+script: "scripts/91_stat_diversity.sh"
+tool: "Rscript"
+tool_version: "phyloseq, vegan, microbiome, picante, ggplot2, ggpubr, tidyverse"
+conda_env: "envs/r_stat"
+description: "Compute alpha and beta diversity statistics with group-wise visualization across bacteria, virus, and fungi."
+dimension: "statistics"
+category: "diversity"
+rule_type: "aggregate"
+
+inputs:
+  - name: "bacteria_taxonomy"
+    path_pattern: "{workdir}/result/metaphlan4/merged/taxonomy.tsv"
+    required: true
+  - name: "virus_votu_table"
+    path_pattern: "{workdir}/result/virus/votu/table/vOTU_table_ann.txt"
+    required: true
+  - name: "fungi_profiles"
+    path_pattern: "{workdir}/result/fungi/metaphlan4/{sample}/{sample}_profile.txt"
+    required: true
+    is_expand: true
+
+outputs:
+  - name: "alpha_diversity"
+    path_pattern: "{workdir}/result/stat/diversity_alpha_summary.tsv"
+    description: "Merged alpha diversity summary sentinel table."
+
+depends_on:
+  - "11b_bac_metaphlan4_merge"
+  - "60_vir_votu_table"
+  - "72_fun_metaphlan4_euk"
+
+params:
+  threads: "{cpus}"
+  workdir: "{workdir}"
+  repo: "{repo}"
+  metadata: "{workdir}/metadata.csv"
+
+benchmarks:
+  typical_runtime_min: ~
+  peak_memory_gb: ~
+
+integration_status: "integrated"
+integrated_date: "2026-06-08"
+snakemake_rule: "pipeline/rules/statistics.smk::stat_diversity"
+
+notes:
+  figure_formats: "PDF+PNG (600 dpi) companions via MGX_FIGURE_FORMATS env var; default output set unchanged"
