@@ -1,10 +1,14 @@
 # CSCCD-MetagenomeFlow
 
+<p align="center">
+  <img src="docs/assets/lab_logo.png" width="140" alt="China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases"/>
+</p>
+
 <p align="center"><img src="docs/figures/header.jpg" alt="CSCCD-MetagenomeFlow banner"></p>
 
 A self-contained metagenomics platform that profiles gut bacteria, viruses, and fungi in parallel — from raw reads to publication-ready statistics — with built-in host-microbe mechanism discovery and an AI-assisted workflow.
 
-Developed by the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases.
+Developed by the **China-Saudi Arabia Joint Laboratory for Cardiovascular and Cerebrovascular Diseases**.
 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
@@ -36,7 +40,7 @@ Developed by the China-Saudi Arabia Joint Laboratory for Cardiovascular and Cere
 
 ## Overview
 
-*(The project was developed under the internal codename "mgx / MaxMetagenome" — tool names like `mgx-vis` and environment variables like `MGX_FIGURE_FORMATS` still use the short form. They refer to this repository, CSCCD-MetagenomeFlow.)*
+*(Tool names like `mgx-vis` and environment variables like `MGX_FIGURE_FORMATS` use the legacy short prefix `mgx`. They refer to this repository, CSCCD-MetagenomeFlow.)*
 
 Most published pipelines handle one kingdom at a time, depend on cloud infrastructure, or don't reproduce cleanly across servers. This platform takes a different approach: bacteria (scripts 11–43c), virome (51–72), and mycobiome (71–86) run side by side under one script convention and one Snakemake DAG, on a single server, with everything installed locally.
 
@@ -50,15 +54,14 @@ Most published pipelines handle one kingdom at a time, depend on cloud infrastru
 
 ### Recent Updates
 
+- **v1.5.2 (2026-11)** — Tutorial restructured into a six-volume edition (overview + preprocessing/read-based, assembly/catalog/annotation, binning/MAG, virome & mycobiome, statistics & optimization) covering all 131 steps; numbers re-verified against raw logs (N50 table ×6, Prodigal CDS 296,989, pangenome 280,554 clusters); Feishu six-doc publishing tooling (`tools/feishu/`) with automatic link-sharing and ownership transfer; lab logo added.
 - **pixi delivery layer (2026-10)** — `envs-pixi/` provides lockfile-based environment delivery (user-approved): 53/57 environments locked (50 build-level exact, 1 busco version-compromised, 2 Track-2 only). glibc and AVX-512 issues resolved via system-requirements and build relaxation. Delivery: dual-track — pixi lockfiles + symlink wiring (recommended) or conda-pack per-env archives (fallback). See `docs/plans/2026-10-03_pixi_adoption_techspec.md`.
 - **Path normalization fix (2026-10-05)** — `libcommon.sh` `mgx_begin` now converts WORKDIR/REPO to absolute paths via `realpath -m`, fixing a critical bug where relative paths caused nested outputs (HUMAnN 6-sample failure) and could bypass the Project01 production write guard.
 
-> Details: `git log v1.1.4-baseline..HEAD` (private dev history)
-
 - **v1.5.0 (2026-10-30)** — AI-Assistant Reliability: three-state validation (PASS/FAIL/UNVERIFIED), dynamic sample loading, pipeline status recovery, AMR report fusion (24c), MCP scope disclosure, interactive dashboard, 113-chapter tutorial with sanitized export, benchmark data for 11 skill cards.
-- **v1.4.1 (2026-09-30 — 2026-10-01)** — Integrity & governance hardening (internal fixes). Addendum — new CLI surface (96-input governance): script 96 gains --combination B/V/F/BV/BF/VF/BVF with shared BVF sample pools, per-block relative-abundance prefiltering, bacteria domain filter (k__Bacteria species rows only), virus input via 98c TPM columns, protocol-pinned 98d fungi source, a **user-visible resume behavior change** (mismatched combination/sample_set/fungi_method or pre-governance sentinels now error instead of silently reusing old results — re-run with --force), cross-cohort loader dimensional alignment (97 mirrors 96's bacteria regime + zero-fill fail-hard gate at 100% feature absence, filter counts stamped into metrics) (all internal fixes, no interface changes): antiSMASH chain triple-defect fix (empty-chunk binning, region-GBK flatten contract for 28b, short-contig prefilter) with permanent CI regression guards for all three failure-semantics defenses (T-11/T-22/T-24); cross-cohort validation chain rebuilt (nine defects: direction pinning, role-aware in-sample/external split, T-11 failure semantics, dual-arm reporting with uncorrected primary + MMUPHin sensitivity, meta-analysis delta-method SE, duplicate-ID guard, external-validation metrics with sample-name alignment); 98c fail-fast on missing vOTU identity map (was: silent 100% evidence drop); repository hygiene (CCMetagen retired end-to-end, 946 tracked run-artifacts untracked, 1.66 GiB dangling objects reclaimed, E-5 archival batch with RAG rebuild); engineering governance (supervisor review channel with 20+ gate audits, three-gate pre-commit hook with self-healing install, pip-only package inventory v3, PYTHONNOUSERSITE isolation, absolute database freeze with mechanical guards); RAG benchmark governance (two-tier release standard, baseline v2, freshness clause).
+- **v1.4.1 (2026-09-30 — 2026-10-01)** — Integrity & engineering hardening (internal fixes). Addendum — new CLI surface (96-input governance): script 96 gains --combination B/V/F/BV/BF/VF/BVF with shared BVF sample pools, per-block relative-abundance prefiltering, bacteria domain filter (k__Bacteria species rows only), virus input via 98c TPM columns, protocol-pinned 98d fungi source, a **user-visible resume behavior change** (mismatched combination/sample_set/fungi_method or pre-governance sentinels now error instead of silently reusing old results — re-run with --force), cross-cohort loader dimensional alignment (97 mirrors 96's bacteria regime + zero-fill fail-hard gate at 100% feature absence, filter counts stamped into metrics) (all internal fixes, no interface changes): antiSMASH chain triple-defect fix (empty-chunk binning, region-GBK flatten contract for 28b, short-contig prefilter) with permanent CI regression guards for all three failure-semantics defenses (T-11/T-22/T-24); cross-cohort validation chain rebuilt (nine defects: direction pinning, role-aware in-sample/external split, T-11 failure semantics, dual-arm reporting with uncorrected primary + MMUPHin sensitivity, meta-analysis delta-method SE, duplicate-ID guard, external-validation metrics with sample-name alignment); 98c fail-fast on missing vOTU identity map (was: silent 100% evidence drop); repository hygiene (CCMetagen retired end-to-end, 946 tracked run-artifacts untracked, 1.66 GiB dangling objects reclaimed, E-5 archival batch with RAG rebuild); engineering hardening (three-gate pre-commit hook with self-healing install, pip-only package inventory v3, PYTHONNOUSERSITE isolation, absolute database freeze with mechanical guards); RAG benchmark release standard (two-tier, baseline v2, freshness clause).
 
-- **v1.4.0 (2026-09)** — Evidence & interpretation layer + ML validity: Phase 2 evidence layer closed (taxonomy cross-validation, virome host/detection/AMG evidence contracts, cross-domain edge contract, DA consensus views); antiSMASH chunked execution adopted in production script 28; Phase 3 opened with subject-aware CV, reproducible split manifests and full metrics panel (PR-AUC/sensitivity/specificity); production write guard for Project01; global rename to CSCCD-MetagenomeFlow; supervisor review channel + user governance rules (path hygiene, DB freeze, doc sync).
+- **v1.4.0 (2026-09)** — Evidence & interpretation layer + ML validity: Phase 2 evidence layer closed (taxonomy cross-validation, virome host/detection/AMG evidence contracts, cross-domain edge contract, DA consensus views); antiSMASH chunked execution adopted in production script 28; Phase 3 opened with subject-aware CV, reproducible split manifests and full metrics panel (PR-AUC/sensitivity/specificity); production write guard for Project01; global rename to CSCCD-MetagenomeFlow; repo hygiene rules (path hygiene, DB freeze, doc sync).
 
 - **v1.3.0 (2026-09)** — First public release. mgx-vis MCP visualization module (publication PDF+PNG, CNS design system, 14-figure gallery reproducible from synthetic demo data); agent-driven metagenome mining loop; GitHub publishing pipeline with leak verification; environment lock manifests.
 
@@ -208,7 +211,7 @@ Additional figure families (not pictured): SpiecEasi functional co-occurrence ne
 
 ## Script Index
 
-Full index with per-script documentation lives in `Tutorial.md` (2,500+ lines, Chinese). Summary:
+Full step-by-step tutorial with per-step commands, real outputs and data interpretation lives in `Tutorial.md` (4,500+ lines, Chinese; six-volume structure covering all 131 steps). Summary:
 
 | Range | Content |
 |-------|---------|
@@ -279,16 +282,17 @@ An agent-driven gut-metagenome mining loop in the spirit of scBaseCount (Arc Ins
 
 ```
 CSCCD-MetagenomeFlow/
-├── scripts/                  172 scripts (152 sh + 4 py + 16 R) + scripts/utils/ helpers
+├── scripts/                  181 scripts (158 sh + 7 py + 16 R) + scripts/utils/ helpers
 ├── pipeline/                 Snakefile, config, hardware profiles, 11 rule files
 ├── agents/                   registry.yaml, skill cards, optional run provenance records
-├── docs/                     experience docs (RAG source), tool references
+├── docs/                     experience docs (RAG source), tool references, tutorial exports
 ├── mcp/                      RAG indexers, bridges, MCP servers
 ├── mining/                   auto-mining subsystem (discovery + curation + orchestrator)
 ├── db/                       ~1.2 TB analysis databases (not in git)
 ├── envs/                     57 conda environments (not in git)
+├── envs-pixi/                57 pixi lockfile environments (53 locked)
 ├── 0Install.sh               environment + database installation
-└── Tutorial.md               per-script documentation (Chinese)
+└── Tutorial.md               six-volume step-by-step tutorial (Chinese)
 ```
 
 ---
