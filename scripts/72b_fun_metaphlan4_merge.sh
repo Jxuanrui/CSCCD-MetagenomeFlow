@@ -118,22 +118,28 @@ echo "[INFO] taxonomy.tsv: ${NROW} 行（含所有分类层级）× ${NCOL} 个�
 
 echo "[INFO] 提取菌种级丰度表..."
 {
-    grep "^#\|^ID" "${TAXONOMY_TSV}"
-    grep -v "^#" "${TAXONOMY_TSV}" | grep "s__" | grep -v "t__"
+    grep "^#\|^ID" "${TAXONOMY_TSV}" || true
+    { grep -v "^#" "${TAXONOMY_TSV}" | grep "s__" | grep -v "t__"; } || true
 } > "${SPECIES_TSV}"
 
-NSPECIES=$(grep -v "^#" "${SPECIES_TSV}" | wc -l)
+NSPECIES=$(grep -vc "^#" "${SPECIES_TSV}" || true)
 echo "[INFO] taxonomy_species.tsv: ${NSPECIES} 个菌种"
+if [ "${NSPECIES}" -eq 0 ]; then
+    echo "[WARN] 真菌零检出（全部 UNCLASSIFIED）——按 R-20261116-26 优雅降级：输出空表并标记 fungi_negative"
+    printf 'fungi_negative\n' > "${MERGED_DIR}/fungi_status.txt"
+else
+    printf 'fungi_positive\tspecies=%s\n' "${NSPECIES}" > "${MERGED_DIR}/fungi_status.txt"
+fi
 
 # --- Step 3: 提取菌属级别（g__ 不含 s__）---
 
 echo "[INFO] 提取菌属级丰度表..."
 {
-    grep "^#\|^ID" "${TAXONOMY_TSV}"
-    grep -v "^#" "${TAXONOMY_TSV}" | grep "g__" | grep -v "s__"
+    grep "^#\|^ID" "${TAXONOMY_TSV}" || true
+    { grep -v "^#" "${TAXONOMY_TSV}" | grep "g__" | grep -v "s__"; } || true
 } > "${GENUS_TSV}"
 
-NGENUS=$(grep -v "^#" "${GENUS_TSV}" | wc -l)
+NGENUS=$(grep -vc "^#" "${GENUS_TSV}" || true)
 echo "[INFO] taxonomy_genus.tsv: ${NGENUS} 个菌属"
 
 # --- Step 4: 生成菌种级 CSV（只含物种名+相对丰度，不含完整层级路径）---
@@ -168,8 +174,10 @@ with open(tsv_path) as f:
         rows.append([species_name] + parts[1:])
 
 if header is None:
-    print("ERROR: header not found", file=sys.stderr)
-    sys.exit(1)
+    print("[WARN] header not found; writing header-only CSV (fungi_negative)", file=sys.stderr)
+    with open(csv_path, 'w', newline='') as f:
+        csv.writer(f).writerow(['species', 'XJA1'])
+    sys.exit(0)
 
 # 按第一样本丰度降序排列
 if len(header) > 1:

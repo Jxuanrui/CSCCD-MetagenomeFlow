@@ -313,7 +313,10 @@ read_fungi_profiles <- function(dir_path) {
            abundance = tab$relative_abundance)
   })
   prof <- Filter(Negate(is.null), prof)
-  if (length(prof) == 0) stop("No fungi taxa found in any profile (all UNCLASSIFIED)")
+  if (length(prof) == 0) {
+    message("[WARN] No fungi taxa found in any profile (all UNCLASSIFIED) — 真菌全阴性，按 R-20261116-26 跳过真菌网络（不失败）")
+    return(NULL)
+  }
   merged <- bind_rows(prof) %>%
     dplyr::filter(!is.na(feature), !is.na(abundance)) %>%
     dplyr::group_by(feature, sample_id) %>%

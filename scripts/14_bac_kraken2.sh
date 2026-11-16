@@ -145,6 +145,7 @@ mgx_conda kraken2 \
     kraken2 \
         --db          "${DB_KRAKEN}" \
         --threads     "${CPUS}" \
+        --memory-mapping \
         --paired      "${INPUT_R1}" "${INPUT_R2}" \
         --use-names \
         --report-zero-counts \
