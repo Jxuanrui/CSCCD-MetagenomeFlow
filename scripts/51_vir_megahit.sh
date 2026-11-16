@@ -41,7 +41,7 @@ if [ ! -f "${R1}" ]; then echo "[ERROR] R1 missing: ${R1}"; exit 1; fi
 if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ]; then echo "[vir_megahit] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
-MEGA_TMP="${OUTDIR}/_megahit_tmp"
+MEGA_TMP="$(mgx_scratch_init virmegahit)"   # NVMe 优先 + 回退 + EXIT 强制清理
 
 echo "[vir_megahit] ${SAMPLE} | 病毒优化组装 ..."
 EXIT_CODE=0
@@ -50,6 +50,7 @@ mgx_try mgx_conda assembly \
         -o "${MEGA_TMP}" \
         --out-prefix "${SAMPLE}" \
         -t "${CPUS}" \
+        -m "${MEGAHIT_MEM_GB:-60}" \
         --presets meta-large \
         --min-contig-len 1500 \
         --force \

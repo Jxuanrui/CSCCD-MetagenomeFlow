@@ -42,7 +42,7 @@ INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 OUTDIR="${WORKDIR}/result/fungi/assembly/${SAMPLE}"
 CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
-MEGAHIT_TMP="${OUTDIR}/_megahit_tmp"
+MEGAHIT_TMP="$(mgx_scratch_init funmegahit)"   # NVMe 优先 + 回退 + EXIT 强制清理
 
 if [ ! -f "${INPUT_R1}" ]; then echo "[ERROR] 输入文件不存在: ${INPUT_R1}"; exit 1; fi
 if [ ! -f "${INPUT_R2}" ]; then echo "[ERROR] 输入文件不存在: ${INPUT_R2}"; exit 1; fi
@@ -53,7 +53,6 @@ if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ] && [ -s "${CONTIGS}" ]; then
 fi
 
 mkdir -p "${OUTDIR}"
-rm -rf "${MEGAHIT_TMP}"
 
 echo "[fun_megahit] 提示: 可先用 71/72 的真菌结果提取 reads，再组装以提高真菌 contig 纯度"
 
@@ -64,7 +63,7 @@ mgx_try mgx_conda assembly \
         -2 "${INPUT_R2}" \
         -o "${MEGAHIT_TMP}" \
         -t "${CPUS}" \
-        -m 0.9 \
+        -m "${MEGAHIT_MEM_GB:-60}" \
         --presets meta-sensitive \
         --min-contig-len 1000 \
         || EXIT_CODE=$?

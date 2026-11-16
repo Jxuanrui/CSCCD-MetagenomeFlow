@@ -83,7 +83,7 @@ INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 
 RESULT_DIR="${WORKDIR}/result/assembly/megahit/${SAMPLE}"
 CONTIGS="${RESULT_DIR}/${SAMPLE}.contigs.fa"
-MEGAHIT_TMP="${RESULT_DIR}/_megahit_tmp"
+MEGAHIT_TMP="$(mgx_scratch_init megahit)"   # NVMe 优先 + 空间不足回退 + EXIT 强制清理
 
 # --- 输入检查 ---
 
@@ -106,7 +106,6 @@ if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ] && [ -s "${CONTIGS}" ]; then
 fi
 
 mkdir -p "${RESULT_DIR}"
-rm -rf "${MEGAHIT_TMP}"
 
 # --- kneaddata trailing-garbage workaround ---
 # kneaddata writes gzip files with trailing bytes that MEGAHIT's reader rejects.
@@ -140,7 +139,7 @@ mgx_try mgx_conda assembly \
         -2 "${INPUT_R2}" \
         -o "${MEGAHIT_TMP}" \
         -t "${CPUS}" \
-        -m 0.9 \
+        -m "${MEGAHIT_MEM_GB:-60}" \
         --presets "${PRESETS}" \
         --min-contig-len "${MIN_CONTIG_LEN}" || EXIT_CODE=$?
 
