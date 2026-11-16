@@ -88,6 +88,12 @@ done
 if [ -z "${FUNGI_INPUT}" ] && compgen -G "${WORKDIR}/result/fungi/metaphlan4/*/*_profile.txt" > /dev/null; then
     FUNGI_INPUT="${WORKDIR}/result/fungi/metaphlan4"
 fi
+# R-20261116-26：真菌全阴性（所有 profile 仅 UNCLASSIFIED）时，跨域相关性跳过真菌分支，不失败
+if [ -n "${FUNGI_INPUT}" ] && [ -f "${WORKDIR}/result/fungi/metaphlan4/merged/fungi_status.txt" ] \
+   && grep -q '^fungi_negative' "${WORKDIR}/result/fungi/metaphlan4/merged/fungi_status.txt" 2>/dev/null; then
+    echo "[WARN] 真菌全阴性（fungi_negative）——跳过真菌分支，仅做细菌-病毒跨域分析"
+    FUNGI_INPUT=""
+fi
 
 mkdir -p "${OUTDIR}"
 echo "[cross_domain_corr] 细菌输入: ${BACTERIA_INPUT}"
