@@ -179,26 +179,6 @@ rule fun_megahit:
         "> {log} 2>&1"
 
 
-rule fun_metaeuk:
-    """Predict fungal coding sequences using the MetaEuk/Prodigal wrapper."""
-    input:
-        contigs = WORKDIR + "/result/fungi/assembly/{sample}/{sample}.contigs.fa",
-    output:
-        faa = WORKDIR + "/result/fungi/metaeuk/{sample}/{sample}_metaeuk.faa",
-    params:
-        samples = SAMPLES,
-        workdir = config["workdir"],
-        force_flag = config.get("force", False) and "--force" or "",
-    log:
-        WORKDIR + "/logs/fungi/metaeuk/{sample}.log",
-    threads: CPUS
-    shell:
-        "bash {REPO}/scripts/80b_fun_metaeuk.sh  {params.force_flag}"
-        "-s {wildcards.sample} -t {threads} "
-        "-w {params.workdir} -r {REPO} "
-        "--method metaeuk --db {REPO}/db/metaeuk_db/fungi_refseq_mmseqs "
-        "> {log} 2>&1"
-
 
 rule fun_eukfinder:
     """Classify fungal assembly contigs: eukaryote / bacteria / unknown (Eukfinder v1.2.4).

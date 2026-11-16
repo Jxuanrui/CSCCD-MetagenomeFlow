@@ -379,10 +379,6 @@ rule vir_integration_tables:
 rule fun_integration_tables:
     """Integrate fungal annotation and abundance outputs into summary tables."""
     input:
-        metaeuk = expand(
-            WORKDIR + "/result/fungi/metaeuk/{sample}/{sample}_metaeuk.faa",
-            sample=SAMPLES,
-        ),
         eggnog = WORKDIR + "/result/fungi/eggnog/eggnog.emapper.annotations",
         dbcan = WORKDIR + "/result/fungi/dbcan/overview.txt",
         vfdb = WORKDIR + "/result/fungi/vfdb/vfdb_hits.tsv",
