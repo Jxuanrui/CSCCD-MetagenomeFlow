@@ -51,7 +51,16 @@ FNA="${RESULT_DIR}/${SAMPLE}.fna"
 GFF="${RESULT_DIR}/${SAMPLE}.gff"
 
 if [ ! -f "${INPUT_CONTIGS}" ]; then echo "[ERROR] 输入不存在: ${INPUT_CONTIGS}"; exit 1; fi
-if [ ! -s "${INPUT_CONTIGS}" ]; then echo "[ERROR] 文件为空"; exit 1; fi
+if [ ! -s "${INPUT_CONTIGS}" ]; then
+    # R-20261116-31（3b）：真菌阴性（0 字节 contigs + flag）→ 写空 faa 放行
+    if [ -f "${WORKDIR}/result/fungi/${SAMPLE}/fungi_negative.flag" ]; then
+        echo "[fun_prodigal] ${SAMPLE} | 真菌阴性 → 写空 faa"
+        mkdir -p "$(dirname "${FAA}")" 2>/dev/null || true
+        : > "${FAA}"
+        exit 0
+    fi
+    echo "[ERROR] contigs 为空且无阴性标志"; exit 1
+fi
 
 if [ ${FORCE} -eq 0 ] && [ -f "${FAA}" ] && [ -s "${FAA}" ]; then
     echo "[INFO] 结果已存在，跳过: ${SAMPLE}"; exit 0

@@ -38,6 +38,17 @@ mgx_require SAMPLE CPUS WORKDIR REPO
 
 mgx_begin
 
+# R-20261116-31（3b）：真菌阴性门槛——阴性样本跳过组装，写 0 字节 contigs + flag
+# 原子性（质量审核注记）：先写 flag 再发布 contigs，下游见 contigs 必见 flag
+GATE=$(mgx_fungi_gate)
+if [ "${GATE}" = "negative" ]; then
+    echo "[fun_megahit] ${SAMPLE} | 真菌阴性（PHF 零检出）→ 跳过组装"
+    mkdir -p "${OUTDIR}"
+    : > "${CONTIGS}"          # 0 字节 fasta（显式空产物）
+    mgx_end "fun_megahit"
+    exit 0
+fi
+
 INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 OUTDIR="${WORKDIR}/result/fungi/assembly/${SAMPLE}"

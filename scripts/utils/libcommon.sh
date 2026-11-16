@@ -401,6 +401,33 @@ mgx_scratch_cleanup() {
     MGX_CLEANUP_FILES=""
 }
 
+# ── 真菌阴性门槛（R-20261116-31，3b）────────────────────────────────
+# 用法：mgx_fungi_gate   # stdout 输出 positive|negative；exit 0
+#   读 ${WORKDIR}/result/fungi/phf_profiler/${SAMPLE}/${SAMPLE}.rc
+#   PHF rc 缺失/空 → [ERROR] exit 2（PHF 必须先跑，DAG 已加 phf_rc 依赖边）
+#   阈值：任一 contig 丰度 > $MGX_FUNGI_MIN_ABUND（默认 0.05）→ positive
+#   negative 时自动写 ${WORKDIR}/result/fungi/${SAMPLE}/fungi_negative.flag
+#   （该 flag 是下游"空产物放行"的统一判定入口）
+mgx_fungi_gate() {
+    local rc="${WORKDIR}/result/fungi/phf_profiler/${SAMPLE}/${SAMPLE}.rc"
+    if [ ! -s "${rc}" ]; then
+        echo "[ERROR] PHF rc 缺失（PHF 必须先跑）: ${rc}" >&2
+        return 2
+    fi
+    local pos
+    pos=$(awk -v t="${MGX_FUNGI_MIN_ABUND:-0.05}" '$2+0 > t' "${rc}" | wc -l)
+    local flag_dir="${WORKDIR}/result/fungi/${SAMPLE}"
+    mkdir -p "${flag_dir}"
+    if [ "${pos}" -eq 0 ]; then
+        echo "fungi_negative" > "${flag_dir}/fungi_negative.flag"
+        echo negative
+        return 1
+    fi
+    rm -f "${flag_dir}/fungi_negative.flag" 2>/dev/null || true
+    echo positive
+    return 0
+}
+
 # conda 环境执行包装: mgx_conda <envname> <cmd...>
 # 等价 conda run --prefix "${REPO}/envs/<envname>" --no-capture-output <cmd...>（REPO 取调用方变量）
 mgx_conda() {

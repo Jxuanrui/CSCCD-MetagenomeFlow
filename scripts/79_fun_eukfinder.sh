@@ -46,6 +46,14 @@ mgx_begin
 INPUT_CONTIGS="${WORKDIR}/result/fungi/assembly/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/fungi/eukfinder/${SAMPLE}"
 
+# R-20261116-31（3b）：真菌阴性（0 字节 contigs + flag）→ 写空 results.txt 放行
+if [ -f "${WORKDIR}/result/fungi/${SAMPLE}/fungi_negative.flag" ]; then
+    echo "[fun_eukfinder] ${SAMPLE} | 真菌阴性 → 写空 results.txt"
+    mkdir -p "${OUTDIR}"
+    : > "${OUTDIR}/results.txt"
+    exit 0
+fi
+
 if [ ! -f "${INPUT_CONTIGS}" ]; then
     echo "[ERROR] 输入文件不存在: ${INPUT_CONTIGS}"
     echo "        请先运行 78_fun_megahit.sh"

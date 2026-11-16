@@ -37,6 +37,14 @@ mgx_require CPUS WORKDIR REPO
 mgx_begin
 
 OUTDIR="${WORKDIR}/result/fungi/merops"
+# R-20261116-31（3b）：真菌阴性 → 写表头空输出（不失败）
+NEG_FLAG="${WORKDIR}/result/fungi/${SAMPLE}/fungi_negative.flag"
+if [ -f "${NEG_FLAG}" ]; then
+    echo "[info] ${SAMPLE} | 真菌阴性 → 表头空输出"
+    mkdir -p "${OUTDIR}" 2>/dev/null || true
+    : > "${OUTPUT_TSV}"
+    exit 0
+fi
 PRODIGAL_DIR="${WORKDIR}/result/fungi/prodigal"
 COMBINED_FAA="${OUTDIR}/combined_fungi.faa"
 OUTPUT_TSV="${OUTDIR}/merops_hits.tsv"
