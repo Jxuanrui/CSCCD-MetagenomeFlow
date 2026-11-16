@@ -41,8 +41,15 @@ mgx_require SAMPLE CPUS WORKDIR REPO
 mgx_begin
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 # R-task-8：分箱统一使用 >=1000 bp 过滤版（功能注释轨仍用 500 bp 全集）
+# P1 修复（质量审核 R-28 批1）：缺过滤版必须显式报错，禁止静默回退全集——
+# 否则 dastool 的 contig2bin 会引用过滤文件中不存在的 contig
 CONTIGS_GE1000="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs_ge1000.fa"
-if [ -s "${CONTIGS_GE1000}" ]; then CONTIGS="${CONTIGS_GE1000}"; fi
+if [ ! -s "${CONTIGS_GE1000}" ]; then
+    echo "[ERROR] 36_bac_dastool.sh 依赖 >=1000bp 过滤版 contigs 但未找到: ${CONTIGS_GE1000}"
+    echo "[ERROR] 请先运行 16b_bac_filter_contigs.sh（或 `snakemake` 规则 filter_contigs_ge1000）"
+    exit 1
+fi
+CONTIGS="${CONTIGS_GE1000}"
 
 OUTDIR="${WORKDIR}/result/binning/dastool/${SAMPLE}"
 SENTINEL="${OUTDIR}/${SAMPLE}_DASTool_contig2bin.tsv"
@@ -58,7 +65,7 @@ SEMIBIN2_TSV="${WORKDIR}/result/binning/semibin2/${SAMPLE}/${SAMPLE}.semibin2.ts
 
 if [ ! -f "${CONTIGS}" ]; then echo "[ERROR] Contigs missing"; exit 1; fi
 
-if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ] && [ -d "${BINS_DIR}" ]; then
+if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ] && [ -s "${SENTINEL}" ] && [ -d "${BINS_DIR}" ] && [ "${SENTINEL}" -nt "${CONTIGS_GE1000}" ]; then
     echo "[dastool] 结果已存在，跳过"; exit 0
 fi
 

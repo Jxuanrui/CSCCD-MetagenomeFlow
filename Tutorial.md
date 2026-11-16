@@ -1112,8 +1112,8 @@ Project/Project01/result/assembly/prodigal/Sample1/
 
 | 后端 | 参数 | 算法复杂度 | 速度（48核，2.5M基因） | 适用场景 |
 |------|------|-----------|----------------------|---------|
-| **CD-HIT-EST**（默认） | `--tool cdhit` | 近 O(n²) | ~30-60 分钟 | ≤500万基因，≤20样本，结果最被同行引用 |
-| **MMseqs2 Linclust** | `--tool mmseqs` | O(n) 线性 | ~5-15 分钟（**4-10×快**） | >500万基因，>50样本，或追求速度 |
+| **MMseqs2 Linclust**（**默认**，R-task-4） | `--tool mmseqs`（或省略） | O(n) 线性 | ~5-15 分钟（**4-10×快**） | >500万基因，>50样本，或追求速度；599 样本全量约 3.5 亿基因必需 |
+| **CD-HIT-EST**（可选回退） | `--tool cdhit` | 近 O(n²) | ~30-60 分钟 | ≤500万基因，≤20样本，结果最被同行引用（小规模场景） |
 
 > **规模临界点**：10 样本 (~250万基因/样本) 用 CD-HIT 约 30 分钟；50 样本 (~1250万基因) 用 CD-HIT 将超 5 小时，此时应切换 MMseqs2。两者 95% identity 结果高度一致，均被 MetaHIT/IGC/UHGG 等大型基因目录项目采用。
 >
@@ -1124,15 +1124,15 @@ Project/Project01/result/assembly/prodigal/Sample1/
 *本步骤是聚合步骤（aggregate），不按样本分，只运行一次：*
 
 ```bash
-# ── 方式 A：CD-HIT（≤500万基因，默认，10样本推荐）──────────────────
+# ── 方式 A：MMseqs2 Linclust（默认，全量必需）────────────────────────
 bash ~/Course/CSCCD-MetagenomeFlow/scripts/18_bac_cdhit.sh \
   -t 48 \
   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
   -r ~/Course/CSCCD-MetagenomeFlow
 
-# ── 方式 B：MMseqs2 Linclust（>500万基因，50样本全量推荐）───────────
+# ── 方式 B：CD-HIT（可选回退，仅 ≤500万基因小规模）──────────────────
 bash ~/Course/CSCCD-MetagenomeFlow/scripts/18_bac_cdhit.sh \
-  --tool mmseqs \
+  --tool cdhit \
   -t 48 \
   -w ~/Course/CSCCD-MetagenomeFlow/Project/Project01 \
   -r ~/Course/CSCCD-MetagenomeFlow
@@ -1142,7 +1142,7 @@ bash ~/Course/CSCCD-MetagenomeFlow/scripts/18_bac_cdhit.sh \
 
 **LLM 调用示例**：
 ```
-请帮我运行步骤 9（基因去冗余），当前 Project01 有 10 个样本，使用默认 CD-HIT 后端。
+请帮我运行步骤 9（基因去冗余），当前 Project01 有 10 个样本。默认后端为 MMseqs2 Linclust（R-task-4，全量 3.5 亿基因必需）。
 工作目录：~/Course/CSCCD-MetagenomeFlow/Project/Project01
 如果样本数将来超过 50 个，记得提示我切换到 --tool mmseqs。
 ```

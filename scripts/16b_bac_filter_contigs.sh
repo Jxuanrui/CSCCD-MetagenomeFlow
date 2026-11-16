@@ -13,17 +13,11 @@ set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 
-SAMPLE=""; CPUS=8; WORKDIR=""; REPO=""
-while getopts "s:t:w:r:" opt; do
-    case ${opt} in
-        s) SAMPLE=${OPTARG} ;;
-        t) CPUS=${OPTARG} ;;
-        w) WORKDIR=${OPTARG} ;;
-        r) REPO=${OPTARG} ;;
-        *) echo "用法: bash 16b_bac_filter_contigs.sh -s SAMPLE -t CPUS -w WORKDIR -r REPO"; exit 1 ;;
-    esac
-done
-[ -n "${SAMPLE}" ] && [ -n "${WORKDIR}" ] && [ -n "${REPO}" ] || { echo "[ERROR] 缺少必填参数"; exit 1; }
+CPUS=8; FORCE=0   # 其余 SAMPLE/WORKDIR/REPO 由 mgx_parse 赋值（与 kneaddata 同款惯例）
+export MGX_OPTS_STRING="s:SAMPLE t:CPUS w:WORKDIR r:REPO"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require SAMPLE WORKDIR REPO
 
 mgx_begin
 DIR="${WORKDIR}/result/assembly/megahit/${SAMPLE}"
@@ -32,7 +26,7 @@ OUT="${DIR}/${SAMPLE}.contigs_ge1000.fa"
 
 if [ ! -s "${CONTIGS}" ]; then echo "[ERROR] contigs 不存在: ${CONTIGS}"; exit 1; fi
 
-if [ -s "${OUT}" ] && [ "${OUT}" -nt "${CONTIGS}" ]; then
+if [ "${FORCE:-0}" -eq 0 ] && [ -s "${OUT}" ] && [ "${OUT}" -nt "${CONTIGS}" ]; then
     echo "[filter_ge1000] 结果已存在且新于输入，跳过"
     mgx_end "filter_ge1000"; exit 0
 fi
