@@ -69,7 +69,9 @@ fi
 mkdir -p "${OUTDIR}"
 
     set +e
-if [ ! -f "${BAM}" ] || [ ! -s "${BAM}" ]; then
+if [ ${FORCE} -eq 1 ] || [ ! -f "${BAM}" ] || [ ! -s "${BAM}" ] || [ ! "${BAM}" -nt "${CONTIGS_GE1000}" ]; then   # round-35 P1: 材料旧于过滤版也重建
+    # round-35 P1b: 陈旧/无效 BAM 先删除，避免 coverm make 内部 resume 保留旧内容
+    [ -f "${BAM}" ] && [ ! "${BAM}" -nt "${CONTIGS_GE1000}" ] && rm -f "${BAM}"
     echo "[coverm] 步骤 1/2: minimap2 比对生成 BAM ..."
     EXIT_CODE=0
     mgx_conda coverm \
@@ -97,7 +99,8 @@ if [ ! -f "${BAM}" ] || [ ! -s "${BAM}" ]; then
 fi
 
     set +e
-if [ ! -f "${DEPTH}" ] || [ ! -s "${DEPTH}" ]; then
+if [ ${FORCE} -eq 1 ] || [ ! -f "${DEPTH}" ] || [ ! -s "${DEPTH}" ] || [ ! "${DEPTH}" -nt "${CONTIGS_GE1000}" ] || [ ! "${DEPTH}" -nt "${BAM}" ]; then   # round-35 P1: 陈旧或与 BAM 不一致均重建
+    rm -f "${DEPTH}"   # round-35 P1b: 删除陈旧深度表，确保重算
     echo "[coverm] 步骤 2/2: 生成深度表 ..."
     mgx_conda coverm \
         coverm contig \
