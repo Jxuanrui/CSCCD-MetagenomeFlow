@@ -20,7 +20,7 @@
 #     通用分析取 500；MAG 挖掘工作流（binning，脚本 32-36）推荐 1000-1500
 #     参考：Meren Lab（≥1000）；Song et al. 2024 Genome Biology（≥1500 for MAG）
 #
-#   内存：-m <bytes>（60G=64424509440）（使用 90% 可用内存，MEGAHIT 自动计算上限）
+#   内存：-m <bytes>（默认 60G=64424509440；可用 MEGAHIT_MEM_GB 覆盖）——显式固定值，避免多并发时按 90% RAM 互抢
 #         PE150 单样本约需 30-80G RAM
 #
 # ── 注意事项 ──────────────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ echo "[megahit] 开始宏基因组组装: ${SAMPLE}"
 echo "[megahit] 预设: ${PRESETS}，最小 contig: ${MIN_CONTIG_LEN} bp，线程: ${CPUS}"
 
 # --- 运行 MEGAHIT ---
-# -m <bytes>（60G=64424509440）:          使用 90% 可用内存（MEGAHIT 自动计算上限）
+# -m <bytes>（60G=64424509440）:          显式固定上限（默认 60G；MEGAHIT_MEM_GB 可覆盖），多并发下防 OOM
 # --presets:       k 值列表 21,29,39,59,79,99,119,141（meta-large）
 # --min-contig-len 过滤短 contig（通用 500；binning 推荐 1000-1500）
 # 输出到临时目录，完成后移动 final.contigs.fa 并删除中间文件节省磁盘

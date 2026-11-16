@@ -36,14 +36,16 @@ R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 OUTDIR="${WORKDIR}/result/virus/assembly/${SAMPLE}"
 CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
-mgx_cleanup_register_file "${CONTIGS}.tmp"   # 中断时清掉发布中的临时文件
+
+mgx_scratch_init virmegahit   # 尽早注册清理 trap：后续任何提前 exit（输入缺失/结果已存在）也能清理
+MEGA_TMP="${MGX_SCRATCH_DIR}"
+mgx_cleanup_register_file "${CONTIGS}.tmp"
 
 if [ ! -f "${R1}" ]; then echo "[ERROR] R1 missing: ${R1}"; exit 1; fi
+
 if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ]; then echo "[vir_megahit] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
-mgx_scratch_init virmegahit   # 设置 MGX_SCRATCH_DIR 并注册清理 trap（禁止用 $() 包裹）
-MEGA_TMP="${MGX_SCRATCH_DIR}"
 
 echo "[vir_megahit] ${SAMPLE} | 病毒优化组装 ..."
 EXIT_CODE=0
