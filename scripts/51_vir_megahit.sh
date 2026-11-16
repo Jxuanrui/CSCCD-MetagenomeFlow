@@ -41,7 +41,8 @@ if [ ! -f "${R1}" ]; then echo "[ERROR] R1 missing: ${R1}"; exit 1; fi
 if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ]; then echo "[vir_megahit] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"
-MEGA_TMP="$(mgx_scratch_init virmegahit)"   # NVMe 优先 + 回退 + EXIT 强制清理
+mgx_scratch_init virmegahit   # 设置 MGX_SCRATCH_DIR 并注册清理 trap（禁止用 $() 包裹）
+MEGA_TMP="${MGX_SCRATCH_DIR}"
 
 echo "[vir_megahit] ${SAMPLE} | 病毒优化组装 ..."
 EXIT_CODE=0
@@ -50,14 +51,14 @@ mgx_try mgx_conda assembly \
         -o "${MEGA_TMP}" \
         --out-prefix "${SAMPLE}" \
         -t "${CPUS}" \
-        -m "${MEGAHIT_MEM_GB:-60}" \
+        -m "$(( ${MEGAHIT_MEM_GB:-60} * 1024 * 1024 * 1024 ))" \
         --presets meta-large \
         --min-contig-len 1500 \
         --force \
         || EXIT_CODE=$?
 if [ "${EXIT_CODE}" -ne 0 ]; then echo "[ERROR] megahit 失败"; exit ${EXIT_CODE}; fi
 
-mv "${MEGA_TMP}/${SAMPLE}.contigs.fa" "${CONTIGS}"
+cp "${MEGA_TMP}/${SAMPLE}.contigs.fa" "${CONTIGS}.tmp" && mv -f "${CONTIGS}.tmp" "${CONTIGS}"
 rm -rf "${MEGA_TMP}"  # 删中间文件，节省 ~80% 磁盘
 
 mgx_end "vir_megahit"

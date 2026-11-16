@@ -312,58 +312,73 @@ if [ "${MGX_MONITOR:-0}" = "1" ]; then
 fi
 
 # ── 临时目录（scratch）管理：优先 NVMe，磁盘不足回退；EXIT 强制清理 ────
-# 用法：SCRATCH="$(mgx_scratch_init megahit)"
+# 用法（注意：必须直接调用，禁止用 $(...) 包裹！命令替换会在子 shell 中执行，
+#       trap 随子 shell 退出立即触发，目录会被当场删除）：
+#   mgx_scratch_init megahit
+#   MEGAHIT_TMP="${MGX_SCRATCH_DIR}"
 #   - 基础目录 $MGX_SCRATCH_BASE（默认 /tmp/mgx_scratch，NVMe）
 #   - 可用空间 < $MGX_SCRATCH_MIN_FREE_GB（默认 1500）→ 回退 $MGX_SCRATCH_FALLBACK
-#     （默认 ${WORKDIR}/temp/scratch，位于 /data）
-#   - 目录名 = mgx_<purpose>_<sample>_<PID>_<RAND>，并发安全
-#   - 启动时清扫同 purpose 的陈旧目录（默认 >$MGX_SCRATCH_MAX_AGE_MIN=720 分钟）
-#   - 注册链式 EXIT trap：正常/异常/被 TERM 均删除；保留 mgx_begin 的 monitor trap
-#   - 显式调用 mgx_scratch_cleanup 可提前释放（幂等）
+#   - **只创建父目录，返回尚不存在的最终目录**（MEGAHIT 要求 -o 不存在）
+#   - 目录名含脚本 PID + RANDOM（并发安全，PID 可用于存活判定）
+#   - 启动时清扫：同名族、mtime > $MGX_SCRATCH_MAX_AGE_MIN（默认 360 分钟）、
+#     且目录名中的 PID 已不存在（避免误删运行中的任务）
+#   - 链式 EXIT trap（保留 mgx_begin 的 monitor trap）：
+#     set +e 保证 cleanup 后仍能 eval 旧 trap，退出码原样透传
 mgx_scratch_init() {
     local purpose="${1:?mgx_scratch_init 需要 purpose}"
     local base="${MGX_SCRATCH_BASE:-/tmp/mgx_scratch}"
     local min_free_gb="${MGX_SCRATCH_MIN_FREE_GB:-1500}"
     local fallback="${MGX_SCRATCH_FALLBACK:-${WORKDIR:-.}/temp/scratch}"
-    local max_age_min="${MGX_SCRATCH_MAX_AGE_MIN:-720}"
-    local avail_gb dir
+    local max_age_min="${MGX_SCRATCH_MAX_AGE_MIN:-360}"
+    local avail_gb dir probe pid
 
-    # 陈旧目录清扫（防 SIGKILL/断电导致 trap 未执行而长期占用）
-    if [ -d "${base}" ]; then
-        find "${base}" -maxdepth 1 -type d -name "mgx_${purpose}_*"             -mmin +"${max_age_min}" -exec rm -rf {} + 2>/dev/null || true
-    fi
+    # 陈旧清扫（base 与 fallback 都扫；跳过仍存活的 PID）
+    for _b in "${base}" "${fallback}"; do
+        [ -d "${_b}" ] || continue
+        while IFS= read -r _d; do
+            [ -d "${_d}" ] || continue
+            pid="$(basename "${_d}" | awk -F_ '{print $(NF-1)}')"
+            if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+                continue   # 进程仍在 → 不删
+            fi
+            rm -rf "${_d}" 2>/dev/null || true
+        done < <(find "${_b}" -maxdepth 1 -type d -name "mgx_${purpose}_*" -mmin +"${max_age_min}" 2>/dev/null)
+    done
 
-    # 磁盘守卫（目标目录可能尚不存在 → 用最近的已存在祖先）
-    local probe="${base}"
+    # 磁盘守卫（目标目录可能尚不存在 → 用最近已存在祖先）
+    probe="${base}"
     while [ ! -d "${probe}" ] && [ "${probe}" != "/" ] && [ "${probe}" != "." ]; do
         probe="$(dirname "${probe}")"
     done
     avail_gb=$(df -BG --output=avail "${probe}" 2>/dev/null | tail -1 | tr -dc '0-9')
     if [ -z "${avail_gb}" ] || [ "${avail_gb}" -lt "${min_free_gb}" ]; then
         base="${fallback}"
-        mkdir -p "${base}" 2>/dev/null || true
-        avail_gb=$(df -BG --output=avail "${base}" 2>/dev/null | tail -1 | tr -dc '0-9')
+        probe="${base}"
+        while [ ! -d "${probe}" ] && [ "${probe}" != "/" ] && [ "${probe}" != "." ]; do
+            probe="$(dirname "${probe}")"
+        done
+        avail_gb=$(df -BG --output=avail "${probe}" 2>/dev/null | tail -1 | tr -dc '0-9')
         echo "[scratch] NVMe 空间不足(<${min_free_gb}G)或不可用，回退: ${base} (free ${avail_gb:-?}G)" >&2
     fi
+    mkdir -p "${base}" || { echo "[scratch] ERROR 无法创建 ${base}" >&2; return 1; }
 
-    dir="${base}/mgx_${purpose}_${SAMPLE:-x}_$$_${RANDOM}"
-    mkdir -p "${dir}" || { echo "[scratch] ERROR 无法创建 ${dir}" >&2; return 1; }
+    # 只建父目录；最终目录留给工具自己创建（MEGAHIT -o 要求不存在）
+    dir="${base}/mgx_${purpose}_${SAMPLE:-x}_${BASHPID}_${RANDOM}"
     MGX_SCRATCH_DIR="${dir}"
     export MGX_SCRATCH_DIR
     echo "[scratch] ${dir} (free ${avail_gb:-?}G)" >&2
 
-    # 链式注册 EXIT trap
+    # 链式 EXIT trap（当前 shell，非子 shell）
     local _old
     _old="$(trap -p EXIT 2>/dev/null | sed -E "s/^trap -- '(.*)' EXIT$/\1/")"
     export _MGX_OLD_EXIT_TRAP="${_old}"
     # SC2154: _mgx_scratch_rc 在 trap 字符串内赋值（trap 作用域），静态检查不可见
     # shellcheck disable=SC2154
-    trap '_mgx_scratch_rc=$?; mgx_scratch_cleanup; ( exit ${_mgx_scratch_rc} ); eval "${_MGX_OLD_EXIT_TRAP:-true}"; exit ${_mgx_scratch_rc}' EXIT
-
-    printf '%s\n' "${dir}"
+    trap '_mgx_scratch_rc=$?; set +e; mgx_scratch_cleanup; ( exit ${_mgx_scratch_rc} ); eval "${_MGX_OLD_EXIT_TRAP:-:}"; exit ${_mgx_scratch_rc}' EXIT
+    return 0
 }
 
-# 清理当前 scratch（幂等；只删 MGX_SCRATCH_DIR 且路径含 /mgx_ 防误删）
+# 清理当前 scratch（幂等；只删路径含 /mgx_ 的目录，防误删）
 mgx_scratch_cleanup() {
     case "${MGX_SCRATCH_DIR:-}" in
         */mgx_*) rm -rf "${MGX_SCRATCH_DIR}" 2>/dev/null || true ;;

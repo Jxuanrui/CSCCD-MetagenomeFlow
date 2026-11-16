@@ -42,7 +42,8 @@ INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 OUTDIR="${WORKDIR}/result/fungi/assembly/${SAMPLE}"
 CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
-MEGAHIT_TMP="$(mgx_scratch_init funmegahit)"   # NVMe 优先 + 回退 + EXIT 强制清理
+mgx_scratch_init funmegahit   # 设置 MGX_SCRATCH_DIR 并注册清理 trap（禁止用 $() 包裹）
+MEGAHIT_TMP="${MGX_SCRATCH_DIR}"
 
 if [ ! -f "${INPUT_R1}" ]; then echo "[ERROR] 输入文件不存在: ${INPUT_R1}"; exit 1; fi
 if [ ! -f "${INPUT_R2}" ]; then echo "[ERROR] 输入文件不存在: ${INPUT_R2}"; exit 1; fi
@@ -63,7 +64,7 @@ mgx_try mgx_conda assembly \
         -2 "${INPUT_R2}" \
         -o "${MEGAHIT_TMP}" \
         -t "${CPUS}" \
-        -m "${MEGAHIT_MEM_GB:-60}" \
+        -m "$(( ${MEGAHIT_MEM_GB:-60} * 1024 * 1024 * 1024 ))" \
         --presets meta-sensitive \
         --min-contig-len 1000 \
         || EXIT_CODE=$?
@@ -78,7 +79,7 @@ if [ ! -f "${MEGAHIT_TMP}/final.contigs.fa" ] || [ ! -s "${MEGAHIT_TMP}/final.co
     exit 1
 fi
 
-mv "${MEGAHIT_TMP}/final.contigs.fa" "${CONTIGS}"
+cp "${MEGAHIT_TMP}/final.contigs.fa" "${CONTIGS}.tmp" && mv -f "${CONTIGS}.tmp" "${CONTIGS}"
 cp "${MEGAHIT_TMP}/log" "${OUTDIR}/${SAMPLE}.megahit.log" 2>/dev/null || true
 rm -rf "${MEGAHIT_TMP}"
 
