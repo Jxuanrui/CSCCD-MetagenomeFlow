@@ -20,6 +20,23 @@ rule megahit:
 # Assembler cross-check (metaSPAdes + QUAST vs MEGAHIT). Deliberately NOT in
 # rule all — verification layer, like the metax rule; run by requesting a
 # result/assembly_metaspades/{sample}/{sample}.metaspades_done.txt target.
+
+rule filter_contigs_ge1000:
+    """分箱专用 contig 过滤（>=1000 bp）；功能注释轨仍用 500 bp 全集（R-task-8）。"""
+    input:
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+    output:
+        fa = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs_ge1000.fa",
+    log:
+        WORKDIR + "/logs/assembly/filter_ge1000/{sample}.log",
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
+    threads: CPUS
+    shell:
+        "bash {REPO}/scripts/16b_bac_filter_contigs.sh -s {wildcards.sample}" +
+        " -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag}" +
+        " > {log} 2>&1"
+
 rule metaspades:
     """metaSPAdes assembly + QUAST comparison vs MEGAHIT (per sample). Opt-in verification layer, not in rule all."""
     input:

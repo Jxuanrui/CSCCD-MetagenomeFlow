@@ -43,6 +43,10 @@ mgx_require SAMPLE CPUS WORKDIR REPO
 
 mgx_begin
 CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
+# R-task-8：分箱统一使用 >=1000 bp 过滤版（功能注释轨仍用 500 bp 全集）
+CONTIGS_GE1000="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs_ge1000.fa"
+if [ -s "${CONTIGS_GE1000}" ]; then CONTIGS="${CONTIGS_GE1000}"; fi
+
 OUTDIR="${WORKDIR}/result/binning/coverm/${SAMPLE}"
 BAM="${OUTDIR}/${SAMPLE}.bam"
 DEPTH="${OUTDIR}/depth.txt"

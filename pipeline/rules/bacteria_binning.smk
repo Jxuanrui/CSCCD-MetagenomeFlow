@@ -15,7 +15,7 @@ BINNING = WORKDIR + "/result/binning"
 
 rule coverm_depth:
     input:
-        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs_ge1000.fa",
         r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
         r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
@@ -33,7 +33,7 @@ rule coverm_depth:
 
 rule metabat2:
     input:
-        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs_ge1000.fa",
         depth = BINNING + "/coverm/{sample}/depth.txt",
     output:
         tsv = BINNING + "/metabat2/{sample}/{sample}.tsv",
@@ -49,7 +49,7 @@ rule metabat2:
 
 rule maxbin2:
     input:
-        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs_ge1000.fa",
         depth = BINNING + "/coverm/{sample}/depth.txt",
     output:
         tsv = BINNING + "/maxbin2/{sample}/{sample}.maxbin2.tsv",
@@ -65,7 +65,7 @@ rule maxbin2:
 
 rule semibin2:
     input:
-        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs_ge1000.fa",
         bam = BINNING + "/coverm/{sample}/{sample}.bam",
     output:
         tsv = BINNING + "/semibin2/{sample}/{sample}.semibin2.tsv",
@@ -82,7 +82,7 @@ rule semibin2:
 rule quickbin:
     """QuickBin (BBTools) CPU-only, marker-free binning; standalone (NOT wired into the DAS_Tool ensemble)."""
     input:
-        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs_ge1000.fa",
         bam = BINNING + "/coverm/{sample}/{sample}.bam",
     output:
         tsv = BINNING + "/quickbin/{sample}/{sample}.quickbin.tsv",
@@ -98,7 +98,7 @@ rule quickbin:
 
 rule dastool:
     input:
-        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
+        contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs_ge1000.fa",
         metabat2 = BINNING + "/metabat2/{sample}/{sample}.tsv",
         maxbin2  = BINNING + "/maxbin2/{sample}/{sample}.maxbin2.tsv",
         semibin2 = BINNING + "/semibin2/{sample}/{sample}.semibin2.tsv",

@@ -3,8 +3,8 @@
 # 脚本名: 18_bac_cdhit.sh
 # 功  能: 跨样本基因集去冗余，构建非冗余基因目录（NR gene catalog）
 #         支持两种后端工具（--tool 参数选择）：
-#           cdhit   — CD-HIT-EST v4.8.1（默认，成熟稳定，适合 ≤500万基因）
-#           mmseqs  — MMseqs2 Linclust v13（线性时间，推荐用于 >500万基因）
+#           mmseqs  — MMseqs2 Linclust v13（**默认**；全量 3.5 亿基因必需，线性时间）
+#           cdhit   — CD-HIT-EST v4.8.1（可选回退，仅 ≤500万基因）
 #         工具环境：conda env assembly（两者均已安装）
 #
 # 依  赖: 17_bac_prodigal.sh 的输出（所有样本的 .fna 文件）
@@ -67,8 +67,8 @@ cat << EOF
 
 可选参数:
   --force  强制重新运行（忽略已存在的结果）
-  --tool cdhit    使用 CD-HIT-EST（默认，≤500万基因推荐）
-  --tool mmseqs   使用 MMseqs2 Linclust（>500万基因或追求速度时推荐）
+  --tool mmseqs   使用 MMseqs2 Linclust（默认，全量必需）
+  --tool cdhit    回退 CD-HIT-EST（仅 ≤500万基因的小规模场景）
 
 示例:
   # 默认 CD-HIT（10样本）
@@ -83,7 +83,7 @@ cat << EOF
 EOF
 }
 
-TOOL="cdhit"
+TOOL="${MGX_CDHIT_TOOL:-mmseqs}"   # R-task-4：全量 3.5 亿基因，CD-HIT 上限 500 万 → 默认 MMseqs2 Linclust
 
 # MGX_* 表由 libcommon.sh 的 mgx_parse 读取；export 避免单文件扫描误报未使用
 export MGX_OPTS_STRING="t:CPUS w:WORKDIR r:REPO"
