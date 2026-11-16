@@ -4,20 +4,23 @@
 
 # ── Step 1: Assembly ──────────────────────────────────────────────────────────
 
-rule vir_megahit:
-    """Virus assembly from clean reads (meta-large, min 1.5kb contigs)."""
+rule vir_filter_ge1500:
+    """Virus-track input = bacterial contigs filtered >=1500bp (R-20261116-27 item 2:
+       independent vir_megahit cancelled — 54,980/54,990 contigs were identical).
+       Output path UNCHANGED so geNomad/VirSorter2/CheckV/provenance need no edits."""
     input:
-        r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
-        r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
+        bac_contigs = WORKDIR + "/result/assembly/megahit/{sample}/{sample}.contigs.fa",
     output:
         contigs = WORKDIR + "/result/virus/assembly/{sample}/{sample}.contigs.fa",
     log:
-        WORKDIR + "/logs/virus/megahit/{sample}.log",
+        WORKDIR + "/logs/virus/filter_ge1500/{sample}.log",
     threads: CPUS
+    params:
+        force_flag = config.get("force", False) and "--force" or "",
     shell:
-        "bash {REPO}/scripts/51_vir_megahit.sh "
+        "bash {REPO}/scripts/51a_vir_filter_contigs.sh "
         "-s {wildcards.sample} -t {threads} "
-        "-w {WORKDIR} -r {REPO} "
+        "-w {WORKDIR} -r {REPO} {params.force_flag} "
         "> {log} 2>&1"
 
 
