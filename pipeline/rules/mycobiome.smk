@@ -163,6 +163,7 @@ rule fun_microfisher:
 rule fun_megahit:
     """Fungal metagenome assembly via MEGAHIT (meta-sensitive preset)."""
     input:
+        phf_rc = WORKDIR + "/result/fungi/phf_profiler/{sample}/{sample}.rc",
         r1 = WORKDIR + "/result/kneaddata/{sample}/{sample}_1.kneaddata.fastq.gz",
         r2 = WORKDIR + "/result/kneaddata/{sample}/{sample}_2.kneaddata.fastq.gz",
     output:
