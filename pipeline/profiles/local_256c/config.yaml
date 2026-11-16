@@ -116,11 +116,7 @@ set-resources:
   megahit:
     mem_mb: 64000
     megahit_slots: 1   # 每 job 占 1 个槽 → 全局最多 10 并发
-  # vir_megahit / fun_megahit：规则保留但常规流程不跑（R-27 病毒轨复用、真菌轨改阳性子集）
-  vir_megahit:
-    mem_mb: 64000
-  fun_megahit:
-    mem_mb: 64000
+  # vir_megahit / fun_megahit 规则已取消（R-27/28），对应条目已删
   dastool:
     mem_mb: 64000
   metabat2:

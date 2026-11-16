@@ -35,9 +35,12 @@ export MGX_OPTS_FLAG="force"
 mgx_parse "$@"
 mgx_require SAMPLE THREADS WORKDIR REPO
 
+mgx_begin
+
 BAC_CONTIGS="${WORKDIR}/result/assembly/megahit/${SAMPLE}/${SAMPLE}.contigs.fa"
 OUTDIR="${WORKDIR}/result/virus/assembly/${SAMPLE}"
 CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
+mkdir -p "${OUTDIR}"   # 质量审核批2 P1：fresh workdir 下输出父目录不存在，seqkit 重定向必失败
 
 if [ ! -s "${BAC_CONTIGS}" ]; then
     echo "[ERROR] 细菌组装 contigs 不存在（需先完成细菌轨组装）: ${BAC_CONTIGS}"
