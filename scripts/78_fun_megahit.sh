@@ -42,6 +42,7 @@ INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 OUTDIR="${WORKDIR}/result/fungi/assembly/${SAMPLE}"
 CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
+mgx_cleanup_register_file "${CONTIGS}.tmp"   # 中断时清掉发布中的临时文件
 mgx_scratch_init funmegahit   # 设置 MGX_SCRATCH_DIR 并注册清理 trap（禁止用 $() 包裹）
 MEGAHIT_TMP="${MGX_SCRATCH_DIR}"
 

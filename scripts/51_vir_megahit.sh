@@ -36,6 +36,7 @@ R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
 R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
 OUTDIR="${WORKDIR}/result/virus/assembly/${SAMPLE}"
 CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
+mgx_cleanup_register_file "${CONTIGS}.tmp"   # 中断时清掉发布中的临时文件
 
 if [ ! -f "${R1}" ]; then echo "[ERROR] R1 missing: ${R1}"; exit 1; fi
 if [ ${FORCE} -eq 0 ] && [ -f "${CONTIGS}" ]; then echo "[vir_megahit] 结果已存在，跳过"; exit 0; fi

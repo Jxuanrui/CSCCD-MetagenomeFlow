@@ -375,15 +375,30 @@ mgx_scratch_init() {
     # SC2154: _mgx_scratch_rc 在 trap 字符串内赋值（trap 作用域），静态检查不可见
     # shellcheck disable=SC2154
     trap '_mgx_scratch_rc=$?; set +e; mgx_scratch_cleanup; ( exit ${_mgx_scratch_rc} ); eval "${_MGX_OLD_EXIT_TRAP:-:}"; exit ${_mgx_scratch_rc}' EXIT
+    # SIGTERM/SIGINT：显式以 143/130 退出，保证 EXIT trap 与 monitor 事件拿到真实信号码
+    # （bash 默认被信号终止时 EXIT trap 内 $? 为 0，会把 monitor 记成 exit=0——质量审核第33轮 P1）
+    trap 'exit 143' TERM
+    trap 'exit 130' INT
     return 0
 }
 
-# 清理当前 scratch（幂等；只删路径含 /mgx_ 的目录，防误删）
+# 登记需随清理删除的临时文件（如跨盘发布的 *.tmp）；空格分隔
+mgx_cleanup_register_file() {
+    [ -n "${1:-}" ] && MGX_CLEANUP_FILES="${MGX_CLEANUP_FILES:-} $1"
+    return 0
+}
+
+# 清理当前 scratch（幂等；只删路径含 /mgx_ 的目录，防误删）+ 登记的临时文件
 mgx_scratch_cleanup() {
     case "${MGX_SCRATCH_DIR:-}" in
         */mgx_*) rm -rf "${MGX_SCRATCH_DIR}" 2>/dev/null || true ;;
     esac
     MGX_SCRATCH_DIR=""
+    local _f
+    for _f in ${MGX_CLEANUP_FILES:-}; do
+        rm -f "${_f}" 2>/dev/null || true
+    done
+    MGX_CLEANUP_FILES=""
 }
 
 # conda 环境执行包装: mgx_conda <envname> <cmd...>
