@@ -21,6 +21,8 @@ Project/*/data/
 Project/*/result/
 Project/*/temp/
 Project/*/logs/
+Project/*/ingest/envs/
+Project/*/ingest/tools/
 # 递归兜底：深层 localDB 副本（Project/<prog>/<sample>/result/.../localDB/，一层通配匹配不到）
 Project/**/localDB/
 # 多层验证产物目录（Project/<program>/<sample>/result/ 结构，二进制产物，不入库；
@@ -146,3 +148,15 @@ tools/
 Project/Project_demo/feishu_notes/
 .claude/settings.local.json
 .transfer/
+
+# MOST_Sinkiang: 含PII/人类敏感数据，禁止入库
+Project/MOST_Sinkiang/01_metadata/
+Project/MOST_Sinkiang/phase1_smoke/result/
+Project/MOST_Sinkiang/phase1_smoke/temp/
+Project/MOST_Sinkiang/phase1_smoke/logs/
+Project/MOST_Sinkiang/02_runs/full/
+envs/virsorter2-sif/*.sif
+# MOST_Sinkiang: 冒烟输入软链接与中间 fasta（不入库）
+Project/MOST_Sinkiang/phase1_smoke/data/
+Project/MOST_Sinkiang/00_admin/vs2_smoke_archive/*.fa
+Project/MOST_Sinkiang/00_admin/vs2_smoke_archive/*.tsv
