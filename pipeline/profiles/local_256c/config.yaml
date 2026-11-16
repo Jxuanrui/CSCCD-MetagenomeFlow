@@ -1,8 +1,151 @@
 # Profile: local_256c — 256-core server (node20)
-# Total thread budget: 252 (reserve 4 for OS)
-# Effective concurrency: 252 / 16 = 15 jobs
-# Memory caveat: kraken2-class rules load the full DB in RAM; if concurrent heavy jobs
-#   OOM, lower cores here (threads_per_job stays 16 in config.yaml).
+# 质量审核第25轮decision（R-20261114-21）：
+#   1) 内存限流必须同时声明全局池 resources.mem_mb（调度器只认显式池）
+#   2) set-threads / set-resources 走 profile，免改 .smk（Snakemake 9.22 支持）
+#   3) kraken2/centrifuger/gtdbtk 为内存大户，pilot 后按实测 RSS 校准
 cores: 252
 rerun-incomplete: true
 printshellcmds: false
+
+# 全局资源池：2TB 内存，留 150G 给 OS/页缓存
+resources:
+  mem_mb: 1850000
+  megahit_slots: 10   # R-task: 限制 megahit 并发 <=10（NVMe 1.8T 安全前提）
+
+set-threads:
+  # ── 预处理 ──
+  fastp_qc: 8
+  pair_repair: 4
+  kneaddata: 8
+  # ── 物种定量（DB 加载型）──
+  metaphlan4: 16
+  kraken2: 8
+  centrifuger: 16
+  sylph: 8
+  # ── 组装（CPU 型）──
+  megahit: 8
+  metaspades: 24
+  # ── 分箱/定量 ──
+  coverm_depth: 16
+  coverm_quant: 16
+  metabat2: 16
+  maxbin2: 8
+  semibin2: 16
+  quickbin: 8
+  dastool: 8
+  checkm2: 16
+  gunc: 8
+  drep: 16
+  gtdbtk: 32
+  bin_reassembly: 16
+  # ── 注释（DB 重）──
+  prodigal: 8
+  eggnog: 24
+  kegg: 24
+  dbcan: 32
+  humann3: 16
+  vfdb: 16
+  amrfinder: 8
+  card: 16
+  bacmet: 8
+  defense_finder: 16
+  ncyc: 16
+  pcyc: 16
+  bac_scyc: 16
+  bac_pfam: 16
+  bac_uniprot: 16
+  fegenie: 8
+  # ── 病毒 ──
+  vir_genomad: 16
+  vir_virsorter2: 16
+  vir_checkv_contig: 8
+  checkv_filter: 8
+  vir_prodigal_gv: 8
+  vir_pharokka: 16
+  vir_phold: 8
+  vir_vog: 8
+  vir_bacphlip: 8
+  vir_iphop: 8
+  vir_vcontact3: 8
+  vir_votu_gen: 8
+  vir_salmon_build: 8
+  vir_salmon_quant: 8
+  vir_coverm_quant: 16
+  vir_vmag: 8
+  # ── 真菌 ──
+  fun_kraken2: 8
+  fun_metaphlan4: 16
+  fun_humann4: 16
+  fun_eukfinder: 16
+  fun_metabat2_euk: 16
+  fun_metaeuk: 16
+  fun_eggnog: 16
+  fun_kegg: 16
+  fun_dbcan: 32
+  fun_amr: 16
+  fun_merops: 16
+  # ── 统计（R 层，轻）──
+  stat_metadata_qc: 4
+  stat_diversity: 8
+  stat_differential: 8
+  stat_cooccurrence: 8
+  stat_batch_correct: 8
+  stat_batch_evaluate: 8
+  stat_visualization: 8
+  stat_functional: 8
+  stat_report: 4
+  stat_lefse: 8
+  cross_domain_ani_cluster: 16
+  cross_domain_orthogroup: 8
+  cross_domain_correlation: 8
+
+set-resources:
+  # 内存大户（pilot 实测 RSS 后校准；单位 MB）
+  kraken2:
+    mem_mb: 80000
+  centrifuger:
+    mem_mb: 175000
+  sylph:
+    mem_mb: 32000
+  metaphlan4:
+    mem_mb: 24000
+  humann3:
+    mem_mb: 48000
+  gtdbtk:
+    mem_mb: 100000
+  megahit:
+    mem_mb: 64000
+    megahit_slots: 1   # 每 job 占 1 个槽 → 全局最多 10 并发
+  # vir_megahit / fun_megahit：规则保留但常规流程不跑（R-27 病毒轨复用、真菌轨改阳性子集）
+  vir_megahit:
+    mem_mb: 64000
+  fun_megahit:
+    mem_mb: 64000
+  dastool:
+    mem_mb: 64000
+  metabat2:
+    mem_mb: 64000
+  quickbin:
+    mem_mb: 64000
+  eggnog:
+    mem_mb: 64000
+  kegg:
+    mem_mb: 64000
+  dbcan:
+    mem_mb: 32000
+  checkm2:
+    mem_mb: 16000
+  drep:
+    mem_mb: 32000
+  vir_virsorter2:
+    mem_mb: 24000
+  vir_genomad:
+    mem_mb: 16000
+  vir_pharokka:
+    mem_mb: 32000
+  vir_vcontact3:
+    mem_mb: 32000
+  fun_eukfinder:
+    mem_mb: 32000
+  fun_metabat2_euk:
+    mem_mb: 64000
