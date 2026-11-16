@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # 脚本名: 80b_fun_metaeuk.sh
+# [ORPHANED — R-20261116-30] rule fun_metaeuk 已删（98d 只读 prodigal，MetaEuk 零消费）；
+# 本脚本保留仅作历史留档，管线不再调用。
 # 功  能: 真菌蛋白编码基因预测
 #         支持 Prodigal（默认）或 MetaEuk 两种方法
 # 依  赖: 78_fun_megahit.sh 的输出（${SAMPLE}.contigs.fa）

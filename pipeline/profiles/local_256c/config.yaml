@@ -78,7 +78,6 @@ set-threads:
   fun_humann4: 16
   fun_eukfinder: 16
   fun_metabat2_euk: 16
-  fun_metaeuk: 16
   fun_eggnog: 16
   fun_kegg: 16
   fun_dbcan: 32
