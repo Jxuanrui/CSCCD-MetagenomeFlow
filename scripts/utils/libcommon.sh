@@ -402,7 +402,9 @@ mgx_scratch_cleanup() {
 }
 
 # ── 真菌阴性门槛（R-20261116-31，3b）────────────────────────────────
-# 用法：mgx_fungi_gate   # stdout 输出 positive|negative；exit 0
+# 用法：if mgx_fungi_gate >/dev/null; then ... 阳性分支 ...; else ... 阴性分支 ...; fi
+#   （禁止 GATE=$(mgx_fungi_gate) 裸赋值——阴性 return 1 会被 set -e 杀掉脚本）
+#   stdout 输出 positive|negative；退出码：阳性 0 / 阴性 1 / rc 缺失 2
 #   读 ${WORKDIR}/result/fungi/phf_profiler/${SAMPLE}/${SAMPLE}.rc
 #   PHF rc 缺失/空 → [ERROR] exit 2（PHF 必须先跑，DAG 已加 phf_rc 依赖边）
 #   阈值：任一 contig 丰度 > $MGX_FUNGI_MIN_ABUND（默认 0.05）→ positive

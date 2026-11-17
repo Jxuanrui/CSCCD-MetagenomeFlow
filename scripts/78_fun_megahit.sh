@@ -38,21 +38,27 @@ mgx_require SAMPLE CPUS WORKDIR REPO
 
 mgx_begin
 
+# 变量定义上移（质量审核第 34 轮 P1：阴性分支引用后定义变量，set -u 下必死）
+INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
+INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
+OUTDIR="${WORKDIR}/result/fungi/assembly/${SAMPLE}"
+CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
+
 # R-20261116-31（3b）：真菌阴性门槛——阴性样本跳过组装，写 0 字节 contigs + flag
 # 原子性（质量审核注记）：先写 flag 再发布 contigs，下游见 contigs 必见 flag
-GATE=$(mgx_fungi_gate)
-if [ "${GATE}" = "negative" ]; then
+# 调用约定（质量审核第 34 轮 P1）：禁止 GATE=$(mgx_fungi_gate) 裸赋值——
+# helper 阴性时 return 1，set -e 下会静默退出；改用 if 捕获
+if mgx_fungi_gate >/dev/null 2>&1; then
+    echo "[fun_megahit] ${SAMPLE} | 真菌阳性 → 正常组装"
+else
     echo "[fun_megahit] ${SAMPLE} | 真菌阴性（PHF 零检出）→ 跳过组装"
     mkdir -p "${OUTDIR}"
+    echo "fungi_negative" > "${OUTDIR}/fungi_negative.flag"
     : > "${CONTIGS}"          # 0 字节 fasta（显式空产物）
     mgx_end "fun_megahit"
     exit 0
 fi
 
-INPUT_R1="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_1.kneaddata.fastq.gz"
-INPUT_R2="${WORKDIR}/result/kneaddata/${SAMPLE}/${SAMPLE}_2.kneaddata.fastq.gz"
-OUTDIR="${WORKDIR}/result/fungi/assembly/${SAMPLE}"
-CONTIGS="${OUTDIR}/${SAMPLE}.contigs.fa"
 mgx_cleanup_register_file "${CONTIGS}.tmp"   # 中断时清掉发布中的临时文件
 mgx_scratch_init funmegahit   # 设置 MGX_SCRATCH_DIR 并注册清理 trap（禁止用 $() 包裹）
 MEGAHIT_TMP="${MGX_SCRATCH_DIR}"
