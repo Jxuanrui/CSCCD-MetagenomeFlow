@@ -74,18 +74,9 @@ if config.get("monitor"):
 if config.get("rss_sample"):
     os.environ["MGX_RSS_SAMPLE"] = "1"
 
-# R-task decision B（P0-5）：benchmark 路径工厂——各规则注入单行 `benchmark: _bench("名")`；
-# 运行时按实际 wildcards 自适应（sample → 每样本文件；多 wildcard → 值拼接；
-# 无 wildcard → aggregate），杜绝注入器文本猜测 wildcard（metaphlan4_merge 与
-# stat_functional 两轮教训）。与 logs/rss/ 采样器互补（Fig1-B/C 数据源）。
-def _bench(name):
-    def _path(wc):
-        names = getattr(wc, "_names", None) or []
-        if names:
-            vals = "-".join(str(getattr(wc, n)) for n in names)
-            return WORKDIR + f"/logs/benchmark/{name}/{vals}.tsv"
-        return WORKDIR + f"/logs/benchmark/{name}.tsv"
-    return _path
+# R-task decision B 勘误（质量审核复核 P3）：benchmark 注入终形态为规则内静态 wildcard
+# 路径（v4 注入器产出），曾试的 _bench() 函数工厂方案因 snakemake 9 IOFile
+# 不支持 callable 而弃用，此处不留死代码。
 
 include: "rules/preprocessing.smk"
 include: "rules/bacteria_taxonomy.smk"
