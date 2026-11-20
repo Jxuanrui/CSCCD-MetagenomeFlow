@@ -43,7 +43,16 @@ SENTINEL="${OUTDIR}/Host_prediction_to_genus_m90.csv"
 IPHOP_DB="${REPO}/db/iphop/Jun_2025_pub_rw"
 
 if [ ! -f "${VOTU_FA}" ] || [ ! -s "${VOTU_FA}" ]; then echo "[ERROR] vOTU 序列不存在"; exit 1; fi
-if [ ! -d "${IPHOP_DB}" ]; then echo "[WARN] iPHoP 数据库不存在: ${IPHOP_DB}，跳过"; mkdir -p "${OUTDIR}"; touch "${SENTINEL}"; exit 0; fi
+# R-task 审计 P0-1：DB 缺失原为「WARN+写假哨兵+exit 0」静默降级——宿主预测空结果与
+# 真无宿主不可区分（违背 R-26 语义铁律），且 Fig3-e 断供无感知。改为显式失败：
+# 写 iphop_db_missing.flag 供区分「基建缺失」与其它错误，跑通时自动清除该旗标。
+if [ ! -d "${IPHOP_DB}" ]; then
+    echo "[ERROR] iPHoP 数据库不存在（R-task P0-1，基建缺失非数据事实）: ${IPHOP_DB}"
+    mkdir -p "${OUTDIR}"
+    touch "${OUTDIR}/iphop_db_missing.flag"
+    exit 1
+fi
+rm -f "${OUTDIR}/iphop_db_missing.flag"
 if [ ${FORCE} -eq 0 ] && [ -f "${SENTINEL}" ]; then echo "[iphop] 结果已存在，跳过"; exit 0; fi
 
 mkdir -p "${OUTDIR}"

@@ -153,6 +153,8 @@ rule drep:
         report = BINNING + "/checkm2/quality_report.tsv",
     output:
         done = BINNING + "/drep/drep_done.txt",
+        # R-task 审计 P0-4：dRep dereplicate 标准产物，98d 硬检查依赖（原仅声明 done 哨兵）
+        wdb = BINNING + "/drep/data_tables/Wdb.csv",
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",

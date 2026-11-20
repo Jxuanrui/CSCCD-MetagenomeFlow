@@ -367,8 +367,19 @@ rule bac_integration_tables:
 rule vir_integration_tables:
     """Integrate viral abundance and annotation outputs into summary tables."""
     input:
-        votu_table = WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
-        pharokka = WORKDIR + "/result/virus/pharokka/pharokka.gff",
+        # 契约对齐（R-task 审计 P0-3，同 R-task 98b 修复模式）：98c 脚本硬检查的
+        # 全部必需输入逐项声明；原声明 ann.txt/gff 均非脚本消费口（已删）。
+        votu_table = WORKDIR + "/result/virus/votu/votu_table.tsv",
+        votu_lengths = WORKDIR + "/result/virus/votu/votu_lengths.tsv",
+        pharokka_cds = WORKDIR + "/result/virus/pharokka/pharokka_cds_final_merged_output.tsv",
+        vog = WORKDIR + "/result/virus/vog/vog_annot.tsv",
+        bacphlip = WORKDIR + "/result/virus/bacphlip/bacphlip_results.tsv",
+        iphop = WORKDIR + "/result/virus/iphop/Host_prediction_to_genus_m90.csv",
+        vcontact = WORKDIR + "/result/virus/vcontact3/exports/final_assignments.csv",
+        checkv_filtered = expand(
+            WORKDIR + "/result/virus/checkv/{sample}/viruses_filtered.fna",
+            sample=SAMPLES,
+        ),
     output:
         # Track key viral functional abundance tables
         vog = WORKDIR + "/result/integration/virus/vog_abundance.tsv",
@@ -439,6 +450,8 @@ rule bac_mag_integration:
     """Integrate bacterial MAG taxonomy, quality, clustering, and abundance."""
     input:
         drep = WORKDIR + "/result/binning/drep/drep_done.txt",
+        # R-task 审计 P0-4：98d 脚本硬检查 Wdb.csv，补声明建立调度边（R-task 同款模式）
+        drep_wdb = WORKDIR + "/result/binning/drep/data_tables/Wdb.csv",
         gtdb = WORKDIR + "/result/binning/gtdbtk/classify/gtdbtk.bac120.summary.tsv",
         checkm2 = WORKDIR + "/result/binning/checkm2/quality_report.tsv",
         coverm = expand(WORKDIR + "/result/binning/coverm_quant/{sample}.tsv", sample=SAMPLES),

@@ -196,6 +196,9 @@ rule vir_votu_table:
         taxonomy = WORKDIR + "/result/virus/votu/genomad/virus_taxonomy.tsv",
     output:
         abundance_table = WORKDIR + "/result/virus/votu/table/vOTU_table_ann.txt",
+        # R-task 审计 P0-3：60 脚本规范聚合路径同步写的 legacy 表，98c/93/96/98g 硬检查
+        # 依赖它——不声明则消费者与产出规则之间无调度边（fresh workdir MissingInput）
+        legacy_table = WORKDIR + "/result/virus/votu/votu_table.tsv",
     log:
         WORKDIR + "/logs/virus/votu/table.log",
     run:
@@ -348,6 +351,8 @@ rule vir_vcontact3:
         prodigal_faa = WORKDIR + "/result/virus/pharokka/phanotate.faa",
     output:
         vcontact_overview = WORKDIR + "/result/virus/vcontact3/exports/final_assignments.csv",
+        # R-task 审计 P0-3：69 脚本写出的 vOTU 长度表，98c 硬检查依赖（同上无调度边缺陷）
+        votu_lengths = WORKDIR + "/result/virus/votu/votu_lengths.tsv",
     log:
         WORKDIR + "/logs/virus/vcontact3/vcontact3.log",
     threads: CPUS
