@@ -69,6 +69,24 @@ CPUS     = config.get("threads_per_job", config.get("cpus", 8))
 if config.get("monitor"):
     os.environ["MGX_MONITOR"] = "1"
 
+# R-task decision B（P0-5）：/proc RSS 采样器开关（与 monitor 同款 opt-in 模式）。
+# config 键 rss_sample: true → mgx_begin 内采样器激活（30s 进程树 RSS）。
+if config.get("rss_sample"):
+    os.environ["MGX_RSS_SAMPLE"] = "1"
+
+# R-task decision B（P0-5）：benchmark 路径工厂——各规则注入单行 `benchmark: _bench("名")`；
+# 运行时按实际 wildcards 自适应（sample → 每样本文件；多 wildcard → 值拼接；
+# 无 wildcard → aggregate），杜绝注入器文本猜测 wildcard（metaphlan4_merge 与
+# stat_functional 两轮教训）。与 logs/rss/ 采样器互补（Fig1-B/C 数据源）。
+def _bench(name):
+    def _path(wc):
+        names = getattr(wc, "_names", None) or []
+        if names:
+            vals = "-".join(str(getattr(wc, n)) for n in names)
+            return WORKDIR + f"/logs/benchmark/{name}/{vals}.tsv"
+        return WORKDIR + f"/logs/benchmark/{name}.tsv"
+    return _path
+
 include: "rules/preprocessing.smk"
 include: "rules/bacteria_taxonomy.smk"
 include: "rules/bacteria_assembly.smk"

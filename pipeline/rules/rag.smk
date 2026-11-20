@@ -22,6 +22,8 @@ rule build_experience_kb:
     log:
         REPO + "/logs/rag/build_experience_kb.log"
     threads: 4
+    benchmark:
+        WORKDIR + "/logs/benchmark/build_experience_kb.tsv"
     shell:
         "conda run --prefix {params.repo}/envs/rag "
         "python {params.repo}/mcp/indexer.py "
@@ -40,6 +42,8 @@ rule refresh_literature_kb:
     log:
         REPO + "/logs/rag/refresh_literature_kb.log"
     threads: 2
+    benchmark:
+        WORKDIR + "/logs/benchmark/refresh_literature_kb.tsv"
     shell:
         "conda run --prefix {params.repo}/envs/rag "
         "python {params.repo}/mcp/literature_pipeline.py "

@@ -295,6 +295,37 @@ mgx_begin() {
         _mgx_emit -1
         trap '_MGX_RC=$?; _MGX_ARGV="$*"; _mgx_emit "${_MGX_RC}"' EXIT
     fi
+    # R-task decision B（P0-5）：30s /proc 进程树 RSS 采样器（Fig1-B/C + pilot 校准数据源）。
+    # 开关 MGX_RSS_SAMPLE=1（opt-in，默认 OFF 保持既往行为字节级不变）；落盘
+    # logs/rss/<script>/<sample|aggregate>.csv（timestamp,rss_kb,nthreads）。
+    # 生命周期：分离式看护循环 kill -0 检测父进程死亡（≤30s 感知）+ 24h 保险丝，
+    # 不注册任何 trap（规避 L164 "last trap wins" 覆盖风险）；自身输出全重定向，
+    # 不持有 stdout/stderr 句柄。
+    if [ "${MGX_RSS_SAMPLE:-0}" = "1" ] && [ -n "${WORKDIR:-}" ]; then
+        local _rss_script _rss_sample _rss_csv _rss_root
+        _rss_script="$(basename "${BASH_SOURCE[${#BASH_SOURCE[@]}-1]}" 2>/dev/null || echo unknown)"
+        _rss_sample="${SAMPLE:-${SAMPLE_NAME:-${SAMPLE_ID:-aggregate}}}"
+        _rss_root="$$"
+        _rss_csv="${WORKDIR}/logs/rss/${_rss_script}/${_rss_sample}.csv"
+        mkdir -p "$(dirname "${_rss_csv}")" 2>/dev/null || true
+        (
+            _csv="${_rss_csv}"
+            _root="${_rss_root}"
+            [ -f "$_csv" ] || echo "timestamp,rss_kb,nthreads" >> "$_csv"
+            _n=0
+            while kill -0 "$_root" 2>/dev/null && [ "$_n" -lt 2880 ]; do
+                _line="$(ps -eo pid=,ppid=,rss=,nlwp= --no-headers 2>/dev/null | awk -v root="$_root" '
+                    { rss[$1]=$3; nth[$1]=$4; pp[$1]=$2; ids[NR]=$1 }
+                    END { for (i=1; i<=NR; i++) { p=ids[i]; q=p; d=0
+                        while (q > 0) { if (q == root) { d=1; break } q=pp[q] }
+                        if (d) { tr += rss[p]; tn += nth[p] } }
+                        print tr+0 "," tn+0 }')"
+                echo "$(date +%FT%T%z),$_line" >> "$_csv"
+                _n=$((_n + 1))
+                sleep 30
+            done
+        ) >/dev/null 2>&1 &
+    fi
 }
 
 # 计时结束: 输出 [label] 耗时 ${SECONDS}s（label 可省略，默认 done）

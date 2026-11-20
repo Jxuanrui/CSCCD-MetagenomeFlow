@@ -17,6 +17,8 @@ rule vir_filter_ge1500:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_filter_ge1500/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/51a_vir_filter_contigs.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -35,6 +37,8 @@ rule vir_genomad:
     log:
         WORKDIR + "/logs/virus/genomad/{sample}.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_genomad/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/52_vir_genomad.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -51,6 +55,8 @@ rule vir_virsorter2:
     log:
         WORKDIR + "/logs/virus/virsorter2/{sample}.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_virsorter2/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/53_vir_virsorter2.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -69,6 +75,8 @@ rule vir_checkv_contig:
     log:
         WORKDIR + "/logs/virus/checkv_contig/{sample}.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_checkv_contig/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/54_vir_checkv_contig.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -85,6 +93,8 @@ rule checkv_filter:
     log:
         WORKDIR + "/logs/virus/checkv_filter/{sample}.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/checkv_filter/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/54b_vir_checkv_filter.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -103,6 +113,8 @@ rule vir_prodigal_gv:
     log:
         WORKDIR + "/logs/virus/prodigal/{sample}.log",
     threads: 1
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_prodigal_gv/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/55_vir_prodigal_gv.sh "
         "-s {wildcards.sample} -t 1 "
@@ -125,6 +137,8 @@ rule vir_votu_gen:
     log:
         WORKDIR + "/logs/virus/votu/gen.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_votu_gen.tsv"
     shell:
         "bash {REPO}/scripts/56_vir_votu_gen.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -141,6 +155,8 @@ rule vir_votu_genomad:
     log:
         WORKDIR + "/logs/virus/votu/genomad.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_votu_genomad.tsv"
     shell:
         "bash {REPO}/scripts/57_vir_votu_genomad.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -162,6 +178,8 @@ rule vir_salmon_build:
     log:
         WORKDIR + "/logs/virus/salmon/build.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_salmon_build.tsv"
     shell:
         "bash {REPO}/scripts/58_vir_salmon_build.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -179,6 +197,8 @@ rule vir_salmon_quant:
     log:
         WORKDIR + "/logs/virus/salmon/{sample}.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_salmon_quant/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/59_vir_salmon_quant.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -201,6 +221,8 @@ rule vir_votu_table:
         legacy_table = WORKDIR + "/result/virus/votu/votu_table.tsv",
     log:
         WORKDIR + "/logs/virus/votu/table.log",
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_votu_table.tsv"
     run:
         import os
         os.makedirs(os.path.join(WORKDIR, "logs", "virus", "votu"), exist_ok=True)
@@ -225,6 +247,8 @@ rule vir_vmag:
     log:
         WORKDIR + "/logs/virus/vmag/vmag.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_vmag.tsv"
     shell:
         "bash {REPO}/scripts/61_vir_vmag.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -240,6 +264,8 @@ rule vir_checkv_mag:
     log:
         WORKDIR + "/logs/virus/checkv_mag/checkv_mag.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_checkv_mag.tsv"
     shell:
         "bash {REPO}/scripts/62_vir_checkv_mag.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -257,6 +283,8 @@ rule vir_coverm_quant:
     log:
         WORKDIR + "/logs/virus/coverm_quant/{sample}.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_coverm_quant/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/63_vir_coverm_quant.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -277,6 +305,8 @@ rule vir_pharokka:
     log:
         WORKDIR + "/logs/virus/pharokka/pharokka.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_pharokka.tsv"
     shell:
         "bash {REPO}/scripts/64_vir_pharokka.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -292,6 +322,8 @@ rule vir_phold:
     log:
         WORKDIR + "/logs/virus/phold/phold.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_phold.tsv"
     shell:
         "bash {REPO}/scripts/65_vir_phold.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -308,6 +340,8 @@ rule vir_vog:
     log:
         WORKDIR + "/logs/virus/vog/vog.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_vog.tsv"
     shell:
         "bash {REPO}/scripts/66_vir_vog.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -323,6 +357,8 @@ rule vir_bacphlip:
     log:
         WORKDIR + "/logs/virus/bacphlip/bacphlip.log",
     threads: 1
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_bacphlip.tsv"
     shell:
         "bash {REPO}/scripts/67_vir_bacphlip.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -338,6 +374,8 @@ rule vir_iphop:
     log:
         WORKDIR + "/logs/virus/iphop/iphop.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_iphop.tsv"
     shell:
         "bash {REPO}/scripts/68_vir_iphop.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -356,6 +394,8 @@ rule vir_vcontact3:
     log:
         WORKDIR + "/logs/virus/vcontact3/vcontact3.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_vcontact3.tsv"
     shell:
         "bash {REPO}/scripts/69_vir_vcontact3.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -371,6 +411,8 @@ rule phabox2:
     log:
         WORKDIR + "/logs/virus/phabox2/phabox2.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/phabox2.tsv"
     shell:
         "bash {REPO}/scripts/70_vir_phabox2.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -386,6 +428,8 @@ rule dram_v:
     log:
         WORKDIR + "/logs/virus/dram/dram.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/dram_v.tsv"
     shell:
         "bash {REPO}/scripts/71_vir_dram.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -401,6 +445,8 @@ rule phagcn3:
     log:
         WORKDIR + "/logs/virus/phagcn3/phagcn3.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/phagcn3.tsv"
     shell:
         "bash {REPO}/scripts/72_vir_phagcn3.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -420,6 +466,8 @@ rule phastyle:
     log:
         WORKDIR + "/logs/virus/phastyle/phastyle.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/phastyle.tsv"
     shell:
         "bash {REPO}/scripts/67b_vir_phastyle.sh "
         "-t {threads} -w {WORKDIR} -r {REPO} "

@@ -21,6 +21,8 @@ rule eggnog:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/eggnog.tsv"
     shell:
         "bash {REPO}/scripts/21_bac_eggnog.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -37,6 +39,8 @@ rule kegg:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/kegg.tsv"
     shell:
         "bash {REPO}/scripts/22_bac_kegg.sh -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2>&1"
 
@@ -51,6 +55,8 @@ rule amrfinder:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/amrfinder.tsv"
     shell:
         "bash {REPO}/scripts/23_bac_amrfinder.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -65,6 +71,8 @@ rule card:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/card.tsv"
     shell:
         "bash {REPO}/scripts/24_bac_card.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -79,6 +87,8 @@ rule card_summary:
         WORKDIR + "/logs/card_summary/summary.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/card_summary.tsv"
     shell:
         "bash {REPO}/scripts/24b_bac_card_summary.sh  {params.force_flag}"
         "-w {WORKDIR} -r {REPO} "
@@ -100,6 +110,8 @@ rule amr_harmonize:
         WORKDIR + "/logs/amr_harmonize/hamronize.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/amr_harmonize.tsv"
     shell:
         "bash {REPO}/scripts/24c_bac_amr_harmonize.sh -t {CPUS} "
         "-w {WORKDIR} -r {REPO} {params.force_flag} "
@@ -116,6 +128,8 @@ rule dbcan:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/dbcan.tsv"
     shell:
         "bash {REPO}/scripts/25_bac_dbcan.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -130,6 +144,8 @@ rule vfdb:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/vfdb.tsv"
     shell:
         "bash {REPO}/scripts/26_bac_vfdb.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -144,6 +160,8 @@ rule bacmet:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bacmet.tsv"
     shell:
         "bash {REPO}/scripts/27_bac_bacmet.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -158,6 +176,8 @@ rule antismash:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/antismash/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/28_bac_antismash.sh -s {wildcards.sample} -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -177,6 +197,8 @@ rule bac_bgc_novelty:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_bgc_novelty/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/28b_bac_bgc_novelty.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -198,6 +220,8 @@ rule defense_finder:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/defense_finder.tsv"
     shell:
         "bash {REPO}/scripts/29_bac_defense_finder.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -212,6 +236,8 @@ rule ncyc:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/ncyc.tsv"
     shell:
         "bash {REPO}/scripts/30_bac_ncyc.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -226,6 +252,8 @@ rule pcyc:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/pcyc.tsv"
     shell:
         "bash {REPO}/scripts/31_bac_pcyc.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -240,6 +268,8 @@ rule bac_scyc:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_scyc.tsv"
     shell:
         "bash {REPO}/scripts/31b_bac_scyc.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -255,6 +285,8 @@ rule bac_pfam:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_pfam.tsv"
     shell:
         "bash {REPO}/scripts/31c_bac_pfam.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -269,6 +301,8 @@ rule bac_uniprot:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_uniprot.tsv"
     shell:
         "bash {REPO}/scripts/31d_bac_uniprot.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -286,5 +320,7 @@ rule fegenie:
     threads: 8
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fegenie.tsv"
     shell:
         "bash {REPO}/scripts/31e_bac_fegenie.sh -s NR -t {threads} -w {WORKDIR} -r {REPO} --input-type nr {params.force_flag} > {log} 2>&1"

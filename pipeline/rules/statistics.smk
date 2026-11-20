@@ -19,6 +19,8 @@ rule stat_metadata_qc:
         workdir = config["workdir"],
         repo = config["repo"],
     threads: 1
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_metadata_qc.tsv"
     shell:
         "bash {REPO}/scripts/01_metadata_qc.sh "
         "-w {params.workdir} -r {params.repo} -t {threads}"
@@ -39,6 +41,8 @@ rule stat_diversity:
         meta = meta_file,
         group = "group"
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_diversity.tsv"
     shell:
         "bash {REPO}/scripts/91_stat_diversity.sh "
         "-w {WORKDIR} -r {REPO} -t {threads} "
@@ -55,6 +59,8 @@ rule stat_differential:
         meta = meta_file,
         group = "group"
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_differential.tsv"
     shell:
         "bash {REPO}/scripts/92_stat_differential.sh "
         "-w {WORKDIR} -r {REPO} -t {threads} "
@@ -70,6 +76,8 @@ rule stat_cooccurrence:
     params:
         meta = meta_file
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_cooccurrence.tsv"
     shell:
         "bash {REPO}/scripts/93_stat_cooccurrence.sh "
         "-w {WORKDIR} -r {REPO} -t {threads} "
@@ -86,6 +94,8 @@ rule stat_batch_correct:
         batch = "batch",
         group = "group"
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_batch_correct.tsv"
     shell:
         "bash {REPO}/scripts/95a_stat_batch_correct.sh "
         "-w {WORKDIR} -r {REPO} -t {threads} "
@@ -103,6 +113,8 @@ rule stat_batch_evaluate:
         batch = "batch",
         group = "group"
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_batch_evaluate.tsv"
     shell:
         "bash {REPO}/scripts/95b_stat_batch_evaluate.sh "
         "-w {WORKDIR} -r {REPO} "
@@ -121,6 +133,8 @@ rule stat_ml_siamcat:
         meta = meta_file,
         group = "group"
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_ml_siamcat.tsv"
     shell:
         "bash {REPO}/scripts/96_stat_ml_siamcat.sh "
         "-w {WORKDIR} -r {REPO} -t {threads} "
@@ -141,6 +155,8 @@ rule stat_visualization:
         repo = config["repo"],
         meta = meta_file,
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_visualization.tsv"
     shell:
         "bash {REPO}/scripts/94_stat_visualization.sh "
         "-w {params.workdir} -r {params.repo} -m {params.meta}"
@@ -171,6 +187,8 @@ rule stat_functional:
         repo = config["repo"],
         meta = meta_file,
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_functional.tsv"
     shell:
         r"""
         # 96_stat_functional.R now forces maaslin_cores=1 for every func_type
@@ -237,6 +255,8 @@ rule stat_functional_permanova:
         meta = meta_file,
         group = "group",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_functional_permanova.tsv"
     shell:
         "bash {REPO}/scripts/96_functional_permanova.sh "
         "-w {params.workdir} -r {params.repo} -m {params.meta} -g {params.group}"
@@ -253,6 +273,8 @@ rule stat_functional_network:
         workdir = config["workdir"],
         repo = config["repo"],
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_functional_network.tsv"
     shell:
         r"""
         for dimension in bacteria fungi virus; do
@@ -275,6 +297,8 @@ rule stat_functional_integrated:
         meta = meta_file,
         group = "group",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_functional_integrated.tsv"
     shell:
         r"""
         for dimension in bacteria fungi virus; do
@@ -295,6 +319,8 @@ rule stat_functional_cross_dimension:
         workdir = config["workdir"],
         repo = config["repo"],
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_functional_cross_dimension.tsv"
     shell:
         "bash {REPO}/scripts/96_functional_cross_dimension.sh "
         "-w {params.workdir} -r {params.repo}"
@@ -317,6 +343,8 @@ rule stat_report:
     output:
         touch(WORKDIR + "/result/stat/report/report.done")
     threads: 1
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_report.tsv"
     shell:
         "bash {REPO}/scripts/98_stat_report.sh -w {WORKDIR} -r {REPO}"
 
@@ -358,6 +386,8 @@ rule bac_integration_tables:
     log:
         WORKDIR + "/logs/integration/bacteria_tables.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_integration_tables.tsv"
     shell:
         "bash {REPO}/scripts/98b_bac_integration_tables.sh "
         "-t {threads} -w {params.workdir} -r {REPO} "
@@ -393,6 +423,8 @@ rule vir_integration_tables:
     log:
         WORKDIR + "/logs/integration/virus_tables.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/vir_integration_tables.tsv"
     shell:
         "bash {REPO}/scripts/98c_vir_integration_tables.sh "
         "-t {threads} -w {params.workdir} -r {REPO} "
@@ -421,6 +453,8 @@ rule fun_integration_tables:
     log:
         WORKDIR + "/logs/integration/fungi_tables.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_integration_tables.tsv"
     shell:
         "bash {REPO}/scripts/98d_fun_integration_tables.sh "
         "-t {threads} -w {params.workdir} -r {REPO} "
@@ -441,6 +475,8 @@ rule bac_mge_summary:
         workdir = config["workdir"],
         repo = config["repo"],
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_mge_summary.tsv"
     shell:
         "bash {REPO}/scripts/98c_bac_mge_summary.sh "
         "-w {params.workdir} -r {params.repo} -t {threads}"
@@ -461,6 +497,8 @@ rule bac_mag_integration:
         workdir = config["workdir"],
         repo = config["repo"],
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_mag_integration.tsv"
     shell:
         "bash {REPO}/scripts/98d_bac_mag_integration.sh "
         "-w {params.workdir} -r {params.repo} -t {threads}"
@@ -486,6 +524,8 @@ rule stat_lefse:
         group = "group",
         lda_threshold = 2.0,
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_lefse.tsv"
     shell:
         """
         # Failure ledger (not a declared output; sentinel contract unchanged)
@@ -547,6 +587,8 @@ rule stat_core_microbiome:
         prevalence = 0.5,
         min_abundance = 0.0001,
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_core_microbiome.tsv"
     shell:
         """
         # Bacteria
@@ -598,6 +640,8 @@ rule stat_functional_redundancy:
         fun_summary = WORKDIR + "/result/stat/fungi/functional_redundancy/functional_redundancy_summary.txt",
         vir_summary = WORKDIR + "/result/stat/virus/functional_redundancy/functional_redundancy_summary.txt",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_functional_redundancy.tsv"
     shell:
         """
         # Bacteria
@@ -645,6 +689,8 @@ rule stat_pathway_activity:
         min_coverage = 0.5,
         top_n = 5,
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/stat_pathway_activity.tsv"
     shell:
         """
         bash {REPO}/scripts/96b_pathway_activity.sh \
@@ -673,6 +719,8 @@ rule downstream_summary:
     output:
         summary = WORKDIR + "/result/stat/downstream_summary.tsv",
     threads: 1
+    benchmark:
+        WORKDIR + "/logs/benchmark/downstream_summary.tsv"
     shell:
         r"""
         mkdir -p "$(dirname {output.summary})"
@@ -718,6 +766,8 @@ rule cross_domain_ani_cluster:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/cross_domain_ani_cluster.tsv"
     shell:
         "bash {REPO}/scripts/98e_cross_domain_ani_cluster.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -743,6 +793,8 @@ rule cross_domain_orthogroup:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/cross_domain_orthogroup.tsv"
     shell:
         "bash {REPO}/scripts/98f_cross_domain_orthogroup.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -762,6 +814,8 @@ rule cross_domain_correlation:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/cross_domain_correlation.tsv"
     shell:
         "bash {REPO}/scripts/98g_cross_domain_correlation.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "

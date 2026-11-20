@@ -36,6 +36,8 @@ rule crosscohort_validation:
     threads: 1
     log:
         WORKDIR + "/logs/stat/crosscohort/97_crosscohort.log"
+    benchmark:
+        WORKDIR + "/logs/benchmark/crosscohort_validation.tsv"
     shell:
         """
         bash {params.repo}/scripts/97_stat_crosscohort.sh \
@@ -63,6 +65,8 @@ rule viz_statistics_all:
         sentinel = WORKDIR + "/result/viz_statistics_all_done.txt"
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/viz_statistics_all.tsv"
     shell:
         """
         echo "All statistics visualizations completed" > {output.sentinel}

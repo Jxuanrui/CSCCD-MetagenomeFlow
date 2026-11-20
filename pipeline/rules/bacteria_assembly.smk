@@ -10,6 +10,8 @@ rule megahit:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/megahit/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/16_bac_megahit.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -32,6 +34,8 @@ rule filter_contigs_ge1000:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/filter_contigs_ge1000/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/16b_bac_filter_contigs.sh -s {wildcards.sample}" +
         " -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag}" +
@@ -49,6 +53,8 @@ rule metaspades:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/metaspades/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/16b_bac_metaspades.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -69,6 +75,8 @@ rule prodigal:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: 1
+    benchmark:
+        WORKDIR + "/logs/benchmark/prodigal/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/17_bac_prodigal.sh "
         "-s {wildcards.sample} -t 1 "
@@ -91,6 +99,8 @@ rule cdhit:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/cdhit.tsv"
     shell:
         "bash {REPO}/scripts/18_bac_cdhit.sh "
         "-t {threads} "
@@ -109,6 +119,8 @@ rule salmon_build:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/salmon_build.tsv"
     shell:
         "bash {REPO}/scripts/19_bac_salmon_build.sh "
         "-t {threads} "
@@ -129,6 +141,8 @@ rule salmon_quant:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/salmon_quant/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/20_bac_salmon_quant.sh "
         "-s {wildcards.sample} -t {threads} "

@@ -24,6 +24,8 @@ rule coverm_depth:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/coverm_depth/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/32_bac_coverm_depth.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -40,6 +42,8 @@ rule metabat2:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/metabat2/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/33_bac_metabat2.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -56,6 +60,8 @@ rule maxbin2:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/maxbin2/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/34_bac_maxbin2.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -72,6 +78,8 @@ rule semibin2:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/semibin2/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/35_bac_semibin2.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -89,6 +97,8 @@ rule quickbin:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/quickbin/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/33b_bac_quickbin.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -107,6 +117,8 @@ rule dastool:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/dastool/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/36_bac_dastool.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -124,6 +136,8 @@ rule bin_reassembly:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bin_reassembly/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/36b_bac_bin_reassembly.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -142,6 +156,8 @@ rule checkm2:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/checkm2.tsv"
     shell:
         "bash {REPO}/scripts/37_bac_checkm2.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -158,6 +174,8 @@ rule drep:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/drep.tsv"
     shell:
         "bash {REPO}/scripts/38_bac_drep.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -175,6 +193,8 @@ rule gunc:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/gunc.tsv"
     shell:
         "bash {REPO}/scripts/38b_bac_gunc.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2>&1"
 
@@ -191,6 +211,8 @@ rule coverm_quant:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/coverm_quant/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/39_bac_coverm_quant.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -209,6 +231,8 @@ rule instrain_map:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/instrain_map/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/39b_bac_instrain_map.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -225,6 +249,8 @@ rule instrain_profile:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/instrain_profile/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/39c_bac_instrain_profile.sh -s {wildcards.sample}" +
         " -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
@@ -242,6 +268,8 @@ rule instrain_compare:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/instrain_compare.tsv"
     shell:
         "bash {REPO}/scripts/39d_bac_instrain_compare.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -256,6 +284,8 @@ rule gtdbtk:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/gtdbtk.tsv"
     shell:
         "bash {REPO}/scripts/40_bac_gtdbtk.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -270,6 +300,8 @@ rule prokka:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/prokka.tsv"
     shell:
         "bash {REPO}/scripts/41_bac_prokka.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -284,6 +316,8 @@ rule bac_mlst:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_mlst.tsv"
     shell:
         "bash {REPO}/scripts/41b_bac_mlst.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -298,6 +332,8 @@ rule bac_pangenome:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_pangenome.tsv"
     shell:
         "bash {REPO}/scripts/41c_bac_pangenome.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -312,6 +348,8 @@ rule bac_snippy:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_snippy.tsv"
     shell:
         "bash {REPO}/scripts/41d_bac_snippy.sh -t {CPUS} -w {WORKDIR} -r {REPO} {params.force_flag}"
 
@@ -333,6 +371,8 @@ rule bac_mge:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: 16
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_mge/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/42_bac_mge.sh -s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2>&1"
 
@@ -349,5 +389,7 @@ rule bac_plasmidfinder:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: 4
+    benchmark:
+        WORKDIR + "/logs/benchmark/bac_plasmidfinder/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/42b_bac_plasmidfinder.sh -s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} {params.force_flag} > {log} 2>&1"

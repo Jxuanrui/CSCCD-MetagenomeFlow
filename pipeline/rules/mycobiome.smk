@@ -16,6 +16,8 @@ rule fun_kraken2:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_kraken2/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/71_fun_kraken2_fungi.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -34,6 +36,8 @@ rule fun_metaphlan4:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_metaphlan4/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/72_fun_metaphlan4_euk.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -54,6 +58,8 @@ rule fun_metaphlan4_merge:
         WORKDIR + "/logs/fungi/metaphlan4_merge/merge.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_metaphlan4_merge.tsv"
     shell:
         "bash {REPO}/scripts/72b_fun_metaphlan4_merge.sh  {params.force_flag}"
         "-w {WORKDIR} -r {REPO} "
@@ -75,6 +81,8 @@ rule fun_humann4:
     threads: 1
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_humann4/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/73_fun_humann4_fungi.sh  {params.force_flag}"
         "-s {wildcards.sample} -t 1 "
@@ -94,6 +102,8 @@ rule fun_blast_gutdb:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_blast_gutdb/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/74_fun_blast_gutdb.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -113,6 +123,8 @@ rule fun_funomic:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_funomic/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/75_fun_funomics.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -135,6 +147,8 @@ rule funomics_aggregate:
     log:
         WORKDIR + "/logs/fungi/funomics_aggregate/aggregate.log",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/funomics_aggregate.tsv"
     shell:
         "bash {REPO}/scripts/75b_fun_funomics_aggregate.sh  {params.force_flag}"
         "-t {threads} -w {params.workdir} -r {REPO} "
@@ -153,6 +167,8 @@ rule fun_microfisher:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_microfisher/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/77_fun_microfisher.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -173,6 +189,8 @@ rule fun_megahit:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_megahit/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/78_fun_megahit.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -195,6 +213,8 @@ rule fun_eukfinder:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_eukfinder/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/79_fun_eukfinder.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -217,6 +237,8 @@ rule fun_veba_qc:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_veba_qc/{sample}.tsv"
     shell:
         # Sentinel content records SUCCESS vs EMPTY so downstream rules (e.g. a
         # future cross-domain cluster module) can grep-filter without opening
@@ -245,6 +267,8 @@ rule fun_coverm_depth_euk:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_coverm_depth_euk/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/79c_fun_coverm_depth.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -269,6 +293,8 @@ rule fun_metabat2_euk:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_metabat2_euk/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/79d_fun_metabat2.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -289,6 +315,8 @@ rule fun_euk_qc_per_bin:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_euk_qc_per_bin/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/79e_fun_euk_qc_per_bin.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -310,6 +338,8 @@ rule fun_metaeuk_per_bin:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_metaeuk_per_bin/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/79f_fun_metaeuk_per_bin.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} "
@@ -328,6 +358,8 @@ rule fun_prodigal:
     threads: 1
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_prodigal/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/80_fun_prodigal.sh  {params.force_flag}"
         "-s {wildcards.sample} -t 1 "
@@ -351,6 +383,8 @@ rule fun_eggnog:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_eggnog.tsv"
     shell:
         "bash {REPO}/scripts/81_fun_eggnog.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -371,6 +405,8 @@ rule fun_kegg:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_kegg.tsv"
     shell:
         "bash {REPO}/scripts/82_fun_kegg.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -391,6 +427,8 @@ rule fun_dbcan:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_dbcan.tsv"
     shell:
         "bash {REPO}/scripts/83_fun_dbcan.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -411,6 +449,8 @@ rule fun_vfdb:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_vfdb.tsv"
     shell:
         "bash {REPO}/scripts/84_fun_vfdb.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -431,6 +471,8 @@ rule fun_amr:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_amr.tsv"
     shell:
         "bash {REPO}/scripts/85_fun_amr.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -451,6 +493,8 @@ rule fun_merops:
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_merops.tsv"
     shell:
         "bash {REPO}/scripts/86_fun_merops.sh  {params.force_flag}"
         "-t {threads} -w {WORKDIR} -r {REPO} "
@@ -468,6 +512,8 @@ rule fun_phf_profiler:
     threads: config.get("cpus", 8)
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_phf_profiler/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/74e_fun_phf_profiler.sh  {params.force_flag}"
         "-s {wildcards.sample} -t {threads} -w {WORKDIR} -r {REPO} "
@@ -487,6 +533,8 @@ rule fun_phf_aggregate:
         WORKDIR + "/logs/fungi/phf_aggregate/aggregate.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/fun_phf_aggregate.tsv"
     shell:
         "bash {REPO}/scripts/74f_fun_phf_aggregate.sh  {params.force_flag}"
         "-w {WORKDIR} -r {REPO} "

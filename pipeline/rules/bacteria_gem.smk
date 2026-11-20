@@ -21,6 +21,8 @@ rule gem_carveme:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/gem_carveme.tsv"
     shell:
         """
         # CarveMe processes all dereplicated MAGs in batch mode
@@ -45,6 +47,8 @@ rule gem_fba:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/gem_fba.tsv"
     shell:
         """
         # Find all CarveMe SBML models and run FBA analysis
@@ -87,6 +91,8 @@ rule gem_carveme_single:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/gem_carveme_single/{mag}.tsv"
     shell:
         """
         bash {REPO}/scripts/43b_bac_gem_carveme.sh \
@@ -115,6 +121,8 @@ rule gem_fba_single:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/gem_fba_single/{mag}.tsv"
     shell:
         """
         bash {REPO}/scripts/43c_bac_gem_cobrapy_fba.sh \

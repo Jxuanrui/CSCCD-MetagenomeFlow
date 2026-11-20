@@ -13,6 +13,8 @@ rule fastp_qc:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/fastp_qc/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/01_qc_fastp.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -33,6 +35,8 @@ rule kneaddata:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/kneaddata/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/02_qc_kneaddata.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -54,6 +58,8 @@ rule pair_repair:
         WORKDIR + "/logs/pair_repair/{sample}.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/pair_repair/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/02b_qc_pair_repair.sh "
         "-s {wildcards.sample} "

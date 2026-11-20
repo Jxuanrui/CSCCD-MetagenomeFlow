@@ -11,6 +11,8 @@ rule metaphlan4:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/metaphlan4/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/11_bac_metaphlan4.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -31,6 +33,8 @@ rule metaphlan4_merge:
         WORKDIR + "/logs/metaphlan4_merge/merge.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/metaphlan4_merge.tsv"
     shell:
         "bash {REPO}/scripts/11b_bac_metaphlan4_merge.sh "
         "-w {WORKDIR} -r {REPO} {params.force_flag} "
@@ -51,6 +55,8 @@ rule strainphlan4:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/strainphlan4.tsv"
     shell:
         "bash {REPO}/scripts/12_bac_strainphlan4.sh "
         "-w {WORKDIR} -r {REPO} -t {threads} {params.force_flag} "
@@ -79,6 +85,8 @@ rule humann3:
     params:
         speed = config["humann_speed"],
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/humann3/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/13_bac_humann3.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -102,6 +110,8 @@ rule kraken2:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/kraken2/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/14_bac_kraken2.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -122,6 +132,8 @@ rule centrifuger:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/centrifuger/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/15_bac_centrifuger.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -143,6 +155,8 @@ rule humann3_merge:
         WORKDIR + "/logs/humann3/merge.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/humann3_merge.tsv"
     shell:
         "bash {REPO}/scripts/13b_bac_humann3_merge.sh "
         "-w {WORKDIR} -r {REPO} {params.force_flag} "
@@ -161,6 +175,8 @@ rule sylph:
     params:
         force_flag = config.get("force", False) and "--force" or "",
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/sylph/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/15c_bac_sylph.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -181,6 +197,8 @@ rule metax:
         force_flag = config.get("force", False) and "--force" or "",
         mode = config.get("metax_mode", "default"),
     threads: CPUS
+    benchmark:
+        WORKDIR + "/logs/benchmark/metax/{sample}.tsv"
     shell:
         "bash {REPO}/scripts/15e_bac_metax.sh "
         "-s {wildcards.sample} -t {threads} "
@@ -203,6 +221,8 @@ rule kraken2_merge:
         WORKDIR + "/logs/kraken2/merge.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/kraken2_merge.tsv"
     shell:
         "bash {REPO}/scripts/14b_bac_kraken2_merge.sh "
         "-w {WORKDIR} -r {REPO} {params.force_flag} "
@@ -224,6 +244,8 @@ rule centrifuger_merge:
         WORKDIR + "/logs/centrifuger/merge.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/centrifuger_merge.tsv"
     shell:
         "bash {REPO}/scripts/15b_bac_centrifuger_merge.sh "
         "-w {WORKDIR} -r {REPO} {params.force_flag} "
@@ -243,6 +265,8 @@ rule sylph_merge:
         WORKDIR + "/logs/sylph/merge.log",
     params:
         force_flag = config.get("force", False) and "--force" or "",
+    benchmark:
+        WORKDIR + "/logs/benchmark/sylph_merge.tsv"
     shell:
         "bash {REPO}/scripts/15d_bac_sylph_merge.sh "
         "-w {WORKDIR} -r {REPO} {params.force_flag} "
