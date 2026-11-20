@@ -66,6 +66,13 @@ mgx_try mgx_conda iphop \
         --out_dir "${OUTDIR}" \
         --num_threads "${CPUS}" \
         || EXIT_CODE=$?
-if [ "${EXIT_CODE}" -ne 0 ]; then echo "[WARN] iphop 失败（exit: ${EXIT_CODE}）"; touch "${SENTINEL}"; fi
+# R-task 审计 P0-1b（质量审核指认）：工具失败原为「WARN+touch 输出文件名哨兵+隐式 exit 0」——
+# 崩溃产物伪装成真结果被 98c 消费、且被 L58 哨兵跳过永久固化。改为显式失败+清理半成品。
+if [ "${EXIT_CODE}" -ne 0 ]; then
+    echo "[ERROR] iphop predict 失败（exit: ${EXIT_CODE}），清理半成品并显式失败"
+    rm -f "${SENTINEL}"
+    rm -f "${OUTDIR}"/Host_prediction_*.csv "${OUTDIR}"/Host_prediction_*.tsv 2>/dev/null
+    exit "${EXIT_CODE}"
+fi
 
 mgx_end "iphop"

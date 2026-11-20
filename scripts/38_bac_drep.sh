@@ -8,7 +8,7 @@
 # 输  出: ${WORKDIR}/result/binning/drep/
 #           dereplicated_genomes/*.fa     — 去冗余后 MAGs
 #           data_tables/Cdb.csv           — 比较表
-#           data_tables/Widb.csv          — 基因组信息表
+#           data_tables/Wdb.csv           — 去冗余代表基因组表（R-task P3 勘误：原头注误写 Widb）
 #
 # ── 阈值说明 ─────────────────────────────────────────────────────────────────
 #   -sa 0.95：物种级去冗余（推荐用于大多数分析）
