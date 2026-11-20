@@ -44,8 +44,10 @@ MAPOUT_BZ2="${WORKDIR}/temp/metaphlan4/${SAMPLE}/${SAMPLE}.mapout.bz2"
 
 TEMP_DIR="${WORKDIR}/temp/fungi/metaphlan4/${SAMPLE}"
 RESULT_DIR="${WORKDIR}/result/fungi/metaphlan4/${SAMPLE}"
-DB_DIR="${REPO}/db/metaphlan4"
-DB_INDEX="mpa_vOct22_CHOCOPhlAnSGB_202212"
+# R-task（用户approve案 A，2026-11-20）：DB 切换 vJun23 对齐 GMR（与 11_bac 同步）
+# 覆盖变量：MGX_METAPHLAN4_DB_DIR / MGX_METAPHLAN4_DB_INDEX（验证对比用，默认 vJun23）
+DB_DIR="${MGX_METAPHLAN4_DB_DIR:-${REPO}/db/metaphlan4_vJun23_202403}"
+DB_INDEX="${MGX_METAPHLAN4_DB_INDEX:-mpa_vJun23_CHOCOPhlAnSGB_202403}"
 
 if [ ! -d "${DB_DIR}" ]; then echo "[ERROR] 数据库目录不存在: ${DB_DIR}"; exit 1; fi
 if ! ls "${DB_DIR}/${DB_INDEX}"*.bt2l &>/dev/null; then

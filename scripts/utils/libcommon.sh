@@ -442,7 +442,8 @@ mgx_conda() {
     # 「调用点级环境隔离」哲学：不依赖任何会话层状态。
     if ! command -v conda >/dev/null 2>&1; then
         local _conda_sh="${REPO}/miniforge3/etc/profile.d/conda.sh"
-        [ -f "${_conda_sh}" ] || _conda_sh="${HOME}/miniforge3/etc/profile.d/conda.sh"
+        # R-task 遗留修正：${HOME}=/home/admin-user 无 miniforge，数据目录 /data/admin-user 才有
+        [ -f "${_conda_sh}" ] || _conda_sh="/data/admin-user/miniforge3/etc/profile.d/conda.sh"
         if [ -f "${_conda_sh}" ]; then
             # shellcheck disable=SC1090  # 动态路径系设计使然（REPO 内置/家目录回退，均已实证存在）
             . "${_conda_sh}"

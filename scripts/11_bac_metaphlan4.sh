@@ -57,8 +57,10 @@ PROFILE_OUT="${RESULT_DIR}/${SAMPLE}_profile.txt"
 SAM_OUT="${RESULT_DIR}/${SAMPLE}.sam.bz2"
 MAPOUT="${TEMP_DIR}/${SAMPLE}.mapout.bz2"
 
-DB_DIR="${REPO}/db/metaphlan4"
-DB_INDEX="mpa_vOct22_CHOCOPhlAnSGB_202212"
+# R-task（用户approve案 A，2026-11-20）：DB 切换 vJun23 对齐 GMR（EXECUTION_PLAN §5.2/§12 + D1）
+# 覆盖变量：MGX_METAPHLAN4_DB_DIR / MGX_METAPHLAN4_DB_INDEX（验证对比用，默认 vJun23）
+DB_DIR="${MGX_METAPHLAN4_DB_DIR:-${REPO}/db/metaphlan4_vJun23_202403}"
+DB_INDEX="${MGX_METAPHLAN4_DB_INDEX:-mpa_vJun23_CHOCOPhlAnSGB_202403}"
 
 # --- 输入检查 ---
 
