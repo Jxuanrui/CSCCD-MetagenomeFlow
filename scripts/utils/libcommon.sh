@@ -438,7 +438,7 @@ mgx_conda() {
         exit 1
     fi
     # R-task：conda 自举（2026-11-20 10:03 事故实证）——续接会话/后台泳道的 PATH
-    # 可能无 conda（4 任务同发 exit 127），此处就近初始化，落实 P0-2
+    # 可能无 conda（7 任务同发 exit 127），此处就近初始化，落实 P0-2
     # 「调用点级环境隔离」哲学：不依赖任何会话层状态。
     if ! command -v conda >/dev/null 2>&1; then
         local _conda_sh="${REPO}/miniforge3/etc/profile.d/conda.sh"
