@@ -437,6 +437,20 @@ mgx_conda() {
         echo "[ERROR] mgx_conda: REPO 未设置"
         exit 1
     fi
+    # R-task：conda 自举（2026-11-20 10:03 事故实证）——续接会话/后台泳道的 PATH
+    # 可能无 conda（4 任务同发 exit 127），此处就近初始化，落实 P0-2
+    # 「调用点级环境隔离」哲学：不依赖任何会话层状态。
+    if ! command -v conda >/dev/null 2>&1; then
+        local _conda_sh="${REPO}/miniforge3/etc/profile.d/conda.sh"
+        [ -f "${_conda_sh}" ] || _conda_sh="${HOME}/miniforge3/etc/profile.d/conda.sh"
+        if [ -f "${_conda_sh}" ]; then
+            # shellcheck disable=SC1090  # 动态路径系设计使然（REPO 内置/家目录回退，均已实证存在）
+            . "${_conda_sh}"
+        else
+            echo "[ERROR] mgx_conda: PATH 无 conda 且未定位到 conda.sh（候选: ${REPO}/miniforge3, ~/miniforge3）"
+            exit 127
+        fi
+    fi
     # 质量审核终审 2026-10-15 P0-2：调用点级环境隔离（会话层 activate.sh 的策略对
     # nohup 泳道/续接会话无效；~/.local numpy 曾遮蔽环境内 numpy 致 53/70 二爆）
     PYTHONNOUSERSITE=1 conda run --prefix "${REPO}/envs/$1" --no-capture-output "${@:2}"
