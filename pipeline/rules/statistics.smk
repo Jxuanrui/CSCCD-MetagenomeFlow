@@ -324,8 +324,20 @@ rule stat_report:
 rule bac_integration_tables:
     """Integrate bacterial quantification and annotation outputs into summary tables."""
     input:
+        # 契约对齐：98b 脚本硬检查的全部必需输入（缺一即 exit 1），
+        # 规则必须逐一声明，否则调度序错乱（R-20261120-33 修复：
+        # 首跑 98b 在 dbcan/humann3_merge 未产出时被提前调度即失败）。
         eggnog = WORKDIR + "/result/annotation/eggnog/eggnog.emapper.annotations",
         kegg = WORKDIR + "/result/annotation/kegg/kegg_diamond.tsv",
+        amrfinder = WORKDIR + "/result/annotation/amrfinder/amrfinder_results.tsv",
+        card = WORKDIR + "/result/annotation/card/rgi_results.txt",
+        dbcan = WORKDIR + "/result/annotation/dbcan/overview.txt",
+        vfdb = WORKDIR + "/result/annotation/vfdb/vfdb_hits.tsv",
+        bacmet = WORKDIR + "/result/annotation/bacmet/bacmet_hits.tsv",
+        ncyc = WORKDIR + "/result/annotation/ncyc/ncyc_hits.tsv",
+        pcyc = WORKDIR + "/result/annotation/pcyc/pcyc_hits.tsv",
+        defense = WORKDIR + "/result/annotation/defense_finder/defense_finder_genes.tsv",
+        humann_pathabundance = WORKDIR + "/result/humann3/merged/pathabundance_relab.tsv",
         salmon = expand(
             WORKDIR + "/result/assembly/salmon/{sample}/quant.sf",
             sample=SAMPLES,

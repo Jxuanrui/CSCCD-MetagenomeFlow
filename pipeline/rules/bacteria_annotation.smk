@@ -191,6 +191,10 @@ rule defense_finder:
         protein_nr = PROTEIN_NR_PATH,
     output:
         systems = WORKDIR + "/result/annotation/defense_finder/defense_finder_systems.tsv",
+        # 29 脚本同时产出基因级注释（质量审核 R-20261120-33 指认的契约缺口）：
+        # 不声明则 98b 等消费者与产出规则之间无调度边，fresh workdir 会
+        # MissingInputException，且产出口可能与消费口脱节（stale 基因表）。
+        genes = WORKDIR + "/result/annotation/defense_finder/defense_finder_genes.tsv",
     threads: CPUS
     params:
         force_flag = config.get("force", False) and "--force" or "",
