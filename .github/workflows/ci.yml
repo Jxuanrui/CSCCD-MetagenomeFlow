@@ -7,7 +7,6 @@
 #               plus README count-token drift gate (badge sync + git diff).
 # Level 2 (sampled integration tests) and level 3 (Snakemake DAG dry-run) stay
 # local-only: they depend on Project/Test_CI_fixture data, which is gitignored.
-# Alternatively, translate
 #  this file to your CI platform's pipeline/ pipeline.
 #
 # schedule: weekly re-run guards against silent drift (shellcheck version bumps,
