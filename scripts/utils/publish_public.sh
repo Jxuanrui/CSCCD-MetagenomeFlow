@@ -73,8 +73,8 @@ echo "${FILES}" | xargs -d '\n' grep -l -E '/home/[A-Za-z0-9_.-]+/' 2>/dev/null 
     xargs -r -d '\n' sed -i -E 's#/home/[A-Za-z0-9_.-]+/#~/#g' || true
 # 2026-10-19 pass: this cycle's review-process vocabulary and tool refs are
 # neutralized across shipped text (review channel terms, agent jargon, client names).
-echo "${FILES}" | xargs -d '\n' grep -l -e '质量审核' -e '主代理' -e '子代理' 2>/dev/null | \
-    xargs -r -d '\n' sed -i -e 's/质量审核/质量审核/g' -e 's/主代理/执行方/g' -e 's/子代理/后台任务/g' || true
+echo "${FILES}" | xargs -d '\n' grep -l -e '监工' -e '主代理' -e '子代理' 2>/dev/null | \
+    xargs -r -d '\n' sed -i -e 's/监工/质量审核/g' -e 's/主代理/执行方/g' -e 's/子代理/后台任务/g' || true
 echo "${FILES}" | xargs -d '\n' grep -l -E 'supervisor (P0|final|stage|review)|supervisor_[0-9]|，supervisor|, supervisor' 2>/dev/null | \
     xargs -r -d '\n' sed -i -E 's/[Ss]upervisor_[0-9]{8}[a-z0-9_]*/review/g; s/，supervisor/，review/g; s/, supervisor/, review/g' || true
 echo "${FILES}" | xargs -d '\n' grep -l -E 'Claude Code|claude mcp|claude -p' 2>/dev/null | \
@@ -92,14 +92,14 @@ echo "${FILES}" | xargs -d '\n' grep -l -E '\.claude|CLAUDE|Claude|claude|Codex|
         -e 's/MGXPRESERVEFIG/scientific-figure-library-claude/g' \
         -e 's/Codex/外部执行器/g' -e 's/ZCode 工作区级/工作区级/g' -e 's/ZCode/工作区/g' -e 's/zcode/内部工具/g' || true
 # gitignore: drop the internal relay-config line from the snapshot
-sed -i -e '/supervisor_relays/d' -e '/feishu_notes/d' .gitignore 2>/dev/null || true
+sed -i -e '/supervisor_relays/d' -e '/supervisor_api/d' -e '/feishu_notes/d' .gitignore 2>/dev/null || true
 # 2026-10-21: export sanitized tutorial + optimization evidence for public docs.
 # Copy walkthrough (sanitized: no sample IDs, no absolute paths) to docs/tutorial/
 mkdir -p docs/tutorial
 if [ -f Project/Project_demo/walkthrough.md ]; then
     sed -e 's/Harbin[0-9]\+/Sample<N>/g' \
         -e 's#/home/[A-Za-z0-9_.-]\+/#~/#g' \
-        -e 's/质量审核/质量审核/g' -e 's/主代理/执行方/g' -e 's/子代理/后台任务/g' \
+        -e 's/监工/质量审核/g' -e 's/主代理/执行方/g' -e 's/子代理/后台任务/g' \
         -e 's/[Ss]upervisor_[0-9]\{8\}[a-z0-9_]*/review/g' -e 's/，supervisor/，review/g' \
         Project/Project_demo/walkthrough.md > docs/tutorial/walkthrough.md
     echo "[publish] exported sanitized walkthrough to docs/tutorial/"
@@ -145,16 +145,16 @@ fi
 # the seds above are best-effort; the snapshot is the enforcement point).
 BAD_PATHS="$(git ls-tree -r --name-only "${BRANCH}" | grep -E "${EXCLUDE_RE}" || true)"
 BAD_HOME="$(git grep -l '/home/' "${BRANCH}" -- 2>/dev/null | grep -v 'scripts/utils/publish_public.sh' || true)"
-BAD_WORDS="$(git grep -lEi -e 'Harbin[0-9]' -e '质量审核' -e 'supervisor' -e 'sicoding' \
-                    -e 'claude' -e 'WC1R' -e 'approve' -e 'ou_[a-f0-9]{32}' -e 'gpt-6' -e 'feishu' -e '飞书' \
+BAD_WORDS="$(git grep -lEi -e 'Harbin[0-9]' -e '监工' -e 'supervisor' -e 'sicoding' \
+                    -e 'claude' -e 'WC1R' -e '拍板' -e 'ou_[a-f0-9]{32}' -e 'gpt-6' -e 'feishu' -e '飞书' \
                     -e 'REDACTED-CANARY' "${BRANCH}" -- ':!*.pdf' 2>/dev/null || true)"
 # Accepted exception (4th review): the ScientificFigureLibrary release URL in
 # PROJECT_MAP is a functional third-party artifact name containing "claude".
 # A flagged file only passes if, after excluding that exact URL, nothing hits.
 if [ -n "${BAD_WORDS}" ]; then
     BAD_WORDS="$(printf '%s\n' "${BAD_WORDS}" | while IFS= read -r f; do
-        git grep -nEi -e 'Harbin[0-9]' -e '质量审核' -e 'supervisor' -e 'sicoding' -e 'claude' \
-                       -e 'WC1R' -e 'approve' -e 'ou_[a-f0-9]{32}' -e 'gpt-6' -e 'REDACTED-CANARY' \
+        git grep -nEi -e 'Harbin[0-9]' -e '监工' -e 'supervisor' -e 'sicoding' -e 'claude' \
+                       -e 'WC1R' -e '拍板' -e 'ou_[a-f0-9]{32}' -e 'gpt-6' -e 'REDACTED-CANARY' \
             "${BRANCH}" -- "${f}" 2>/dev/null \
             | grep -v 'scientific-figure-library-claude' | grep -q . && echo "${f}"
     done)"

@@ -176,7 +176,7 @@ with open(tsv_path) as f:
 if header is None:
     print("[WARN] header not found; writing header-only CSV (fungi_negative)", file=sys.stderr)
     with open(csv_path, 'w', newline='') as f:
-        csv.writer(f).writerow(['species', 'XJA1'])
+        csv.writer(f).writerow(['species', 'Sample1'])
     sys.exit(0)
 
 # 按第一样本丰度降序排列

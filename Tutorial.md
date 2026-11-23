@@ -283,7 +283,7 @@ python3 scripts/utils/pipeline_status.py <workdir>
 这套教程的原则是**把不确定的地方写清楚**，而不是让数字看起来漂亮。
 
 1. **统计功效**：本演示 n=6（3v3），组标签置换空间仅 C(6,3)=20 种。所有组间比较（差异分析、网络比较、核心菌群对比）**只能作为探索性提示**，不能当作确证结论。详见 `docs/08_statistics/POWER_DISCLOSURE.md`。
-2. **网络比较未完成**：5/5 网络本体已建成，但组间比较（NetCoMi）因小样本下逐组网络退化而按decision跳过，状态表如实记 `SKIPPED`。
+2. **网络比较未完成**：5/5 网络本体已建成，但组间比较（NetCoMi）因小样本下逐组网络退化而按决定跳过，状态表如实记 `SKIPPED`。
 3. **基因组分箱质量**：128 个代表中 GUNC 判定 81 通过 / 47 有嵌合信号——全部保留并披露，未做二次删除。
 4. **代谢模型**：9/10 成功；失败的 1 个是 CarveMe 求解器空解，属工具内部数值问题，未重试。
 5. **真菌链是全群落口径**：80 号起用全群落 contigs（非纯真菌序列），真菌功能注释含大量细菌基因——阅读时须带这个限定。
@@ -3824,7 +3824,7 @@ setTimeLimit(elapsed = as.integer(Sys.getenv("NETCOMI_TIMEOUT", "7200")))   # 2h
 - **_tpm join 整改（质量复核 5 审 E2 / cp2_review，1b9e566）**：病毒表样本列只取 `*_tpm`（整改项-B，
   旧代码把 length/_count/lineage 一并当丰度），且读入后剥 `_tpm` 后缀再对元数据行名——旧代码
   `Sample<N>_tpm` vs 元数据 `Sample<N>` 交集为 0，把失败伪装成"需≥5 样本"的误导性跳过。
-- **NetCoMi 组间比较 = 有界披露（质量复核 6/7 审decision，POWER_DISCLOSURE §二）**：
+- **NetCoMi 组间比较 = 有界披露（质量复核 6/7 审核决定，POWER_DISCLOSURE §二）**：
   a) 细菌域：3v3 逐组 SparCC/FastSpar 网络退化，`network/bacteria/group_compare.txt` 为退化
   诊断（"Status: unavailable"，nPerm: 20 (capped at permutation space 20)），非成功比较；
   b) 其余 4 目标：2 小时总预算点终止 = SKIPPED(overall-timeout)；
@@ -4413,7 +4413,7 @@ Project/Project01/result/assembly/prodigal/Sample1/
 
 | 后端 | 参数 | 算法复杂度 | 速度（48核，2.5M基因） | 适用场景 |
 |------|------|-----------|----------------------|---------|
-| **MMseqs2 Linclust**（**默认**，R-task-4） | `--tool mmseqs`（或省略） | O(n) 线性 | ~5-15 分钟（**4-10×快**） | >500万基因，>50样本，或追求速度；599 样本全量约 3.5 亿基因必需 |
+| **MMseqs2 Linclust**（**默认**，R-task） | `--tool mmseqs`（或省略） | O(n) 线性 | ~5-15 分钟（**4-10×快**） | >500万基因，>50样本，或追求速度；599 样本全量约 3.5 亿基因必需 |
 | **CD-HIT-EST**（可选回退） | `--tool cdhit` | 近 O(n²) | ~30-60 分钟 | ≤500万基因，≤20样本，结果最被同行引用（小规模场景） |
 
 > **规模临界点**：10 样本 (~250万基因/样本) 用 CD-HIT 约 30 分钟；50 样本 (~1250万基因) 用 CD-HIT 将超 5 小时，此时应切换 MMseqs2。两者 95% identity 结果高度一致，均被 MetaHIT/IGC/UHGG 等大型基因目录项目采用。
@@ -4443,9 +4443,9 @@ bash ~/Course/CSCCD-MetagenomeFlow/scripts/18_bac_cdhit.sh \
 
 **LLM 调用示例**：
 ```
-请帮我运行步骤 9（基因去冗余），当前 Project01 有 10 个样本。默认后端为 MMseqs2 Linclust（R-task-4，全量 3.5 亿基因必需）。
+请帮我运行步骤 9（基因去冗余），当前 Project01 有 10 个样本。默认后端为 MMseqs2 Linclust（R-task，全量 3.5 亿基因必需）。
 工作目录：~/Course/CSCCD-MetagenomeFlow/Project/Project01
-默认后端已是 MMseqs2 Linclust（R-task-4），无需切换；仅当人工确认数据量 ≤500 万基因（如小规模探索）时才用 `--tool cdhit` 回退。
+默认后端已是 MMseqs2 Linclust（R-task），无需切换；仅当人工确认数据量 ≤500 万基因（如小规模探索）时才用 `--tool cdhit` 回退。
 ```
 
 **输出结果**：
