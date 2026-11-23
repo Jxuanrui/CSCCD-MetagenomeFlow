@@ -64,11 +64,14 @@ mkdir -p "${OUTDIR}"
 find "${OUTDIR}" -maxdepth 1 -xtype l -delete 2>/dev/null || true
 
 # 确保 GTDBTK_DATA_PATH 指向正确
+# 旧开发机曾在 conda 激活层预设指向其本机库的 GTDBTK_DATA_PATH（2026-11-22
+# rerun5b 实证 "reference data does not exist"）——任何与本地库不符的预设一律覆盖。
 GTDB_PATH="${REPO}/db/gtdbtk"
 if [ -z "${GTDBTK_DATA_PATH:-}" ]; then
     export GTDBTK_DATA_PATH="${GTDB_PATH}"
 elif [ "${GTDBTK_DATA_PATH}" != "${GTDB_PATH}" ]; then
-    echo "[gtdbtk] NOTE: 当前 GTDBTK_DATA_PATH=${GTDBTK_DATA_PATH}"
+    echo "[gtdbtk] NOTE: 覆盖激活层预设 GTDBTK_DATA_PATH=${GTDBTK_DATA_PATH} → ${GTDB_PATH}"
+    export GTDBTK_DATA_PATH="${GTDB_PATH}"
 fi
 
 echo "[gtdbtk] MAG 分类（分步执行，避开 classify_wf 的 skani 依赖）| 线程: ${CPUS}"

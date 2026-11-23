@@ -176,3 +176,4 @@ docs/plans/
 Project/MOST_Sinkiang/
 Project/*/00_admin/
 Project/*/ingest/*inventory*
+scripts/utils/supervisor_api.py

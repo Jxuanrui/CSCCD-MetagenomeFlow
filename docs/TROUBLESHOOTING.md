@@ -364,4 +364,5 @@ ps aux | grep checkm
 
 - 📖 性能调优: [docs/PERFORMANCE_TUNING.md](PERFORMANCE_TUNING.md)
 - 📖 项目架构: [docs/PROJECT_MAP.md](PROJECT_MAP.md)
+- 📖 公共数据下载（Aspera / aria2c / 链路诊断）: [docs/experience/ena-fastq-bulk-download.md](experience/ena-fastq-bulk-download.md)
 - 🤖 自动诊断: 使用 `/mgx-tune` 技能获取配置建议
