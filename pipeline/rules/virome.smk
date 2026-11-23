@@ -371,6 +371,8 @@ rule vir_iphop:
         votu_fasta = WORKDIR + "/result/virus/votu/contigs/virus.fasta",
     output:
         host_tsv = WORKDIR + "/result/virus/iphop/Host_prediction_to_genus_m90.csv",
+        # R-task 审计同类：iphop predict 同步产出的 genome 级表，98g 硬消费
+        host_genome = WORKDIR + "/result/virus/iphop/Host_prediction_to_genome_m90.csv",
     log:
         WORKDIR + "/logs/virus/iphop/iphop.log",
     threads: CPUS

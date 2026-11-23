@@ -807,6 +807,10 @@ rule cross_domain_correlation:
     """
     input:
         ani_clusters = WORKDIR + "/result/cross_domain/cluster/genome_clusters.tsv",
+        # R-task 同类第 3 例：98g 脚本硬检查 votu_table（L49-54 exit 1）与
+        # iphop genome 级表（L112 --iphop 参数），原规则仅声明 ani_clusters
+        votu_table = WORKDIR + "/result/virus/votu/votu_table.tsv",
+        iphop_genome = WORKDIR + "/result/virus/iphop/Host_prediction_to_genome_m90.csv",
     output:
         out = WORKDIR + "/result/cross_domain/correlation/network_summary.txt",
     log:
