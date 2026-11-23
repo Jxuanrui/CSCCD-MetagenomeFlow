@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-# W1 baseline rebuild (supervisor CP2-MAG condition C1, user-approved approve A).
+# W1 baseline rebuild (review CP2-MAG condition C1, user-approved approve A).
 # Shadow-workdir approach: symlink dastool bins into an isolated workdir, run
 # 37/38/38b there (scripts fall back to dastool bins when reassembly/ absent),
 # then copy outputs into result/binning/{checkm2,drep,gunc}_w1_baseline/.

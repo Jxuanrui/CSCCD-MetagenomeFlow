@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-# W5 gate (supervisor 4th review P0-2): smoke-test the fixed 91/92/93 consumers
+# W5 gate (review 4th review P0-2): smoke-test the fixed 91/92/93 consumers
 # the moment the V3 lane finishes, BEFORE any W5/98-series stats run.
 export MGX_MONITOR=1
 export PATH="${REPO}/miniforge3/bin:$PATH"

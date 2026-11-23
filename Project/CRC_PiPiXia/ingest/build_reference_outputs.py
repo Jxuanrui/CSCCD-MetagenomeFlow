@@ -18,7 +18,7 @@ Inputs (must already exist, 25-sample gate enforced):
 KEGG aggregates are rebuilt from ko_unstratified + db/kegg/misc mappings
 (ko-pathway.txt, ko-levels.txt, pathway-definition.txt); row names follow the
 CURRENT KEGG release, so row sets may differ from Reference_result (recorded
-in manifest, per supervisor decision).
+in manifest, per review decision).
 
 Usage:
   python3 build_reference_outputs.py --workdir Project/CRC_PiPiXia/PRJEB22893 \

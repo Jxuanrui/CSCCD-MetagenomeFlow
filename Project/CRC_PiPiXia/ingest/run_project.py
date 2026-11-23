@@ -80,7 +80,7 @@ ARIA2_BLOCK_STREAK = 5        # consecutive refused connects before backing off
 ARIA2_BLOCK_SLEEP_S = 1800    # long pause: hammering extends the block
 ARIA2_STALL_WINDOW_S = 90
 ARIA2_MAX_RESTARTS = 8
-# Optional HTTP proxy passthrough (supervisor 2026-11-22 P0: the VPN download
+# Optional HTTP proxy passthrough (review 2026-11-22 P0: the VPN download
 # path moved inside the audited runner, so the bash loop is gone). Empty string
 # means direct connection, exactly the pre-2026-11-22 behaviour.
 PROXY = ""
@@ -90,7 +90,7 @@ PROXY = ""
 # logfile, so completeness there is non-negotiable).
 PROGRESS_ECHO = False
 # Runs whose --progress pump hard-failed (timeout or logfile-write error) in
-# this execution. Queue level (supervisor P0, 2026-11-23 round 3): such a run
+# this execution. Queue level (review P0, 2026-11-23 round 3): such a run
 # is refused at aria2_download entry and filtered out of every retry pass, so
 # a still-alive old pump can never race a fresh attempt on the same logfile
 # and the run can never publish here. A later process (--manifest rerun)
@@ -99,7 +99,7 @@ _PUMP_BROKEN_RUNS = set()
 # Terminal echo is best-effort: dedicated daemon writers consume bounded
 # queues for BOTH stdout and stderr, so a blocked/broken terminal can never
 # stall the log-draining pump OR the download control flow (jlog, hard-fail
-# notices) — supervisors P0, 2026-11-23 rounds 3-4. Overflow is dropped from
+# notices) — reviews P0, 2026-11-23 rounds 3-4. Overflow is dropped from
 # the display only; the logfile (and jsonl audit) stays authoritative.
 _WRITERS = {}
 _STREAM_STATE = {"out": True, "err": True}
@@ -134,7 +134,7 @@ def _ensure_writer(name):
 
 
 def _emit(name, text):
-    """Non-blocking console emit: never blocks, never raises (supervisor P0:
+    """Non-blocking console emit: never blocks, never raises (review P0:
     a permanently blocked stdout must not hang download control flow)."""
     try:
         q = _ensure_writer(name)
@@ -193,7 +193,7 @@ def now():
 def jlog(path, **record):
     # Audit logging is best-effort for CONTROL FLOW: a broken stdout (the
     # --progress echo case) must never crash the download or the hard-fail
-    # propagation paths (supervisor P0, 2026-11-23 round 3). The jsonl file
+    # propagation paths (review P0, 2026-11-23 round 3). The jsonl file
     # write stays first; if even that fails we say so on stderr once per call
     # site and move on.
     record = {"ts": now(), **record}
@@ -566,7 +566,7 @@ def _echo_pump(proc, log_path, state):
     dedicated daemon writer, so a blocked/broken terminal can never stall
     this pump or the log drain — overflow lines are dropped from the display
     only. Daemon thread; run_monitored joins it explicitly at every
-    termination point (supervisor P0, 2026-11-23)."""
+    termination point (review P0, 2026-11-23)."""
     state["log_ok"] = True
     try:
         with open(log_path, "a", encoding="utf-8") as fh:
@@ -605,7 +605,7 @@ def run_monitored(cmd, log_path, part, min_bps, window_s, poll_s=15,
     pump = None
 
     def join_pump(timeout_s=60):
-        # Supervisor P0 (2026-11-23, round 2): joining without checking
+        # review P0 (2026-11-23, round 2): joining without checking
         # liveness, or with a silently-failed pump, is not a guarantee. This
         # returns True only when the pump thread FINISHED and completed its
         # logfile drain. Any timeout or logfile-write failure is a hard
@@ -666,7 +666,7 @@ def run_monitored(cmd, log_path, part, min_bps, window_s, poll_s=15,
             now_t = time.monotonic()
             # Rate over the REAL elapsed interval, not the nominal poll_s: near
             # the wall-clock deadline the wait is clamped and a fixed divisor
-            # would silently distort the measurement (supervisor P1).
+            # would silently distort the measurement (review P1).
             elapsed = max(now_t - last_t, 1e-3)
             rate = (cur - last) / elapsed
             last, last_t = cur, now_t
@@ -698,7 +698,7 @@ def run_monitored(cmd, log_path, part, min_bps, window_s, poll_s=15,
                 return None, restarts, "burst_cycles_exhausted"
             continue
         restarts += 1
-        # Per-attempt audit record (supervisor requirement: every backend/attempt
+        # Per-attempt audit record (review requirement: every backend/attempt
         # is individually reconstructable, and a same-backend retry is
         # distinguishable from a backend switch).
         if on_restart is not None:
@@ -732,7 +732,7 @@ def aria2_download(run, details, data_dir, log):
     '<dest>.aria2' control file inside data/, which is inert to every downstream
     glob (*.fastq.gz/.done/.part) and removed on success."""
     if run in _PUMP_BROKEN_RUNS:
-        # Queue-level hard fail (supervisor P0, 2026-11-23 round 3): a run
+        # Queue-level hard fail (review P0, 2026-11-23 round 3): a run
         # whose --progress pump died or outlived its join is never retried
         # and never published in this execution — the queue filters it out
         # of `pending`; this guard is the second line of defence so no fresh
@@ -791,7 +791,7 @@ def aria2_download(run, details, data_dir, log):
             # --progress pump failed or outlived its join budget: the logfile
             # tail cannot be trusted for refusal detection and the next
             # attempt must not race it. Poison the run for the WHOLE
-            # execution (supervisor P0 2026-11-23 round 3): filtered from
+            # execution (review P0 2026-11-23 round 3): filtered from
             # every later retry pass and refused at entry, so it can never
             # publish here; a later --manifest rerun (fresh process, empty
             # poison set) resumes from .part/.aria2.
@@ -958,7 +958,7 @@ def download(selected, details, workdir, parallel, log, backend="locked-aspera")
                         _, run_ok = fut.result()
                         (ok if run_ok else failed).append(run)
             if _PUMP_BROKEN_RUNS:
-                # Queue-level hard fail (supervisor P0 2026-11-23 round 3):
+                # Queue-level hard fail (review P0 2026-11-23 round 3):
                 # pump-poisoned runs leave the retry queue entirely — no
                 # further attempt in this execution, so no publish either.
                 # The final "download incomplete" summary in main() reports
@@ -1040,7 +1040,7 @@ def _benchmark_recommendation(workdir):
     Both the default name and the pilot name are accepted: the probe run for
     this dataset was written as download_benchmark_pilot.json, and a record
     that says "not_run" only because of a filename mismatch is misleading
-    (supervisor P1). The report actually read is named in the result."""
+    (review P1). The report actually read is named in the result."""
     for name in BENCHMARK_REPORTS:
         path = workdir / "manifests" / name
         if not path.exists():
@@ -1219,7 +1219,7 @@ def main(argv=None):
     parser.add_argument("--max-hours", type=float, default=12,
                         help="hard wall-clock budget for downloads + analysis (default 12)")
     args = parser.parse_args(argv)
-    # Proxy address validation is the FIRST thing after parsing (supervisor P0,
+    # Proxy address validation is the FIRST thing after parsing (review P0,
     # 2026-11-22 round 2): an invalid --proxy must exit before any path is
     # resolved, any directory is created, or any log/lock file is opened.
     _proxy = args.proxy.strip()
@@ -1248,7 +1248,7 @@ def main(argv=None):
         (workdir / sub).mkdir(parents=True, exist_ok=True)
     log = workdir / "logs" / "ingest.jsonl"
 
-    # Single-instance guard (supervisor P0: a pilot must never contend with
+    # Single-instance guard (review P0: a pilot must never contend with
     # another downloader for the same FASTQ). The fd is held for the whole
     # process lifetime; a second orchestrator on this workdir exits instead of
     # racing — the §23 dual-instance incident cannot recur.
@@ -1297,7 +1297,7 @@ def main(argv=None):
          progress_echo=PROGRESS_ECHO)
 
     # The selected backend is part of the auditable record, not just a CLI flag
-    # (supervisor P0). Written before any transfer so a crash still leaves it.
+    # (review P0). Written before any transfer so a crash still leaves it.
     selection = {
         "dataset": dataset["dataset_id"],
         "recorded_at": now(),
@@ -1329,7 +1329,7 @@ def main(argv=None):
                   backend=args.download_backend)
     if len(ok) != len(selected):
         # Exit-path console output goes through the non-blocking queue too
-        # (supervisor P0 2026-11-23 round 5): a blocked terminal must not hang
+        # (review P0 2026-11-23 round 5): a blocked terminal must not hang
         # the final exit. int code keeps the interpreter silent on stderr.
         _emit("err", "download incomplete: %d/%d (see %s; poisoned runs: %s)"
               % (len(ok), len(selected), log,

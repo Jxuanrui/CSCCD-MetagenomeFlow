@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-# W5 lane (CP2 closed per 7th supervisor review; user-approved plan):
+# W5 lane (CP2 closed per 7th review review; user-approved plan):
 # integration tables -> cross-domain analytics. Fungus integration (98d_fun)
 # runs alongside bacterial/viral since inputs are ready.
 # Lane self-check per 6th-ruling rule-1: permutation/bootstrap params below

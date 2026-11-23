@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-# 79c-f fungi MAG chain watcher (user approved 2026-10-14, supervisor 4th
+# 79c-f fungi MAG chain watcher (user approved 2026-10-14, review 4th
 # review decision #4): starts when the F lane finishes; all 6 samples with
 # continue-on-error (only Sample4 has fungal assembly content by design).
 export MGX_MONITOR=1

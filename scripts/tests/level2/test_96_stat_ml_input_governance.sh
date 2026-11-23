@@ -30,7 +30,7 @@
 #          the degenerate disclosure also persists in
 #          siamcat_disclosure.txt (Q3), regenerated every ML run.
 #
-#          Supervisor P1-2: fixtures use REAL producer formats, not invented
+#          review P1-2: fixtures use REAL producer formats, not invented
 #          ones - B block = MetaPhlAn merged taxonomy layout (header,
 #          "#metaphlan4" comment line, UNCLASSIFIED, multi-rank k__Bacteria
 #          rows, k__Eukaryota/k__Archaea lineages), V block = 98c
@@ -719,7 +719,7 @@ rm -f "${C2OK_LOG}"
 echo "[OK] C2: regime-matched resume exits 0 with regime-match log"
 
 # fungi_method audit value must be the REAL source (funomic), not the
-# env-default auto (supervisor re-review: the audit line wrote a fake value)
+# env-default auto (review re-review: the audit line wrote a fake value)
 grep -q "^fungi_method=funomic$" "${B_ML}/split_manifest.txt" \
     || fail "manifest fungi_method is not the real source (expected funomic)"
 echo "[OK] manifest fungi_method=funomic (real value, not env default)"
@@ -743,7 +743,7 @@ rm -f "${C2M_LOG}"
 echo "[OK] C2: fungi_method mismatch (phf vs funomic) blocks resume"
 
 # SKIPPED-path contract: 10 samples 5/class => SIAMCAT per-class refusal,
-# and resuming that sentinel (no --force) exits 0 (supervisor P1).
+# and resuming that sentinel (no --force) exits 0 (review P1).
 SK_DIR="$(mktemp -d)"
 mkdir -p "${SK_DIR}/result/metaphlan4/merged"
 python3 - "${SK_DIR}" <<'PYSKIP'

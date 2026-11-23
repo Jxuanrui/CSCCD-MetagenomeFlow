@@ -2,7 +2,7 @@
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W4-B lane (last unrun MAG chain; dRep products ready since 10-14):
 # 39 coverm quant x6 -> 39b instrain map x6 -> 39c instrain profile x6 ->
-# 39d instrain compare. 39b->39c->39d strictly serial (per supervisor W4).
+# 39d instrain compare. 39b->39c->39d strictly serial (per review W4).
 export MGX_MONITOR=1
 export PATH="${REPO}/miniforge3/bin:$PATH"
 WD="${REPO}/Project/Project_demo"

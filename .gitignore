@@ -143,7 +143,7 @@ mining/m4/profiles/
 mining/m4/annotations_cache.jsonl
 .mcp.json
 .pixi/
-.claude/supervisor_relays.local.json
+.claude/review_relays.local.json
 tools/
 Project/Project_demo/feishu_notes/
 .claude/settings.local.json
@@ -176,4 +176,4 @@ docs/plans/
 Project/MOST_Sinkiang/
 Project/*/00_admin/
 Project/*/ingest/*inventory*
-scripts/utils/supervisor_api.py
+scripts/utils/review_api.py

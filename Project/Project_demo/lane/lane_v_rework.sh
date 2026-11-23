@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-# V-rework lane (supervisor 2026-10-13 P0 / decisions D+E+B):
+# V-rework lane (review 2026-10-13 P0 / decisions D+E+B):
 # virus chain rebuilt with prefixed gene IDs, contig-level-only TPM table,
 # fixed union sensitivity output. Strict chain: abort on first failure.
 export MGX_MONITOR=1

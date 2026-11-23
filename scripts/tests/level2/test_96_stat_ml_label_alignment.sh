@@ -149,7 +149,7 @@ for (k in seq_len(nrow(tsv))) {
                  nm, tsv$auc_pr[k], tsv$sensitivity[k], tsv$specificity[k], tsv$n_predictions[k],
                  aligned$auc_pr, aligned$sens, aligned$spec, length(ids)))
   }
-  # Ground-truth assertion (supervisor P1-1): the aligned label vector must equal
+  # Ground-truth assertion (review P1-1): the aligned label vector must equal
   # the fixture's true labels by name-prefix rule (H* -> control/0, D* -> case/1),
   # independent of the production alignment code (breaks the self-confirming loop).
   truth <- ifelse(startsWith(ids, "H"), 1L, 0L)  # case = levels()[2] = H

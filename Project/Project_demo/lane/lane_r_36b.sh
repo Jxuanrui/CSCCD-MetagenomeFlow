@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-# R lane (supervisor 2026-10-13 P0-2 / decision A):
+# R lane (review 2026-10-13 P0-2 / decision A):
 # 36b reassembly x6 strictly serial (assembler mutex), then 37/38/38b --force.
 export MGX_MONITOR=1
 WD="${REPO}/Project/Project_demo"

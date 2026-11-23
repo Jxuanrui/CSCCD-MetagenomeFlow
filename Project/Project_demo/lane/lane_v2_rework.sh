@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-# V2 lane (supervisor 2026-10-13 re-review P0-1/P0-2/P0-3):
+# V2 lane (review 2026-10-13 re-review P0-1/P0-2/P0-3):
 # 54 union fix for the 2 samples with multi-provirus contigs (main outputs
 # bit-identical, so no downstream cascade beyond what the index change needs),
 # then 58 index rebuild (vOTU-only) -> 59 x6 -> 60. Strict chain.
