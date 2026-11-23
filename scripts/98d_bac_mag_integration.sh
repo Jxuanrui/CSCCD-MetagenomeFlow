@@ -60,12 +60,16 @@ COVERM_DIR="${BIN_DIR}/coverm_quant"
 OUT_DIR="${WORKDIR}/result/integration/bacteria"
 OUT_FILE="${OUT_DIR}/mag_integration_table.tsv"
 
-if [ -f "${WORKDIR}/samplesheet_test10.csv" ]; then
+if [ -f "${WORKDIR}/samplesheet_smoke.csv" ]; then
+    # R-task 审计第 5 颗迁移雷：各 run 的样本表命名不同（smoke/test10/正式），
+    # 通用兜底 = 任意 samplesheet*.csv（含带后缀变体），优先级显式在前
+    SAMPLESHEET="${WORKDIR}/samplesheet_smoke.csv"
+elif [ -f "${WORKDIR}/samplesheet_test10.csv" ]; then
     SAMPLESHEET="${WORKDIR}/samplesheet_test10.csv"
 elif [ -f "${WORKDIR}/samplesheet.csv" ]; then
     SAMPLESHEET="${WORKDIR}/samplesheet.csv"
 else
-    SAMPLESHEET=""
+    SAMPLESHEET="$(ls "${WORKDIR}"/samplesheet*.csv 2>/dev/null | head -1)"
 fi
 
 # 幂等检查
