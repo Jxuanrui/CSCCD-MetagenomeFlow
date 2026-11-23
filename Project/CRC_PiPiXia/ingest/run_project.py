@@ -61,8 +61,8 @@ ISEQ_BIN = HERE / "envs" / "iseq" / "bin"
 # Connect 4.2.19 build (ascp 4.4.7) with a "-d" flag and "-l 1000M"; that is not
 # the documented invocation. Correct form (tutorial §5/§13):
 #   ascp -QT -k1 -l 300m -P 33001 -i <key> era-fasp@fasp.sra.ebi.ac.uk:<path> <dir>
-ASCP_BIN = Path("/home/admin-user/.aspera/sdk/ascp")
-ASCP_KEY = Path("/home/admin-user/.aspera/sdk/aspera_bypass_rsa.pem")
+ASCP_BIN = Path.home() / ".aspera" / "sdk" / "ascp"
+ASCP_KEY = Path.home() / ".aspera" / "sdk" / "aspera_bypass_rsa.pem"
 ASCP_RATE = "300m"
 # Symlink into this project's ingest/envs/ -> platform envs/dram/bin/aria2c,
 # so the project does not reach into a shared conda prefix directly.

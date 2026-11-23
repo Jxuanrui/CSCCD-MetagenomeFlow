@@ -1,9 +1,9 @@
 #!/bin/bash
-cd /home/labuser/Course/Maxmetagenome
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+cd "${REPO}"
 source scripts/activate.sh >/dev/null 2>&1
 export MGX_MONITOR=1
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+WD="${REPO}/Project/Project_demo"
 
 echo "=== [$(date +%H:%M:%S)] F: 72b metaphlan4_merge ==="
 bash scripts/72b_fun_metaphlan4_merge.sh -w "$WD" -r "$REPO" 2>&1 | tail -3

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # F-fungi lane (supervisor W2-C): waits for B3-light lane to free its 16 threads,
 # then runs fungi chain. Per-sample steps continue-on-error (5/6 samples have
 # empty fungal assemblies by design disclosure); aggregate steps strict.
 export MGX_MONITOR=1
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 SAMPLES="Sample1 Sample2 Sample3 Sample4 Sample10 Sample11"
 

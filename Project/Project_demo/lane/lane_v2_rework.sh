@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # V2 lane (supervisor 2026-10-13 re-review P0-1/P0-2/P0-3):
 # 54 union fix for the 2 samples with multi-provirus contigs (main outputs
 # bit-identical, so no downstream cascade beyond what the index change needs),
 # then 58 index rebuild (vOTU-only) -> 59 x6 -> 60. Strict chain.
 export MGX_MONITOR=1
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 SAMPLES="Sample1 Sample2 Sample3 Sample4 Sample10 Sample11"
 

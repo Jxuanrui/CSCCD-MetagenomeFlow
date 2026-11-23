@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W3-C lane (supervisor 4th review P1-8: fill-in execution, no wave gating;
 # user approved 2026-10-14). Light per-sample steps at -t 8 to fit real
 # headroom (nominal 48t already allocated, observed load ~28).
 # 31e fegenie (reads 17 faa), 42 mge, 42b plasmidfinder (read 16/17 products).
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 SAMPLES="Sample1 Sample2 Sample3 Sample4 Sample10 Sample11"
 

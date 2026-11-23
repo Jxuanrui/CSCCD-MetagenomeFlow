@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W1 baseline rebuild (supervisor CP2-MAG condition C1, user-approved approve A).
 # Shadow-workdir approach: symlink dastool bins into an isolated workdir, run
 # 37/38/38b there (scripts fall back to dastool bins when reassembly/ absent),
@@ -6,8 +7,7 @@
 # The REAL result paths (incl. drep output gtdbtk is reading right now) are
 # never touched — lower risk than moving reassembly/ aside.
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
 REAL="$REPO/Project/Project_demo"
 SHADOW="/tmp/w1_baseline_shadow"
 cd "$REPO"

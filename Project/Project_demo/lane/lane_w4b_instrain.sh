@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W4-B lane (last unrun MAG chain; dRep products ready since 10-14):
 # 39 coverm quant x6 -> 39b instrain map x6 -> 39c instrain profile x6 ->
 # 39d instrain compare. 39b->39c->39d strictly serial (per supervisor W4).
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 SAMPLES="Sample1 Sample2 Sample3 Sample4 Sample10 Sample11"
 

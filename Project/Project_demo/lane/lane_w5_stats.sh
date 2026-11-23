@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W5 lane (CP2 closed per 7th supervisor review; user-approved plan):
 # integration tables -> cross-domain analytics. Fungus integration (98d_fun)
 # runs alongside bacterial/viral since inputs are ready.
@@ -6,9 +7,8 @@
 # carry explicit caps — 98e ANI clustering & 98g correlations are CPU-bound
 # on small tables (n=6); no n_perm/n_repeats knobs in these scripts (grep'd).
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 
 fail() { echo "=== W5 ABORTED at $1 ($(date +%T)) ==="; exit 1; }

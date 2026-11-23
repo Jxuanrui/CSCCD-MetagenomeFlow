@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W5 gate v3 (2026-10-16): pre-init regression fixed (unset-only semantics);
 # rerun 91/92/93 smoke verification with full parameters.
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 META="$WD/metadata.csv"
 

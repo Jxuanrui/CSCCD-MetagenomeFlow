@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # R lane (supervisor 2026-10-13 P0-2 / decision A):
 # 36b reassembly x6 strictly serial (assembler mutex), then 37/38/38b --force.
 export MGX_MONITOR=1
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 SAMPLES="Sample1 Sample2 Sample3 Sample4 Sample10 Sample11"
 

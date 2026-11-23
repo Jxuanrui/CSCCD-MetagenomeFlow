@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W5 gate (supervisor 4th review P0-2): smoke-test the fixed 91/92/93 consumers
 # the moment the V3 lane finishes, BEFORE any W5/98-series stats run.
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 
 while ! grep -q "V3-TAIL DONE" /tmp/lane_v3tail.log 2>/dev/null; do sleep 120; done

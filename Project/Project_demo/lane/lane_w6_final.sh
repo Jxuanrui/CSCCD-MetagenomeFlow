@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W6 lane (W5 done 03:53; 96-series dependency 98b satisfied):
 # functional stats umbrella -> SIAMCAT ML -> visualization -> core microbiome
 # (bacteria via metaphlan4 merged species; virus via votu_table) -> LEfSe
 # standalone -> final report. Parameter self-check: no n_perm/n_repeats knobs
 # in these scripts (grep-verified); SIAMCAT on n=6 expected exploratory only.
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 META="$WD/metadata.csv"
 BACT="$WD/result/metaphlan4/merged/taxonomy_species.tsv"

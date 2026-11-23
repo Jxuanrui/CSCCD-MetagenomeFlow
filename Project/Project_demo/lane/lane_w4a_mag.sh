@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W4-A lane (unblocked by R-lane completion 16:33; user-approved plan):
 # taxonomy + annotation chain on the 128 dereplicated MAGs.
 # Strict chain: gtdbtk -> prokka -> mlst -> pangenome -> snippy.
 # gtdbtk/iphop stagger respected: V3's iphop is ~10h away at chain tail.
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 
 fail() { echo "=== W4A ABORTED at $1 ($(date +%T)) ==="; exit 1; }

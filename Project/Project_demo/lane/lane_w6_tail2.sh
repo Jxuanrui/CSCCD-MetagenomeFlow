@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W6 tail v2: SIAMCAT recorded SKIPPED-by-guard (assert_block_samples needs
 # >=10 samples; n=6 with 3v3 is design-limited — disclosure, not a bug).
 # Continue: visualization -> core microbiome x2 -> LEfSe -> final report.
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 META="$WD/metadata.csv"
 BACT="$WD/result/metaphlan4/merged/taxonomy_species.tsv"

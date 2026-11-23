@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 # W5 gate v2 (corrected 2026-10-16): the original gate omitted the required
 # -m METADATA_CSV / -g GROUP_COL — all three smoke tests died in arg parsing.
 # Rerun 91/92/93 with full parameters.
 export MGX_MONITOR=1
-export PATH="/home/labuser/Course/Maxmetagenome/miniforge3/bin:$PATH"
-WD=/home/labuser/Course/Maxmetagenome/Project/Project_demo
-REPO=/home/labuser/Course/Maxmetagenome
+export PATH="${REPO}/miniforge3/bin:$PATH"
+WD="${REPO}/Project/Project_demo"
 cd "$REPO"
 META="$WD/metadata.csv"
 
