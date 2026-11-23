@@ -160,3 +160,19 @@ envs/virsorter2-sif/*.sif
 Project/MOST_Sinkiang/phase1_smoke/data/
 Project/MOST_Sinkiang/00_admin/vs2_smoke_archive/*.fa
 Project/MOST_Sinkiang/00_admin/vs2_smoke_archive/*.tsv
+
+# ---- 2026-11-23 公开仓长期纪律: 内部/AI 材料永不入库 ----
+.claude/
+.omo/
+.mcp.json
+CLAUDE.md
+AGENTS.md
+.zcodeignore
+agents/
+skills/
+mining/
+tools/
+docs/plans/
+Project/MOST_Sinkiang/
+Project/*/00_admin/
+Project/*/ingest/*inventory*
