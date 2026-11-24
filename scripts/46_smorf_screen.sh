@@ -21,7 +21,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon
 
 show_help() {
 cat <<'EOF'
-Usage: bash 46_smorf_screen.sh -w WORKDIR -r REPO [--force]
+Usage: bash 46_smorf_screen.sh -w WORKDIR -r REPO [-i INPUT_FASTA] [--force]
 
 Runs hosted miProbe predictions (bioactivity/amp/phychem) over the
 complete-tier cluster representatives in batches of 10. Resumable via
@@ -33,7 +33,7 @@ if [ $# -eq 0 ]; then
     show_help; exit 0
 fi
 
-export MGX_OPTS_STRING="w:WORKDIR r:REPO"
+export MGX_OPTS_STRING="w:WORKDIR r:REPO i:INPUT"
 export MGX_OPTS_FLAG="force"
 mgx_parse "$@"
 mgx_require WORKDIR REPO
@@ -42,6 +42,10 @@ WORKDIR="$(cd "${WORKDIR}" && pwd)"
 mgx_begin
 
 REPS="${WORKDIR}/result/peptide/cluster_test/clu50_complete_rep_seq.fasta"
+if [ -n "${INPUT:-}" ]; then
+    REPS="$(cd "$(dirname "${INPUT}")" && pwd)/$(basename "${INPUT}")"
+    echo "[INFO] 输入覆盖：${REPS}（试点子集模式）"
+fi
 OUT="${WORKDIR}/result/peptide/screen"
 LOG="${WORKDIR}/logs/peptide/screen"
 mkdir -p "${OUT}/bioactivity" "${OUT}/amp" "${OUT}/phychem" "${LOG}"
@@ -58,7 +62,7 @@ fi
 STATE="${OUT}/state.json"
 [ -s "${STATE}" ] || echo '{}' > "${STATE}"
 
-echo "[INFO] 46 号批量功能预测启动 $(date -u '+%F %T')（cap=10，串行 0.3s 间隔，curl 传输）"
+echo "[INFO] 46 号批量功能预测启动 $(date -u '+%F %T')（分端点限批 bioactivity cap=3/11 模型子集、amp|phychem cap=10；串行 0.3s，curl）"
 date -u '+%F %T' > "${OUT}/screen.started"
 
 python3 - "${REPS}" "${OUT}" "${STATE}" <<'PYEOF'
