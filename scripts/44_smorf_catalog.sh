@@ -20,6 +20,29 @@
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
 
+show_help() {
+cat <<'EOF'
+Usage: bash 44_smorf_catalog.sh -w WORKDIR -r REPO [-t CPUS] [--force]
+
+Required:
+  -w  Project work directory (contains result/assembly/prodigal/<sample>/*.faa)
+  -r  Repository root
+
+Optional:
+  -t  Parallel workers (default: 4)
+  --force  Re-run even if the done sentinel exists
+  -h, --help  Show this help message
+
+Outputs: ${WORKDIR}/result/peptide/smorf/  (per-sample TSV+FASTA, pooled stats, done sentinel)
+EOF
+}
+
+# 无参数直接运行时给出用法（避免只看到"缺少必需参数"而不知如何调用）
+if [ $# -eq 0 ]; then
+    show_help
+    exit 0
+fi
+
 export MGX_OPTS_STRING="w:WORKDIR r:REPO t:CPUS"
 export MGX_OPTS_FLAG="force"
 mgx_parse "$@"
