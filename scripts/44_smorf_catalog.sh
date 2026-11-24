@@ -57,7 +57,7 @@ LOG="${WORKDIR}/logs/peptide/smorf"
 mkdir -p "${OUT}" "${LOG}"
 # 每次运行独立日志文件：历史失败运行（含旧版 bug 的 SyntaxError）不会混入
 # 当前运行的成功日志，避免"旧错误 + 新哨兵"造成假完成误读。
-LOG_FILE="${LOG}/44_smorf_catalog_$(date -u +%Y%m%d_%H%M%S).log"
+LOG_FILE="${LOG}/44_smorf_catalog_$(date -u +%Y%m%d_%H%M%S%N | head -c 20).log"
 exec > >(tee "${LOG_FILE}") 2>&1
 
 SENTINEL="${OUT}/smorf_catalog.done"
@@ -67,7 +67,8 @@ if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
     exit 0
 fi
 
-rm -f "${SENTINEL}"
+# 清理旧状态标记：done 与 FAILED 都不残留，避免旧失败标记与新成功哨兵并存
+rm -f "${SENTINEL}" "${SENTINEL}.FAILED"
 
 echo "[INFO] 扫描 ${WORKDIR}/result/assembly/prodigal/*/（--force=${FORCE}）"
 shopt -s nullglob
@@ -149,9 +150,9 @@ if [ "${XARGS_STATUS}" -ne 0 ]; then
     exit 1
 fi
 
-echo "[INFO] 独立核验：TSV/FASTA 行数一致、长度边界、partial 取值、gene_id 唯一性"
+echo "[INFO] 独立核验：TSV/FASTA 逐行对应、序列长度一致、长度边界、partial 取值、gene_id 唯一性"
 python3 - "${OUT}" <<'PYEOF'
-import glob, os, sys, collections
+import glob, os, sys
 
 out = sys.argv[1]
 VALID_PARTIAL = {"complete", "partial_g3", "partial_g5", "unknown"}
@@ -159,7 +160,7 @@ failures = []
 for t in sorted(glob.glob(f"{out}/*.smorf.tsv")):
     fa = t.replace(".smorf.tsv", ".smorf.faa")
     sample = os.path.basename(t).replace(".smorf.tsv", "")
-    tsv_ids, tsv_rows, lens, partials = [], 0, [], []
+    rows = {}
     with open(t, encoding="utf-8") as fh:
         header = fh.readline()
         if header.rstrip("\n") != "gene_id\tcontig_id\tstart\tend\tstrand\tpartial\tlength_aa\tstart_type\tseq_sha1_12":
@@ -169,32 +170,50 @@ for t in sorted(glob.glob(f"{out}/*.smorf.tsv")):
             if len(f) != 9:
                 failures.append(f"{sample}: tsv 列数异常: {line[:60]}")
                 continue
-            tsv_ids.append(f[0]); tsv_rows += 1
-            lens.append(int(f[6])); partials.append(f[5])
-    if not tsv_rows:
+            if f[0] in rows:
+                failures.append(f"{sample}: gene_id 重复 {f[0]}")
+            rows[f[0]] = (int(f[6]), f[5])
+    if not rows:
         failures.append(f"{sample}: tsv 为空")
         continue
-    fasta_count = sum(1 for line in open(fa, encoding="utf-8") if line.startswith(">"))
-    if fasta_count != tsv_rows:
-        failures.append(f"{sample}: FASTA 序列数 {fasta_count} != TSV 行数 {tsv_rows}")
-    if tsv_ids and len(set(tsv_ids)) != len(tsv_ids):
-        dup = len(tsv_ids) - len(set(tsv_ids))
-        failures.append(f"{sample}: gene_id 重复 {dup} 条")
-    bad_len = [x for x in lens if not (20 <= x <= 99)]
+    fa_ids = {}
+    cur_id, cur = None, []
+    with open(fa, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.rstrip("\n")
+            if line.startswith(">"):
+                if cur_id is not None:
+                    fa_ids[cur_id] = len("".join(cur))
+                cur_id, cur = line[1:].strip(), []
+            else:
+                cur.append(line)
+    if cur_id is not None:
+        fa_ids[cur_id] = len("".join(cur))
+    missing = set(rows) - set(fa_ids)
+    extra = set(fa_ids) - set(rows)
+    if missing:
+        failures.append(f"{sample}: {len(missing)} 条在 TSV 有而 FASTA 无（如 {sorted(missing)[:2]}）")
+    if extra:
+        failures.append(f"{sample}: {len(extra)} 条在 FASTA 有而 TSV 无（如 {sorted(extra)[:2]}）")
+    len_mismatch = [gid for gid in (set(rows) & set(fa_ids)) if rows[gid][0] != fa_ids[gid]]
+    if len_mismatch:
+        failures.append(f"{sample}: {len(len_mismatch)} 条 length_aa 与 FASTA 实际序列长度不一致")
+    bad_len = [gid for gid, (ln, _) in rows.items() if not (20 <= ln <= 99)]
     if bad_len:
-        failures.append(f"{sample}: 长度越界 {len(bad_len)} 条（min={min(lens)} max={max(lens)}）")
-    bad_partial = set(partials) - VALID_PARTIAL
+        failures.append(f"{sample}: 长度越界 {len(bad_len)} 条")
+    bad_partial = sorted({p for _, p in rows.values()} - VALID_PARTIAL)
     if bad_partial:
-        failures.append(f"{sample}: 非法 partial 取值 {sorted(bad_partial)}")
-    print(f"  [verify] {sample}: rows={tsv_rows} fasta={fasta_count} "
-          f"length={min(lens)}-{max(lens)} partial_ok={not bad_partial}")
+        failures.append(f"{sample}: 非法 partial 取值 {bad_partial}")
+    print(f"  [verify] {sample}: rows={len(rows)} fasta={len(fa_ids)} "
+          f"逐行对应={not missing and not extra} 长度一致={not len_mismatch} "
+          f"length={min(r[0] for r in rows.values())}-{max(r[0] for r in rows.values())}")
 
 if failures:
     print("[VERIFY-FAIL] 独立核验未通过：", file=sys.stderr)
     for f_ in failures:
         print("  -", f_, file=sys.stderr)
     sys.exit(1)
-print("[verify] 全部样本独立核验通过")
+print("[verify] 全部样本独立核验通过（逐行 gene_id 对应 + 序列长度一致）")
 PYEOF
 VERIFY_STATUS=$?
 if [ "${VERIFY_STATUS}" -ne 0 ]; then
