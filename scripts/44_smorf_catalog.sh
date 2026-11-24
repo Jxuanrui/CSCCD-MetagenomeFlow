@@ -55,8 +55,10 @@ mgx_begin
 OUT="${WORKDIR}/result/peptide/smorf"
 LOG="${WORKDIR}/logs/peptide/smorf"
 mkdir -p "${OUT}" "${LOG}"
-LOG_FILE="${LOG}/44_smorf_catalog.log"
-exec > >(tee -a "${LOG_FILE}") 2>&1
+# 每次运行独立日志文件：历史失败运行（含旧版 bug 的 SyntaxError）不会混入
+# 当前运行的成功日志，避免"旧错误 + 新哨兵"造成假完成误读。
+LOG_FILE="${LOG}/44_smorf_catalog_$(date -u +%Y%m%d_%H%M%S).log"
+exec > >(tee "${LOG_FILE}") 2>&1
 
 SENTINEL="${OUT}/smorf_catalog.done"
 if [ ${FORCE} -eq 0 ] && [ -s "${SENTINEL}" ]; then
@@ -79,6 +81,7 @@ fi
 
 export OUT
 printf '%s\n' "${FAAS[@]}" | xargs -P "${CPUS}" -n 1 bash -c '
+    set -e   # python 任一失败即以非零退出，向 xargs 传播
     faa="$1"; sample="$(basename "$(dirname "$faa")")"; out="${OUT}"
     python3 - "$faa" "$sample" "$out" <<PYEOF
 import sys, hashlib
@@ -137,8 +140,64 @@ with open(fa_out, "w", encoding="utf-8") as f:
 print(f"[{sample}] candidates={len(rows)}")
 PYEOF
 ' _
-if [ ${PIPESTATUS[0]} -ne 0 ]; then
-    echo "[ERROR] 子样本解析失败" >&2
+# PIPESTATUS[1] = xargs 的退出码（GNU xargs：任一子任务失败 → 123）。
+# PIPESTATUS[0] 是 printf，几乎不会失败——错误检查必须挂在 xargs 上。
+XARGS_STATUS=${PIPESTATUS[1]}
+if [ "${XARGS_STATUS}" -ne 0 ]; then
+    echo "[ERROR] 子样本解析失败（xargs exit=${XARGS_STATUS}；123=存在失败子任务）" >&2
+    : > "${SENTINEL}.FAILED"
+    exit 1
+fi
+
+echo "[INFO] 独立核验：TSV/FASTA 行数一致、长度边界、partial 取值、gene_id 唯一性"
+python3 - "${OUT}" <<'PYEOF'
+import glob, os, sys, collections
+
+out = sys.argv[1]
+VALID_PARTIAL = {"complete", "partial_g3", "partial_g5", "unknown"}
+failures = []
+for t in sorted(glob.glob(f"{out}/*.smorf.tsv")):
+    fa = t.replace(".smorf.tsv", ".smorf.faa")
+    sample = os.path.basename(t).replace(".smorf.tsv", "")
+    tsv_ids, tsv_rows, lens, partials = [], 0, [], []
+    with open(t, encoding="utf-8") as fh:
+        header = fh.readline()
+        if header.rstrip("\n") != "gene_id\tcontig_id\tstart\tend\tstrand\tpartial\tlength_aa\tstart_type\tseq_sha1_12":
+            failures.append(f"{sample}: tsv 表头不符")
+        for line in fh:
+            f = line.rstrip("\n").split("\t")
+            if len(f) != 9:
+                failures.append(f"{sample}: tsv 列数异常: {line[:60]}")
+                continue
+            tsv_ids.append(f[0]); tsv_rows += 1
+            lens.append(int(f[6])); partials.append(f[5])
+    if not tsv_rows:
+        failures.append(f"{sample}: tsv 为空")
+        continue
+    fasta_count = sum(1 for line in open(fa, encoding="utf-8") if line.startswith(">"))
+    if fasta_count != tsv_rows:
+        failures.append(f"{sample}: FASTA 序列数 {fasta_count} != TSV 行数 {tsv_rows}")
+    if tsv_ids and len(set(tsv_ids)) != len(tsv_ids):
+        dup = len(tsv_ids) - len(set(tsv_ids))
+        failures.append(f"{sample}: gene_id 重复 {dup} 条")
+    bad_len = [x for x in lens if not (20 <= x <= 99)]
+    if bad_len:
+        failures.append(f"{sample}: 长度越界 {len(bad_len)} 条（min={min(lens)} max={max(lens)}）")
+    bad_partial = set(partials) - VALID_PARTIAL
+    if bad_partial:
+        failures.append(f"{sample}: 非法 partial 取值 {sorted(bad_partial)}")
+    print(f"  [verify] {sample}: rows={tsv_rows} fasta={fasta_count} "
+          f"length={min(lens)}-{max(lens)} partial_ok={not bad_partial}")
+
+if failures:
+    print("[VERIFY-FAIL] 独立核验未通过：", file=sys.stderr)
+    for f_ in failures:
+        print("  -", f_, file=sys.stderr)
+    sys.exit(1)
+print("[verify] 全部样本独立核验通过")
+PYEOF
+VERIFY_STATUS=$?
+if [ "${VERIFY_STATUS}" -ne 0 ]; then
     : > "${SENTINEL}.FAILED"
     exit 1
 fi
