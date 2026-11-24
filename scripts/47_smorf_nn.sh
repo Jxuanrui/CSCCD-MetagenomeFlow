@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# 脚本名: 47_smorf_nn.sh
+# 功  能: miProbe 嵌入最近邻检索——对代表序列逐条调用 embedding-search（k=3），
+#         返回库内最相似肽的 internal_id 与相似度。结果供 50 号整合时关联
+#         物种/生境档案（by-internal-id/sources）。
+# 口  径: 串行（0.3s 间隔，curl 传输——urllib 被 Cloudflare 拦截）；按 D4/D5
+#         决策仅查 complete 层代表；游标断点续传；单次失败重试 2 次。
+# 依  赖: 44 号产物 + 聚簇代表 FASTA
+# 输  出: ${WORKDIR}/result/peptide/nn/nn_results.tsv（query_id, rank, hit_id, sim）
+#         ${WORKDIR}/result/peptide/nn/nn_cursor.txt（已处理条数）
+# 用  法: bash 47_smorf_nn.sh -w WORKDIR -r REPO -i INPUT_FASTA [--force]
+# ==============================================================================
+
+set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/utils/libcommon.sh"
+
+show_help() {
+cat <<'EOF'
+Usage: bash 47_smorf_nn.sh -w WORKDIR -r REPO -i INPUT_FASTA [--force]
+
+Serial miProbe embedding-search (k=3) over the given representative FASTA.
+Resumable via cursor file.  Serial by design: concurrent load triggers the
+60s gateway 504s.
+EOF
+}
+
+if [ $# -eq 0 ]; then
+    show_help; exit 0
+fi
+
+export MGX_OPTS_STRING="w:WORKDIR r:REPO i:INPUT"
+export MGX_OPTS_FLAG="force"
+mgx_parse "$@"
+mgx_require WORKDIR REPO INPUT
+WORKDIR="$(cd "${WORKDIR}" && pwd)"
+INPUT="$(cd "$(dirname "${INPUT}")" && pwd)/$(basename "${INPUT}")"
+
+mgx_begin
+
+OUT="${WORKDIR}/result/peptide/nn"
+LOG="${WORKDIR}/logs/peptide/nn"
+mkdir -p "${OUT}" "${LOG}"
+LOG_FILE="${LOG}/47_smorf_nn_$(date -u +%Y%m%d_%H%M%S%N | head -c 20).log"
+exec > >(tee "${LOG_FILE}") 2>&1
+
+if [ ! -s "${INPUT}" ]; then
+    echo "[ERROR] 输入 FASTA 不存在: ${INPUT}" >&2
+    : > "${OUT}/nn.FAILED"
+    exit 1
+fi
+
+RESULTS="${OUT}/nn_results.tsv"
+CURSOR="${OUT}/nn_cursor.txt"
+
+echo "[INFO] 47 号 NN 检索启动 $(date -u '+%F %T')（k=3，串行 0.3s，curl）"
+
+python3 - "${INPUT}" "${RESULTS}" "${CURSOR}" <<'PYEOF'
+import json, os, subprocess, sys, time
+
+input_fa, results, cursor = sys.argv[1], sys.argv[2], sys.argv[3]
+API = "https://www.biosino.org/iMAC/miProbe/api"
+INTERVAL = 0.3
+RETRIES = 2
+K = 3
+
+entries, cur_id, cur = [], None, []
+with open(input_fa, encoding="utf-8") as fh:
+    for line in fh:
+        line = line.rstrip("\n")
+        if line.startswith(">"):
+            if cur_id is not None:
+                entries.append((cur_id, "".join(cur)))
+            cur_id, cur = line[1:].strip(), []
+        else:
+            cur.append(line)
+if cur_id is not None:
+    entries.append((cur_id, "".join(cur)))
+n = len(entries)
+
+start = 0
+if os.path.exists(cursor) and os.path.getsize(cursor):
+    start = int(open(cursor).read().strip())
+print(f"[plan] total={n} resume_from={start}")
+
+if not os.path.exists(results) or os.path.getsize(results) == 0:
+    with open(results, "w", encoding="utf-8") as f:
+        f.write("query_id\trank\thit_internal_id\tsimilarity\n")
+
+ok = err = 0
+t0 = time.time()
+with open(results, "a", encoding="utf-8") as out_f:
+    for i in range(start, n):
+        gid, seq = entries[i]
+        body = json.dumps({"sequence": seq, "k": K})
+        rows = None
+        for attempt in range(1, RETRIES + 2):
+            r = subprocess.run(["curl", "-s", "--max-time", "120", "-X", "POST",
+                                f"{API}/embedding-search/search",
+                                "-H", "Content-Type: application/json", "-d", body],
+                               capture_output=True, text=True)
+            if r.returncode == 0 and r.stdout.strip().startswith("{"):
+                try:
+                    d = json.loads(r.stdout)
+                    rows = [(h["rank"], h["internal_id"], h["similarity"]) for h in d.get("results", [])]
+                    break
+                except json.JSONDecodeError:
+                    pass
+            time.sleep(2 * attempt + 1)
+        if rows is None:
+            err += 1
+            out_f.write(f"{gid}\tERR\t0\t0.0\n")
+        else:
+            ok += 1
+            for rank, hid, sim in rows:
+                out_f.write(f"{gid}\t{rank}\t{hid}\t{sim}\n")
+        out_f.flush()
+        if (i + 1) % 50 == 0:
+            with open(cursor, "w") as c:
+                c.write(str(i + 1))
+            el = time.time() - t0
+            done_n = i + 1 - start
+            eta = el / done_n * (n - i - 1) if done_n else 0
+            print(f"[progress] {i+1}/{n} | ok={ok} err={err} | elapsed={el/60:.0f}m eta={eta/3600:.1f}h")
+        time.sleep(INTERVAL)
+
+with open(cursor, "w") as c:
+    c.write(str(n))
+el = time.time() - t0
+print(f"[done] total={n} ok={ok} err={err} elapsed={el/3600:.2f}h")
+PYEOF
+
+echo "[DONE] $(date -u '+%F %T') nn"
+date -u '+%F %T' > "${OUT}/nn.done"
+mgx_end "nn"
