@@ -124,15 +124,16 @@ with open(results, "a", encoding="utf-8") as out_f:
             time.sleep(2 * attempt + 1)
         if rows is None:
             err += 1
+            print(f"[retry-exhausted] {gid}: {RETRIES} 次重试后仍失败，记 ERR 行")
             out_f.write(f"{gid}\tERR\t0\t0.0\n")
         else:
             ok += 1
             for rank, hid, sim in rows:
                 out_f.write(f"{gid}\t{rank}\t{hid}\t{sim}\n")
         out_f.flush()
+        with open(cursor, "w") as c:
+            c.write(str(i + 1))  # 逐条落游标（D-B F2：50 条粒度太粗，小运行不可续传）
         if (i + 1) % 50 == 0:
-            with open(cursor, "w") as c:
-                c.write(str(i + 1))
             el = time.time() - t0
             done_n = i + 1 - start
             eta = el / done_n * (n - i - 1) if done_n else 0

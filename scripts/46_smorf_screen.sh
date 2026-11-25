@@ -65,7 +65,8 @@ STATE="${OUT}/state.json"
 echo "[INFO] 46 号批量功能预测启动 $(date -u '+%F %T')（分端点限批 bioactivity cap=3/11 模型子集、amp|phychem cap=10；串行 0.3s，curl）"
 date -u '+%F %T' > "${OUT}/screen.started"
 
-python3 - "${REPS}" "${OUT}" "${STATE}" <<'PYEOF'
+VERIFY=0
+python3 - "${REPS}" "${OUT}" "${STATE}" <<'PYEOF' || VERIFY=$?
 import json, os, subprocess, sys, time, hashlib
 
 reps_path, out, state_path = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -160,8 +161,8 @@ for ep in ENDPOINTS:
     n_ok = len(glob := __import__("glob").glob(f"{out}/{ep}/batch_*.json"))
     print(f"  {ep}: {n_ok} batch files")
 PYEOF
-
-VERIFY=${PIPESTATUS[0]}
+# set -e 下 python 非零退出会直接中止脚本——用 || 捕获退出码再走 FAILED 分支，
+# 否则 screen.FAILED 永远不会写入（D-B F1 整改遗留）。
 if [ "${VERIFY}" -eq 2 ]; then
     echo "[ERROR] 存在未恢复的失败批次（已成功批次与游标已保留，可修复后 --force 续传）" >&2
     : > "${OUT}/screen.FAILED"
