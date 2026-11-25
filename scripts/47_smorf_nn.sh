@@ -85,15 +85,32 @@ print(f"[plan] total={n} resume_from={start}")
 
 # F2 修复：启动时读取已写 query_id 集合——重启重跑时跳过已完成查询（幂等），
 # 且追加前逐条去重，杜绝崩溃后重复 API 调用与重复结果行
+# ERR 语义（D-B P0）：ERR 行 = 未完成（临时故障），重启时移除 ERR 行并重查该
+# query；仅非 ERR 结果行计入 written_ids（永久完成，跳过）。人工如需永久记账
+# 可手工将 ERR 行移入旁路文件——默认行为是自动重试。
 written_ids = set()
+err_retry_ids = set()
 if os.path.exists(results) and os.path.getsize(results):
+    keep_lines = []
     with open(results, encoding="utf-8") as fh:
         for line in fh:
             if line.startswith("query_id"):
+                keep_lines.append(line)
                 continue
             qid = line.split("\t", 1)[0]
-            if qid:
+            if not qid:
+                continue
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) >= 2 and parts[1] == "ERR":
+                err_retry_ids.add(qid)   # 未完成：本轮重查，旧行删除
+            else:
                 written_ids.add(qid)
+                keep_lines.append(line)
+    if err_retry_ids:
+        with open(results, "w", encoding="utf-8") as f:
+            f.writelines(keep_lines)
+        print(f"[resume] 移除 {len(err_retry_ids)} 条 ERR 行并纳入本轮重查: "
+              f"{sorted(err_retry_ids)[:5]}{'...' if len(err_retry_ids) > 5 else ''}")
 if not os.path.exists(results) or os.path.getsize(results) == 0:
     with open(results, "w", encoding="utf-8") as f:
         f.write("query_id\trank\thit_internal_id\tsimilarity\n")
