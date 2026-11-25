@@ -20,10 +20,10 @@ A self-contained metagenomics platform that profiles gut bacteria, viruses, and 
 [![Platform](https://img.shields.io/badge/platform-Linux%20x86__64-lightgrey)](https://ubuntu.com)
 [![Snakemake](https://img.shields.io/badge/Snakemake-9.22-green)](https://snakemake.readthedocs.io)
 [![Conda](https://img.shields.io/badge/conda%20envs-59-orange)](https://github.com/conda-forge/miniforge)
-[![Scripts](https://img.shields.io/badge/scripts-181-blue)]()
+[![Scripts](https://img.shields.io/badge/scripts-191-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-**181 scripts · 144 Snakemake rules · 59 conda envs · ~1.2 TB databases**
+**191 scripts · 144 Snakemake rules · 59 conda envs · ~1.2 TB databases**
 
 ---
 
@@ -127,6 +127,7 @@ snakemake -s pipeline/Snakefile --configfile pipeline/config/config.yaml -j 4 --
 | Virome | 51–72 | `00_pipeline_virome.sh` |
 | Mycobiome | 71–86 | `00_pipeline_fungi.sh` |
 | Statistics | 91–98 | — |
+| Peptide (A+B routes) | 44–50 | — |
 | Full chain | 01–98 | `00_pipeline_full.sh` |
 
 ### Bacteria
@@ -144,6 +145,16 @@ Multiple taxonomic profilers cross-validate each other: Kraken2, MetaPhlAn4-euk,
 ### Statistics
 
 Diversity (91), differential abundance (92, 99b LEfSe), co-occurrence networks (93, FastSpar), visualization (94), batch correction and evaluation (95a/b, 10 methods), functional profiling across 20 dimension × type combinations (96 series), cross-cohort replication (97), snapshot reports (98). phyloseq objects for each kingdom feed all downstream R packages directly.
+
+### Peptide Discovery (A+B routes)
+
+Integration of the [miProbe](https://www.biosino.org/iMAC/miProbe) microbial peptide repository (1.08 billion entries, Nature Communications 2026) enables functional peptide discovery across three tiers:
+
+- **Tier 1 · Hosted screening** (steps 44–46): smORF candidates screened against 11 hosted bioactivity models (anti-diabetic, antiviral, antifungal, antibacterial, toxicity…) plus AMP ordinal scoring and physicochemical profiling
+- **Tier 2 · Repository similarity** (step 47): embedding-based nearest-neighbor search against the full miProbe catalog — 87% of pilot representatives matched at ≥0.8 similarity, inheriting species and habitat provenance
+- **Tier 3 · de novo mining** (steps 49a–c): Macrel novel AMP mining + antiSMASH RiPP precursor harvest + antiSMASH-to-gene remapping
+
+Key results from the 6-sample pilot: 450,320 smORF candidates, 367 AMP candidates (7.3%), 87% repository match rate, 8 anti-diabetic and 21 antiviral candidates.
 
 ---
 

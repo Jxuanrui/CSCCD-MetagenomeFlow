@@ -32,7 +32,7 @@ outputs:
 
 depends_on:
   - 44_smorf_catalog
-  - "complete-tier 50% AAI 聚簇（试点经临时流程产出，正式编号聚簇步骤待固化）"
+  - "44_smorf_catalog"
 
 params:
   input: "-i 查询 FASTA（必填）"
