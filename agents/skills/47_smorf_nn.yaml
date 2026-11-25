@@ -1,0 +1,63 @@
+id: "47_smorf_nn"
+name: "miProbe Embedding Nearest-Neighbor Search (k=3, serial)"
+script: "scripts/47_smorf_nn.sh"
+tool: "miProbe embedding-search API (curl) + python3 driver"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: integrated
+
+description: >
+  对输入代表序列逐条调用 miProbe embedding-search（k=3），返回库内最相似肽的
+  internal_id 与相似度。结果供 50 号整合时生成 nn_hits 表，并可经
+  by-internal-id/sources 能力端点关联物种/生境档案。串行（0.3s 间隔）设计：
+  并发会触发 60s 网关 504；游标文件断点续传；单次失败重试 2 次，仍失败写
+  ERR 行并继续（50 号记为 error 状态）。
+
+inputs:
+  - name: query_fasta
+    path_pattern: "{workdir}/result/peptide/cluster_test/clu50_complete_rep_seq.fasta"
+    required: true
+    description: "查询代表序列（-i 必填传入）；按 D4 策略仅 complete 层代表"
+
+outputs:
+  - name: nn_results
+    path_pattern: "{workdir}/result/peptide/nn/nn_results.tsv"
+    description: "长表：query_id / rank / hit_internal_id / similarity；失败查询记 rank=ERR 行"
+  - name: cursor
+    path_pattern: "{workdir}/result/peptide/nn/nn_cursor.txt"
+    description: "已处理条数游标，重跑从断点续传"
+  - name: sentinel
+    path_pattern: "{workdir}/result/peptide/nn/nn.done"
+    description: "完成哨兵"
+
+depends_on:
+  - 44_smorf_catalog
+  - "complete-tier 50% AAI 聚簇（试点经临时流程产出，正式编号聚簇步骤待固化）"
+
+params:
+  input: "-i 查询 FASTA（必填）"
+  force: "--force 重跑"
+
+calibers:
+  k_value: "k=3（API 支持 k<=20、最短 5 aa；分支固定 k=3）"
+  serial_design: "逐条串行 + 0.3s 间隔 + curl 传输（urllib 403）；串行是刻意为之，勿并发加速"
+  query_scope: "仅 complete 层代表（D4）；partial 层不查询——nn_status 记 not_queried_partial_policy，不得误读为无命中"
+  evidence_type: "NN 命中是相似度证据（similarity_transfer），不是独立功能预测；来源标签继承须写明推断边界"
+  err_semantics: "重试 2 次仍失败写 ERR 行，50 号按 error 状态入账，不静默丢弃"
+
+benchmarks:
+  note: "试点（5,000 查询）已核证：命中行 15,000、cursor=5000。全量串行外推（45 万级 ~171-225h，来自 30 次延迟实测的单时点估算）为计划参考，实际吞吐/耗时待实测回填。"
+
+known_issues:
+  - description: "试点相似度分布（已核证，5,000 查询）：最强命中 >=0.99 共 32、0.9-1.0 共 1,737、0.8-0.9 共 2,631；最强命中 >=0.8 约占 87%（1,737+2,631=4,368/5,000）。该分布绑定当期库版本，换库需重测。"
+    workaround: "解读阈值效应时以当期 nn_results.tsv 实际分布为准。"
+  - description: "partial 层不查 NN（D4 策略）：partial 候选的 nn_status 固定 not_queried_partial_policy。"
+    workaround: "不得把未查询表述为'无远亲'；如需覆盖 partial 层须用户重新拍板。"
+  - description: "簇成员为代表级映射传播，非独立查询；ERR 行对应的候选在 nn_status 记 error 需人工补查。"
+    workaround: "50 号 qc_summary 的六态计数是审计入口；error>0 时先补查再下结论。"
+  - description: "相似度转移的推断边界：NN 命中只能支持'存在近邻'，其来源物种/生境标签是转移推断。"
+    workaround: "下游引用时写明 similarity_transfer 证据类型，不与模型预测、注释证据混排投票。"
+  - description: "预测≠验证（分支级）：NN 命中不代表任何实验验证。"
+    workaround: "报告用语统一为 '预测功能候选'。"
+
+example_command: "bash scripts/47_smorf_nn.sh -w /path/to/workdir -r /path/to/repo -i /path/to/representatives.fasta"

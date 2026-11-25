@@ -1,0 +1,51 @@
+id: "45_ref_registry"
+name: "External Reference Registry (miProbe API version stamps)"
+script: "scripts/45_ref_registry.sh"
+tool: "curl + python3 (stdlib)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: integrated
+
+description: >
+  把功能肽分支实际依赖的外部资源固化成版本戳清单：抓取 miProbe API 的
+  openapi 版本、端点清单、33 个生物活性模型（名称/数据集/AUC）与访问时间，
+  并把按决策暂缓的扩展参考库（Quorumpeps/DRAMP/SignalP6 standalone）登记为
+  pending、BAGEL4 HMM 登记为 blocked（条款未读前支路关闭）。
+  产物是后续所有预测结果的溯源锚点：预测行携带的 api_version 与本登记对应。
+
+inputs:
+  - name: miProbe_api
+    path_pattern: "https://www.biosino.org/iMAC/miProbe/api"
+    required: true
+    description: "开放 API，无注册；openapi.json + prediction/bioactivity/models 两个只读端点"
+
+outputs:
+  - name: registry
+    path_pattern: "{workdir}/result/peptide/refs/registry.json"
+    description: "版本戳清单：registered_at_utc / miProbe(base_url, api_version, endpoints, bioactivity_models 含 AUC, accessed_at_utc, transport, 容量注记) / deferred_references"
+  - name: sentinel
+    path_pattern: "{workdir}/result/peptide/refs/registry.done"
+    description: "完成哨兵"
+
+depends_on: []
+
+params:
+  force: "--force 重跑（默认哨兵存在即跳过）"
+
+calibers:
+  transport: "必须用 curl 传输：urllib 被 Cloudflare TLS 指纹拦截（实测 30/30 403，见 docs/plans/peptide_phase0_evidence/api_rate_limit.txt）"
+  capacity_notes: "登记页注记实测容量：bioactivity 服务端单次上限 10 条（33 模型 @10 必 504，60s 网关窗口）；分支实际用 11 模型子集 @3 条/次；embedding-search 单序列、k<=20、最短 5 aa"
+  snapshot_semantics: "registry.json 是访问时点快照；预测表的 api_version（如 miProbe API v0.1.0）应与本文件核对，API 侧升级后需重跑登记再复用旧预测需说明"
+
+benchmarks:
+  note: "仅 2 个只读请求，秒级完成；全量参考库拉取（Quorumpeps/DRAMP 等）尚未执行，耗时待实测回填。"
+
+known_issues:
+  - description: "外部服务无 SLA：端点/模型清单可能随时间变化，登记只保证'当时用什么版本'。"
+    workaround: "复现旧结果时以 registry.json 的 accessed_at_utc + api_version 为准，不假设服务端不变。"
+  - description: "延期项如实登记而非静默省略：quorumpeps/dramp/signalp6_standalone=pending，bagel4_hmm=blocked（条款未读）。"
+    workaround: "不得在 blocked 项未过条款审查前调用 BAGEL4 支路。"
+  - description: "预测≠验证（分支级）：登记的模型 AUC 是服务端声明的训练指标，不代表本数据集上的实际表现（试点中即有 2 个模型在本数据无区分度）。"
+    workaround: "模型可用性以 46/50 号实测与 filter_usable 标注为准。"
+
+example_command: "bash scripts/45_ref_registry.sh -w /path/to/workdir -r /path/to/repo"

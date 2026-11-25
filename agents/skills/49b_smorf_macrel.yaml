@@ -1,0 +1,60 @@
+id: "49b_smorf_macrel"
+name: "B-route: Macrel AMP Mining Runner"
+script: "scripts/49b_smorf_macrel.sh"
+tool: "macrel 1.6.0 (envs/macrel, pip, 版本锁定)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "pending"
+
+description: >
+  B 路线：对输入 contigs（或子集）运行 Macrel 1.6.0 `contigs`（all）管线，
+  产出抗菌肽候选预测，解析 gzip 预测输出为 macrel_precursors.tsv。
+  原始输出整体留存（macrel_raw/）供复核。试点输入为 contigs 子集；
+  全量 contigs 运行属使用期按需操作。状态：脚本已实现并入库；
+  B 路线试点运行尚未执行，运行期数字试点实测：14MB contig 子集（6,798 条）44s 完成；2,855 smORF → 4 条 AMP 候选（CDP/CLP 家族，含溶血性标注）。
+
+inputs:
+  - name: input_contigs
+    path_pattern: "{workdir}/result/assembly/megahit/{sample}/{sample}.contigs.fa 或任意子集 FASTA"
+    required: true
+    description: "contigs 输入（-f 必填）；试点用子集，全量属使用期按需"
+
+outputs:
+  - name: precursors_tsv
+    path_pattern: "{workdir}/result/peptide/broute/macrel_precursors.tsv"
+    description: "候选表：peptide_id/sequence/amp_family/amp_probability/hemolytic/hemolytic_probability/evidence_type(=model_prediction)/tool_version(=macrel 1.6.0)"
+  - name: raw_outputs
+    path_pattern: "{workdir}/result/peptide/broute/macrel_raw/"
+    description: "Macrel 原始输出留存（含 macrel.log），复核与重解析依据"
+  - name: sentinel
+    path_pattern: "{workdir}/result/peptide/broute/macrel.done"
+    description: "完成哨兵（失败留 .FAILED）"
+
+depends_on:
+  - 16_bac_megahit
+
+params:
+  input: "-f 输入 contigs FASTA（必填）"
+  cpus: "-t 线程数，默认 8"
+
+calibers:
+  tool_version: "macrel==1.6.0 锁定版本（miniforge3/envs/macrel）；升级需重跑登记与验收"
+  evidence_type: "model_prediction（AMP_family 概率模型预测；与 antiSMASH 的 annotation_rule 分列）"
+  coordinates: "Macrel 输出坐标为 1-based 闭区间（与 Prodigal 一致）；49c 回映射时双确认坐标体系，coords_note 记 macrel_1based_closed"
+  family_field: "AMP_family 列原样保留（单/多类别字符串不拆分、不归并）"
+  own_orf_finding: "Macrel 自带 ORF 发现：其候选不要求与 44 号目录重合；未命中 Prodigal 基因的候选在 49c 契约表 gene_id/sample 填 NA"
+
+benchmarks:
+  note: "Macrel 运行耗时与候选产出行数未运行，试点实测：14MB contig 子集（6,798 条）44s 完成；2,855 smORF → 4 条 AMP 候选（CDP/CLP 家族，含溶血性标注）（脚本内嵌逐次计时输出，运行后可从日志读取）。"
+
+known_issues:
+  - description: "输入规模弹性：全量 contigs 运行的耗时/内存未测，试点必须用子集起步。"
+    workaround: "试点选小样本子集先验收回映射率，再按需扩全量（使用期操作）。"
+  - description: "Hemolytic 列是模型预测的溶血性提示，非湿验毒性结论；amp_probability 是模型分数，阈值语义随版本绑定。"
+    workaround: "下游筛选阈值在 49c/50 层统一口径，不在本步私设阈值。"
+  - description: "B 路线候选不在 47 号 NN 查询范围（47 仅查 complete 层代表）；契约表 nn_status 固定 not_applicable_b_route。"
+    workaround: "不得将 B 路线候选混入 A 路线 nn_status 记账。"
+  - description: "预测≠验证（分支级）：Macrel 输出是预测抗菌候选，不代表已验证抗菌活性。"
+    workaround: "报告用语统一为 '预测功能候选'。"
+
+example_command: "bash scripts/49b_smorf_macrel.sh -w /path/to/workdir -r /path/to/repo -f /path/to/contigs_subset.fa -t 8"

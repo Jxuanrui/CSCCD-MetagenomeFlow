@@ -1,0 +1,65 @@
+id: "49a_smorf_antismash_harvest"
+name: "B-route: antiSMASH RiPP Precursor Harvester"
+script: "scripts/49a_smorf_antismash_harvest.sh"
+tool: "python3 (stdlib GBK parser)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "pending"
+
+description: >
+  B 路线：解析 28 号 antiSMASH 现产 region GBK，从 RiPP 类区域提取
+  proto_core 坐标处重叠 CDS 的翻译序列（前体肽）。零新增计算——只消费
+  28 号已有产物。严格抽取口径（用户决策 D-1）：仅 category=RiPP 的
+  protocluster；核心肽 CDS 需与 proto_core 区间重叠 >=50% CDS 跨度；
+  序列为前体肽（leader 可能未切除），表中如实标注 precursor，不冒充成熟
+  加工肽；所有跳过情形分别计数保留原因，不静默丢弃，输出计数闭合 QC 报告。
+  状态：脚本已实现并入库；B 路线收割属阶段 2 门禁项，试点运行尚未执行，
+  运行期数字待实测回填。
+
+inputs:
+  - name: region_gbk
+    path_pattern: "{workdir}/result/annotation/antismash/{sample}/*.region*.gbk"
+    required: true
+    description: "28 号 antiSMASH flatten 后的 region GenBank（含 protocluster/proto_core/CDS 特征）"
+
+outputs:
+  - name: precursors_tsv
+    path_pattern: "{workdir}/result/peptide/broute/antismash_precursors.tsv"
+    description: "前体肽元数据长表：peptide_id/sample/region_file/locus_tag/product/cds_location/proto_core_coords/length_aa/extraction_rule（固定 precursor:proto_core_overlapping_cds）"
+  - name: precursors_faa
+    path_pattern: "{workdir}/result/peptide/broute/antismash_precursors.faa"
+    description: "前体肽序列（与 TSV 逐行对应）"
+  - name: qc_report
+    path_pattern: "{workdir}/result/peptide/broute/antismash_harvest.qc.md"
+    description: "计数闭合报告：region 总数、提取数、逐类跳过计数（non_RiPP_category/no_proto_core/core_cds_without_translation/tiny_precursor_lt10aa/region_without_matching_cds）"
+  - name: sentinel
+    path_pattern: "{workdir}/result/peptide/broute/broute_antismash.done"
+    description: "完成哨兵（失败留 .FAILED）"
+
+depends_on:
+  - 28_bac_antismash
+
+params:
+  force: "--force 重跑"
+
+calibers:
+  strict_extraction: "category=RiPP（含 RiPP-like/lanthipeptide/ranthipeptide/lassopeptide/thiopeptide 等子类）；CDS 与任一 proto_core 区间重叠 >=50% CDS 跨度才算核心肽前体基因（排除擦边 1-2 密码子碎片）"
+  precursor_semantics: "提取的是前体肽（含 leader 可能未切除），非成熟加工肽；extraction_rule 列如实标注 precursor"
+  multi_core: "一个 region 含多个 protocluster/proto_core 时逐 CDS 输出；无 proto_core/无重叠 CDS/无 translation 分别计数"
+  min_length: "翻译序列 <10 aa 跳过（tiny_precursor_lt10aa 计数）"
+  evidence_type: "下游 49c 契约表 evidence_type=annotation_rule（规则注释抽取，非模型预测）"
+
+benchmarks:
+  note: "阶段 0 盘点已核证（输入侧）：1,778 个 region GBK，RiPP 类 1,079（category RiPP 1,062 + product 关键词命中但 category 非 RiPP 的 17，两口径分列）。收割产出行数/耗时未运行，待实测回填。"
+
+known_issues:
+  - description: "前体肽≠成熟肽：leader/core 处理状态未判定，直接拿去与成熟肽库比对会引入长度偏差。"
+    workaround: "下游分析注明前体语义；成熟核心肽切割位点预测属后续扩展，不在本步范围。"
+  - description: "自研最小 GBK 解析器（正则匹配特征/qualifier，仅标准库）：非典型缩进或跨行 qualifier 的极端格式可能解析偏差。"
+    workaround: "QC 报告的跳过计数即为审计入口；计数闭合异常时用 Biopython 复核抽样 region。"
+  - description: "本步候选属 B 路线，不在 47 号 NN 查询范围（47 仅查 complete 层代表）；契约表 nn_status 固定 not_applicable_b_route。"
+    workaround: "不得将 B 路线候选混入 A 路线 nn_status 记账。"
+  - description: "预测/注释≠验证（分支级）：RiPP 注释是规则命中（annotation_rule），不代表已验证活性。"
+    workaround: "报告用语统一为 '注释/预测功能候选'。"
+
+example_command: "bash scripts/49a_smorf_antismash_harvest.sh -w /path/to/workdir -r /path/to/repo"

@@ -1,0 +1,64 @@
+id: "44_smorf_catalog"
+name: "smORF Candidate Catalog (20-99 aa peptide layer)"
+script: "scripts/44_smorf_catalog.sh"
+tool: "python3 (stdlib) over Prodigal FAA"
+dimension: "bacteria"
+rule_type: "per_sample"
+integration_status: integrated
+
+description: >
+  从 17 号 Prodigal（-p meta）蛋白预测中提取 20-99 aa 短肽候选，构建独立于
+  18 号主目录口径的 smORF 子目录。18 号按核酸 <100 bp 过滤，33 aa 以下肽不可见；
+  本步骤专门覆盖 20-99 aa 肽段层，供功能肽分支（45/46/47/50）专用。
+  逐样本产出 TSV+FASTA，并做独立核验（TSV/FASTA 逐行对应、长度一致、边界合法），
+  最后生成全样本汇总与完成哨兵。
+
+inputs:
+  - name: prodigal_faa
+    path_pattern: "{workdir}/result/assembly/prodigal/{sample}/{sample}.faa"
+    required: true
+    description: "17 号 Prodigal 蛋白预测（header 含坐标/链/partial 属性）"
+
+outputs:
+  - name: smorf_faa
+    path_pattern: "{workdir}/result/peptide/smorf/{sample}.smorf.faa"
+    description: "短肽序列；header 保留原始 gene_id（下游限定 ID = {sample}|{gene_id}）"
+  - name: smorf_tsv
+    path_pattern: "{workdir}/result/peptide/smorf/{sample}.smorf.tsv"
+    description: "元数据表：gene_id/contig_id/start/end/strand/partial/length_aa/start_type/seq_sha1_12"
+  - name: stats
+    path_pattern: "{workdir}/result/peptide/smorf/smorf_catalog.stats.md"
+    description: "全样本汇总：逐样本候选数/complete 占比 + 长度分布（10 aa 桶）"
+  - name: sentinel
+    path_pattern: "{workdir}/result/peptide/smorf/smorf_catalog.done"
+    description: "完成哨兵（失败时留 .FAILED，重跑 --force 清理旧标记）"
+
+depends_on:
+  - 17_bac_prodigal
+
+params:
+  cpus: "并行 worker 数，默认 4（-t）"
+  force: "--force 重跑（默认哨兵存在即跳过）"
+
+calibers:
+  length_window: "候选 = 20 <= 实际 aa 数（不含终止子）<= 99，闭区间"
+  partial_layering: "partial 标记原样保留并分层：00=complete、01=partial_g3、10=partial_g5、11=partial_both；不做静默过滤"
+  independent_catalog: "独立于 18 号 CD-HIT 核酸目录口径（后者 <100 bp 不可见 → 20-33 aa 肽在丰度层存在盲区）"
+  downstream_id: "下游表使用限定 ID {sample}|{gene_id}；seq_sha1_12 为 12 位序列哈希，供跨步一致性核对"
+
+benchmarks:
+  note: "吞吐/耗时未正式计量，待实测回填。试点事实（已核证）：6 样本合计 450,320 条候选，其中 complete 层 153,625 条。"
+  typical_runtime_min: null
+  peak_memory_gb: null
+
+known_issues:
+  - description: "候选范围仅限 Prodigal(-p meta) 预测到的 ORF（>=20 aa）；非专用 small-ORF caller（无 Ribo-seq/DeepFinder 类证据），极短或非经典起始的 smORF 会漏检。"
+    workaround: "解读时表述为 'Prodigal 可见肽段层的预测功能候选'，不得声称全量 smORF 覆盖。"
+  - description: "20-33 aa 盲区（分支级）：丰度层依赖 18 号 NR 目录（<100 bp 核酸被滤），该长度段肽无法关联丰度行（试点 118 条代表无丰度行，属已知口径而非失败）。"
+    workaround: "50 号 abundance.tsv 中以缺行 + qc_summary 披露；不得把缺丰度行误读为低丰度。"
+  - description: "partial 层候选保留在目录中，但按 D4 策略不进入 46/47 的查询范围（仅 complete 层代表被筛查/检索）。"
+    workaround: "partial 层仅作目录分层记账；如需纳入需用户重新拍板策略。"
+  - description: "预测≠验证（分支级）：本目录是候选清单，不代表任何已验证功能。"
+    workaround: "报告用语统一为 '预测功能候选'。"
+
+example_command: "bash scripts/44_smorf_catalog.sh -w /path/to/workdir -r /path/to/repo -t 4"

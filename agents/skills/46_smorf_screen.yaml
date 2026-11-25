@@ -1,0 +1,68 @@
+id: "46_smorf_screen"
+name: "Hosted Peptide Screening (bioactivity / AMP / phychem batches)"
+script: "scripts/46_smorf_screen.sh"
+tool: "miProbe hosted API (curl) + python3 driver"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: integrated
+
+description: >
+  对 complete 层聚簇代表序列批量调用 miProbe 托管三端点：
+  prediction/bioactivity（11 模型子集，cap=3 条/批）、prediction/amp（0-4 ordinal，
+  cap=10 条/批）、prediction/phychem（理化性质 MLP，cap=10 条/批）。
+  串行 + 0.3s 间隔，curl 传输；失败批次重试 2 次后落盘 error 记录，不阻塞后续
+  批次；state.json 游标断点续传。簇成员结果不单独查询，由 50 号整合时按
+  代表级映射传播标注。
+
+inputs:
+  - name: representative_fasta
+    path_pattern: "{workdir}/result/peptide/cluster_test/clu50_complete_rep_seq.fasta"
+    required: true
+    description: "complete 层 50% AAI 聚簇代表序列；-i 可覆盖为试点子集 FASTA"
+
+outputs:
+  - name: bioactivity_batches
+    path_pattern: "{workdir}/result/peptide/screen/bioactivity/batch_*.json"
+    description: "bioactivity 批次响应（11 模型子集逐条预测）"
+  - name: amp_batches
+    path_pattern: "{workdir}/result/peptide/screen/amp/batch_*.json"
+    description: "AMP ordinal 批次响应（raw_score + rounded_score）"
+  - name: phychem_batches
+    path_pattern: "{workdir}/result/peptide/screen/phychem/batch_*.json"
+    description: "理化性质批次响应（charge/hydrophobicity/boman_index/aliphatic_index）"
+  - name: cursor
+    path_pattern: "{workdir}/result/peptide/screen/state.json"
+    description: "分端点已完成批次游标，重跑自动续传"
+  - name: sentinel
+    path_pattern: "{workdir}/result/peptide/screen/screen.done"
+    description: "完成哨兵（存在未恢复失败时留 screen.FAILED）"
+
+depends_on:
+  - 44_smorf_catalog
+  - "complete-tier 50% AAI 聚簇（试点经临时流程产出，正式编号聚簇步骤待固化，见 known_issues）"
+
+params:
+  input: "-i 覆盖输入 FASTA（试点子集模式）"
+  force: "--force 重跑"
+
+calibers:
+  bioactivity_subset: "11 模型子集（cap=3）：anti_diabetic/anti_hypertensive/anti_inflammatory/antioxidant/chemotaxis/antibacterial/anti_biofilm/antifungal/antiviral/general_toxicity/hemolytic_activity；非全 33 模型"
+  capacity: "实测容量（单时点）：33 模型 @10 条/批必 504（60s 网关窗口）；11 模型子集 @3 条/批 22.6s 通过。故 bioactivity cap=3、amp/phychem cap=10"
+  strip_asterisk: "序列剥除末尾 '*'（Prodigal 终止子翻译字符，实测仅出现在末尾）"
+  rate_limit: "串行 + 0.3s 间隔；curl 传输（urllib 被 Cloudflare TLS 指纹拦截）；超时 120s；重试 2 次后落盘 error 不阻塞"
+  query_scope: "仅 complete 层代表被查询（D4 策略）；partial 层不进本步"
+
+benchmarks:
+  note: "试点（5,000 代表）批次实数已核证：bioactivity 1,667 批 / amp 500 批 / phychem 500 批，全部 200。全量 64,964 代表的计划估算约 5-6 天后台，属外推估算，实际吞吐/耗时待实测回填。"
+
+known_issues:
+  - description: "输入依赖缺口：complete 层聚簇代表目前由试点期临时流程产出（cluster_test/ 目录，无编号脚本）；正式聚簇步骤待固化。"
+    workaround: "复现试点用既有 cluster_test/ 产物；新项目需先固化聚簇步骤（MMseqs2 50% AAI，口径与 50 号 cluster.tsv 消费一致）再运行本步。"
+  - description: "簇成员未独立查询：结果由代表级映射传播（非独立测量），传播边界在 50 号 nn_status/整合标注中如实记录。"
+    workaround: "解读成员级结果时必须带上 representative-mapped 边界，不得当作独立预测。"
+  - description: "无区分度模型风险：试点中 antioxidant（阳性率 100.0%）与 anti_inflammatory（97.2%）在本数据无区分度，50 号落表时 filter_usable=false 仅存档。"
+    workaround: "筛选只用 filter_usable=true 的模型行；换数据集后需重新评估而非沿用本结论。"
+  - description: "预测≠验证（分支级）：全部输出为模型预测证据（model_prediction），不代表实验验证功能。"
+    workaround: "报告用语统一为 '预测功能候选'。"
+
+example_command: "bash scripts/46_smorf_screen.sh -w /path/to/workdir -r /path/to/repo  # 试点子集：追加 -i /path/to/pilot_reps.fasta"

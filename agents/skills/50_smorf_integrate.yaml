@@ -1,0 +1,107 @@
+id: "50_smorf_integrate"
+name: "Peptide Pilot Integration (seven contract tables + QC ledger)"
+script: "scripts/50_smorf_integrate.sh"
+tool: "python3 (stdlib)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: integrated
+
+description: >
+  功能肽试点结果整合：把 46（bioactivity/amp/phychem 批次 JSON）、47（NN 命中）、
+  44（smORF 元数据）与丰度来源（18 号 NR 目录 clstr -> 簇代表 -> 20 号 Salmon
+  TPM）拼成七张契约分表，并输出 QC 汇总。内置落盘重读核验（从磁盘重读比对
+  预期行数，不信任内存计数）与 nn_status 算术断言（六态分布逐项核对，
+  queried==5000 等试点断言）。B 路线 candidate_evidence.tsv（49c 产出）按
+  契约兼容接入，既有七表基线不改动。
+
+inputs:
+  - name: pilot_fasta
+    path_pattern: "{workdir}/result/peptide/cluster_test/pilot5000.faa"
+    required: true
+    description: "试点代表清单（本脚本按试点形态锁定该输入）"
+  - name: nn_results
+    path_pattern: "{workdir}/result/peptide/nn/nn_results.tsv"
+    required: true
+    description: "47 号 NN 命中长表"
+  - name: cluster_tsv
+    path_pattern: "{workdir}/result/peptide/cluster_test/clu50_complete_cluster.tsv"
+    required: true
+    description: "complete 层聚簇映射（代表 -> 成员）"
+  - name: nr_clstr
+    path_pattern: "{workdir}/result/assembly/cdhit/nucleotide_nr.fa.clstr"
+    required: true
+    description: "18 号核苷酸非冗余目录 clstr（丰度家族口径的成员->目录代表连接）"
+  - name: salmon_quant
+    path_pattern: "{workdir}/result/assembly/salmon/{sample}/quant.sf"
+    required: true
+    description: "20 号 Salmon TPM（丰度数值来源）"
+  - name: smorf_tsps
+    path_pattern: "{workdir}/result/peptide/smorf/{sample}.smorf.tsv"
+    required: true
+    description: "44 号元数据（主表与分层记账来源）"
+  - name: screen_batches
+    path_pattern: "{workdir}/result/peptide/screen/{bioactivity,amp,phychem}/batch_*.json"
+    required: true
+    description: "46 号三端点批次响应"
+
+outputs:
+  - name: peptide_main
+    path_pattern: "{workdir}/result/peptide/integration/peptide_main.tsv"
+    description: "主表：试点代表 x 44 号元数据 x 簇归属（cluster_representative_id / is_cluster_representative）"
+  - name: bioactivity_predictions
+    path_pattern: "{workdir}/result/peptide/integration/bioactivity_predictions.tsv"
+    description: "bioactivity 长表，含 filter_usable 列（无区分度模型=false）"
+  - name: amp_predictions
+    path_pattern: "{workdir}/result/peptide/integration/amp_predictions.tsv"
+    description: "AMP ordinal 表（raw_score + rounded_score）"
+  - name: phychem_properties
+    path_pattern: "{workdir}/result/peptide/integration/phychem_properties.tsv"
+    description: "理化性质表（charge/hydrophobicity/boman_index/aliphatic_index）"
+  - name: nn_hits
+    path_pattern: "{workdir}/result/peptide/integration/nn_hits.tsv"
+    description: "NN 命中表（evidence_type=similarity_transfer 逐行携带）"
+  - name: nn_status
+    path_pattern: "{workdir}/result/peptide/integration/nn_status.tsv"
+    description: "全候选逐条记账表（peptide_id/nn_status/note），试点 450,320 数据行"
+  - name: abundance
+    path_pattern: "{workdir}/result/peptide/integration/abundance.tsv"
+    description: "丰度表：peptide_id/sample/tpm/caliber/catalog_representative_id"
+  - name: qc_summary
+    path_pattern: "{workdir}/result/peptide/integration/qc_summary.md"
+    description: "QC 汇总：批次计数、NN 错误数、无区分度模型标注、nn_status 六态计数、映射边界披露"
+  - name: sentinel
+    path_pattern: "{workdir}/result/peptide/integration/integrate.done"
+    description: "完成哨兵（核验失败留 .FAILED 且退出非零）"
+
+depends_on:
+  - 44_smorf_catalog
+  - 46_smorf_screen
+  - 47_smorf_nn
+  - 18_bac_cdhit
+  - 20_bac_salmon_quant
+
+calibers:
+  qualified_id: "peptide_id = {sample}|{gene_id}，主键唯一性落盘重读核验"
+  filter_usable: "无区分度模型 filter_usable=false（试点：antioxidant 阳性率 100.0%、anti_inflammatory 97.2%），仅存档不用于筛选；其余模型=true"
+  evidence_type: "逐行携带：bioactivity/amp/phychem=model_prediction，NN=similarity_transfer；不同任务分数不合并投票"
+  nn_status_six_states: "queried_complete_representative / not_queried_outside_pilot / not_queried_representative_mapped / not_queried_partial_policy / error / not_in_tier_tables；全候选逐条入账（试点 450,320 行），未查询不得误报为无命中"
+  abundance_family_caliber: "家族口径丰度：肽基因经 18 号 NR clstr 映射到目录代表后取其 Salmon TPM；caliber 分档 direct_gene_tpm（自身即代表）/ cluster_family_gene_tpm（簇家族代理）"
+  blind_zone_disclosure: "20-33 aa 盲区（NR 目录 <100 bp 不可见）候选无丰度行，属已知口径而非失败（试点 118 条代表），qc_summary 披露"
+  b_route_access: "B 路线 candidate_evidence.tsv（49c）契约兼容接入；七表既有列与行数基线不改动"
+
+benchmarks:
+  note: "试点整合已核证：nn_status 450,320 数据行（六态全覆盖）、bioactivity/amp/phychem 批次全 200、落盘重读核验+算术断言通过。运行耗时未正式计量，待实测回填。"
+
+known_issues:
+  - description: "试点形态锁定：脚本硬编码要求 pilot5000.faa 与试点断言（queried==5000）；全量整合需先解除试点断言并泛化输入清单（属阶段 2 扩展）。"
+    workaround: "全量使用前改造脚本输入与断言；不要用 --force 硬闯试点断言。"
+  - description: "api_version 字符串硬编码（miProbe API v0.1.0）；API 升级后需与 45 号 registry.json 核对并更新。"
+    workaround: "以 45 号登记为版本真值源，落表前核对。"
+  - description: "簇成员的 NN/预测结果均为代表级映射传播（非独立查询）；传播边界在 qc_summary 披露。"
+    workaround: "成员级解读必须携带 representative-mapped 边界。"
+  - description: "partial 层不查 NN/不筛查（D4 策略）：nn_status=not_queried_partial_policy 的行不得解读为无命中。"
+    workaround: "下游筛选只在 queried/映射传播范围内做，partial 层仅目录记账。"
+  - description: "预测≠验证（分支级）：七表全部是预测/相似度证据，不代表实验验证功能。"
+    workaround: "报告用语统一为 '预测功能候选'。"
+
+example_command: "bash scripts/50_smorf_integrate.sh -w /path/to/workdir -r /path/to/repo"

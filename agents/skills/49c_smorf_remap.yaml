@@ -1,0 +1,66 @@
+id: "49c_smorf_remap"
+name: "B-route: Candidate-to-Gene Remap and Evidence Table (contract)"
+script: "scripts/49c_smorf_remap.sh"
+tool: "python3 (planned; stdlib)"
+dimension: "bacteria"
+rule_type: "aggregate"
+integration_status: "pending"
+
+implementation_status: "实现中——脚本尚未落库；本卡为契约草稿卡（依据 docs/plans/peptide_contract.md 冻结契约预写），实现落地后按实跑口径回填"
+
+description: >
+  B 路线回映射器：把 49a（antiSMASH 前体）与 49b（Macrel 候选）产出的候选
+  回映射到 17 号 Prodigal 基因与样本，产出冻结契约定义的
+  candidate_evidence.tsv（B 路线候选证据表），供 50 号兼容接入。
+  回映射采取"序列包含优先、坐标双确认"口径：优先以序列包含关系定
+  exact/contained，坐标体系按工具原样保留（coords_note 说明），不做换算。
+
+inputs:
+  - name: antismash_precursors
+    path_pattern: "{workdir}/result/peptide/broute/antismash_precursors.tsv (+.faa)"
+    required: true
+    description: "49a 前体肽长表与序列"
+  - name: macrel_precursors
+    path_pattern: "{workdir}/result/peptide/broute/macrel_precursors.tsv"
+    required: true
+    description: "49b Macrel 候选表（含序列列）"
+  - name: prodigal_genes
+    path_pattern: "{workdir}/result/assembly/prodigal/{sample}/{sample}.faa (+ .smorf.tsv 目录表)"
+    required: true
+    description: "17 号蛋白预测（回映射目标）；44 号目录表提供限定 ID 与分层元数据"
+
+outputs:
+  - name: candidate_evidence
+    path_pattern: "{workdir}/result/peptide/broute/candidate_evidence.tsv"
+    description: "契约表（14 列）：candidate_id/source_tool/tool_version/sample/gene_id/contig_id/coords/coords_note/family/probability/remap_status/remap_note/evidence_type/nn_status"
+  - name: remap_qc
+    path_pattern: "{workdir}/result/peptide/broute/49c_remap.qc.md"
+    description: "回映射率与五分项计数报告（实现细节随脚本落库固化）"
+
+depends_on:
+  - 49a_smorf_antismash_harvest
+  - 49b_smorf_macrel
+  - 17_bac_prodigal
+
+calibers:
+  candidate_id: "全局唯一，格式 {source_tool}:{qualified_id或原ID}（如 antismash:{sample}|{contig}_{ordinal}、macrel:{原始Access}）"
+  remap_status: "五分项：exact_mapped / contained_mapped / ambiguous / unmapped_only_candidate / not_attempted；exact 与 contained 都算已映射但分列统计"
+  evidence_type: "macrel=model_prediction；antismash=annotation_rule（规则注释抽取）；对应关系由 T5 校验点强制"
+  nn_status: "固定 not_applicable_b_route——B 路线候选不在 47 号 NN 查询范围（47 只查 complete 层代表）"
+  coords_policy: "coords 保留工具原始坐标字符串不换算；coords_note ∈ {antismash_1based_closed, macrel_1based_closed}"
+  sample_na: "不能归属样本/基因时填 NA（如 Macrel 未映射候选 sample=NA、gene_id=NA）"
+
+benchmarks:
+  note: "回映射率验收（阶段 2 门禁项）尚未运行：exact/contained/ambiguous/unmapped 占比与耗时全部待实测回填。"
+
+known_issues:
+  - description: "实现缺口：脚本尚未落库，本卡为契约草稿卡；ambiguous 与 contained 的判定细节（包含阈值、多重命中处理）随实现固化后回填本卡。"
+    workaround: "实现必须遵守冻结契约：字段/取值集合不得单方变更，需修改须回报主会话仲裁。"
+  - description: "T5 校验点（契约规定）：candidate_id 唯一非空；source_tool ∈ {antismash, macrel}；remap_status ∈ 五分项；evidence_type 与 source_tool 对应；filter_usable=false 模型行存在于既有 bioactivity_predictions.tsv；nn_status.tsv 行数==450,320（全候选覆盖不回归）；主表/预测表行数与批次产物计数一致。"
+    workaround: "实现须内置逐项校验，任一不满足即失败退出，不得带病落盘。"
+  - description: "序列包含口径对前体肽（含 leader）偏保守：antiSMASH 前体可能长于 Prodigal 所见 CDS 翻译，此时按坐标回映射兜底。"
+    workaround: "remap_note 列记录判定依据（序列包含/坐标）或失败原因，逐行可审计。"
+  - description: "预测/注释≠验证（分支级）：candidate_evidence.tsv 是候选证据表，不是功能验证清单。"
+    workaround: "报告用语统一为 '注释/预测功能候选'。"
+
+example_command: "bash scripts/49c_smorf_remap.sh -w /path/to/workdir -r /path/to/repo  # 命令行接口随实现落库固化"
