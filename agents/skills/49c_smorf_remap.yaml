@@ -6,7 +6,7 @@ dimension: "bacteria"
 rule_type: "aggregate"
 integration_status: "pending"
 
-implementation_status: "实现中——脚本尚未落库；本卡为契约已交付卡（依据 docs/plans/peptide_contract.md 冻结契约预写），实现落地后按实跑口径回填"
+implementation_status: "已实现（scripts/49c_smorf_remap.sh，commit 912752d；验收复跑 md5 幂等 ×2、五分项闭合）"
 
 description: >
   B 路线回映射器：把 49a（antiSMASH 前体）与 49b（Macrel 候选）产出的候选
@@ -54,7 +54,7 @@ benchmarks:
   note: "回映射率验收（阶段 2 门禁项）尚未运行：exact/contained/ambiguous/unmapped 占比与耗时全部待实测回填。"
 
 known_issues:
-  - description: "实现缺口：脚本尚未落库，本卡为契约已交付卡；ambiguous 与 contained 的判定细节（包含阈值、多重命中处理）随实现固化后回填本卡。"
+  - description: "回映射判定：序列精确匹配优先，其次双向包含；ambiguous 由多蛋白索引天然支持（本试点数据未触发）。"
     workaround: "实现必须遵守冻结契约：字段/取值集合不得单方变更，需修改须回报主会话仲裁。"
   - description: "T5 校验点（契约规定）：candidate_id 唯一非空；source_tool ∈ {antismash, macrel}；remap_status ∈ 五分项；evidence_type 与 source_tool 对应；filter_usable=false 模型行存在于既有 bioactivity_predictions.tsv；nn_status.tsv 行数==450,320（全候选覆盖不回归）；主表/预测表行数与批次产物计数一致。"
     workaround: "实现须内置逐项校验，任一不满足即失败退出，不得带病落盘。"
