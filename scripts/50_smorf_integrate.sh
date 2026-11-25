@@ -222,6 +222,10 @@ for qid, t in tier.items():
 missing_tier = set(queried) - set(tier)
 for qid in missing_tier:
     nn_status[qid] = "not_in_tier_tables"
+assert len(nn_status) == len(tier), (len(nn_status), len(tier))
+FOUR = ["queried_complete_representative", "not_queried_outside_pilot",
+        "not_queried_representative_mapped", "not_queried_partial_policy"]
+assert sum(1 for v in nn_status.values() if v in FOUR) == len(tier), "四态总数应等于候选总数"
 
 # 状态分布断言（算术自洽：代表数=已查试点+未查代表；成员数=映射传播数）
 st_cnt = collections.Counter(nn_status.values())
@@ -317,20 +321,45 @@ for fn, want in expected.items():
 main_ids = [l.split("\t")[0] for l in open(f"{OUT}/peptide_main.tsv", encoding="utf-8").readlines()[1:]]
 if len(set(main_ids)) != len(main_ids):
     failures.append("peptide_main.tsv 存在重复主键")
-if set(nn_status.keys()) != set(tier.keys()):
-    only_status = sorted(set(nn_status) - set(tier))[:3]
-    only_tier = sorted(set(tier) - set(nn_status))[:3]
-    failures.append(f"nn_status 主键集合与候选集合不相等"
-                    f"（仅 status 有: {only_status}；仅 tier 有: {only_tier}）")
-for st_name, want in [("queried_complete_representative", 5000),
-                      ("not_queried_outside_pilot", len(cluster_reps - set(queried))),
-                      ("not_queried_representative_mapped",
-                       sum(len(v) for v in cluster_members.values())),
-                      ("not_queried_partial_policy",
-                       sum(1 for t in tier.values() if t == "partial"))]:
-    got = sum(1 for v in nn_status.values() if v == st_name)
+# nn_status.tsv 落盘重读：表头/数据行/重复键/逐状态计数/键集合与候选双向比对
+ns_hdr = "peptide_id\tnn_status\tnote"
+ns_disk = {}
+ns_status_disk = collections.Counter()
+with open(f"{OUT}/nn_status.tsv", encoding="utf-8") as fh:
+    hdr = fh.readline().rstrip("\n")
+    if hdr != ns_hdr:
+        failures.append(f"nn_status.tsv 表头不符: {hdr[:60]}")
+    for line in fh:
+        f = line.rstrip("\n").split("\t")
+        if len(f) != 3:
+            failures.append(f"nn_status.tsv 列数异常: {line[:60]}")
+            continue
+        qid, st = f[0], f[1]
+        if qid in ns_disk:
+            failures.append(f"nn_status.tsv 重复主键 {qid}")
+        ns_disk[qid] = st
+        ns_status_disk[st] += 1
+if set(ns_disk.keys()) != set(tier.keys()):
+    only_disk = sorted(set(ns_disk) - set(tier))[:3]
+    only_tier = sorted(set(tier) - set(ns_disk))[:3]
+    failures.append(f"nn_status 落盘键集合与候选集合双向不等"
+                    f"（仅落盘: {only_disk}；仅候选: {only_tier}）")
+if len(ns_disk) != len(tier):
+    failures.append(f"nn_status 落盘 {len(ns_disk)} != 候选 {len(tier)}")
+# 四类状态计数断言（基于落盘重读值，非内存）
+want_counts = {
+    "queried_complete_representative": 5000,
+    "not_queried_outside_pilot": len(cluster_reps - set(queried)),
+    "not_queried_representative_mapped": sum(len(v) for v in cluster_members.values()),
+    "not_queried_partial_policy": sum(1 for t in tier.values() if t == "partial"),
+}
+for st_name, want in want_counts.items():
+    got = ns_status_disk.get(st_name, 0)
     if got != want:
-        failures.append(f"nn_status 状态 {st_name} 计数 {got} != 断言 {want}")
+        failures.append(f"nn_status 状态 {st_name} 落盘计数 {got} != 断言 {want}")
+want_total = sum(want_counts.values())
+if len(ns_disk) != want_total:
+    failures.append(f"nn_status 落盘 {len(ns_disk)} != 四态断言总和 {want_total}")
 
 # ── 9. QC 汇总（按落盘核验后的实际值生成） ─────────────────────────
 batch_bio = len(glob.glob(f"{SCREEN}/bioactivity/batch_*.json"))
@@ -358,7 +387,7 @@ with open(f"{OUT}/qc_summary.md", "w", encoding="utf-8") as m:
             "anti_inflammatory（97.2%）——仅存档，不用于筛选\n")
     m.write("- 证据类型: model_prediction（bioactivity/amp/phychem）、"
             "similarity_transfer（NN）；逐行随表携带\n")
-    st_cnt = collections.Counter(nn_status.values())
+    st_cnt = ns_status_disk  # 来自落盘重读，非内存
     m.write("- nn_status 六态计数（全候选 450,320 逐条记账，不得把未查询误报为无命中）:\n")
     for st_name in ["queried_complete_representative", "not_queried_outside_pilot",
                     "not_queried_representative_mapped", "not_queried_partial_policy",
