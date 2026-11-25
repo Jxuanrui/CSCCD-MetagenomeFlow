@@ -59,7 +59,7 @@ python3 - "${INPUT}" "${RESULTS}" "${CURSOR}" <<'PYEOF'
 import json, os, subprocess, sys, time
 
 input_fa, results, cursor = sys.argv[1], sys.argv[2], sys.argv[3]
-API = "https://www.biosino.org/iMAC/miProbe/api"
+API = os.environ.get("PEPTIDE_API_BASE", "https://www.biosino.org/iMAC/miProbe/api")  # env override, default = production
 INTERVAL = 0.3
 RETRIES = 2
 K = 3
@@ -83,6 +83,17 @@ if os.path.exists(cursor) and os.path.getsize(cursor):
     start = int(open(cursor).read().strip())
 print(f"[plan] total={n} resume_from={start}")
 
+# F2 修复：启动时读取已写 query_id 集合——重启重跑时跳过已完成查询（幂等），
+# 且追加前逐条去重，杜绝崩溃后重复 API 调用与重复结果行
+written_ids = set()
+if os.path.exists(results) and os.path.getsize(results):
+    with open(results, encoding="utf-8") as fh:
+        for line in fh:
+            if line.startswith("query_id"):
+                continue
+            qid = line.split("\t", 1)[0]
+            if qid:
+                written_ids.add(qid)
 if not os.path.exists(results) or os.path.getsize(results) == 0:
     with open(results, "w", encoding="utf-8") as f:
         f.write("query_id\trank\thit_internal_id\tsimilarity\n")
@@ -90,8 +101,12 @@ if not os.path.exists(results) or os.path.getsize(results) == 0:
 ok = err = 0
 t0 = time.time()
 with open(results, "a", encoding="utf-8") as out_f:
+    skipped_existing = 0
     for i in range(start, n):
         gid, seq = entries[i]
+        if gid in written_ids:
+            skipped_existing += 1
+            continue
         body = json.dumps({"sequence": seq, "k": K})
         rows = None
         for attempt in range(1, RETRIES + 2):
@@ -127,7 +142,7 @@ with open(results, "a", encoding="utf-8") as out_f:
 with open(cursor, "w") as c:
     c.write(str(n))
 el = time.time() - t0
-print(f"[done] total={n} ok={ok} err={err} elapsed={el/3600:.2f}h")
+print(f"[done] total={n} ok={ok} err={err} skipped_existing={skipped_existing} elapsed={el/3600:.2f}h")
 PYEOF
 
 echo "[DONE] $(date -u '+%F %T') nn"

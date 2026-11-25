@@ -69,7 +69,7 @@ python3 - "${REPS}" "${OUT}" "${STATE}" <<'PYEOF'
 import json, os, subprocess, sys, time, hashlib
 
 reps_path, out, state_path = sys.argv[1], sys.argv[2], sys.argv[3]
-API = "https://www.biosino.org/iMAC/miProbe/api"
+API = os.environ.get("PEPTIDE_API_BASE", "https://www.biosino.org/iMAC/miProbe/api")  # env override, default = production
 # 实测容量（60s 网关硬限制）：bioactivity 33 模型 @10 条必 504；11 模型子集 @3 条 22.6s 通过。
 # 因此 bioactivity 用 11 模型子集 + cap=3；amp/phychem 轻量，cap=10。
 CAPS = {"bioactivity": 3, "amp": 10, "phychem": 10}
@@ -142,7 +142,7 @@ for bi in range(max_batches):
             with open(f"{out}/{ep}/batch_{bi:05d}.error", "a", encoding="utf-8") as f:
                 f.write(f"{json.dumps({'batch': bi, 'http': code, 'resp': resp[:400]})}\n")
         time.sleep(INTERVAL)
-    if (bi + 1) % 200 == 0:
+    if (bi + 1) % 50 == 0:
         el = time.time() - t0
         eta = el / (bi + 1) * (max_batches - bi - 1)
         print(f"[progress] batch {bi+1}/{max_batches} | calls={calls} fails={fails} "
@@ -152,14 +152,22 @@ for bi in range(max_batches):
 json.dump(state, open(state_path, "w"), indent=0)
 el = time.time() - t0
 print(f"[done] max_batches={max_batches} calls={calls} fails={fails} elapsed={el/3600:.2f}h")
+if fails:
+    # 有失败批次：保留已成功批次产物与游标（可续传），但明确失败退出——
+    # 不写 screen.done，由 bash 侧落 screen.FAILED；修复 D-B 演练 F1。
+    sys.exit(2)
 for ep in ENDPOINTS:
     n_ok = len(glob := __import__("glob").glob(f"{out}/{ep}/batch_*.json"))
     print(f"  {ep}: {n_ok} batch files")
 PYEOF
 
 VERIFY=${PIPESTATUS[0]}
-if [ "${VERIFY}" -ne 0 ]; then
-    echo "[ERROR] 46 号批量预测存在未恢复失败（详见上方 error 记录）" >&2
+if [ "${VERIFY}" -eq 2 ]; then
+    echo "[ERROR] 存在未恢复的失败批次（已成功批次与游标已保留，可修复后 --force 续传）" >&2
+    : > "${OUT}/screen.FAILED"
+    exit 1
+elif [ "${VERIFY}" -ne 0 ]; then
+    echo "[ERROR] 46 号批量预测异常退出（exit=${VERIFY}）" >&2
     : > "${OUT}/screen.FAILED"
     exit 1
 fi
