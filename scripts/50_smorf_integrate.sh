@@ -201,29 +201,43 @@ for t in sorted(glob.glob(f"{SMORF}/*.smorf.tsv")):
                 continue
             tier[f"{sample}|{f[0]}"] = "complete" if f[5] == "complete" else "partial"
 
-cluster_rep, cluster_members = {}, collections.defaultdict(set)
+cluster_reps, cluster_members = set(), {}
 with open(f"{PEP}/cluster_test/clu50_complete_cluster.tsv", encoding="utf-8") as fh:
     for line in fh:
         rep, member = line.rstrip("\n").split("\t")
-        cluster_rep[member] = rep
-        cluster_members[rep].add(member)
+        cluster_reps.add(rep)
+        if member != rep:
+            cluster_members.setdefault(rep, set()).add(member)
 
 nn_status = {}
 for qid, t in tier.items():
     if qid in queried:
         nn_status[qid] = queried[qid]
     elif t == "complete":
-        nn_status[qid] = ("not_queried_outside_pilot" if qid in cluster_rep
+        # 互斥三态：簇代表（未查/已查）≠ 簇成员（代表级映射传播）
+        nn_status[qid] = ("not_queried_outside_pilot" if qid in cluster_reps
                           else "not_queried_representative_mapped")
     else:
         nn_status[qid] = "not_queried_partial_policy"
 missing_tier = set(queried) - set(tier)
 for qid in missing_tier:
     nn_status[qid] = "not_in_tier_tables"
+
+# 状态分布断言（算术自洽：代表数=已查试点+未查代表；成员数=映射传播数）
+st_cnt = collections.Counter(nn_status.values())
+assert st_cnt["queried_complete_representative"] == 5000, st_cnt
+assert st_cnt["not_queried_outside_pilot"] == len(cluster_reps - set(queried)), st_cnt
+assert st_cnt["not_queried_representative_mapped"] == sum(len(v) for v in cluster_members.values()), st_cnt
+assert st_cnt["not_queried_partial_policy"] == sum(1 for t in tier.values() if t == "partial"), st_cnt
+print(f"[assert] 状态分布算术自洽: "
+      f"queried={st_cnt['queried_complete_representative']} "
+      f"outside_pilot_reps={st_cnt['not_queried_outside_pilot']} "
+      f"members_mapped={st_cnt['not_queried_representative_mapped']} "
+      f"partial_policy={st_cnt['not_queried_partial_policy']}")
 NOTE = {
     "queried_complete_representative": "本序列已查询",
-    "not_queried_outside_pilot": "complete 层代表，试点范围外未查询",
-    "not_queried_representative_mapped": "簇成员未直接查询，结果经代表级映射传播",
+    "not_queried_outside_pilot": "complete 层簇代表，试点范围外未查询",
+    "not_queried_representative_mapped": "簇成员未直接查询，结果经簇代表级映射传播",
     "not_queried_partial_policy": "partial 层按策略未查询（D4），不得误读为无命中",
     "error": "查询失败，见重试与错误记录",
     "not_in_tier_tables": "查询存在但未匹配到分层表（需排查）",
@@ -303,8 +317,20 @@ for fn, want in expected.items():
 main_ids = [l.split("\t")[0] for l in open(f"{OUT}/peptide_main.tsv", encoding="utf-8").readlines()[1:]]
 if len(set(main_ids)) != len(main_ids):
     failures.append("peptide_main.tsv 存在重复主键")
-if len(nn_status) != len(tier):
-    failures.append(f"nn_status 覆盖 {len(nn_status)} != 候选 {len(tier)}，记账不完整")
+if set(nn_status.keys()) != set(tier.keys()):
+    only_status = sorted(set(nn_status) - set(tier))[:3]
+    only_tier = sorted(set(tier) - set(nn_status))[:3]
+    failures.append(f"nn_status 主键集合与候选集合不相等"
+                    f"（仅 status 有: {only_status}；仅 tier 有: {only_tier}）")
+for st_name, want in [("queried_complete_representative", 5000),
+                      ("not_queried_outside_pilot", len(cluster_reps - set(queried))),
+                      ("not_queried_representative_mapped",
+                       sum(len(v) for v in cluster_members.values())),
+                      ("not_queried_partial_policy",
+                       sum(1 for t in tier.values() if t == "partial"))]:
+    got = sum(1 for v in nn_status.values() if v == st_name)
+    if got != want:
+        failures.append(f"nn_status 状态 {st_name} 计数 {got} != 断言 {want}")
 
 # ── 9. QC 汇总（按落盘核验后的实际值生成） ─────────────────────────
 batch_bio = len(glob.glob(f"{SCREEN}/bioactivity/batch_*.json"))
@@ -332,9 +358,13 @@ with open(f"{OUT}/qc_summary.md", "w", encoding="utf-8") as m:
             "anti_inflammatory（97.2%）——仅存档，不用于筛选\n")
     m.write("- 证据类型: model_prediction（bioactivity/amp/phychem）、"
             "similarity_transfer（NN）；逐行随表携带\n")
-    m.write(f"- nn_status 记账: 全候选 {len(tier)} 行全覆盖，状态六类分列"
-            "（queried / outside_pilot / representative_mapped / partial_policy / error / not_in_tier），"
-            "不得把未查询误报为无命中\n")
+    st_cnt = collections.Counter(nn_status.values())
+    m.write("- nn_status 六态计数（全候选 450,320 逐条记账，不得把未查询误报为无命中）:\n")
+    for st_name in ["queried_complete_representative", "not_queried_outside_pilot",
+                    "not_queried_representative_mapped", "not_queried_partial_policy",
+                    "error", "not_in_tier_tables"]:
+        m.write(f"    - {st_name}: {st_cnt.get(st_name, 0)}\n")
+    m.write("- 代表级映射边界: NN 结果由簇代表查询获得，簇成员为映射传播（非独立查询）\n")
 if failures:
     print("[VERIFY-FAIL] 存在需披露的项（见上），明细：", file=sys.stderr)
     for x in failures:
