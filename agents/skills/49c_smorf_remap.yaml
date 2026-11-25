@@ -1,7 +1,7 @@
 id: "49c_smorf_remap"
 name: "B-route: Candidate-to-Gene Remap and Evidence Table (contract)"
 script: "scripts/49c_smorf_remap.sh"
-tool: "python3 (planned; stdlib)"
+tool: "python3 (stdlib，已实现；scripts/49c_smorf_remap.sh，commit 912752d)"
 dimension: "bacteria"
 rule_type: "aggregate"
 integration_status: "pending"
@@ -31,10 +31,10 @@ inputs:
 
 outputs:
   - name: candidate_evidence
-    path_pattern: "{workdir}/result/peptide/broute/candidate_evidence.tsv"
+    path_pattern: "{workdir}/result/peptide/integration/candidate_evidence.tsv"
     description: "契约表（14 列）：candidate_id/source_tool/tool_version/sample/gene_id/contig_id/coords/coords_note/family/probability/remap_status/remap_note/evidence_type/nn_status"
   - name: remap_qc
-    path_pattern: "{workdir}/result/peptide/broute/49c_remap.qc.md"
+    path_pattern: "{workdir}/result/peptide/broute/remap_qc.md"
     description: "回映射率与五分项计数报告（实现细节随脚本落库固化）"
 
 depends_on:
