@@ -109,7 +109,11 @@ if os.path.exists(results) and os.path.getsize(results):
     if err_retry_ids:
         with open(results, "w", encoding="utf-8") as f:
             f.writelines(keep_lines)
-        print(f"[resume] 移除 {len(err_retry_ids)} 条 ERR 行并纳入本轮重查: "
+        err_idx = [i for i, (gid, seq) in enumerate(entries) if gid in err_retry_ids]
+        if err_idx:
+            start = min(start, min(err_idx))  # 游标回退到最早 ERR 位置，确保重查
+        print(f"[resume] 移除 {len(err_retry_ids)} 条 ERR 行并纳入本轮重查 "
+              f"(游标回退至 {start}): "
               f"{sorted(err_retry_ids)[:5]}{'...' if len(err_retry_ids) > 5 else ''}")
 if not os.path.exists(results) or os.path.getsize(results) == 0:
     with open(results, "w", encoding="utf-8") as f:
