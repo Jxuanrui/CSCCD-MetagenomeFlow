@@ -106,6 +106,19 @@ with open(f"{PEP}/cluster_test/clu50_complete_cluster.tsv", encoding="utf-8") as
             cluster_of[member] = rep
 print(f"[load] cluster mapping: {len(cluster_of)} pilot members mapped")
 
+# ── 2b. 主表（契约表之一）：试点代表 × 44 号元数据 × 簇归属 ────────
+with open(f"{OUT}/peptide_main.tsv", "w", encoding="utf-8") as f:
+    f.write("peptide_id\tsample\tgene_id\tcontig_id\tstart\tend\tstrand\tpartial\t"
+            "length_aa\tseq_sha1_12\tcluster_representative_id\tis_cluster_representative\n")
+    for qid in sorted(meta):
+        m = meta[qid]
+        rep = cluster_of.get(qid)
+        is_rep = "true" if rep == qid else "false"
+        f.write(f"{qid}\t{m['sample']}\t{m['gene_id']}\t{m['contig_id']}\t{m['start']}\t{m['end']}\t"
+                f"{m['strand']}\t{m['partial']}\t{m['length_aa']}\t{m['seq_sha1_12']}\t"
+                f"{rep or 'NA'}\t{is_rep}\n")
+print(f"[write] peptide_main rows: {len(meta)}")
+
 # ── 3. bioactivity 预测长表 ────────────────────────────────────────
 NO_DISCRIMINATION = {"antioxidant", "anti_inflammatory"}
 bio_rows = []
@@ -155,9 +168,9 @@ with open(f"{OUT}/phychem_properties.tsv", "w", encoding="utf-8") as f:
         f.write(f"{qid}\t{ch}\t{hy}\t{bo}\t{al}\tmodel_prediction\t{API_VERSION}\n")
 print(f"[load] phychem rows: {len(phy_rows)}")
 
-# ── 6. NN 命中 + nn_status 记账 ────────────────────────────────────
+# ── 6. NN 命中 + nn_status 全量记账（覆盖全部 450,320 候选） ────────
 nn_hits = 0
-nn_status = {}
+queried = {}
 with open(f"{NN}/nn_results.tsv", encoding="utf-8") as fh, \
      open(f"{OUT}/nn_hits.tsv", "w", encoding="utf-8") as o:
     o.write("query_id\trank\thit_internal_id\tsimilarity\tevidence_type\tapi_version\n")
@@ -168,25 +181,59 @@ with open(f"{NN}/nn_results.tsv", encoding="utf-8") as fh, \
         if len(f) < 4:
             continue
         qid = f[0]
-        nn_status.setdefault(qid, "queried_complete_representative")
         if f[1] == "ERR":
-            nn_status[qid] = "error"
+            queried[qid] = "error"
             continue
+        queried.setdefault(qid, "queried_complete_representative")
         nn_hits += 1
         o.write(f"{qid}\t{f[1]}\t{f[2]}\t{f[3]}\tsimilarity_transfer\t{API_VERSION}\n")
-for qid in pilot_ids:
-    nn_status.setdefault(qid, "not_queried_representative_mapped" if qid in cluster_of
-                         else "not_in_pilot")
+
+# 全候选分层（qualified ID 与 clu50/clstr 同构）
+tier = {}
+for t in sorted(glob.glob(f"{SMORF}/*.smorf.tsv")):
+    sample = os.path.basename(t).replace(".smorf.tsv", "")
+    with open(t, encoding="utf-8") as fh:
+        for i, line in enumerate(fh):
+            if i == 0:
+                continue
+            f = line.rstrip("\n").split("\t")
+            if len(f) != 9:
+                continue
+            tier[f"{sample}|{f[0]}"] = "complete" if f[5] == "complete" else "partial"
+
+cluster_rep, cluster_members = {}, collections.defaultdict(set)
+with open(f"{PEP}/cluster_test/clu50_complete_cluster.tsv", encoding="utf-8") as fh:
+    for line in fh:
+        rep, member = line.rstrip("\n").split("\t")
+        cluster_rep[member] = rep
+        cluster_members[rep].add(member)
+
+nn_status = {}
+for qid, t in tier.items():
+    if qid in queried:
+        nn_status[qid] = queried[qid]
+    elif t == "complete":
+        nn_status[qid] = ("not_queried_outside_pilot" if qid in cluster_rep
+                          else "not_queried_representative_mapped")
+    else:
+        nn_status[qid] = "not_queried_partial_policy"
+missing_tier = set(queried) - set(tier)
+for qid in missing_tier:
+    nn_status[qid] = "not_in_tier_tables"
+NOTE = {
+    "queried_complete_representative": "本序列已查询",
+    "not_queried_outside_pilot": "complete 层代表，试点范围外未查询",
+    "not_queried_representative_mapped": "簇成员未直接查询，结果经代表级映射传播",
+    "not_queried_partial_policy": "partial 层按策略未查询（D4），不得误读为无命中",
+    "error": "查询失败，见重试与错误记录",
+    "not_in_tier_tables": "查询存在但未匹配到分层表（需排查）",
+}
 with open(f"{OUT}/nn_status.tsv", "w", encoding="utf-8") as f:
     f.write("peptide_id\tnn_status\tnote\n")
     for qid, st in sorted(nn_status.items()):
-        note = {"queried_complete_representative": "本序列已查询",
-                "not_queried_representative_mapped": "簇成员未直接查询，结果经代表级映射传播",
-                "not_queried_partial_policy": "partial 层按策略未查询（D4）",
-                "not_in_pilot": "不在本试点范围",
-                "error": "查询失败，见错误记录"}.get(st, st)
-        f.write(f"{qid}\t{st}\t{note}\n")
-print(f"[load] nn hits: {nn_hits} | nn_status entries: {len(nn_status)}")
+        f.write(f"{qid}\t{st}\t{NOTE.get(st, st)}\n")
+print(f"[load] nn hits: {nn_hits} | nn_status: {len(nn_status)} rows "
+      f"(期望 450320；tier 外查询 {len(missing_tier)})")
 
 # ── 7. 丰度（clstr → 簇代表 → Salmon 家族口径 TPM） ────────────────
 need = set(pilot_ids)
@@ -238,11 +285,39 @@ if not_in_catalog:
     print(f"[note] {len(not_in_catalog)} 条不在 NR 目录（20-33 aa 盲区，阶段 0 已披露）——"
           "这些条目无丰度行，属已知口径而非失败")
 
-# ── 8. QC 汇总 ─────────────────────────────────────────────────────
+# ── 8. 落盘后重算核验（从磁盘重读比对预期，不信任内存计数） ────────
+expected = {
+    "peptide_main.tsv": len(meta),
+    "bioactivity_predictions.tsv": len(bio_rows),
+    "amp_predictions.tsv": len(amp_rows),
+    "phychem_properties.tsv": len(phy_rows),
+    "nn_hits.tsv": nn_hits,
+    "nn_status.tsv": len(nn_status),
+    "abundance.tsv": len(ab_rows),
+}
+for fn, want in expected.items():
+    with open(f"{OUT}/{fn}", encoding="utf-8") as fh:
+        got = sum(1 for _ in fh) - 1
+    if got != want:
+        failures.append(f"{fn}: 落盘数据行 {got} != 预期 {want}")
+main_ids = [l.split("\t")[0] for l in open(f"{OUT}/peptide_main.tsv", encoding="utf-8").readlines()[1:]]
+if len(set(main_ids)) != len(main_ids):
+    failures.append("peptide_main.tsv 存在重复主键")
+if len(nn_status) != len(tier):
+    failures.append(f"nn_status 覆盖 {len(nn_status)} != 候选 {len(tier)}，记账不完整")
+
+# ── 9. QC 汇总（按落盘核验后的实际值生成） ─────────────────────────
 batch_bio = len(glob.glob(f"{SCREEN}/bioactivity/batch_*.json"))
 batch_amp = len(glob.glob(f"{SCREEN}/amp/batch_*.json"))
 batch_phy = len(glob.glob(f"{SCREEN}/phychem/batch_*.json"))
 errs = sum(1 for v in nn_status.values() if v == "error")
+if failures:
+    print("[VERIFY-FAIL] 落盘核验未通过：", file=sys.stderr)
+    for x in failures:
+        print("  -", x, file=sys.stderr)
+    sys.exit(1)
+print("[verify] 落盘核验通过（七表行数 + 主键唯一性 + nn_status 全覆盖）")
+
 with open(f"{OUT}/qc_summary.md", "w", encoding="utf-8") as m:
     m.write("# 功能肽试点整合 QC 汇总\n\n")
     m.write(f"- API: {API_VERSION}\n")
@@ -257,8 +332,8 @@ with open(f"{OUT}/qc_summary.md", "w", encoding="utf-8") as m:
             "anti_inflammatory（97.2%）——仅存档，不用于筛选\n")
     m.write("- 证据类型: model_prediction（bioactivity/amp/phychem）、"
             "similarity_transfer（NN）；逐行随表携带\n")
-    m.write("- nn_status 记账: queried_complete_representative / "
-            "not_queried_representative_mapped / not_queried_partial_policy 分列，"
+    m.write(f"- nn_status 记账: 全候选 {len(tier)} 行全覆盖，状态六类分列"
+            "（queried / outside_pilot / representative_mapped / partial_policy / error / not_in_tier），"
             "不得把未查询误报为无命中\n")
 if failures:
     print("[VERIFY-FAIL] 存在需披露的项（见上），明细：", file=sys.stderr)
